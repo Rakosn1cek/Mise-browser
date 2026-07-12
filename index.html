@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mise</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        :root {
+            --bg-main: #1a1b26;
+            --bg-sidebar: #16161e;
+            --text: #c0caf5;
+            --accent: #2ac3de;
+            --border: #24283b;
+            --selected: #364a85;
+        }
+
+        body.light-mode {
+            --bg-main: #c6d1d1;
+            --bg-sidebar: #e1e2e7;
+            --text: #3c3e4f;
+            --accent: #007acc;
+            --border: #d2d3db;
+            --selected: #cfe2fe;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body, html {
+            height: 100%;
+            width: 100%;
+            font-family: sans-serif;
+            overflow: hidden;
+            background-color: var(--bg-main);
+        }
+
+        .main-container {
+            display: flex;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #Sidebar {
+            width: 260px;
+            min-width: 260px;
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+        }
+
+        #WorkspaceLabel {
+            color: var(--text);
+            font-weight: bold;
+            font-size: 14px;
+            padding: 6px 0;
+            background: transparent;
+        }
+
+        .nav-action-layout {
+            display: flex;
+            gap: 8px;
+            padding: 8px 0;
+            align-items: center;
+        }
+
+        .nav-icon-button {
+            background-color: transparent;
+            color: var(--text);
+            font-weight: bold;
+            font-size: 12px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 2px;
+            cursor: pointer;
+            width: 32px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            outline: none;
+        }
+
+        .nav-icon-button:hover, .nav-icon-button:focus {
+            background-color: var(--selected);
+            border-color: var(--accent);
+        }
+
+        #TabList {
+            list-style: none;
+            flex-grow: 1;
+            overflow-y: auto;
+            margin-top: 10px;
+            background-color: transparent;
+            border: none;
+            outline: none;
+        }
+
+        #TabList li {
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 14px;
+            color: var(--text);
+            cursor: pointer;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 4px;
+            outline: none;
+        }
+
+        #TabList li.selected {
+            background-color: var(--selected);
+            color: var(--text);
+        }
+
+        #TabList li:focus {
+            border: 1px solid var(--accent);
+        }
+
+        .bottom-theme-layout {
+            display: flex;
+            gap: 8px;
+            padding-top: 10px;
+            border-top: 1px solid var(--border);
+            margin-top: auto;
+        }
+
+        #right-content {
+            flex-grow: 1;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--bg-main);
+        }
+
+        #WideAddressBar {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: calc(100% - 20px);
+            height: 40px;
+            background-color: var(--bg-sidebar);
+            color: var(--text);
+            border: 1px solid var(--accent);
+            border-radius: 4px;
+            padding: 8px;
+            font-size: 14px;
+            outline: none;
+            z-index: 1000;
+            display: none;
+        }
+
+        #webview-container {
+            width: 100%;
+            height: 100%;
+            flex-grow: 1;
+            position: relative;
+        }
+
+        webview {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            display: none;
+        }
+
+        #DashboardOverlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-main);
+            color: var(--text);
+            z-index: 500;
+            display: none;
+            flex-direction: column;
+            padding: 30px;
+            overflow-y: auto;
+            outline: none;
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        .dashboard-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--accent);
+        }
+
+        .workspace-tree-node {
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: var(--bg-sidebar);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+        }
+
+        .workspace-tree-header {
+            font-weight: bold;
+            font-size: 16px;
+            padding: 6px;
+            border-radius: 4px;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .workspace-tree-header.dashboard-selected {
+            background-color: var(--selected);
+        }
+
+        .dashboard-tab-item {
+            padding: 6px 10px;
+            font-size: 14px;
+            color: var(--text);
+            opacity: 0.8;
+            border-left: 2px solid var(--border);
+            margin-left: 10px;
+            margin-top: 4px;
+            border-radius: 4px;
+            cursor: pointer;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            outline: none;
+        }
+
+        .dashboard-tab-item.dashboard-selected {
+            background-color: var(--selected);
+            opacity: 1;
+        }
+        
+        .dashboard-action-btn {
+            background-color: var(--selected);
+            color: var(--text);
+            border: 1px solid var(--accent);
+            border-radius: 4px;
+            padding: 6px 12px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        #WorkspaceInputBox {
+            display: none;
+            gap: 8px;
+            margin-bottom: 20px;
+            background-color: var(--bg-sidebar);
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+        }
+
+        #NewWorkspaceTitleInput {
+            flex-grow: 1;
+            background-color: var(--bg-main);
+            color: var(--text);
+            border: 1px solid var(--border);
+            padding: 6px 10px;
+            border-radius: 4px;
+            outline: none;
+        }
+
+        /* Command Palette Style Modifications matching layout files */
+        #CommandPaletteOverlay {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4);
+            z-index: 2000;
+            justify-content: center;
+            align-items: flex-start;
+            padding-top: 60px;
+        }
+
+        .palette-window {
+            width: 600px;
+            background-color: rgba(22, 22, 30, 0.95);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+        }
+
+        #PaletteInput {
+            background-color: var(--bg-main);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 10px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        #PaletteList {
+            list-style: none;
+            color: var(--text);
+            font-size: 14px;
+            max-height: 300px;
+            overflow-y: auto;
+            outline: none;
+        }
+
+        .palette-item {
+            padding: 12px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .palette-item.selected {
+            background-color: var(--selected);
+            color: var(--text);
+        }
+
+        /* Help Modal Design Layout mirroring reference text specifications */
+        #HelpMenuOverlay {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #HelpMenuContent {
+            width: 550px;
+            height: 600px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 14px;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+            overflow-y: auto;
+            outline: none;
+        }
+    </style>
+</head>
+<body class="dark-mode">
+    <div class="main-container">
+        <div id="Sidebar">
+            <div id="WorkspaceLabel">Workspace 1</div>
+            
+            <div class="nav-action-layout">
+                <button id="back-btn" class="nav-icon-button" title="Go Back"><i class="fa-solid fa-angle-left"></i></button>
+                <button id="forward-btn" class="nav-icon-button" title="Go Forward"><i class="fa-solid fa-angle-right"></i></button>
+                <button id="toggle-nav-btn" class="nav-icon-button" title="New Tab / Navigation"><i class="fa-solid fa-plus"></i></button>
+                <button id="menu-btn" class="nav-icon-button" title="Workspaces Dashboard"><i class="fa-solid fa-bars"></i></button>
+            </div>
+
+            <ul id="TabList">
+                <!-- Populated dynamically -->
+            </ul>
+
+            <div class="bottom-theme-layout">
+                <button id="theme-toggle-btn" class="nav-icon-button" title="Toggle Light/Dark Mode"><i class="fa-solid fa-moon"></i></button>
+                <button id="noti-toggle-btn" class="nav-icon-button" title="Toggle Web Notifications"><i class="fa-regular fa-bell"></i></button>
+            </div>
+        </div>
+
+        <div id="right-content">
+            <input type="text" id="WideAddressBar" placeholder="Search or enter address...">
+            
+            <div id="webview-container">
+                <!-- Command Palette DOM Nodes Block -->
+                <div id="CommandPaletteOverlay">
+                    <div class="palette-window">
+                        <input type="text" id="PaletteInput" placeholder="Search commands...">
+                        <ul id="PaletteList" tabindex="0"></ul>
+                    </div>
+                </div>
+
+                <!-- Help Window Modal Frame -->
+                <div id="HelpMenuOverlay" tabindex="0">
+                    <div id="HelpMenuContent"></div>
+                </div>
+
+                <div id="DashboardOverlay" tabindex="0">
+                    <div class="dashboard-header">
+                        <div class="dashboard-title">Workspace Dashboard</div>
+                        <button id="add-ws-btn" class="dashboard-action-btn">+ New Workspace</button>
+                    </div>
+                    
+                    <div id="WorkspaceInputBox">
+                        <input type="text" id="NewWorkspaceTitleInput" placeholder="Workspace name...">
+                        <button id="submit-ws-btn" class="dashboard-action-btn" style="border-color: var(--accent);">Save</button>
+                        <button id="cancel-ws-btn" class="dashboard-action-btn" style="background-color: transparent; border-color: var(--border);">Cancel</button>
+                    </div>
+
+                    <div id="DashboardTreeContainer"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="renderer.js"></script>
+</body>
+</html>

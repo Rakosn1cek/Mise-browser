@@ -1,0 +1,173 @@
+:root {
+    --bg-main: #1a1b26;
+    --bg-sidebar: #16161e;
+    --text: #c0caf5;
+    --accent: #2ac3de;
+    --border: #24283b;
+    --selected: #364a85;
+}
+
+body.light-mode {
+    --bg-main: #c6d1d1;
+    --bg-sidebar: #e1e2e7;
+    --text: #3c3e4f;
+    --accent: #007acc;
+    --border: #d2d3db;
+    --selected: #cfe2fe;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+}
+
+input {
+    user-select: text;
+    pointer-events: auto;
+}
+
+#WideAddressBar {
+    pointer-events: auto;
+    /* ... rest of the styles ... */
+}
+
+body, html {
+    height: 100%;
+    width: 100%;
+    font-family: sans-serif;
+    overflow: hidden;
+    background-color: var(--bg-main);
+}
+
+.main-container {
+    display: flex;
+    width: 100vw;
+    height: 100vh;
+}
+
+/* QWidget#Sidebar Matching Rulebook */
+#Sidebar {
+    width: 260px;
+    min-width: 260px;
+    background-color: var(--bg-sidebar);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 4px;
+}
+
+/* QLabel#WorkspaceLabel */
+#WorkspaceLabel {
+    color: var(--text);
+    font-weight: bold;
+    font-size: 14px;
+    padding: 6px;
+    background: transparent;
+}
+
+.nav-action-layout {
+    display: flex;
+    gap: 12px;
+    padding: 4px 2px 6px 4px;
+    align-items: center;
+}
+
+/* QPushButton#NavIconButton / #ThemeToggleBtn / #NotiToggleBtn */
+.nav-icon-button, #theme-toggle-btn, #noti-toggle-btn {
+    background-color: transparent;
+    color: var(--text);
+    font-size: 18px;
+    border: none;
+    border-radius: 4px;
+    padding: 4px;
+    cursor: pointer;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nav-icon-button:hover, #theme-toggle-btn:hover, #noti-toggle-btn:hover {
+    background-color: var(--selected);
+}
+
+/* QListWidget#TabList */
+#TabList {
+    list-style: none;
+    flex-grow: 1;
+    overflow-y: auto;
+    background-color: transparent;
+    border: none;
+}
+
+#TabList li {
+    padding: 8px;
+    border-radius: 4px;
+    font-size: 14px;
+    color: var(--text);
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#TabList li.selected {
+    background-color: var(--selected);
+    color: var(--text);
+}
+
+.bottom-theme-layout {
+    display: flex;
+    gap: 8px;
+    padding: 4px;
+    margin-top: auto;
+}
+
+#right-content {
+    flex-grow: 1;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--bg-main);
+}
+
+#WideAddressBar {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    width: calc(100% - 20px);
+    height: 50px;
+    background-color: var(--bg-main);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px;
+    font-size: 14px;
+    outline: none;
+    z-index: 1000;
+    display: none; /* Controlled interactively by toggle scripts */
+    pointer-events: auto;
+}
+
+#webview-container {
+    width: 100%;
+    height: 100%;
+    flex-grow: 1;
+    position: relative;
+}
+
+webview {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: none;
+}
+
+webview.active {
+    display: flex;
+}
