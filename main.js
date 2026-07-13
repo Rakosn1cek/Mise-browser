@@ -12,7 +12,7 @@ function createWindow() {
         width: 1600,
         height: 1040,
         frame: true,
-        autoHideMenuBar: true,
+        autoHideMenuBar: false,
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
             contextIsolation: true,
@@ -20,7 +20,7 @@ function createWindow() {
             webviewTag: true
         }
     });
-
+    
     mainWindow.setMenu(null);
     mainWindow.loadFile('index.html');
 
@@ -34,6 +34,12 @@ function createWindow() {
             console.error('Failed to configure private session user agent:', err);
         }
     });
+
+    // Enforce UK English spellchecking across the default browsing context
+    session.defaultSession.setSpellCheckerLanguages(['en-GB']);
+
+    // Enforce UK English spellchecking across the dark/private partition profile
+    session.fromPartition('MisePrivateProfile').setSpellCheckerLanguages(['en-GB']);
 
     const blockKeywords = [
         "telemetry", "analytics", "metrics", "log-upload", 
@@ -66,6 +72,20 @@ function createWindow() {
 
     ipcMain.on('show-context-menu', (event, params) => {
         const menu = new Menu();
+        // Dynamically append dictionary corrections at the top of the menu list for misspelled targets
+        if (params.dictionarySuggestions && params.dictionarySuggestions.length > 0) {
+            params.dictionarySuggestions.forEach(suggestion => {
+                menu.append(new MenuItem({
+                    label: suggestion,
+                    click: () => {
+                        // Instruct the specific webContents source to replace the misspelled text selection
+                        event.sender.replaceMisspelling(suggestion);
+                    }
+                }));
+            });
+            // Add a visual separator between spelling corrections and standard utility actions
+            menu.append(new MenuItem({ type: 'separator' }));
+        }
         if (params.selectionText && params.selectionText.trim() !== '') {
             menu.append(new MenuItem({ label: 'Copy', role: 'copy' }));
         }
@@ -195,6 +215,12 @@ ipcMain.handle('save-session', async (event, sessionData) => {
     } catch (err) { return false; }
 });
 
+// Toggle menu bar visibility on demand
+ipcMain.on('toggle-menu-bar', () => {
+    const isVisible = mainWindow.isMenuBarVisible();
+    mainWindow.setMenuBarVisibility(!isVisible);
+});
+
 const { clipboard } = require('electron');
 const { exec, spawn } = require('child_process');
 
@@ -246,6 +272,61 @@ ipcMain.on('execute-terminal-command', (event, commandStr) => {
 // Monitor all global frame allocations to catch child webview tags securely
 app.on('web-contents-created', (event, webContents) => {
     if (webContents.getType() === 'webview') {
+        
+        // Intercept right-clicks inside guest frames and handle spellcheck corrections natively
+        webContents.on('context-menu', (contextEvent, params) => {
+            contextEvent.preventDefault();
+            
+            const menu = new Menu();
+
+            // Populate spelling suggestions directly from the active guest frame configuration
+            if (params.dictionarySuggestions && params.dictionarySuggestions.length > 0) {
+                params.dictionarySuggestions.forEach(suggestion => {
+                    menu.append(new MenuItem({
+                        label: suggestion,
+                        click: () => webContents.replaceMisspelling(suggestion)
+                    }));
+                });
+                menu.append(new MenuItem({ type: 'separator' }));
+            }
+
+            if (params.selectionText && params.selectionText.trim() !== '') {
+                menu.append(new MenuItem({ label: 'Copy', role: 'copy' }));
+            }
+            if (params.linkURL && params.linkURL.trim() !== '') {
+                menu.append(new MenuItem({
+                    label: 'Open Link in New Tab',
+                    click: () => {
+                        if (mainWindow && mainWindow.webContents) {
+                            mainWindow.webContents.send('master-shortcut', 'spawn-tab-with-url', params.linkURL);
+                        }
+                    }
+                }));
+            }
+            if (params.isEditable) {
+                menu.append(new MenuItem({ label: 'Paste', role: 'paste' }));
+                menu.append(new MenuItem({ label: 'Cut', role: 'cut' }));
+                menu.append(new MenuItem({ label: 'Select All', role: 'selectall' }));
+            }
+            if (params.mediaType === 'image') {
+                menu.append(new MenuItem({
+                    label: 'Save Image As...',
+                    click: () => { if (mainWindow) mainWindow.webContents.downloadURL(params.srcURL); }
+                }));
+                menu.append(new MenuItem({
+                    label: 'Copy Image Address',
+                    click: () => { const { clipboard } = require('electron'); clipboard.writeText(params.srcURL); }
+                }));
+            }
+            if (menu.items.length === 0) {
+                menu.append(new MenuItem({ label: 'Back', click: () => { webContents.send('master-shortcut', 'go-back-signal'); } }));
+                menu.append(new MenuItem({ label: 'Forward', click: () => { webContents.send('master-shortcut', 'go-forward-signal'); } }));
+                menu.append(new MenuItem({ label: 'Reload', click: () => { webContents.reload(); } }));
+            }
+
+            menu.popup({ window: mainWindow });
+        });
+
         webContents.setWindowOpenHandler((details) => {
             if (details.url && details.url !== 'about:blank') {
                 if (mainWindow && mainWindow.webContents) {

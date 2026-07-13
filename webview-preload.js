@@ -1,24 +1,5 @@
 const { ipcRenderer } = require('electron');
 
-window.addEventListener('contextmenu', (e) => {
-    e.preventDefault();
-    
-    const linkElement = e.target.closest('a');
-    
-    // Construct structural attributes regarding the cursor collision spot coordinates
-    const params = {
-        selectionText: window.getSelection().toString(),
-        isEditable: e.target.matches('input, textarea, [contenteditable="true"]'),
-        mediaType: e.target.tagName.toLowerCase() === 'img' ? 'image' : 'none',
-        srcURL: e.target.src || '',
-        linkURL: linkElement ? linkElement.href : ''
-    };
-    
-    ipcRenderer.send('bubble-webview-key', 'handle-context-menu-data');
-    // Send structural properties straight down the channel line
-    ipcRenderer.send('show-context-menu', params);
-});
-
 window.addEventListener('keydown', (e) => {
     if (e.ctrlKey) {
         const key = e.key.toLowerCase();
