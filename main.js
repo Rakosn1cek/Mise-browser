@@ -70,8 +70,6 @@ function initializeEngineSwitches() {
     app.commandLine.appendSwitch('disable-battery-saver');
     app.commandLine.appendSwitch('log-level', '2');
     app.commandLine.appendSwitch('disable-speech-api');
-    app.commandLine.appendSwitch('disable-gpu-animation');
-    app.commandLine.appendSwitch('enable-low-end-device-mode');
 }
 
 // Fire the switches before the browser engine starts up

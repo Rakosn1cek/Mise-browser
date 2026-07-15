@@ -936,8 +936,9 @@ const injectedThemeKeys = new Map();
 
 async function applyCSSThemeToView(webview) {
     const isDark = isDarkMode();
+    const url = webview.getURL() || "";
     
-    // 1. If dark mode is disabled, remove the previously injected CSS key if it exists
+    // 1. If dark mode is disabled, remove the previously injected CSS key
     if (!isDark) {
         const key = injectedThemeKeys.get(webview);
         if (key) {
@@ -946,32 +947,51 @@ async function applyCSSThemeToView(webview) {
                 injectedThemeKeys.delete(webview);
             } catch (err) {}
         }
-        return;
+    } else {
+        // 2. Hardware-accelerated CSS filter
+        const darkCSS = `
+            html { 
+                filter: invert(1) hue-rotate(180deg) !important; 
+            }
+            img, video, iframe, canvas, [style*="background-image"] { 
+                filter: invert(1) hue-rotate(180deg) !important; 
+            }
+        `.replace(/\s+/g, ' ');
+
+        try {
+            const oldKey = injectedThemeKeys.get(webview);
+            if (oldKey) {
+                await webview.removeInsertedCSS(oldKey);
+            }
+            const newKey = await webview.insertCSS(darkCSS);
+            injectedThemeKeys.set(webview, newKey);
+        } catch (err) {
+            console.error("Failed to apply GPU theme filter:", err);
+        }
     }
 
-    // 2. Exact hardware-accelerated CSS filter strings
-    const darkCSS = `
-        html { 
-            filter: invert(1) hue-rotate(180deg) !important; 
-            will-change: filter !important; 
-        }
-        img, video, iframe, canvas, [style*="background-image"] { 
-            filter: invert(1) hue-rotate(180deg) !important; 
-        }
-    `.replace(/\s+/g, ' '); // Compact string
+    // 3. Gemini-Specific Layout Jitter Freeze (Runs for both light and dark modes)
+    if (url.includes('gemini.google.com')) {
+        const freezeScript = `
+            (function() {
+                // Find Google's main app shell containers that handle heights
+                const targets = [
+                    document.querySelector('div[class*="app-container"]'),
+                    document.querySelector('div[class*="chat-container"]'),
+                    document.body
+                ].filter(el => el !== null);
 
-    // 3. Native CSS injection bypasses all website CSP restrictions completely
-    try {
-        // Clear any old key first to prevent multiple stacked style filters
-        const oldKey = injectedThemeKeys.get(webview);
-        if (oldKey) {
-            await webview.removeInsertedCSS(oldKey);
-        }
-        
-        const newKey = await webview.insertCSS(darkCSS);
-        injectedThemeKeys.set(webview, newKey);
-    } catch (err) {
-        console.error("Failed to apply GPU theme filter:", err);
+                targets.forEach(el => {
+                    // Force the layout engine to ignore dynamic script calculations
+                    el.style.setProperty('height', '100vh', 'important');
+                    el.style.setProperty('max-height', '100vh', 'important');
+                    el.style.setProperty('overflow', 'hidden', 'important');
+                });
+            })();
+        `;
+        try {
+            await webview.executeJavaScript(freezeScript);
+        } catch (err) {}
     }
 }
 
