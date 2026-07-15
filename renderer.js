@@ -463,7 +463,7 @@ function renderWorkspaceUI(targetTabToFocus = null) {
 
         if (!activeViewsCache[currentWS][idx]) {
             const webview = document.createElement('webview');
-            webview.setAttribute('preload', 'file://' + window.miseAPI.getWebviewPreloadPath());
+            webview.setAttribute('preload', window.miseAPI.getWebviewPreloadPath());
             webview.setAttribute('allowpopups', '');
             
             if (globalPrivateModeActive || url.toLowerCase().includes("ycombinator.com")) {

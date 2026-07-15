@@ -2,6 +2,9 @@ const { app, BrowserWindow, ipcMain, session, Menu, MenuItem } = require('electr
 const path = require('path');
 const fs = require('fs');
 
+// Require the security config module to isolate filtering and hardening rules
+const security = require('./security');
+
 let mainWindow;
 const sessionPath = path.join(app.getPath('home'), '.config', 'mise-browser', 'session.json');
 
@@ -35,40 +38,14 @@ function createWindow() {
         }
     });
 
-    // Enforce UK English spellchecking across the default browsing context
-    session.defaultSession.setSpellCheckerLanguages(['en-GB']);
+    // Enforce isolated sessions and intercept filters via security module
+    security.hardenSession(session.defaultSession);
+    security.hardenSession(session.fromPartition('MisePrivateProfile'));
 
-    // Enforce UK English spellchecking across the dark/private partition profile
-    session.fromPartition('MisePrivateProfile').setSpellCheckerLanguages(['en-GB']);
-
-    const blockKeywords = [
-        "telemetry", "analytics", "metrics", "log-upload", 
-        "browser-intake", "stats", "pagead", "doubleclick"
-    ];
-
-    const requestFilter = (details, callback) => {
-        let shouldBlock = false;
-
-        try {
-            const urlObj = new URL(details.url);
-            const host = urlObj.hostname.toLowerCase();
-            
-            if (host.includes("alb.reddit.com") || details.url.includes(".reddit.com/api/eval")) {
-                shouldBlock = true;
-            } else if (blockKeywords.some(keyword => host.includes(keyword))) {
-                shouldBlock = true;
-            }
-        } catch (e) {}
-
-        if (shouldBlock) {
-            callback({ cancel: true });
-        } else {
-            callback({ cancel: false });
-        }
-    };
-
-    session.defaultSession.webRequest.onBeforeRequest(requestFilter);
-    session.fromPartition('MisePrivateProfile').webRequest.onBeforeRequest(requestFilter);
+    // Intercept webviews before they attach to strip out unwanted capabilities like WebGL
+    mainWindow.webContents.on('will-attach-webview', (event, webPreferences, params) => {
+        security.hardenWebviewPreferences(webPreferences);
+    });
 
     ipcMain.on('show-context-menu', (event, params) => {
         const menu = new Menu();

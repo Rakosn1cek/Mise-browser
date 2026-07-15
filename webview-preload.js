@@ -1,5 +1,8 @@
 const { ipcRenderer } = require('electron');
 
+// ==========================================
+// PRE-EXISTING WEBVIEW KEYBOARD BUBBLING
+// ==========================================
 window.addEventListener('keydown', (e) => {
     if (e.ctrlKey) {
         const key = e.key.toLowerCase();

@@ -1,5 +1,7 @@
+// preload.js
 const { contextBridge, ipcRenderer } = require('electron');
 
+// --- PRELOAD PRIVATE API EXPOSURE ---
 contextBridge.exposeInMainWorld('miseAPI', {
     getSession: () => ipcRenderer.invoke('get-session'),
     saveSession: (sessionData) => ipcRenderer.invoke('save-session', sessionData),
