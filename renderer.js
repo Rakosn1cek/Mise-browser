@@ -36,9 +36,13 @@ const commandRegistry = {
     "Toggle Floating Address Bar": () => displayAddressOverlay(),
     "Toggle Workspace Dashboard": () => toggleDashboardView(),
     "Focus Sidebar Tab List": () => {
-        const selectedTab = document.querySelector('#TabList li.selected');
-        if (selectedTab) selectedTab.focus();
-        else { const firstTab = document.querySelector('#TabList li'); if (firstTab) firstTab.focus(); }
+        const backBtn = document.getElementById('back-btn');
+        if (backBtn) {
+            backBtn.focus();
+        } else {
+            const selectedTab = document.querySelector('#TabList li.selected');
+            if (selectedTab) selectedTab.focus();
+        }
     },
     "Focus Active Webview": () => focusActiveWebview(),
     "Toggle Link Hints Overlay": () => triggerLinkHints(),
@@ -119,30 +123,65 @@ function setupEventListeners() {
         if (e.key === 'Escape') toggleHelpMenuWindow();
     });
 
-    document.getElementById('Sidebar').addEventListener('keydown', (e) => {
-        if (e.key === 'Tab') {
-            e.preventDefault();
-            const focusableElements = [
-                document.getElementById('back-btn'),
-                document.getElementById('forward-btn'),
-                document.getElementById('toggle-nav-btn'),
-                document.getElementById('menu-btn'),
-                ...Array.from(document.querySelectorAll('#TabList li')),
-                document.getElementById('theme-toggle-btn'),
-                document.getElementById('noti-toggle-btn')
-            ].filter(el => el !== null);
-
-            if (focusableElements.length === 0) return;
-            const currentIdx = focusableElements.indexOf(document.activeElement);
-
-            if (e.shiftKey) {
-                const nextIdx = (currentIdx <= 0) ? focusableElements.length - 1 : currentIdx - 1;
-                focusableElements[nextIdx].focus();
-            } else {
-                const nextIdx = (currentIdx === -1 || currentIdx >= focusableElements.length - 1) ? 0 : currentIdx + 1;
-                focusableElements[nextIdx].focus();
+	// --- HORIZONTAL NAVIGATION FOR TOP BUTTONS ---
+    const topNavIds = ['back-btn', 'forward-btn', 'toggle-nav-btn', 'menu-btn'];
+    topNavIds.forEach((id, idx) => {
+        const btn = document.getElementById(id);
+        if (!btn) return;
+        
+        btn.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                const nextIdx = (idx + 1) % topNavIds.length;
+                document.getElementById(topNavIds[nextIdx]).focus();
+            } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                const prevIdx = (idx - 1 + topNavIds.length) % topNavIds.length;
+                document.getElementById(topNavIds[prevIdx]).focus();
+            } else if (e.key === 'ArrowDown' || (e.key === 'Tab' && !e.shiftKey)) {
+                // Drop straight down into the active workspace tab list
+                e.preventDefault();
+                const selectedTab = document.querySelector('#TabList li.selected');
+                if (selectedTab) selectedTab.focus();
+                else {
+                    const firstTab = document.querySelector('#TabList li');
+                    if (firstTab) firstTab.focus();
+                }
             }
-        }
+        });
+    });
+
+    // --- KEYBOARD FLOW FOR BOTTOM UTILITY BUTTONS ---
+    const bottomButtons = ['theme-toggle-btn', 'noti-toggle-btn'];
+    bottomButtons.forEach((id, idx) => {
+        const btn = document.getElementById(id);
+        if (!btn) return;
+
+        btn.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || (e.key === 'Tab' && !e.shiftKey && id === 'theme-toggle-btn')) {
+                // Move right to notifications
+                e.preventDefault();
+                const nextBtn = document.getElementById('noti-toggle-btn');
+                if (nextBtn) nextBtn.focus();
+            } else if (e.key === 'ArrowLeft' || (e.key === 'Tab' && e.shiftKey && id === 'noti-toggle-btn')) {
+                // Move left to theme
+                e.preventDefault();
+                const prevBtn = document.getElementById('theme-toggle-btn');
+                if (prevBtn) prevBtn.focus();
+            } else if (e.key === 'ArrowUp' || (e.key === 'Tab' && e.shiftKey && id === 'theme-toggle-btn')) {
+                // Shift+Tab or Up arrow jumps back to the last active tab in the list
+                e.preventDefault();
+                const tabItems = Array.from(document.querySelectorAll('#TabList li'));
+                if (tabItems.length > 0) {
+                    tabItems[tabItems.length - 1].focus();
+                }
+            } else if (e.key === 'Tab' && !e.shiftKey && id === 'noti-toggle-btn') {
+                // Wrap focus all the way back up to the top Back Button
+                e.preventDefault();
+                const backBtn = document.getElementById('back-btn');
+                if (backBtn) backBtn.focus();
+            }
+        });
     });
 
     const tabListContainer = document.getElementById('TabList');
