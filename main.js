@@ -8,7 +8,58 @@ const security = require('./security');
 let mainWindow;
 const sessionPath = path.join(app.getPath('home'), '.config', 'mise-browser', 'session.json');
 
+// --- HISTORY CONFIGURATION & HELPERS ---
+const historyPath = path.join(app.getPath('home'), '.config', 'mise-browser', 'history.json');
+const MAX_HISTORY_ITEMS = 500; // Hard cap to prevent disk bloat
+
 let privateBrowsingEnabled = false;
+
+// Helper to read history safely
+function readHistory() {
+    try {
+        if (fs.existsSync(historyPath)) {
+            return JSON.parse(fs.readFileSync(historyPath, 'utf8'));
+        }
+    } catch (err) {}
+    return [];
+}
+
+// Helper to save history safely
+function saveHistory(historyData) {
+    try {
+        const dir = path.dirname(historyPath);
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+        fs.writeFileSync(historyPath, JSON.stringify(historyData, null, 4), 'utf8');
+    } catch (err) {}
+}
+
+// Helper to log user-initiated page visits
+function logVisit(title, url) {
+    // Ignore internal page configurations, blank slates, and local scripts
+    if (!url || url === 'about:blank' || url.startsWith('file://')) return;
+
+    let history = readHistory();
+    
+    const newEntry = {
+        title: title || url,
+        url: url,
+        timestamp: Date.now()
+    };
+
+    // Skip duplicating adjacent entries (e.g., refreshing or loading similar assets)
+    if (history.length > 0 && history[0].url === url) return;
+
+    // Push to the top of the pile
+    history.unshift(newEntry);
+
+    // Keep the file size tight and light
+    if (history.length > MAX_HISTORY_ITEMS) {
+        history = history.slice(0, MAX_HISTORY_ITEMS);
+    }
+
+    saveHistory(history);
+}
+// ---------------------------------------
 
 function createWindow() {
     mainWindow = new BrowserWindow({
@@ -169,7 +220,16 @@ function createWindow() {
     });
 }
 
+// Sync system theme settings with the main process
+ipcMain.on('set-native-theme', (event, mode) => {
+    // Mode can be 'dark', 'light', or 'system'
+    const { nativeTheme } = require('electron');
+    nativeTheme.themeSource = mode;
+});
+
+// --- IPC CHANNELS AND UTILITY HANDLERS ---
 ipcMain.on('get-webview-preload-path', (event) => { event.returnValue = path.join(__dirname, 'webview-preload.js'); });
+
 ipcMain.handle('read-hinter-code', async () => {
     try {
         const hinterPath = path.join(__dirname, 'hinter.js');
@@ -190,6 +250,29 @@ ipcMain.handle('save-session', async (event, sessionData) => {
         fs.writeFileSync(sessionPath, JSON.stringify(sessionData, null, 4), 'utf8');
         return true;
     } catch (err) { return false; }
+});
+
+// --- IPC HISTORY CHANNELS ---
+ipcMain.handle('search-history', async (event, query) => {
+    const history = readHistory();
+    if (!query || !query.trim()) return history;
+
+    const lowerQuery = query.toLowerCase();
+    return history.filter(item => 
+        item.title.toLowerCase().includes(lowerQuery) || 
+        item.url.toLowerCase().includes(lowerQuery)
+    );
+});
+
+ipcMain.handle('purge-history', async () => {
+    try {
+        if (fs.existsSync(historyPath)) {
+            fs.writeFileSync(historyPath, JSON.stringify([], null, 4), 'utf8');
+        }
+        return true;
+    } catch (err) {
+        return false;
+    }
 });
 
 // Toggle menu bar visibility on demand
@@ -250,6 +333,18 @@ ipcMain.on('execute-terminal-command', (event, commandStr) => {
 app.on('web-contents-created', (event, webContents) => {
     if (webContents.getType() === 'webview') {
         
+        // INTERCEPT SUCCESSFUL NAVIGATIONS FOR THE LOG
+        webContents.on('did-navigate', (navEvent, url) => {
+            const title = webContents.getTitle();
+            logVisit(title, url);
+        });
+
+        // INTERCEPT IN-PAGE TRANSITIONS (SINGLE PAGE APPS LIKE YOUTUBE)
+        webContents.on('did-navigate-in-page', (navEvent, url) => {
+            const title = webContents.getTitle();
+            logVisit(title, url);
+        });
+
         // Intercept right-clicks inside guest frames and handle spellcheck corrections natively
         webContents.on('context-menu', (contextEvent, params) => {
             contextEvent.preventDefault();

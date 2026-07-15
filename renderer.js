@@ -14,7 +14,22 @@ let helpActive = false;
 let paletteMatches = [];
 let paletteSelectionIdx = 0;
 
+let historyActive = false; // Tracks whether the history overlay is open
+let historyResults = [];   // Stores the currently loaded search results
+
 let globalPrivateModeActive = false;
+
+// --- GLOBAL UTILITY HELPERS ---
+// Returns true if the browser interface is currently in dark mode
+const isDarkMode = () => document.body.classList.contains('dark-mode');
+
+// Updates an element's background and text color based on the current theme
+function applyThemeToOverlayElement(element, darkBg, lightBg, darkText, lightText) {
+    if (!element) return;
+    const dark = isDarkMode();
+    element.style.backgroundColor = dark ? darkBg : lightBg;
+    element.style.color = dark ? darkText : lightText;
+}
 
 const commandRegistry = {
     "New DuckDuckGo Tab": () => spawnNewBlankTab(),
@@ -29,6 +44,7 @@ const commandRegistry = {
     "Toggle Link Hints Overlay": () => triggerLinkHints(),
     "Toggle Light/Dark Layout": () => toggleInterfaceTheme(),
     "Show Shortcuts Reference": () => toggleHelpMenuWindow(),
+    "Toggle Actionable History": () => toggleHistoryOverlay(),
     "Toggle Private Browsing": () => {
         globalPrivateModeActive = !globalPrivateModeActive;
         handlePrivateBrowsingStateShift(globalPrivateModeActive);
@@ -82,6 +98,7 @@ function setupEventListeners() {
             case 'trigger-hints': triggerLinkHints(); break;
             case 'toggle-palette': toggleCommandPaletteView(); break;
             case 'toggle-help': toggleHelpMenuWindow(); break;
+            case 'toggle-history': toggleHistoryOverlay(); break;
             case 'go-back-signal': navigateFrameBack(); break;
             case 'go-forward-signal': navigateFrameForward(); break;
             case 'toggle-private-mode': {
@@ -186,6 +203,35 @@ function setupEventListeners() {
             e.preventDefault();
             const selectedTab = document.querySelector('#TabList li.selected');
             if (selectedTab) selectedTab.focus();
+        }
+    });
+
+    // --- History Overlay Event Listeners ---
+    const historySearchInput = document.getElementById('HistorySearchInput');
+    
+    // Trigger live search as you type
+    historySearchInput.addEventListener('input', (e) => {
+        filterHistoryItems(e.target.value.trim());
+    });
+
+    // Close button click
+    document.getElementById('CloseHistoryBtn').addEventListener('click', toggleHistoryOverlay);
+
+    // Purge button click (with confirmation)
+    document.getElementById('PurgeHistoryBtn').addEventListener('click', async () => {
+        const confirmPurge = confirm("Are you sure you want to permanently delete all history?");
+        if (confirmPurge) {
+            const success = await window.miseAPI.purgeHistory();
+            if (success) {
+                filterHistoryItems(''); // Refresh with empty state
+            }
+        }
+    });
+
+    // Close overlay if the background is clicked
+    document.getElementById('HistoryOverlay').addEventListener('click', (e) => {
+        if (e.target.id === 'HistoryOverlay') {
+            toggleHistoryOverlay();
         }
     });
 }
@@ -365,9 +411,9 @@ function toggleHelpMenuWindow() {
             dashboardActive = false;
             document.getElementById('DashboardOverlay').style.display = 'none';
         }
-        const isDark = document.body.classList.contains('dark-mode');
-        content.style.backgroundColor = isDark ? "#124647" : "#f5f6f9";
-        content.style.color = isDark ? "#c0caf5" : "#3c3e4f";
+        
+        // Use our clean utility helper instead of manual color definitions
+        applyThemeToOverlayElement(content, "#124647", "#f5f6f9", "#c0caf5", "#3c3e4f");
         
         content.innerHTML = `Mise Browser — v0.1.0\n==================================================\n
 Navigation & Workspaces
@@ -835,17 +881,67 @@ function handleNavigation(input) {
 }
 
 function applyCSSThemeToView(webview) {
-    const isDark = document.body.classList.contains('dark-mode');
+    const isDark = isDarkMode();
     if (isDark) {
+        // High-performance, GPU-accelerated selective color inversion
         webview.insertCSS(`
-            html { filter: invert(90%) hue-rotate(180deg) !important; }
-            img, video, iframe { filter: invert(100%) hue-rotate(180deg) !important; }
+            html {
+                filter: invert(0.9) hue-rotate(180deg) !important;
+                background-color: #1a1b26 !important;
+                will-change: filter;
+            }
+            /* Keep pictures, videos, and vector graphics looking normal */
+            img, video, canvas, svg, [style*="background-image"] {
+                filter: invert(1.1) hue-rotate(180deg) !important;
+                will-change: filter;
+            }
+            /* Prevent dark elements like frames or code blocks from double-inverting */
+            iframe, pre, code {
+                filter: invert(0) !important;
+            }
         `);
     } else {
+        // Instantly clear the filters for a clean light mode
         webview.insertCSS(`
-            html { filter: none !important; }
-            img, video, iframe { filter: none !important; }
+            html {
+                filter: none !important;
+            }
+            img, video, canvas, svg {
+                filter: none !important;
+            }
         `);
+    }
+}
+
+function toggleInterfaceTheme() {
+    const body = document.body;
+    const button = document.getElementById('theme-toggle-btn');
+    
+    if (isDarkMode()) {
+        body.classList.remove('dark-mode');
+        body.classList.add('light-mode');
+        button.innerHTML = '<i class="fa-solid fa-sun"></i>';
+        
+        // Notify the native theme manager to match light-mode elements
+        if (window.miseAPI && typeof window.miseAPI.setNativeTheme === 'function') {
+            window.miseAPI.setNativeTheme('light');
+        }
+    } else {
+        body.classList.remove('light-mode');
+        body.classList.add('dark-mode');
+        button.innerHTML = '<i class="fa-solid fa-moon"></i>';
+        
+        // Notify the native theme manager to match dark-mode elements
+        if (window.miseAPI && typeof window.miseAPI.setNativeTheme === 'function') {
+            window.miseAPI.setNativeTheme('dark');
+        }
+    }
+    
+    enforceActiveGlobalThemeMode();
+    
+    if (helpActive) {
+        const content = document.getElementById('HelpMenuContent');
+        applyThemeToOverlayElement(content, "#124647", "#f5f6f9", "#c0caf5", "#3c3e4f");
     }
 }
 
@@ -854,28 +950,6 @@ function enforceActiveGlobalThemeMode() {
     allWebviews.forEach((webview) => {
         try { applyCSSThemeToView(webview); } catch (err) {}
     });
-}
-
-function toggleInterfaceTheme() {
-    const body = document.body;
-    const button = document.getElementById('theme-toggle-btn');
-    
-    if (body.classList.contains('dark-mode')) {
-        body.classList.remove('dark-mode');
-        body.classList.add('light-mode');
-        button.innerHTML = '<i class="fa-solid fa-sun"></i>';
-    } else {
-        body.classList.remove('light-mode');
-        body.classList.add('dark-mode');
-        button.innerHTML = '<i class="fa-solid fa-moon"></i>';
-    }
-    enforceActiveGlobalThemeMode();
-    if (helpActive) {
-        const content = document.getElementById('HelpMenuContent');
-        const isDark = body.classList.contains('dark-mode');
-        content.style.backgroundColor = isDark ? "#124647" : "#f5f6f9";
-        content.style.color = isDark ? "#c0caf5" : "#3c3e4f";
-    }
 }
 
 document.getElementById('noti-toggle-btn').addEventListener('click', () => {
@@ -890,3 +964,74 @@ document.getElementById('noti-toggle-btn').addEventListener('click', () => {
 });
 
 document.addEventListener('DOMContentLoaded', initializeBrowser);
+
+// Toggle the History Overlay Window
+function toggleHistoryOverlay() {
+    const overlay = document.getElementById('HistoryOverlay');
+    const input = document.getElementById('HistorySearchInput');
+    
+    historyActive = !historyActive;
+    if (historyActive) {
+        // Ensure other overlays are closed
+        if (paletteActive) toggleCommandPaletteView();
+        if (helpActive) toggleHelpMenuWindow();
+        if (dashboardActive) toggleDashboardView();
+
+        overlay.style.display = 'flex';
+        input.value = '';
+        input.focus();
+        filterHistoryItems(''); // Fetch all history items initially
+    } else {
+        overlay.style.display = 'none';
+        focusActiveWebview();
+    }
+}
+
+// Fetch and render the history items
+function filterHistoryItems(filterText) {
+    const listContainer = document.getElementById('HistoryResultsList');
+    listContainer.innerHTML = '';
+
+    // Use .then instead of async/await to keep the syntax parser simple
+    window.miseAPI.searchHistory(filterText).then((results) => {
+        historyResults = results;
+
+        if (historyResults.length === 0) {
+            listContainer.innerHTML = '<div class="history-empty">No recent history items found.</div>';
+            return;
+        }
+
+        historyResults.forEach((item) => {
+            const itemEl = document.createElement('div');
+            itemEl.className = 'history-item';
+            
+            const safeTitle = escapeHtml(item.title);
+            const safeUrl = escapeHtml(item.url);
+
+            itemEl.innerHTML = `
+                <div class="history-item-title">${safeTitle}</div>
+                <div class="history-item-url">${safeUrl}</div>
+            `;
+
+            itemEl.addEventListener('click', () => {
+                spawnTabWithUrl(item.url);
+                toggleHistoryOverlay();
+            });
+
+            listContainer.appendChild(itemEl);
+        });
+    }).catch((err) => {
+        console.error("Failed to load history:", err);
+    });
+}
+
+// Simple HTML escaping helper for safe rendering
+function escapeHtml(text) {
+    if (!text) return "";
+    return text
+        .split("&").join("&amp;")
+        .split("<").join("&lt;")
+        .split(">").join("&gt;")
+        .split('"').join("&quot;")
+        .split("'").join("&#039;");
+}

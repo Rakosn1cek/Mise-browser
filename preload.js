@@ -11,6 +11,9 @@ contextBridge.exposeInMainWorld('miseAPI', {
     clearDomainCookies: (data) => ipcRenderer.invoke('clear-domain-cookies', data),
     clearActiveCache: (isPrivate) => ipcRenderer.invoke('clear-active-cache', isPrivate),
     executeTerminalCommand: (commandStr) => ipcRenderer.send('execute-terminal-command', commandStr),
+    searchHistory: (query) => ipcRenderer.invoke('search-history', query),
+    purgeHistory: () => ipcRenderer.invoke('purge-history'),
+    setNativeTheme: (mode) => ipcRenderer.send('set-native-theme', mode),
     onMasterShortcut: (callback) => {
         ipcRenderer.on('master-shortcut', (event, action, ...args) => callback(action, ...args));
     }
