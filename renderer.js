@@ -594,11 +594,18 @@ function switchTabFocus(targetIdx) {
     
     if (!dashboardActive && currentWSViews[targetIdx]) {
         currentWSViews[targetIdx].style.display = 'flex';
-        const currentFocused = document.activeElement;
-        const sidebarHasFocus = document.getElementById('Sidebar').contains(currentFocused);
-        if (!sidebarHasFocus && !paletteActive && !helpActive) {
-            currentWSViews[targetIdx].focus();
-        }
+        
+        // Safety timeout to ensure the DOM has painted the view before snatching focus
+        setTimeout(() => {
+            const currentFocused = document.activeElement;
+            const sidebarHasFocus = document.getElementById('Sidebar').contains(currentFocused);
+            if (!sidebarHasFocus && !paletteActive && !helpActive) {
+                window.miseAllowWebviewFocus = true;
+                currentWSViews[targetIdx].focus();
+            }
+        }, 50);
+        
+        try { applyCSSThemeToView(currentWSViews[targetIdx]); } catch (err) {}
     }
 }
 
@@ -679,6 +686,9 @@ function handleTabRemoval() {
     if (activeTitlesCache[currentWS]) activeTitlesCache[currentWS].splice(currentIdx, 1);
 
     window.miseAPI.saveSession(sessionState);
+    
+    window.miseAllowWebviewFocus = true;
+
     renderWorkspaceUI(Math.max(0, currentIdx - 1));
 }
 
@@ -882,34 +892,22 @@ function handleNavigation(input) {
 
 function applyCSSThemeToView(webview) {
     const isDark = isDarkMode();
+    
+    // Use the native browser engine to manage color layouts cleanly
+    try {
+        const wc = webview.getWebContents();
+        if (wc && typeof wc.setForceDarkModeEnabled === 'function') {
+            wc.setForceDarkModeEnabled(isDark);
+        }
+    } catch (e) {
+        // Fallback safety if webContents isn't fully active yet
+    }
+
     if (isDark) {
-        // High-performance, GPU-accelerated selective color inversion
-        webview.insertCSS(`
-            html {
-                filter: invert(0.9) hue-rotate(180deg) !important;
-                background-color: #1a1b26 !important;
-                will-change: filter;
-            }
-            /* Keep pictures, videos, and vector graphics looking normal */
-            img, video, canvas, svg, [style*="background-image"] {
-                filter: invert(1.1) hue-rotate(180deg) !important;
-                will-change: filter;
-            }
-            /* Prevent dark elements like frames or code blocks from double-inverting */
-            iframe, pre, code {
-                filter: invert(0) !important;
-            }
-        `);
+        // Tell modern websites to deliver their built-in dark versions directly
+        webview.insertCSS(":root { color-scheme: dark !important; }");
     } else {
-        // Instantly clear the filters for a clean light mode
-        webview.insertCSS(`
-            html {
-                filter: none !important;
-            }
-            img, video, canvas, svg {
-                filter: none !important;
-            }
-        `);
+        webview.insertCSS(":root { color-scheme: light !important; }");
     }
 }
 
