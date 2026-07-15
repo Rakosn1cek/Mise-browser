@@ -469,6 +469,7 @@ Ctrl + B           Focus Active Webview
 Enter              Switch to Selected Sidebar Tab
 Ctrl + P           Toggle Command Palette
 Ctrl + Shift + P   Toggle Private Browsing Mode On/Off
+Ctrl + Shift + Tab Focus sidebar nav buttons
 
 Web Interaction
 --------------------------------------------------
@@ -477,6 +478,7 @@ Right Click        Contextual Actions + (Arch Wiki)
 
 Sidebar Controls
 --------------------------------------------------
+Arrow Keys L/R     Move around the nav buttons
 Sun/Moon Icon      Toggle Light/Dark Layout
 Bell Icon          Toggle Web Notifications`;
         
