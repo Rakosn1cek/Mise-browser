@@ -890,37 +890,60 @@ function handleNavigation(input) {
     document.getElementById('WideAddressBar').style.display = 'none';
 }
 
-function applyCSSThemeToView(webview) {
+// Keep track of active style injection keys for each webview to safely remove them
+const injectedThemeKeys = new Map();
+
+async function applyCSSThemeToView(webview) {
     const isDark = isDarkMode();
     
-    // Use the native browser engine to manage color layouts cleanly
-    try {
-        const wc = webview.getWebContents();
-        if (wc && typeof wc.setForceDarkModeEnabled === 'function') {
-            wc.setForceDarkModeEnabled(isDark);
+    // 1. If dark mode is disabled, remove the previously injected CSS key if it exists
+    if (!isDark) {
+        const key = injectedThemeKeys.get(webview);
+        if (key) {
+            try {
+                await webview.removeInsertedCSS(key);
+                injectedThemeKeys.delete(webview);
+            } catch (err) {}
         }
-    } catch (e) {
-        // Fallback safety if webContents isn't fully active yet
+        return;
     }
 
-    if (isDark) {
-        // Tell modern websites to deliver their built-in dark versions directly
-        webview.insertCSS(":root { color-scheme: dark !important; }");
-    } else {
-        webview.insertCSS(":root { color-scheme: light !important; }");
+    // 2. Exact hardware-accelerated CSS filter strings
+    const darkCSS = `
+        html { 
+            filter: invert(1) hue-rotate(180deg) !important; 
+            will-change: filter !important; 
+        }
+        img, video, iframe, canvas, [style*="background-image"] { 
+            filter: invert(1) hue-rotate(180deg) !important; 
+        }
+    `.replace(/\s+/g, ' '); // Compact string
+
+    // 3. Native CSS injection bypasses all website CSP restrictions completely
+    try {
+        // Clear any old key first to prevent multiple stacked style filters
+        const oldKey = injectedThemeKeys.get(webview);
+        if (oldKey) {
+            await webview.removeInsertedCSS(oldKey);
+        }
+        
+        const newKey = await webview.insertCSS(darkCSS);
+        injectedThemeKeys.set(webview, newKey);
+    } catch (err) {
+        console.error("Failed to apply GPU theme filter:", err);
     }
 }
 
 function toggleInterfaceTheme() {
     const body = document.body;
     const button = document.getElementById('theme-toggle-btn');
+    const isDark = body.classList.contains('dark-mode');
     
-    if (isDarkMode()) {
+    // 1. Swap UI classes and notify the native backend quietly
+    if (isDark) {
         body.classList.remove('dark-mode');
         body.classList.add('light-mode');
         button.innerHTML = '<i class="fa-solid fa-sun"></i>';
-        
-        // Notify the native theme manager to match light-mode elements
         if (window.miseAPI && typeof window.miseAPI.setNativeTheme === 'function') {
             window.miseAPI.setNativeTheme('light');
         }
@@ -928,14 +951,16 @@ function toggleInterfaceTheme() {
         body.classList.remove('light-mode');
         body.classList.add('dark-mode');
         button.innerHTML = '<i class="fa-solid fa-moon"></i>';
-        
-        // Notify the native theme manager to match dark-mode elements
         if (window.miseAPI && typeof window.miseAPI.setNativeTheme === 'function') {
             window.miseAPI.setNativeTheme('dark');
         }
     }
     
-    enforceActiveGlobalThemeMode();
+    // 2. Loop through active webviews and instantly apply/remove the filter style sheet
+    const allWebviews = document.getElementById('webview-container').querySelectorAll('webview');
+    allWebviews.forEach((webview) => {
+        applyCSSThemeToView(webview);
+    });
     
     if (helpActive) {
         const content = document.getElementById('HelpMenuContent');

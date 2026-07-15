@@ -1,9 +1,81 @@
-const { app, BrowserWindow, ipcMain, session, Menu, MenuItem } = require('electron');
+const { app, BrowserWindow, ipcMain, session, Menu, MenuItem, nativeTheme } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
 // Require the security config module to isolate filtering and hardening rules
 const security = require('./security');
+
+// --- NATIVE CONFIG UTILITIES ---
+const CONFIG_DIR = path.join(app.getPath('home'), '.config', 'mise-browser');
+const CONFIG_PATH = path.join(CONFIG_DIR, 'config.json');
+
+const DEFAULT_CONFIG = {
+    disable_gpu: false,          // Keep false by default for cool video playback!
+    background_throttling: true,
+    process_limit: 3
+};
+
+function loadBrowserConfig() {
+    try {
+        if (!fs.existsSync(CONFIG_DIR)) fs.mkdirSync(CONFIG_DIR, { recursive: true });
+        if (!fs.existsSync(CONFIG_PATH)) {
+            fs.writeFileSync(CONFIG_PATH, JSON.stringify(DEFAULT_CONFIG, null, 4), 'utf-8');
+            return { ...DEFAULT_CONFIG };
+        }
+        return { ...DEFAULT_CONFIG, ...JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf-8')) };
+    } catch (e) {
+        return { ...DEFAULT_CONFIG };
+    }
+}
+
+function saveBrowserConfig(cfg) {
+    try {
+        fs.writeFileSync(CONFIG_PATH, JSON.stringify(cfg, null, 4), 'utf-8');
+        app.relaunch(); // Relaunches a clean window with the new flags active
+        app.exit(0);    // Exits the current window
+    } catch (e) {}
+}
+
+function initializeEngineSwitches() {
+    const cfg = loadBrowserConfig();
+
+    if (cfg.disable_gpu) {
+        app.commandLine.appendSwitch('disable-gpu');
+        app.commandLine.appendSwitch('disable-gpu-compositing');
+    } else {
+        // LINUX NATIVE VA-API SPEEDUPS (Resolves video overheating instantly)
+        if (process.platform === 'linux') {
+            app.commandLine.appendSwitch('ignore-gpu-blocklist');
+            app.commandLine.appendSwitch('enable-gpu-rasterization');
+            app.commandLine.appendSwitch('enable-zero-copy');
+            app.commandLine.appendSwitch('enable-accelerated-video-decode');
+            app.commandLine.appendSwitch('use-gl', 'desktop');
+            app.commandLine.appendSwitch('enable-features', 'VaapiVideoDecoder,VaapiVideoEncoder,CanvasOopRasterization,TLSExtensionGrease');
+        } else {
+            app.commandLine.appendSwitch('enable-features', 'TLSExtensionGrease');
+        }
+    }
+
+    if (cfg.background_throttling) {
+        app.commandLine.appendSwitch('enable-background-timer-throttling');
+        app.commandLine.appendSwitch('add-delay-to-background-timer-tasks');
+    }
+    
+    app.commandLine.appendSwitch('renderer-process-limit', String(cfg.process_limit || 3));
+
+    // Hardcoded security optimizations from old Python build
+    app.commandLine.appendSwitch('disable-reading-from-canvas');
+    app.commandLine.appendSwitch('disable-shared-workers');
+    app.commandLine.appendSwitch('enable-strict-mixed-content-checking');
+    app.commandLine.appendSwitch('disable-battery-saver');
+    app.commandLine.appendSwitch('log-level', '2');
+    app.commandLine.appendSwitch('disable-speech-api');
+    app.commandLine.appendSwitch('disable-gpu-animation');
+    app.commandLine.appendSwitch('enable-low-end-device-mode');
+}
+
+// Fire the switches before the browser engine starts up
+initializeEngineSwitches();
 
 let mainWindow;
 const sessionPath = path.join(app.getPath('home'), '.config', 'mise-browser', 'session.json');
@@ -35,7 +107,6 @@ function saveHistory(historyData) {
 
 // Helper to log user-initiated page visits
 function logVisit(title, url) {
-    // Ignore internal page configurations, blank slates, and local scripts
     if (!url || url === 'about:blank' || url.startsWith('file://')) return;
 
     let history = readHistory();
@@ -46,13 +117,10 @@ function logVisit(title, url) {
         timestamp: Date.now()
     };
 
-    // Skip duplicating adjacent entries (e.g., refreshing or loading similar assets)
     if (history.length > 0 && history[0].url === url) return;
 
-    // Push to the top of the pile
     history.unshift(newEntry);
 
-    // Keep the file size tight and light
     if (history.length > MAX_HISTORY_ITEMS) {
         history = history.slice(0, MAX_HISTORY_ITEMS);
     }
@@ -66,7 +134,7 @@ function createWindow() {
         width: 1600,
         height: 1040,
         frame: true,
-        autoHideMenuBar: false,
+        autoHideMenuBar: true,
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
             contextIsolation: true,
@@ -75,10 +143,57 @@ function createWindow() {
         }
     });
     
-    mainWindow.setMenu(null);
+    const cfg = loadBrowserConfig();
+    const menuTemplate = [
+        {
+            label: 'Mise Settings',
+            submenu: [
+                {
+                    label: 'Disable GPU Hardware Acceleration',
+                    type: 'checkbox',
+                    checked: cfg.disable_gpu,
+                    click: (menuItem) => {
+                        cfg.disable_gpu = menuItem.checked;
+                        saveBrowserConfig(cfg);
+                    }
+                },
+                {
+                    label: 'Enable Background Throttling',
+                    type: 'checkbox',
+                    checked: cfg.background_throttling,
+                    click: (menuItem) => {
+                        cfg.background_throttling = menuItem.checked;
+                        saveBrowserConfig(cfg);
+                    }
+                },
+                { type: 'separator' },
+                {
+                    label: 'Renderer Process Limit',
+                    submenu: [2, 3, 4, 5].map(num => ({
+                        label: `Limit to ${num} processes`,
+                        type: 'radio',
+                        checked: cfg.process_limit === num,
+                        click: () => {
+                            cfg.process_limit = num;
+                            saveBrowserConfig(cfg);
+                        }
+                    }))
+                },
+                { type: 'separator' },
+                {
+                    label: 'Restart Browser Now',
+                    click: () => { app.relaunch(); app.exit(0); }
+                }
+            ]
+        }
+    ];
+
+    const systemMenu = Menu.buildFromTemplate(menuTemplate);
+    mainWindow.setMenu(systemMenu);
+    mainWindow.setMenuBarVisibility(false);
+    
     mainWindow.loadFile('index.html');
 
-    // Safe context configuration deferred until the main layout tree completes mounting
     mainWindow.webContents.once('dom-ready', () => {
         try {
             const defaultUA = session.defaultSession.getUserAgent();
@@ -96,58 +211,6 @@ function createWindow() {
     // Intercept webviews before they attach to strip out unwanted capabilities like WebGL
     mainWindow.webContents.on('will-attach-webview', (event, webPreferences, params) => {
         security.hardenWebviewPreferences(webPreferences);
-    });
-
-    ipcMain.on('show-context-menu', (event, params) => {
-        const menu = new Menu();
-        // Dynamically append dictionary corrections at the top of the menu list for misspelled targets
-        if (params.dictionarySuggestions && params.dictionarySuggestions.length > 0) {
-            params.dictionarySuggestions.forEach(suggestion => {
-                menu.append(new MenuItem({
-                    label: suggestion,
-                    click: () => {
-                        // Instruct the specific webContents source to replace the misspelled text selection
-                        event.sender.replaceMisspelling(suggestion);
-                    }
-                }));
-            });
-            // Add a visual separator between spelling corrections and standard utility actions
-            menu.append(new MenuItem({ type: 'separator' }));
-        }
-        if (params.selectionText && params.selectionText.trim() !== '') {
-            menu.append(new MenuItem({ label: 'Copy', role: 'copy' }));
-        }
-        if (params.linkURL && params.linkURL.trim() !== '') {
-            menu.append(new MenuItem({
-                label: 'Open Link in New Tab',
-                click: () => {
-                    if (mainWindow && mainWindow.webContents) {
-                        mainWindow.webContents.send('master-shortcut', 'spawn-tab-with-url', params.linkURL);
-                    }
-                }
-            }));
-        }
-        if (params.isEditable) {
-            menu.append(new MenuItem({ label: 'Paste', role: 'paste' }));
-            menu.append(new MenuItem({ label: 'Cut', role: 'cut' }));
-            menu.append(new MenuItem({ label: 'Select All', role: 'selectall' }));
-        }
-        if (params.mediaType === 'image') {
-            menu.append(new MenuItem({
-                label: 'Save Image As...',
-                click: () => { if (mainWindow) mainWindow.webContents.downloadURL(params.srcURL); }
-            }));
-            menu.append(new MenuItem({
-                label: 'Copy Image Address',
-                click: () => { const { clipboard } = require('electron'); clipboard.writeText(params.srcURL); }
-            }));
-        }
-        if (menu.items.length === 0) {
-            menu.append(new MenuItem({ label: 'Back', click: () => { event.sender.send('master-shortcut', 'go-back-signal'); } }));
-            menu.append(new MenuItem({ label: 'Forward', click: () => { event.sender.send('master-shortcut', 'go-forward-signal'); } }));
-            menu.append(new MenuItem({ label: 'Reload', click: () => { event.sender.reload(); } }));
-        }
-        menu.popup(BrowserWindow.fromWebContents(event.sender));
     });
 
     ipcMain.handle('clear-domain-cookies', async (event, { urlStr, isPrivate }) => {
@@ -207,13 +270,11 @@ function createWindow() {
         else if (isCtrl && key === 'f') { event.preventDefault(); mainWindow.webContents.send('master-shortcut', 'trigger-hints'); }
         else if (isCtrl && key === 'h') { event.preventDefault(); mainWindow.webContents.send('master-shortcut', 'toggle-help'); }
         else if (isCtrl && isShift && key === 'p') {
-            // Decouple from command palette and toggle private state variables securely
             event.preventDefault();
             privateBrowsingEnabled = !privateBrowsingEnabled;
             mainWindow.webContents.send('master-shortcut', 'toggle-private-mode', privateBrowsingEnabled);
         }
         else if (isCtrl && key === 'p') {
-            // Keep pure Ctrl + P assigned exclusively to the Command Palette modal overlay
             event.preventDefault();
             mainWindow.webContents.send('master-shortcut', 'toggle-palette');
         }
@@ -222,9 +283,12 @@ function createWindow() {
 
 // Sync system theme settings with the main process
 ipcMain.on('set-native-theme', (event, mode) => {
-    // Mode can be 'dark', 'light', or 'system'
-    const { nativeTheme } = require('electron');
     nativeTheme.themeSource = mode;
+});
+
+// --- IPC CONFIG CHANNELS FOR THE UI ---
+ipcMain.handle('get-browser-settings', async () => {
+    return loadBrowserConfig();
 });
 
 // --- IPC CHANNELS AND UTILITY HANDLERS ---
@@ -237,6 +301,7 @@ ipcMain.handle('read-hinter-code', async () => {
     } catch (err) {}
     return '';
 });
+
 ipcMain.handle('get-session', async () => {
     try {
         if (fs.existsSync(sessionPath)) return JSON.parse(fs.readFileSync(sessionPath, 'utf8'));
@@ -287,7 +352,6 @@ const { exec, spawn } = require('child_process');
 ipcMain.on('execute-terminal-command', (event, commandStr) => {
     if (!commandStr || !commandStr.trim()) return;
 
-    // Securely write the formatted text to the system clipboard
     clipboard.writeText(commandStr);
 
     const platform = process.platform;
@@ -309,16 +373,13 @@ ipcMain.on('execute-terminal-command', (event, commandStr) => {
         });
     } 
     else if (platform === 'darwin') {
-        // Safe Darwin launch via the native open command without shell argument passing
         spawn('open', ['-a', 'Terminal'], { detached: true, stdio: 'ignore' }).unref();
     } 
     else if (platform === 'win32') {
-        // Distro-agnostic Windows logic checks for modern Windows Terminal or falls back to cmd
         exec('where wt', (err) => {
             if (!err) {
                 spawn('wt', [], { detached: true, stdio: 'ignore' }).unref();
             } else {
-                // Spawn a clean cmd instance using the creation flags to detach it as a separate window
                 spawn('cmd.exe', [], { 
                     detached: true, 
                     stdio: 'ignore',
@@ -333,25 +394,21 @@ ipcMain.on('execute-terminal-command', (event, commandStr) => {
 app.on('web-contents-created', (event, webContents) => {
     if (webContents.getType() === 'webview') {
         
-        // INTERCEPT SUCCESSFUL NAVIGATIONS FOR THE LOG
         webContents.on('did-navigate', (navEvent, url) => {
             const title = webContents.getTitle();
             logVisit(title, url);
         });
 
-        // INTERCEPT IN-PAGE TRANSITIONS (SINGLE PAGE APPS LIKE YOUTUBE)
         webContents.on('did-navigate-in-page', (navEvent, url) => {
             const title = webContents.getTitle();
             logVisit(title, url);
         });
 
-        // Intercept right-clicks inside guest frames and handle spellcheck corrections natively
         webContents.on('context-menu', (contextEvent, params) => {
             contextEvent.preventDefault();
             
             const menu = new Menu();
 
-            // Populate spelling suggestions directly from the active guest frame configuration
             if (params.dictionarySuggestions && params.dictionarySuggestions.length > 0) {
                 params.dictionarySuggestions.forEach(suggestion => {
                     menu.append(new MenuItem({
