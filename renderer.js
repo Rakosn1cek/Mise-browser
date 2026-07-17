@@ -911,16 +911,45 @@ function displayAddressOverlay() {
 
 function handleNavigation(input) {
     if (!input) return;
+    
+    // 1. Split input into parts to identify the alias (e.g., "g wallpapers")
+    const parts = input.trim().split(' ');
+    const alias = parts[0].toLowerCase();
+    const query = parts.slice(1).join(' ');
+
+    // 2. Define your URL aliases
+    const aliases = {
+        'g': 'https://www.google.com/search?q=',
+        'yt': 'https://www.youtube.com/results?search_query=',
+        'a': 'https://wiki.archlinux.org/index.php?search=',
+        'gh': 'https://github.com/search?q=',
+        'ddg': 'https://duckduckgo.com/?q=',
+        'pkg': 'https://archlinux.org/packages/?q=',
+        'so': 'https://stackoverflow.com/search?q=',
+        'r': 'https://www.reddit.com/search/?q='
+    };
+
+    let targetUrl;
+
+    // 3. Check if the first word matches a known alias
+    if (aliases[alias] && query) {
+        targetUrl = aliases[alias] + encodeURIComponent(query);
+    } 
+    // 4. Default behavior (original logic)
+    else {
+        targetUrl = input;
+        if (!input.startsWith('http://') && !input.startsWith('https://')) {
+            if (input.includes('.') && !input.includes(' ')) targetUrl = `https://${input}`;
+            else targetUrl = `https://duckduckgo.com/?q=${encodeURIComponent(input)}`;
+        }
+    }
+
+    // --- Proceed with existing logic to save and load the URL ---
     const currentWS = sessionState.current_workspace;
     const activeListItem = document.querySelector('#TabList li.selected');
     if (!activeListItem) return;
 
     const currentIdx = Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem);
-    let targetUrl = input;
-    if (!input.startsWith('http://') && !input.startsWith('https://')) {
-        if (input.includes('.') && !input.includes(' ')) targetUrl = `https://${input}`;
-        else targetUrl = `https://duckduckgo.com/?q=${encodeURIComponent(input)}`;
-    }
 
     sessionState.workspaces[currentWS][currentIdx] = targetUrl;
     window.miseAPI.saveSession(sessionState);
