@@ -46,10 +46,8 @@ function initializeEngineSwitches() {
         // LINUX NATIVE VA-API SPEEDUPS (Resolves video overheating instantly)
         if (process.platform === 'linux') {
             app.commandLine.appendSwitch('ignore-gpu-blocklist');
-            app.commandLine.appendSwitch('enable-gpu-rasterization');
             app.commandLine.appendSwitch('enable-zero-copy');
             app.commandLine.appendSwitch('enable-accelerated-video-decode');
-            app.commandLine.appendSwitch('use-gl', 'desktop');
             app.commandLine.appendSwitch('enable-features', 'VaapiVideoDecoder,VaapiVideoEncoder,CanvasOopRasterization,TLSExtensionGrease');
         } else {
             app.commandLine.appendSwitch('enable-features', 'TLSExtensionGrease');
@@ -64,8 +62,8 @@ function initializeEngineSwitches() {
     app.commandLine.appendSwitch('renderer-process-limit', String(cfg.process_limit || 3));
 
     // Hardcoded security optimizations from old Python build
-    app.commandLine.appendSwitch('disable-reading-from-canvas');
     app.commandLine.appendSwitch('disable-shared-workers');
+    app.commandLine.appendSwitch('disable-smooth-scrolling')
     app.commandLine.appendSwitch('enable-strict-mixed-content-checking');
     app.commandLine.appendSwitch('disable-battery-saver');
     app.commandLine.appendSwitch('log-level', '2');
