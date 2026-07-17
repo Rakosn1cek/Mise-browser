@@ -13,6 +13,7 @@ Mise is engineered with a modular suite of tools that bridge the gap between web
 - **Granular Profile Management**: Features an isolated private browsing mode that decouples from the primary session into a volatile, memory-only cache partition alongside targeted cleanup utilities designed to surgically clear individual domain cookies or global profile data.
 - **Dynamic Workspace Trees**: System profiles use persistent session caching to group concurrent tab layouts into distinct, named workspaces managed via a fluid, structural overlay dashboard.
 - **Keyboard-Centric Navigation**: Customise and control your browsing behaviour using a comprehensive set of keyboard shortcuts.
+- **Search Bar Aliases**: This allows for rapid navigation using shorthand keywords (e.g., `g` for Google, `a` for Arch Wiki, `gh` for GitHub).
 - **Link Hints Overlay**: Navigate web pages without a mouse. Pressing the hint shortcut overlays two-letter labels using a left-hand cluster of keys (`q, w, e, a, s, d, z, x, c, r, f, v`) onto all interactive elements for instant triggering.
 - **Interactive Command Palette**: Quickly filter and execute browser commands with the integrated search palette.
 - **Workspace Dashboard**: Organise tabs and sessions into distinct workspaces, keeping different tasks and projects separated.
@@ -81,6 +82,20 @@ Mise Browser is designed to be fully controllable via keyboard shortcuts. Below 
 | :---  | :---  |
 | Ctrl + F | Toggle link hints overlay |
 | Right Click | Open contextual menu (Copy, Paste, Save Image As, etc.) |
+
+### Search Bar 
+
+| Alias | Action |
+| :--- | :--- |
+| a | https://wiki.archlinux.org/index.php?search= |
+| g | https://www.google.com/search?q= |
+| yt | https://www.youtube.com/results?search_query= |
+| gh | https://github.com/search?q= |
+| ddg | https://duckduckgo.com/?q= |
+| pkg | https://archlinux.org/packages/?q= |
+| so | https://stackoverflow.com/search?q= |
+| r | https://www.reddit.com/search/?q= |
+
 
 ---
 

@@ -480,7 +480,18 @@ Sidebar Controls
 --------------------------------------------------
 Arrow Keys L/R     Move around the nav buttons
 Sun/Moon Icon      Toggle Light/Dark Layout
-Bell Icon          Toggle Web Notifications`;
+Bell Icon          Toggle Web Notifications
+
+Search Bar Aliasses
+--------------------------------------------------
+g                  https://www.google.com/search?q=
+yt                 https://www.youtube.com/results?search_query=
+a                  https://wiki.archlinux.org/index.php?search=
+gh                 https://github.com/search?q=
+ddg                https://duckduckgo.com/?q=
+pkg                https://archlinux.org/packages/?q=
+so                 https://stackoverflow.com/search?q=
+r                  https://www.reddit.com/search/?q=`;
         
         overlay.style.display = 'flex';
         overlay.focus();
