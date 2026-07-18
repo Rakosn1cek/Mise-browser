@@ -1,87 +1,69 @@
 // security.js
 // Decoupled security configuration module for the Mise browser
 
-// 1. Explicit domain blocks for platforms that bypass keyword filters
-const blockHosts = [
-    "bugsnag.com",
-    "sentry.io",
-    "sentry-cdn.com",
-    "advmaker.ru",
-    "advmaker.net"
-];
+const { ElectronBlocker } = require('@ghostery/adblocker-electron');
+const fs = require('fs');
+const path = require('path');
+const { app } = require('electron');
 
-// 2. Heavy-duty ad-tech and tracking keywords (Restored to block standard ad servers)
-const blockKeywords = [
-    // --- Original General Keywords ---
-    "telemetry", "analytics", "metrics", "log-upload", 
-    "browser-intake", "stats", "pagead", "doubleclick",
+let blockerInstance = null;
 
-    // --- Major Ad Networks & Ad Servers (Restored) ---
-    "adsense", "adsystem", "adservice", "adnxs", "adserver",
-    "quantserve", "scorecardresearch", "criteo", "taboola", 
-    "amazon-adsystem", "outbrain", "popads", "yandex",
+// Define a permanent location for the compiled adblocker cache file
+const CACHE_PATH = path.join(app.getPath('userData'), 'adblock_cache.bin');
 
-    // --- Behavioral Tracking & Tag Management ---
-    "googletagmanager", "google-analytics", "fbevents", 
-    "hotjar", "optimizely", "amplitude", "mixpanel", 
-    "segment", "intercom", "clarity.ms",
-
-    // --- App Error & Performance Telemetry ---
-    "crashlytics", "raygun", "instabug", "bugsnag",
-];
-
-function requestFilter(details, callback) {
-    let shouldBlock = false;
-    try {
-        const urlObj = new URL(details.url);
-        const host = urlObj.hostname.toLowerCase();
-        const urlPath = details.url.toLowerCase();
-
-        // Rule A: Explicit Reddit Tracking/Eval Protections
-        if (host.includes("alb.reddit.com") || details.url.includes(".reddit.com/api/eval")) {
-            shouldBlock = true;
-        } 
-        // Rule B: Explicit Host Matching (Blocks Bugsnag, Sentry, Advmaker)
-        else if (blockHosts.some(blockedHost => host === blockedHost || host.endsWith("." + blockedHost))) {
-            shouldBlock = true;
-        } 
-        // Rule C: Aggressive Substring Keyword Matching (Restored for Ad/Adsystem blocks)
-        else if (blockKeywords.some(keyword => host.includes(keyword))) {
-            shouldBlock = true;
-        }
-        // Rule D: Smart Resource Context Filtering (Pings & beacons)
-        else if (details.resourceType === 'ping' && urlPath.includes('track')) {
-            shouldBlock = true;
-        }
-    } catch (e) {}
-
-    if (shouldBlock) {
-        callback({ cancel: true });
-    } else {
-        callback({ cancel: false });
+async function initialiseAdblocker(targetSession) {
+    if (blockerInstance) {
+        blockerInstance.enableBlockingInSession(targetSession);
+        return;
     }
+
+    try {
+        // Attempt to load a pre-compiled binary cache to eliminate startup overhead
+        if (fs.existsSync(CACHE_PATH)) {
+            const buffer = fs.readFileSync(CACHE_PATH);
+            blockerInstance = ElectronBlocker.deserialize(buffer);
+        } else {
+            // Fall back to building the ruleset and save the compiled result for subsequent boots
+            blockerInstance = await ElectronBlocker.fromPrebuiltAdsAndTracking();
+            const buffer = blockerInstance.serialize();
+            fs.writeFileSync(CACHE_PATH, buffer);
+        }
+    } catch (err) {
+        console.error('Failed to instantiate network filters:', err);
+        return;
+    }
+
+    blockerInstance.enableBlockingInSession(targetSession);
 }
 
 function hardenSession(targetSession) {
     // Enforce UK English spellchecking
     targetSession.setSpellCheckerLanguages(['en-GB']);
 
-    // Telemetry, Ads, and Tracker request filtering with context
-    targetSession.webRequest.onBeforeRequest(requestFilter);
+    // Trigger the dynamic tracking rule engine injection
+    initialiseAdblocker(targetSession);
 
-    // Block permission requests (Camera, Mic, Location)
+    const blockedPermissions = ['media', 'geolocation', 'notifications', 'midiSysex', 'audio', 'video'];
+
     targetSession.setPermissionRequestHandler((webContents, permission, callback) => {
-        const blocked = ['media', 'geolocation', 'notifications', 'midiSysex'];
-        if (blocked.includes(permission)) {
-            return callback(false); // Refuse sensory/tracking requests
+        if (blockedPermissions.includes(permission)) {
+            return callback(false);
         }
         callback(true);
+    });
+
+    targetSession.setPermissionCheckHandler((webContents, permission, origin) => {
+        if (blockedPermissions.includes(permission)) {
+            return false;
+        }
+        return true;
     });
 }
 
 function hardenWebviewPreferences(webPreferences) {
-    // Force-disable WebGL at the rendering engine level for all webviews
     webPreferences.webgl = false;
+    webPreferences.accelerated2dCanvas = false;
+    webPreferences.experimentalFeatures = false;
 }
 
 module.exports = {
