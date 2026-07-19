@@ -47,6 +47,8 @@ function initializeEngineSwitches() {
         if (process.platform === 'linux') {
             app.commandLine.appendSwitch('ignore-gpu-blocklist');
             app.commandLine.appendSwitch('enable-zero-copy');
+            app.commandLine.appendSwitch('enable-gpu-rasterization');
+            app.commandLine.appendSwitch('enable-oop-rasterization');
             app.commandLine.appendSwitch('enable-accelerated-video-decode');
             app.commandLine.appendSwitch('enable-features', 'VaapiVideoDecoder,VaapiVideoEncoder,CanvasOopRasterization,TLSExtensionGrease');
         } else {

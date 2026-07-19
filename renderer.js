@@ -45,6 +45,29 @@ const commandRegistry = {
         }
     },
     "Focus Active Webview": () => focusActiveWebview(),
+    "Mute/Unmute Active Tab": () => {
+        const currentWS = sessionState.current_workspace;
+        const activeListItem = document.querySelector('#TabList li.selected');
+        if (!activeListItem) return;
+        const currentIdx = Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem);
+        const activeWv = activeViewsCache[currentWS]?.[currentIdx];
+        
+        if (activeWv) {
+            const isMuted = activeWv.isAudioMuted();
+            activeWv.setAudioMuted(!isMuted);
+        }
+    },
+    "Reset Tab Zoom Level": () => {
+        const currentWS = sessionState.current_workspace;
+        const activeListItem = document.querySelector('#TabList li.selected');
+        if (!activeListItem) return;
+        const currentIdx = Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem);
+        const activeWv = activeViewsCache[currentWS]?.[currentIdx];
+        
+        if (activeWv) {
+            activeWv.setZoomLevel(0); // 0 acts as the native 100% zoom standard in Electron
+        }
+    },
     "Toggle Link Hints Overlay": () => triggerLinkHints(),
     "Toggle Light/Dark Layout": () => toggleInterfaceTheme(),
     "Show Shortcuts Reference": () => toggleHelpMenuWindow(),
@@ -52,6 +75,17 @@ const commandRegistry = {
     "Toggle Private Browsing": () => {
         globalPrivateModeActive = !globalPrivateModeActive;
         handlePrivateBrowsingStateShift(globalPrivateModeActive);
+    },
+    "Force Reload Page (Clear Cache)": () => {
+        const currentWS = sessionState.current_workspace;
+        const activeListItem = document.querySelector('#TabList li.selected');
+        if (!activeListItem) return;
+        const currentIdx = Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem);
+        const activeWv = activeViewsCache[currentWS]?.[currentIdx];
+        
+        if (activeWv) {
+            activeWv.reloadIgnoringCache();
+        }
     },
     "Clear Current Site Cookies": () => executeSurgicalCookieWipe(),
     "Clear Active Profile Cache": () => executeGlobalCacheWipe()
@@ -348,8 +382,7 @@ function filterPaletteCommands(filterText) {
         li.className = 'palette-item';
         li.textContent = cmd;
         li.addEventListener('click', () => {
-            paletteSelectionIdx = idx;
-            // Pass the current trimmed value down explicitly to prevent missing string argument errors
+            paletteSelectionIdx = idx; 
             executePaletteSelection(document.getElementById('PaletteInput').value.trim());
         });
         listContainer.appendChild(li);
@@ -978,17 +1011,39 @@ async function applyCSSThemeToView(webview) {
     const isDark = isDarkMode();
     const url = webview.getURL() || "";
     
-    // 1. If dark mode is disabled, remove the previously injected CSS key
+    const oldKey = injectedThemeKeys.get(webview);
+    if (oldKey) {
+        try {
+            await webview.removeInsertedCSS(oldKey);
+            injectedThemeKeys.delete(webview);
+        } catch (err) {}
+    }
+
     if (!isDark) {
-        const key = injectedThemeKeys.get(webview);
-        if (key) {
-            try {
-                await webview.removeInsertedCSS(key);
-                injectedThemeKeys.delete(webview);
-            } catch (err) {}
+        // Drop invasive text overrides and use a top-level multiply overlay.
+        // This drops bright whites to warm cream while preserving dark code panels perfectly.
+        const lightCSS = `
+            html::after {
+                content: "";
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: #fbf1c7;
+                mix-blend-mode: multiply;
+                z-index: 2147483647;
+                pointer-events: none;
+            }
+        `.replace(/\s+/g, ' ');
+
+        try {
+            const newKey = await webview.insertCSS(lightCSS);
+            injectedThemeKeys.set(webview, newKey);
+        } catch (err) {
+            console.error("Failed to apply light theme blend context:", err);
         }
     } else {
-        // 2. Hardware-accelerated CSS filter
         const darkCSS = `
             html { 
                 filter: invert(1) hue-rotate(180deg) !important; 
@@ -999,10 +1054,6 @@ async function applyCSSThemeToView(webview) {
         `.replace(/\s+/g, ' ');
 
         try {
-            const oldKey = injectedThemeKeys.get(webview);
-            if (oldKey) {
-                await webview.removeInsertedCSS(oldKey);
-            }
             const newKey = await webview.insertCSS(darkCSS);
             injectedThemeKeys.set(webview, newKey);
         } catch (err) {
@@ -1010,11 +1061,9 @@ async function applyCSSThemeToView(webview) {
         }
     }
 
-    // 3. Gemini-Specific Layout Jitter Freeze (Runs for both light and dark modes)
     if (url.includes('gemini.google.com')) {
         const freezeScript = `
             (function() {
-                // Find Google's main app shell containers that handle heights
                 const targets = [
                     document.querySelector('div[class*="app-container"]'),
                     document.querySelector('div[class*="chat-container"]'),
@@ -1022,7 +1071,6 @@ async function applyCSSThemeToView(webview) {
                 ].filter(el => el !== null);
 
                 targets.forEach(el => {
-                    // Force the layout engine to ignore dynamic script calculations
                     el.style.setProperty('height', '100vh', 'important');
                     el.style.setProperty('max-height', '100vh', 'important');
                     el.style.setProperty('overflow', 'hidden', 'important');
