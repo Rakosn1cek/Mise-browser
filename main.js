@@ -276,6 +276,10 @@ function createWindow() {
             event.preventDefault();
             mainWindow.webContents.send('master-shortcut', 'toggle-palette');
         }
+        else if (isCtrl && key === 's') { 
+            event.preventDefault(); 
+            mainWindow.webContents.send('master-shortcut', 'toggle-find'); 
+        }
     });
 }
 
@@ -471,6 +475,12 @@ app.on('web-contents-created', (event, webContents) => {
             if (isCtrl && key === 'r') {
                 inputEvent.preventDefault();
                 webContents.reload();
+            }
+            else if (isCtrl && key === 's') {
+                inputEvent.preventDefault();
+                if (mainWindow && mainWindow.webContents) {
+                    mainWindow.webContents.send('master-shortcut', 'toggle-find');
+                }
             }
         });
     }

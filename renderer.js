@@ -69,6 +69,7 @@ const commandRegistry = {
         }
     },
     "Toggle Link Hints Overlay": () => triggerLinkHints(),
+    "Find In Page": () => toggleInPageSearch(),
     "Toggle Light/Dark Layout": () => toggleInterfaceTheme(),
     "Show Shortcuts Reference": () => toggleHelpMenuWindow(),
     "Toggle Actionable History": () => toggleHistoryOverlay(),
@@ -125,6 +126,7 @@ function setupEventListeners() {
             case 'spawn-tab-with-url': spawnTabWithUrl(args[0]); break;
             case 'toggle-address': displayAddressOverlay(); break;
             case 'toggle-dashboard': toggleDashboardView(); break;
+            case 'toggle-find': toggleInPageSearch(); break;
             case 'remove-tab': handleTabRemoval(); break;
             case 'focus-sidebar': {
                 const selectedTab = document.querySelector('#TabList li.selected');
@@ -241,6 +243,37 @@ function setupEventListeners() {
             }
         }
     });
+
+    const findInput = document.getElementById('FindInput');
+    if (findInput) {
+        findInput.addEventListener('input', (e) => {
+            const text = e.target.value;
+            const activeWv = getActiveWebview();
+            if (!activeWv) return;
+
+            if (text.length > 0) {
+                activeWv.findInPage(text);
+            } else {
+                activeWv.stopFindInPage('clearSelection');
+                document.getElementById('FindMatchCount').textContent = '';
+            }
+        });
+
+        findInput.addEventListener('keydown', (e) => {
+            const activeWv = getActiveWebview();
+            const isCtrl = e.control || e.metaKey;
+            const key = e.key.toLowerCase();
+
+            if (e.key === 'Escape' || (isCtrl && key === 's')) {
+                e.preventDefault();
+                toggleInPageSearch();
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (!activeWv) return;
+                activeWv.findInPage(findInput.value, { forward: !e.shiftKey, findNext: true });
+            }
+        });
+    }
 
     const overlay = document.getElementById('DashboardOverlay');
     overlay.addEventListener('keydown', (e) => {
@@ -638,6 +671,25 @@ function renderWorkspaceUI(targetTabToFocus = null) {
                 
                 const newTargetIdx = sessionState.workspaces[currentWS].length - 1;
                 renderWorkspaceUI(newTargetIdx);
+            });
+
+            webview.addEventListener('render-process-gone', (e) => {
+                if (e.reason !== 'clean-exit') {
+                    setTimeout(() => {
+                        webview.reload();
+                    }, 500);
+                }
+            });
+
+            webview.addEventListener('found-in-page', (e) => {
+                if (e.result) {
+                    const countEl = document.getElementById('FindMatchCount');
+                    if (countEl) {
+                        const activeMatch = e.result.activeMatchOrdinal || 0;
+                        const totalMatches = e.result.matches || 0;
+                        countEl.textContent = totalMatches > 0 ? `${activeMatch}/${totalMatches}` : '0/0';
+                    }
+                }
             });
 
             webview.addEventListener('dom-ready', async () => {
@@ -1206,4 +1258,39 @@ function escapeHtml(text) {
         .split(">").join("&gt;")
         .split('"').join("&quot;")
         .split("'").join("&#039;");
+}
+
+let findActive = false;
+
+function toggleInPageSearch() {
+    const overlay = document.getElementById('FindBarOverlay');
+    const input = document.getElementById('FindInput');
+    const count = document.getElementById('FindMatchCount');
+    
+    findActive = !findActive;
+    
+    if (findActive) {
+        overlay.style.display = 'flex';
+        input.value = '';
+        count.textContent = '';
+        setTimeout(() => {
+            input.focus();
+            input.select();
+        }, 20);
+    } else {
+        overlay.style.display = 'none';
+        const activeWv = getActiveWebview();
+        if (activeWv) {
+            activeWv.stopFindInPage('clearSelection');
+        }
+        focusActiveWebview();
+    }
+}
+
+function getActiveWebview() {
+    const currentWS = sessionState.current_workspace;
+    const activeListItem = document.querySelector('#TabList li.selected');
+    if (!activeListItem) return null;
+    const currentIdx = Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem);
+    return activeViewsCache[currentWS]?.[currentIdx] || null;
 }

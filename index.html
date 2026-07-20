@@ -46,6 +46,11 @@
                     <div id="HelpMenuContent"></div>
                 </div>
 
+                <div id="FindBarOverlay">
+                    <input type="text" id="FindInput" placeholder="Find in page...">
+                    <span id="FindMatchCount"></span>
+                </div>
+				
                 <div id="DashboardOverlay" tabindex="0">
                     <div class="dashboard-header">
                         <div class="dashboard-title">Workspace Dashboard</div>
@@ -54,8 +59,8 @@
                     
                     <div id="WorkspaceInputBox">
                         <input type="text" id="NewWorkspaceTitleInput" placeholder="Workspace name...">
-                        <button id="submit-ws-btn" class="dashboard-action-btn" style="border-color: var(--accent);">Save</button>
-                        <button id="cancel-ws-btn" class="dashboard-action-btn" style="background-color: transparent; border-color: var(--border);">Cancel</button>
+                        <button id="submit-ws-btn" class="dashboard-action-btn submit-btn">Save</button>
+                        <button id="cancel-ws-btn" class="dashboard-action-btn cancel-btn">Cancel</button>
                     </div>
 
                     <div id="DashboardTreeContainer"></div>
@@ -64,17 +69,17 @@
         </div>
     </div>
 
-			<!-- Actionable History Overlay -->
-		    <div id="HistoryOverlay" class="history-overlay">
-		        <div class="history-card">
-		            <div class="history-header">
-		                <input type="text" id="HistorySearchInput" placeholder="Search history..." autocomplete="off">
-		                <button id="PurgeHistoryBtn" class="history-action-btn" title="Purge All History"><i class="fa-solid fa-trash-can"></i></button>
-		                <button id="CloseHistoryBtn" class="history-action-btn" title="Close"><i class="fa-solid fa-xmark"></i></button>
-		            </div>
-		            <div id="HistoryResultsList" class="history-results"></div>
-		        </div>
-		    </div>
+    <!-- Actionable History Overlay -->
+    <div id="HistoryOverlay" class="history-overlay">
+        <div class="history-card">
+            <div class="history-header">
+                <input type="text" id="HistorySearchInput" placeholder="Search history..." autocomplete="off">
+                <button id="PurgeHistoryBtn" class="history-action-btn" title="Purge All History"><i class="fa-solid fa-trash-can"></i></button>
+                <button id="CloseHistoryBtn" class="history-action-btn" title="Close"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div id="HistoryResultsList" class="history-results"></div>
+        </div>
+    </div>
 
     <script src="renderer.js"></script>
 </body>
