@@ -520,7 +520,7 @@ function toggleHelpMenuWindow() {
         // Use our clean utility helper instead of manual color definitions
         applyThemeToOverlayElement(content, "#124647", "#f5f6f9", "#c0caf5", "#3c3e4f");
         
-        content.innerHTML = `Mise Browser — v0.1.0\n==================================================\n
+        content.innerHTML = `Mise Browser — v0.1.1\n==================================================\n
 Navigation & Workspaces
 --------------------------------------------------
 Ctrl + T           New DuckDuckGo Tab

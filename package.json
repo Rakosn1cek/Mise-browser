@@ -1,6 +1,6 @@
 {
   "name": "mise-browser",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Mise Browser - Electron Edition",
   "main": "main.js",
   "scripts": {
