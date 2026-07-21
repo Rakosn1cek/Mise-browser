@@ -32,9 +32,11 @@ function applyThemeToOverlayElement(element, darkBg, lightBg, darkText, lightTex
 }
 
 const commandRegistry = {
+	"Toggle Workspace Dashboard": () => toggleDashboardView(),
     "New DuckDuckGo Tab": () => spawnNewBlankTab(),
     "Toggle Floating Address Bar": () => displayAddressOverlay(),
-    "Toggle Workspace Dashboard": () => toggleDashboardView(),
+    "Toggle Link Hints Overlay": () => triggerLinkHints(),
+    "Find In Page": () => toggleInPageSearch(),
     "Focus Sidebar Tab List": () => {
         const backBtn = document.getElementById('back-btn');
         if (backBtn) {
@@ -68,8 +70,6 @@ const commandRegistry = {
             activeWv.setZoomLevel(0); // 0 acts as the native 100% zoom standard in Electron
         }
     },
-    "Toggle Link Hints Overlay": () => triggerLinkHints(),
-    "Find In Page": () => toggleInPageSearch(),
     "Toggle Light/Dark Layout": () => toggleInterfaceTheme(),
     "Show Shortcuts Reference": () => toggleHelpMenuWindow(),
     "Toggle Actionable History": () => toggleHistoryOverlay(),
