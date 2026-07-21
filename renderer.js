@@ -94,6 +94,12 @@ const commandRegistry = {
 
 async function initializeBrowser() {
     sessionState = await window.miseAPI.getSession();
+    
+    // Broadcast native theme state directly to Electron on startup
+    if (window.miseAPI && typeof window.miseAPI.setNativeTheme === 'function') {
+        window.miseAPI.setNativeTheme(isDarkMode() ? 'dark' : 'light');
+    }
+
     setupEventListeners();
     renderWorkspaceUI();
 }
@@ -627,6 +633,7 @@ function renderWorkspaceUI(targetTabToFocus = null) {
 
         if (!activeViewsCache[currentWS][idx]) {
             const webview = document.createElement('webview');
+            webview.style.backgroundColor = '#1a1b26';
             webview.setAttribute('preload', window.miseAPI.getWebviewPreloadPath());
             webview.setAttribute('allowpopups', '');
             
@@ -692,14 +699,19 @@ function renderWorkspaceUI(targetTabToFocus = null) {
                 }
             });
 
-            webview.addEventListener('dom-ready', async () => {
-                applyCSSThemeToView(webview);
+            webview.addEventListener('did-start-loading', () => {
+	            webview.style.opacity = '1';
+	        });
 
-                try {
-                    const hinterCode = await window.miseAPI.readHinterCode();
-                    if (hinterCode) webview.executeJavaScript(hinterCode);
-                } catch (err) {}
-            });
+	        webview.addEventListener('dom-ready', async () => {
+	            applyCSSThemeToView(webview);
+	            webview.style.opacity = '1';
+
+	            try {
+	                const hinterCode = await window.miseAPI.readHinterCode();
+	                if (hinterCode) webview.executeJavaScript(hinterCode);
+	            } catch (err) {}
+	        });
 
             container.appendChild(webview);
             activeViewsCache[currentWS][idx] = webview;
@@ -1062,79 +1074,8 @@ const injectedThemeKeys = new Map();
 async function applyCSSThemeToView(webview) {
     const isDark = isDarkMode();
     const url = webview.getURL() || "";
-    
-    const oldKey = injectedThemeKeys.get(webview);
-    if (oldKey) {
-        try {
-            await webview.removeInsertedCSS(oldKey);
-            injectedThemeKeys.delete(webview);
-        } catch (err) {}
     }
-
-    if (!isDark) {
-        // Drop invasive text overrides and use a top-level multiply overlay.
-        // This drops bright whites to warm cream while preserving dark code panels perfectly.
-        const lightCSS = `
-            html::after {
-                content: "";
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background-color: #fbf1c7;
-                mix-blend-mode: multiply;
-                z-index: 2147483647;
-                pointer-events: none;
-            }
-        `.replace(/\s+/g, ' ');
-
-        try {
-            const newKey = await webview.insertCSS(lightCSS);
-            injectedThemeKeys.set(webview, newKey);
-        } catch (err) {
-            console.error("Failed to apply light theme blend context:", err);
-        }
-    } else {
-        const darkCSS = `
-            html { 
-                filter: invert(1) hue-rotate(180deg) !important; 
-            }
-            img, video, iframe, canvas, [style*="background-image"] { 
-                filter: invert(1) hue-rotate(180deg) !important; 
-            }
-        `.replace(/\s+/g, ' ');
-
-        try {
-            const newKey = await webview.insertCSS(darkCSS);
-            injectedThemeKeys.set(webview, newKey);
-        } catch (err) {
-            console.error("Failed to apply GPU theme filter:", err);
-        }
-    }
-
-    if (url.includes('gemini.google.com')) {
-        const freezeScript = `
-            (function() {
-                const targets = [
-                    document.querySelector('div[class*="app-container"]'),
-                    document.querySelector('div[class*="chat-container"]'),
-                    document.body
-                ].filter(el => el !== null);
-
-                targets.forEach(el => {
-                    el.style.setProperty('height', '100vh', 'important');
-                    el.style.setProperty('max-height', '100vh', 'important');
-                    el.style.setProperty('overflow', 'hidden', 'important');
-                });
-            })();
-        `;
-        try {
-            await webview.executeJavaScript(freezeScript);
-        } catch (err) {}
-    }
-}
-
+  
 function toggleInterfaceTheme() {
     const body = document.body;
     const button = document.getElementById('theme-toggle-btn');

@@ -8,12 +8,12 @@
 }
 
 body.light-mode {
-    --bg-main: #fbf1c7;       /* Gruvbox light0 (Warm cream background) */
-    --bg-sidebar: #f2e5bc;    /* Gruvbox light1 (Slightly darker contrast for the sidebar panel) */
-    --text: #282828;          /* Gruvbox dark0 (Soft charcoal for readable, non-harsh text) */
-    --accent: #b8bb26;        /* Gruvbox green (Muted green accent matching the terminal style) */
-    --border: #d5c4a1;        /* Gruvbox light3 (Soft sand border lines) */
-    --selected: #ebdbb2;      /* Gruvbox light2 (Gentle background highlight block) */
+    --bg-main: #e5e5e5;       /* Soft, dimmed grey canvas instead of blinding white */
+    --bg-sidebar: #d4d4d4;    /* Muted contrast grey for sidebar panel */
+    --text: #262626;          /* Dark charcoal for readable text */
+    --accent: #2563eb;        /* Soft blue accent */
+    --border: #bebebe;        /* Muted border divider */
+    --selected: #c8c8c8;      /* Highlight block for selected tab */
 }
 
 * {
@@ -171,6 +171,7 @@ body, html {
     height: 100%;
     flex-grow: 1;
     position: relative;
+    background-color: var(--bg-main);
 }
 
 webview {
@@ -180,6 +181,7 @@ webview {
     top: 0;
     left: 0;
     display: none;
+    background-color: var(--bg-main);
 }
 
 #DashboardOverlay {
