@@ -865,6 +865,7 @@ function toggleDashboardView() {
     }
 }
 
+
 function buildDashboardTree() {
     const container = document.getElementById('DashboardTreeContainer');
     container.innerHTML = '';
@@ -886,6 +887,48 @@ function buildDashboardTree() {
             executeDashboardItemActivation(wsPayload);
         });
 
+        // --- ALLOW DROPPING ON WORKSPACE HEADER ---
+        header.addEventListener('dragover', (e) => e.preventDefault());
+        header.addEventListener('drop', (e) => {
+            e.preventDefault();
+            try {
+                const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+                const sourceWS = data.workspace;
+                const sourceIdx = data.index;
+                const targetWS = wsName; // Dropped onto this workspace header
+
+                if (sourceWS === targetWS) return; // No movement needed if dropped onto same workspace
+
+                // 1. Move URL between workspace arrays in session state
+                const [movedUrl] = sessionState.workspaces[sourceWS].splice(sourceIdx, 1);
+                if (!sessionState.workspaces[targetWS]) {
+                    sessionState.workspaces[targetWS] = [];
+                }
+                sessionState.workspaces[targetWS].push(movedUrl);
+
+                // 2. Move active view cache safely
+                if (activeViewsCache[sourceWS] && activeViewsCache[sourceWS][sourceIdx]) {
+                    const [movedView] = activeViewsCache[sourceWS].splice(sourceIdx, 1);
+                    if (!activeViewsCache[targetWS]) activeViewsCache[targetWS] = [];
+                    activeViewsCache[targetWS].push(movedView);
+                }
+
+                // 3. Move title cache safely
+                if (activeTitlesCache[sourceWS] && activeTitlesCache[sourceWS][sourceIdx]) {
+                    const [movedTitle] = activeTitlesCache[sourceWS].splice(sourceIdx, 1);
+                    if (!activeTitlesCache[targetWS]) activeTitlesCache[targetWS] = [];
+                    activeTitlesCache[targetWS].push(movedTitle);
+                }
+
+                window.miseAPI.saveSession(sessionState);
+                renderWorkspaceUI();
+                buildDashboardTree(); // Re-render dashboard to reflect changes instantly
+            } catch (err) {
+                console.error("Workspace drop failed:", err);
+            }
+        });
+        // ------------------------------------------
+
         node.appendChild(header);
 
         const urls = sessionState.workspaces[wsName] || [];
@@ -895,6 +938,64 @@ function buildDashboardTree() {
             const cachedTitle = (activeTitlesCache[wsName] && activeTitlesCache[wsName][idx]) || url;
             tabItem.textContent = `- ${cachedTitle}`;
             
+            // --- MAKE DASHBOARD TABS DRAGGABLE ---
+            tabItem.setAttribute('draggable', 'true');
+
+            tabItem.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('text/plain', JSON.stringify({ workspace: wsName, index: idx }));
+                e.stopPropagation();
+            });
+
+            tabItem.addEventListener('dragover', (e) => e.preventDefault());
+
+            tabItem.addEventListener('drop', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                try {
+                    const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+                    const sourceWS = data.workspace;
+                    const sourceIdx = data.index;
+                    const targetWS = wsName;
+
+                    if (sourceWS === targetWS && sourceIdx === idx) return;
+
+                    // Reordering or moving within/across workspaces
+                    const [movedUrl] = sessionState.workspaces[sourceWS].splice(sourceIdx, 1);
+                    
+                    // Adjust target index if shifting inside the same workspace array
+                    let targetIdx = idx;
+                    if (sourceWS === targetWS && sourceIdx < idx) {
+                        targetIdx--;
+                    }
+                    
+                    if (!sessionState.workspaces[targetWS]) {
+                        sessionState.workspaces[targetWS] = [];
+                    }
+                    sessionState.workspaces[targetWS].splice(targetIdx, 0, movedUrl);
+
+                    // Sync view cache
+                    if (activeViewsCache[sourceWS] && activeViewsCache[sourceWS][sourceIdx]) {
+                        const [movedView] = activeViewsCache[sourceWS].splice(sourceIdx, 1);
+                        if (!activeViewsCache[targetWS]) activeViewsCache[targetWS] = [];
+                        activeViewsCache[targetWS].splice(targetIdx, 0, movedView);
+                    }
+
+                    // Sync title cache
+                    if (activeTitlesCache[sourceWS] && activeTitlesCache[sourceWS][sourceIdx]) {
+                        const [movedTitle] = activeTitlesCache[sourceWS].splice(sourceIdx, 1);
+                        if (!activeTitlesCache[targetWS]) activeTitlesCache[targetWS] = [];
+                        activeTitlesCache[targetWS].splice(targetIdx, 0, movedTitle);
+                    }
+
+                    window.miseAPI.saveSession(sessionState);
+                    renderWorkspaceUI();
+                    buildDashboardTree();
+                } catch (err) {
+                    console.error("Tab reorder/move drop failed:", err);
+                }
+            });
+            // -------------------------------------
+
             const tabPayload = ['tab', wsName, idx];
             const tabItemRef = { element: tabItem, payload: tabPayload };
             dashboardItems.push(tabItemRef);
