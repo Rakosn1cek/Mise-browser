@@ -10,7 +10,7 @@
     "electron@31.7.7": true
   },
   "devDependencies": {
-    "electron": "^43.1.0"
+    "electron": "^43.2.0"
   },
   "dependencies": {
     "@ghostery/adblocker-electron": "^2.18.1"
