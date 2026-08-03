@@ -39,11 +39,24 @@ function saveBrowserConfig(cfg) {
 function initializeEngineSwitches() {
     const cfg = loadBrowserConfig();
 
+    // Force a generic Chrome Desktop User-Agent
+    const standardUA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36';
+    app.commandLine.appendSwitch('user-agent', standardUA);
+
+    // Lock down WebRTC local IP leaks
+    app.commandLine.appendSwitch('force-webrtc-ip-handling-policy', 'default_public_interface_only');
+
+    // Disable invasive background privacy-sandbox and tracking APIs
+    app.commandLine.appendSwitch('disable-features', 
+        'Translate,PrivacySandboxSettings4,PrivacySandboxAdsAPIsOverride,' +
+        'PrivacySandboxAdsAPIsM1Override,InterestGroupStorage,' +
+        'AttributionReportingCrossAppWeb,FencedFrames,WebUSB,WebBluetooth,Serial,GenericSensor,WebOTP'
+    );
+
     if (cfg.disable_gpu) {
         app.commandLine.appendSwitch('disable-gpu');
         app.commandLine.appendSwitch('disable-gpu-compositing');
     } else {
-        // LINUX NATIVE VA-API SPEEDUPS (Resolves video overheating instantly)
         if (process.platform === 'linux') {
             app.commandLine.appendSwitch('ignore-gpu-blocklist');
             app.commandLine.appendSwitch('enable-zero-copy');
@@ -63,9 +76,9 @@ function initializeEngineSwitches() {
     
     app.commandLine.appendSwitch('renderer-process-limit', String(cfg.process_limit || 3));
 
-    // Hardcoded security optimizations from old Python build
     app.commandLine.appendSwitch('disable-shared-workers');
-    app.commandLine.appendSwitch('disable-smooth-scrolling')
+    app.commandLine.appendSwitch('disable-features', 'Vulkan');
+    app.commandLine.appendSwitch('disable-smooth-scrolling');
     app.commandLine.appendSwitch('enable-strict-mixed-content-checking');
     app.commandLine.appendSwitch('disable-battery-saver');
     app.commandLine.appendSwitch('log-level', '2');
@@ -194,9 +207,10 @@ function createWindow() {
 
     mainWindow.webContents.once('dom-ready', () => {
         try {
-            const defaultUA = session.defaultSession.getUserAgent();
+            const standardUA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36';
+            session.defaultSession.setUserAgent(standardUA);
             const privateSession = session.fromPartition('MisePrivateProfile');
-            privateSession.setUserAgent(defaultUA);
+            privateSession.setUserAgent(standardUA);
         } catch (err) {
             console.error('Failed to configure private session user agent:', err);
         }
@@ -395,7 +409,7 @@ ipcMain.on('execute-terminal-command', (event, commandStr) => {
 // Monitor all global frame allocations to catch child webview tags securely
 app.on('web-contents-created', (event, webContents) => {
     if (webContents.getType() === 'webview') {
-        
+
         webContents.on('did-navigate', (navEvent, url) => {
             const title = webContents.getTitle();
             logVisit(title, url);
