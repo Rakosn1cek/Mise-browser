@@ -126,6 +126,20 @@ function setupEventListeners() {
         else if (e.key === 'Escape') addressBar.style.display = 'none';
     });
 
+	// Select all text automatically when focusing via trackpad click
+    addressBar.addEventListener('focus', () => {
+        requestAnimationFrame(() => {
+            addressBar.select();
+        });
+    });
+	
+    // Prevent mouseup from clearing the selection when clicking into the address bar
+    addressBar.addEventListener('mouseup', (e) => {
+        if (document.activeElement === addressBar && addressBar.selectionStart !== addressBar.selectionEnd) {
+            e.preventDefault();
+        }
+    });
+
     window.miseAPI.onMasterShortcut((action, ...args) => {
         switch (action) {
             case 'spawn-tab': spawnNewBlankTab(); break;
@@ -748,7 +762,10 @@ function switchTabFocus(targetIdx) {
         setTimeout(() => {
             const currentFocused = document.activeElement;
             const sidebarHasFocus = document.getElementById('Sidebar').contains(currentFocused);
-            if (!sidebarHasFocus && !paletteActive && !helpActive) {
+            const addressBar = document.getElementById('WideAddressBar');
+            const addressBarIsActive = addressBar && (addressBar.style.display === 'block' || currentFocused === addressBar);
+
+            if (!sidebarHasFocus && !paletteActive && !helpActive && !addressBarIsActive) {
                 window.miseAllowWebviewFocus = true;
                 currentWSViews[targetIdx].focus();
             }
@@ -1113,8 +1130,12 @@ function displayAddressOverlay() {
         }
         
         addressBar.style.display = 'block';
-        addressBar.focus();
-        addressBar.select();
+        
+        // Defer focus and select past the DOM rendering frame to prevent focus stealing
+        requestAnimationFrame(() => {
+            addressBar.focus();
+            addressBar.select();
+        });
     }
 }
 

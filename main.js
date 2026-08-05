@@ -38,6 +38,7 @@ function saveBrowserConfig(cfg) {
 
 function initializeEngineSwitches() {
     const cfg = loadBrowserConfig();
+	app.commandLine.appendSwitch('remote-debugging-port', '9229');
 
     // Force a generic Chrome Desktop User-Agent
     const standardUA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36';
