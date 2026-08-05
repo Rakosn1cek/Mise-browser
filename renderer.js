@@ -1034,8 +1034,12 @@ function buildDashboardTree() {
 
 function updateDashboardVisualSelection() {
     dashboardItems.forEach((item, idx) => {
-        if (idx === dashboardSelectionIdx) item.element.classList.add('dashboard-selected');
-        else item.element.classList.remove('dashboard-selected');
+        if (idx === dashboardSelectionIdx) {
+            item.element.classList.add('dashboard-selected');
+            item.element.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        } else {
+            item.element.classList.remove('dashboard-selected');
+        }
     });
 }
 
