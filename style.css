@@ -10,10 +10,10 @@
 body.light-mode {
     --bg-main: #e5e5e5;       /* Soft, dimmed grey canvas instead of blinding white */
     --bg-sidebar: #d4d4d4;    /* Muted contrast grey for sidebar panel */
-    --text: #262626;          /* Dark charcoal for readable text */
+    --text: #000000;          /* Dark charcoal for readable text */
     --accent: #2563eb;        /* Soft blue accent */
     --border: #bebebe;        /* Muted border divider */
-    --selected: #c8c8c8;      /* Highlight block for selected tab */
+    --selected: #99c2ff;      /* Highlight block for selected tab */
 }
 
 * {
