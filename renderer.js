@@ -89,7 +89,8 @@ const commandRegistry = {
         }
     },
     "Clear Current Site Cookies": () => executeSurgicalCookieWipe(),
-    "Clear Active Profile Cache": () => executeGlobalCacheWipe()
+    "Clear Active Profile Cache": () => executeGlobalCacheWipe(),
+    "Toggle Active Webview DevTools": () => toggleActiveDevTools()
 };
 
 async function initializeBrowser() {
@@ -146,6 +147,7 @@ function setupEventListeners() {
             case 'spawn-tab-with-url': spawnTabWithUrl(args[0]); break;
             case 'toggle-address': displayAddressOverlay(); break;
             case 'toggle-dashboard': toggleDashboardView(); break;
+            case 'toggle-devtools': toggleActiveDevTools(); break;
             case 'toggle-find': toggleInPageSearch(); break;
             case 'remove-tab': handleTabRemoval(); break;
             case 'focus-sidebar': {
@@ -561,6 +563,7 @@ Web Interaction
 --------------------------------------------------
 Ctrl + F           Toggle Link Hints Overlay
 Right Click        Contextual Actions + (Arch Wiki)
+Ctrl + Shift + i   Toggle DevTools
 
 Sidebar Controls
 --------------------------------------------------
@@ -1360,4 +1363,15 @@ function getActiveWebview() {
     if (!activeListItem) return null;
     const currentIdx = Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem);
     return activeViewsCache[currentWS]?.[currentIdx] || null;
+}
+
+function toggleActiveDevTools() {
+    const activeWv = getActiveWebview();
+    if (!activeWv) return;
+
+    if (activeWv.isDevToolsOpened()) {
+        activeWv.closeDevTools();
+    } else {
+        activeWv.openDevTools();
+    }
 }

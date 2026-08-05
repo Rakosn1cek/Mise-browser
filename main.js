@@ -295,8 +295,19 @@ function createWindow() {
             event.preventDefault(); 
             mainWindow.webContents.send('master-shortcut', 'toggle-find'); 
         }
+        else if (isCtrl && isShift && key === 'i') {
+            event.preventDefault();
+            mainWindow.webContents.send('master-shortcut', 'toggle-devtools');
+        }
     });
 }
+
+ipcMain.on('toggle-active-devtools', (event) => {
+    if (!mainWindow) return;
+
+    // Send a signal back to renderer to handle webview DevTools directly
+    mainWindow.webContents.send('master-shortcut', 'toggle-devtools');
+});
 
 // Sync system theme settings with the main process
 ipcMain.on('set-native-theme', (event, mode) => {
