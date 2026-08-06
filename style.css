@@ -538,3 +538,130 @@ webview {
     background-color: transparent;
     border-color: var(--border);
 }
+
+#NotesOverlay {
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 2000;
+    justify-content: center;
+    align-items: center;
+}
+
+#NotesContent {
+    width: 600px;
+    height: 450px;
+    background-color: var(--bg-sidebar);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.notes-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+    font-weight: bold;
+    color: var(--text);
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+}
+
+.close-btn {
+    cursor: pointer;
+    font-size: 18px;
+    color: var(--text);
+}
+
+.close-btn:hover {
+    color: #ef4444;
+}
+
+#NotesTextArea {
+    flex: 1;
+    width: 100%;
+    background-color: var(--bg-main);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 12px;
+    font-family: inherit;
+    font-size: 14px;
+    resize: none;
+    outline: none;
+    box-sizing: border-box;
+}
+
+#NotesTextArea:focus {
+    border-color: var(--accent);
+}
+
+#NotesMarkdownView {
+    flex: 1;
+    width: 100%;
+    background-color: var(--bg-main);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 12px;
+    overflow-y: auto;
+    box-sizing: border-box;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+#NotesMarkdownView h1, 
+#NotesMarkdownView h2, 
+#NotesMarkdownView h3 {
+    color: var(--accent);
+    margin-top: 10px;
+    margin-bottom: 6px;
+    border-bottom: 1px dashed var(--border);
+    padding-bottom: 4px;
+}
+
+#NotesMarkdownView p,
+#NotesMarkdownView li {
+    color: var(--text);
+}
+
+#NotesMarkdownView code {
+    background-color: var(--bg-sidebar);
+    color: var(--accent);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: monospace;
+}
+
+#NotesMarkdownView blockquote {
+    border-left: 3px solid var(--accent);
+    margin: 8px 0;
+    padding-left: 10px;
+    color: var(--text);
+    opacity: 0.8;
+}
+
+.notes-mode-btn {
+    background: var(--bg-main);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 8px;
+    cursor: pointer;
+    margin-right: 10px;
+    font-size: 12px;
+}
+
+.notes-mode-btn:hover {
+    background: var(--selected);
+    border-color: var(--accent);
+}

@@ -127,7 +127,7 @@ const injectScript = () => {
                 if (pixels && pixels.length) {
                     // A fixed pixels[0] ^= 1 produces the exact same output
                     // on every call, which is why this was still coming
-                    // back as a static hash rather than "randomized" (the
+                    // back as a static hash rather than "randomised" (the
                     // way the AudioContext noise below does, since that one
                     // uses Math.random() per call). Use per-call random
                     // noise across the buffer instead, so two calls in the
@@ -162,10 +162,10 @@ const injectScript = () => {
         };
 
         const addWebGLCanvasNoise = (gl) => {
-            // toDataURL() on a WebGL canvas serializes whatever is
+            // toDataURL() on a WebGL canvas serialises whatever is
             // currently in the drawing buffer — there's no putImageData
             // equivalent for WebGL, so nudge one pixel via the scissor
-            // test right before serialization, then put GL state back
+            // test right before serialisation, then put GL state back
             // exactly as it was so nothing else on the page notices.
             try {
                 const prevScissorEnabled = gl.isEnabled(gl.SCISSOR_TEST);

@@ -19,6 +19,8 @@ Mise is engineered with a modular suite of tools that bridge the gap between web
 - **Workspace Dashboard**: Organise tabs and sessions into distinct workspaces, keeping different tasks and projects separated.
 - **Built-in Privacy & Request Filtering**: Automatically blocks tracking, analytics, and telemetry requests to keep your browsing session fast and private.
 - **Theme Customisation**: Instantly toggle between beautifully styled dark and light themes.
+- **Notes**: Take notes right in the browser. All saved localy in notes.md. Suports markdown editing and preview.
+- **DevTolls**: Intagrated DevTools. Toggled via keybind or within the Command Palette. Opens in a new window.
 
 ---
 
@@ -75,6 +77,8 @@ Mise Browser is designed to be fully controllable via keyboard shortcuts. Below 
 | Ctrl + P | Toggle the command palette |
 | Ctrl + Shift + P | Toggle private browsing mode |
 | Ctrl + H | Toggle the help / shortcut reference overlay |
+| Ctrl + N | Open Notes overlay |
+| Ctrl + Shift + I | Opens DevTools in new window | 
 
 ### Web Interaction
 

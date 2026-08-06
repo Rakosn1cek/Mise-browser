@@ -19,6 +19,10 @@ let historyResults = [];   // Stores the currently loaded search results
 
 let globalPrivateModeActive = false;
 
+let notesActive = false;
+let notesSaveTimeout = null;
+let isEditingNotes = false;
+
 // --- GLOBAL UTILITY HELPERS ---
 // Returns true if the browser interface is currently in dark mode
 const isDarkMode = () => document.body.classList.contains('dark-mode');
@@ -37,6 +41,7 @@ const commandRegistry = {
     "Toggle Floating Address Bar": () => displayAddressOverlay(),
     "Toggle Link Hints Overlay": () => triggerLinkHints(),
     "Find In Page": () => toggleInPageSearch(),
+    "Toggle Quick Notes": () => toggleNotesOverlay(),
     "Focus Sidebar Tab List": () => {
         const backBtn = document.getElementById('back-btn');
         if (backBtn) {
@@ -103,6 +108,7 @@ async function initializeBrowser() {
 
     setupEventListeners();
     renderWorkspaceUI();
+    setupNotesListeners();
 }
 
 function setupEventListeners() {
@@ -148,6 +154,7 @@ function setupEventListeners() {
             case 'toggle-address': displayAddressOverlay(); break;
             case 'toggle-dashboard': toggleDashboardView(); break;
             case 'toggle-devtools': toggleActiveDevTools(); break;
+            case 'toggle-notes': toggleNotesOverlay(); break;
             case 'toggle-find': toggleInPageSearch(); break;
             case 'remove-tab': handleTabRemoval(); break;
             case 'focus-sidebar': {
@@ -542,8 +549,8 @@ function toggleHelpMenuWindow() {
         // Use our clean utility helper instead of manual color definitions
         applyThemeToOverlayElement(content, "#124647", "#f5f6f9", "#c0caf5", "#3c3e4f");
         
-        content.innerHTML = `Mise Browser — v0.1.2\n==================================================\n
-Navigation & Workspaces
+        content.innerHTML = `Mise Browser — v0.1.3\n==================================================\n
+NAVIGATION & WORKSPACES
 --------------------------------------------------
 Ctrl + T           New DuckDuckGo Tab
 Ctrl + L           Toggle Floating Address Bar
@@ -557,21 +564,22 @@ Ctrl + B           Focus Active Webview
 Enter              Switch to Selected Sidebar Tab
 Ctrl + P           Toggle Command Palette
 Ctrl + Shift + P   Toggle Private Browsing Mode On/Off
+Ctrl + N           Open Notes Taking Overlay
 Ctrl + Shift + Tab Focus sidebar nav buttons
 
-Web Interaction
+WEB INTERACTION
 --------------------------------------------------
 Ctrl + F           Toggle Link Hints Overlay
 Right Click        Contextual Actions + (Arch Wiki)
 Ctrl + Shift + i   Toggle DevTools
 
-Sidebar Controls
+SIDEBAR CONTROLS
 --------------------------------------------------
 Arrow Keys L/R     Move around the nav buttons
 Sun/Moon Icon      Toggle Light/Dark Layout
 Bell Icon          Toggle Web Notifications
 
-Search Bar Aliasses
+SEARCH BAR ALIASSES
 --------------------------------------------------
 g                  https://www.google.com/search?q=
 yt                 https://www.youtube.com/results?search_query=
@@ -1373,5 +1381,124 @@ function toggleActiveDevTools() {
         activeWv.closeDevTools();
     } else {
         activeWv.openDevTools();
+    }
+}
+
+function setupNotesListeners() {
+    const textarea = document.getElementById('NotesTextArea');
+    const closeBtn = document.getElementById('CloseNotesBtn');
+    const editBtn = document.getElementById('ToggleEditNotesBtn');
+
+    if (editBtn) {
+        editBtn.addEventListener('click', () => {
+            isEditingNotes = !isEditingNotes;
+            renderNotesView();
+        });
+    }
+
+    if (textarea) {
+        textarea.addEventListener('input', (e) => {
+            clearTimeout(notesSaveTimeout);
+            notesSaveTimeout = setTimeout(() => {
+                if (window.miseAPI && typeof window.miseAPI.saveNotes === 'function') {
+                    window.miseAPI.saveNotes(e.target.value);
+                }
+            }, 300);
+        });
+
+        textarea.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                toggleNotesOverlay();
+            }
+        });
+    }
+
+    if (closeBtn) {
+        closeBtn.addEventListener('click', toggleNotesOverlay);
+    }
+}
+
+// Simple inline markdown parser helper
+function parseMarkdownToHtml(text) {
+    if (!text) return '';
+    
+    // Escape standard HTML tags first to prevent injection
+    let html = escapeHtml(text);
+
+    // Parse Markdown headers
+    html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+    html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+    html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+
+    // Parse bold, italics, and inline code
+    html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    html = html.replace(/`(.*?)`/g, '<code>$1</code>');
+
+    // Parse blockquotes and list items
+    html = html.replace(/^\&gt\; (.*$)/gim, '<blockquote>$1</blockquote>');
+    html = html.replace(/^> (.*$)/gim, '<blockquote>$1</blockquote>');
+    html = html.replace(/^\- (.*$)/gim, '<li>$1</li>');
+
+    // Convert newlines to breaks
+    html = html.replace(/\n/g, '<br>');
+
+    return html;
+}
+
+function renderNotesView() {
+    const textarea = document.getElementById('NotesTextArea');
+    const mdView = document.getElementById('NotesMarkdownView');
+    const editBtn = document.getElementById('ToggleEditNotesBtn');
+
+    if (!textarea || !mdView) return;
+
+    if (isEditingNotes) {
+        textarea.style.display = 'block';
+        mdView.style.display = 'none';
+        if (editBtn) editBtn.textContent = 'Preview';
+        setTimeout(() => textarea.focus(), 50);
+    } else {
+        mdView.innerHTML = parseMarkdownToHtml(textarea.value);
+        textarea.style.display = 'none';
+        mdView.style.display = 'block';
+        if (editBtn) editBtn.textContent = 'Edit';
+    }
+}
+
+function toggleNotesOverlay() {
+    const overlay = document.getElementById('NotesOverlay');
+    const textarea = document.getElementById('NotesTextArea');
+
+    if (!overlay || !textarea) return;
+
+    notesActive = !notesActive;
+
+    if (notesActive) {
+        if (paletteActive) toggleCommandPaletteView();
+        if (helpActive) toggleHelpMenuWindow();
+        if (dashboardActive) toggleDashboardView();
+        if (historyActive) toggleHistoryOverlay();
+
+        if (window.miseAPI && typeof window.miseAPI.readNotes === 'function') {
+            window.miseAPI.readNotes().then((content) => {
+                textarea.value = content || '';
+                isEditingNotes = false;
+                renderNotesView();
+                overlay.style.display = 'flex';
+            }).catch((err) => {
+                console.error("Failed to load notes:", err);
+                overlay.style.display = 'flex';
+            });
+        } else {
+            overlay.style.display = 'flex';
+        }
+    } else {
+        if (window.miseAPI && typeof window.miseAPI.saveNotes === 'function') {
+            window.miseAPI.saveNotes(textarea.value);
+        }
+        overlay.style.display = 'none';
+        focusActiveWebview();
     }
 }

@@ -81,6 +81,21 @@
         </div>
     </div>
 
+	<!-- Notes Taking Overlay -->
+    <div id="NotesOverlay" class="overlay-container" style="display: none;">
+        <div id="NotesContent" class="overlay-card">
+            <div class="notes-header">
+                <span>Quick Notes (~/.config/mise-browser/notes.md)</span>
+                <div>
+                    <button id="ToggleEditNotesBtn" class="notes-mode-btn">Edit</button>
+                    <span id="CloseNotesBtn" class="close-btn">&times;</span>
+                </div>
+            </div>
+            <textarea id="NotesTextArea" style="display: none;" placeholder="Type markdown notes..."></textarea>
+            <div id="NotesMarkdownView" class="markdown-body"></div>
+        </div>
+    </div>
+
     <script src="renderer.js"></script>
 </body>
 </html>

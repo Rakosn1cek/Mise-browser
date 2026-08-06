@@ -8,6 +8,7 @@ const security = require('./security');
 // --- NATIVE CONFIG UTILITIES ---
 const CONFIG_DIR = path.join(app.getPath('home'), '.config', 'mise-browser');
 const CONFIG_PATH = path.join(CONFIG_DIR, 'config.json');
+const NOTES_PATH = path.join(CONFIG_DIR, 'notes.md');
 
 const DEFAULT_CONFIG = {
     disable_gpu: false,          // Keep false by default for cool video playback!
@@ -299,8 +300,32 @@ function createWindow() {
             event.preventDefault();
             mainWindow.webContents.send('master-shortcut', 'toggle-devtools');
         }
+        else if (isCtrl && key === 'n') {
+            event.preventDefault();
+            mainWindow.webContents.send('master-shortcut', 'toggle-notes');
+        }
     });
 }
+
+ipcMain.handle('read-notes', async () => {
+    try {
+        if (!fs.existsSync(CONFIG_DIR)) fs.mkdirSync(CONFIG_DIR, { recursive: true });
+        if (!fs.existsSync(NOTES_PATH)) fs.writeFileSync(NOTES_PATH, '', 'utf-8');
+        return fs.readFileSync(NOTES_PATH, 'utf-8');
+    } catch (err) {
+        return '';
+    }
+});
+
+ipcMain.handle('save-notes', async (event, content) => {
+    try {
+        if (!fs.existsSync(CONFIG_DIR)) fs.mkdirSync(CONFIG_DIR, { recursive: true });
+        fs.writeFileSync(NOTES_PATH, content, 'utf-8');
+        return true;
+    } catch (err) {
+        return false;
+    }
+});
 
 ipcMain.on('toggle-active-devtools', (event) => {
     if (!mainWindow) return;
@@ -506,6 +531,18 @@ app.on('web-contents-created', (event, webContents) => {
                 inputEvent.preventDefault();
                 if (mainWindow && mainWindow.webContents) {
                     mainWindow.webContents.send('master-shortcut', 'toggle-find');
+                }
+            }
+        });
+        webContents.on('before-input-event', (inputEvent, input) => {
+            if (input.type !== 'keyDown') return;
+            const isCtrl = input.control;
+            const key = input.key.toLowerCase();
+
+            if (isCtrl && key === 'n') {
+                inputEvent.preventDefault();
+                if (mainWindow && mainWindow.webContents) {
+                    mainWindow.webContents.send('master-shortcut', 'toggle-notes');
                 }
             }
         });

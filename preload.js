@@ -14,6 +14,8 @@ contextBridge.exposeInMainWorld('miseAPI', {
     searchHistory: (query) => ipcRenderer.invoke('search-history', query),
     purgeHistory: () => ipcRenderer.invoke('purge-history'),
     setNativeTheme: (mode) => ipcRenderer.send('set-native-theme', mode),
+    readNotes: () => ipcRenderer.invoke('read-notes'),
+    saveNotes: (content) => ipcRenderer.invoke('save-notes', content),
     onMasterShortcut: (callback) => {
         ipcRenderer.on('master-shortcut', (event, action, ...args) => callback(action, ...args));
     }
