@@ -21,7 +21,7 @@ Mise is engineered with a modular suite of tools that bridge the gap between web
 - **Theme Customisation**: Instantly toggle between beautifully styled dark and light themes.
 - **Notes**: Take notes right in the browser. All saved localy in notes.md. Suports markdown editing and preview.
 - **DevTolls**: Intagrated DevTools. Toggled via keybind or within the Command Palette. Opens in a new window.
-
+- **Hide/Unhide Sidebar**: Easy to hide and unhide sidebar with keybind of within the Command Palette.
 ---
 
 ## Installation
@@ -79,6 +79,7 @@ Mise Browser is designed to be fully controllable via keyboard shortcuts. Below 
 | Ctrl + H | Toggle the help / shortcut reference overlay |
 | Ctrl + N | Open Notes overlay |
 | Ctrl + Shift + I | Opens DevTools in new window | 
+| Ctrl + Shift + Z | Hide/unhide Sidebar |
 
 ### Web Interaction
 

@@ -304,6 +304,10 @@ function createWindow() {
             event.preventDefault();
             mainWindow.webContents.send('master-shortcut', 'toggle-notes');
         }
+        else if (isCtrl && isShift && key === 'z') {
+             event.preventDefault();
+             mainWindow.webContents.send('master-shortcut', 'toggle-zen-mode');
+         }
     });
 }
 
@@ -534,6 +538,7 @@ app.on('web-contents-created', (event, webContents) => {
                 }
             }
         });
+        
         webContents.on('before-input-event', (inputEvent, input) => {
             if (input.type !== 'keyDown') return;
             const isCtrl = input.control;
@@ -543,6 +548,19 @@ app.on('web-contents-created', (event, webContents) => {
                 inputEvent.preventDefault();
                 if (mainWindow && mainWindow.webContents) {
                     mainWindow.webContents.send('master-shortcut', 'toggle-notes');
+                }
+            }
+        });
+        webContents.on('before-input-event', (inputEvent, input) => {
+            if (input.type !== 'keyDown') return;
+            const isCtrl = input.control;
+            const isShift = input.shift;
+            const key = input.key.toLowerCase();
+
+            if (isCtrl && isShift && key === 'z') {
+                inputEvent.preventDefault();
+                if (mainWindow && mainWindow.webContents) {
+                    mainWindow.webContents.send('master-shortcut', 'toggle-zen-mode');
                 }
             }
         });

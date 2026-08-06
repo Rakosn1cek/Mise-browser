@@ -665,3 +665,12 @@ webview {
     background: var(--selected);
     border-color: var(--accent);
 }
+
+body.zen-mode #Sidebar {
+    display: none !important;
+}
+
+body.zen-mode #right-content {
+    width: 100vw;
+    height: 100vh;
+}

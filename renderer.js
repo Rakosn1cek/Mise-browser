@@ -42,6 +42,7 @@ const commandRegistry = {
     "Toggle Link Hints Overlay": () => triggerLinkHints(),
     "Find In Page": () => toggleInPageSearch(),
     "Toggle Quick Notes": () => toggleNotesOverlay(),
+    "Toggle Zen Mode (Hide Sidebar)": () => toggleZenMode(),
     "Focus Sidebar Tab List": () => {
         const backBtn = document.getElementById('back-btn');
         if (backBtn) {
@@ -157,6 +158,7 @@ function setupEventListeners() {
             case 'toggle-notes': toggleNotesOverlay(); break;
             case 'toggle-find': toggleInPageSearch(); break;
             case 'remove-tab': handleTabRemoval(); break;
+            case 'toggle-zen-mode': toggleZenMode(); break;
             case 'focus-sidebar': {
                 const selectedTab = document.querySelector('#TabList li.selected');
                 if (selectedTab) selectedTab.focus();
@@ -549,7 +551,7 @@ function toggleHelpMenuWindow() {
         // Use our clean utility helper instead of manual color definitions
         applyThemeToOverlayElement(content, "#124647", "#f5f6f9", "#c0caf5", "#3c3e4f");
         
-        content.innerHTML = `Mise Browser — v0.1.3\n==================================================\n
+        content.innerHTML = `Mise Browser — v0.1.4\n==================================================\n
 NAVIGATION & WORKSPACES
 --------------------------------------------------
 Ctrl + T           New DuckDuckGo Tab
@@ -566,6 +568,7 @@ Ctrl + P           Toggle Command Palette
 Ctrl + Shift + P   Toggle Private Browsing Mode On/Off
 Ctrl + N           Open Notes Taking Overlay
 Ctrl + Shift + Tab Focus sidebar nav buttons
+Ctrl + Shift + Z   Hide/Unhide Sidebar
 
 WEB INTERACTION
 --------------------------------------------------
@@ -1501,4 +1504,8 @@ function toggleNotesOverlay() {
         overlay.style.display = 'none';
         focusActiveWebview();
     }
+}
+
+function toggleZenMode() {
+    document.body.classList.toggle('zen-mode');
 }
