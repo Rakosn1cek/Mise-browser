@@ -23,6 +23,9 @@ let notesActive = false;
 let notesSaveTimeout = null;
 let isEditingNotes = false;
 
+let addressSuggestions = [];
+let addressSelectionIdx = -1;
+
 // --- GLOBAL UTILITY HELPERS ---
 // Returns true if the browser interface is currently in dark mode
 const isDarkMode = () => document.body.classList.contains('dark-mode');
@@ -110,6 +113,7 @@ async function initializeBrowser() {
     setupEventListeners();
     renderWorkspaceUI();
     setupNotesListeners();
+    setupAddressBarAutocomplete();
 }
 
 function setupEventListeners() {
@@ -551,7 +555,7 @@ function toggleHelpMenuWindow() {
         // Use our clean utility helper instead of manual color definitions
         applyThemeToOverlayElement(content, "#124647", "#f5f6f9", "#c0caf5", "#3c3e4f");
         
-        content.innerHTML = `Mise Browser — v0.1.4\n==================================================\n
+        content.innerHTML = `Mise Browser — v0.1.5\n==================================================\n
 NAVIGATION & WORKSPACES
 --------------------------------------------------
 Ctrl + T           New DuckDuckGo Tab
@@ -1137,6 +1141,11 @@ function displayAddressOverlay() {
     const addressBar = document.getElementById('WideAddressBar');
     if (addressBar.style.display === 'block') {
         addressBar.style.display = 'none';
+        
+        // Hide auto-complete suggestion dropdown when closing address bar
+        if (typeof hideSuggestions === 'function') {
+            hideSuggestions();
+        }
     } else {
         const currentWS = sessionState.current_workspace;
         const activeListItem = document.querySelector('#TabList li.selected');
@@ -1160,12 +1169,34 @@ function displayAddressOverlay() {
 function handleNavigation(input) {
     if (!input) return;
     
-    // 1. Split input into parts to identify the alias (e.g., "g wallpapers")
-    const parts = input.trim().split(' ');
+    const trimmedInput = input.trim();
+
+    // 1. Intercept workspace switch commands (e.g., "ws:Socials" or "ws Socials")
+    if (trimmedInput.toLowerCase().startsWith('ws:') || trimmedInput.toLowerCase().startsWith('ws ')) {
+        const targetWs = trimmedInput.replace(/^ws[:\s]+/i, '').trim();
+        
+        // Find exact or case-insensitive workspace match
+        const availableWorkspaces = Object.keys(sessionState.workspaces);
+        const matchedWs = availableWorkspaces.find(ws => ws.toLowerCase() === targetWs.toLowerCase());
+
+        if (matchedWs) {
+            sessionState.current_workspace = matchedWs;
+            window.miseAPI.saveSession(sessionState);
+            renderWorkspaceUI(0);
+        } else {
+            alert(`Workspace "${targetWs}" does not exist.`);
+        }
+
+        hideSuggestions();
+        document.getElementById('WideAddressBar').style.display = 'none';
+        return;
+    }
+
+    // 2. Split input into parts to identify aliases (e.g., "g wallpapers")
+    const parts = trimmedInput.split(' ');
     const alias = parts[0].toLowerCase();
     const query = parts.slice(1).join(' ');
 
-    // 2. Define your URL aliases
     const aliases = {
         'g': 'https://www.google.com/search?q=',
         'yt': 'https://www.youtube.com/results?search_query=',
@@ -1179,20 +1210,17 @@ function handleNavigation(input) {
 
     let targetUrl;
 
-    // 3. Check if the first word matches a known alias
     if (aliases[alias] && query) {
         targetUrl = aliases[alias] + encodeURIComponent(query);
-    } 
-    // 4. Default behavior (original logic)
-    else {
-        targetUrl = input;
-        if (!input.startsWith('http://') && !input.startsWith('https://')) {
-            if (input.includes('.') && !input.includes(' ')) targetUrl = `https://${input}`;
-            else targetUrl = `https://duckduckgo.com/?q=${encodeURIComponent(input)}`;
+    } else {
+        targetUrl = trimmedInput;
+        if (!trimmedInput.startsWith('http://') && !trimmedInput.startsWith('https://')) {
+            if (trimmedInput.includes('.') && !trimmedInput.includes(' ')) targetUrl = `https://${trimmedInput}`;
+            else targetUrl = `https://duckduckgo.com/?q=${encodeURIComponent(trimmedInput)}`;
         }
     }
 
-    // --- Proceed with existing logic to save and load the URL ---
+    // Save and load the target URL
     const currentWS = sessionState.current_workspace;
     const activeListItem = document.querySelector('#TabList li.selected');
     if (!activeListItem) return;
@@ -1205,6 +1233,8 @@ function handleNavigation(input) {
     if (activeViewsCache[currentWS] && activeViewsCache[currentWS][currentIdx]) {
         activeViewsCache[currentWS][currentIdx].setAttribute('src', targetUrl);
     }
+
+    hideSuggestions();
     document.getElementById('WideAddressBar').style.display = 'none';
 }
 
@@ -1508,4 +1538,139 @@ function toggleNotesOverlay() {
 
 function toggleZenMode() {
     document.body.classList.toggle('zen-mode');
+}
+
+function setupAddressBarAutocomplete() {
+    const addressBar = document.getElementById('WideAddressBar');
+    const suggestionsList = document.getElementById('AddressSuggestions');
+
+    if (!addressBar || !suggestionsList) return;
+
+    addressBar.addEventListener('input', async (e) => {
+        const query = e.target.value.trim();
+        if (!query) {
+            hideSuggestions();
+            return;
+        }
+
+        // 1. Handle Workspace Aliases ("ws <query>")
+        if (query.toLowerCase().startsWith('ws ')) {
+            const wsQuery = query.slice(3).toLowerCase();
+            const matchingWorkspaces = Object.keys(sessionState.workspaces)
+                .filter(ws => ws.toLowerCase().includes(wsQuery))
+                .map(ws => ({ title: `Switch to Workspace: ${ws}`, value: `ws:${ws}`, type: 'Workspace' }));
+
+            renderSuggestions(matchingWorkspaces);
+            return;
+        }
+
+        // 2. Query History and Open Workspace Tabs simultaneously
+        const matches = [];
+
+        // Workspace tab titles match
+        Object.keys(sessionState.workspaces).forEach(wsName => {
+            sessionState.workspaces[wsName].forEach((url, idx) => {
+                const title = (activeTitlesCache[wsName] && activeTitlesCache[wsName][idx]) || url;
+                if (title.toLowerCase().includes(query.toLowerCase()) || url.toLowerCase().includes(query.toLowerCase())) {
+                    matches.push({ title: `${title} (${wsName})`, value: url, type: 'Tab' });
+                }
+            });
+        });
+
+        // History match via IPC
+        if (window.miseAPI && typeof window.miseAPI.searchHistory === 'function') {
+            try {
+                const historyMatches = await window.miseAPI.searchHistory(query);
+                historyMatches.slice(0, 5).forEach(item => {
+                    matches.push({ title: item.title, value: item.url, type: 'History' });
+                });
+            } catch (err) {}
+        }
+
+        renderSuggestions(matches);
+    });
+
+    addressBar.addEventListener('keydown', (e) => {
+        if (suggestionsList.style.display === 'none') return;
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (addressSuggestions.length > 0) {
+                addressSelectionIdx = (addressSelectionIdx + 1) % addressSuggestions.length;
+                updateSuggestionHighlight();
+            }
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (addressSuggestions.length > 0) {
+                addressSelectionIdx = (addressSelectionIdx - 1 + addressSuggestions.length) % addressSuggestions.length;
+                updateSuggestionHighlight();
+            }
+        } else if (e.key === 'Tab') {
+            e.preventDefault();
+            if (addressSelectionIdx >= 0 && addressSuggestions[addressSelectionIdx]) {
+                addressBar.value = addressSuggestions[addressSelectionIdx].value;
+            }
+        }
+    });
+}
+
+function renderSuggestions(items) {
+    const suggestionsList = document.getElementById('AddressSuggestions');
+    suggestionsList.innerHTML = '';
+    addressSuggestions = items;
+    addressSelectionIdx = -1;
+
+    if (items.length === 0) {
+        hideSuggestions();
+        return;
+    }
+
+    items.forEach((item, idx) => {
+        const li = document.createElement('li');
+        li.className = 'suggestion-item';
+        li.innerHTML = `<span>${escapeHtml(item.title)}</span><span class="suggestion-type">${item.type}</span>`;
+        
+        li.addEventListener('click', () => {
+            selectSuggestion(item);
+        });
+
+        suggestionsList.appendChild(li);
+    });
+
+    suggestionsList.style.display = 'block';
+}
+
+function updateSuggestionHighlight() {
+    const items = document.querySelectorAll('#AddressSuggestions .suggestion-item');
+    items.forEach((item, idx) => {
+        if (idx === addressSelectionIdx) {
+            item.classList.add('selected');
+            item.scrollIntoView({ block: 'nearest' });
+            // Auto update input text to value on selection
+            if (addressSuggestions[idx]) {
+                document.getElementById('WideAddressBar').value = addressSuggestions[idx].value;
+            }
+        } else {
+            item.classList.remove('selected');
+        }
+    });
+}
+
+function selectSuggestion(item) {
+    if (item.value.startsWith('ws:')) {
+        const targetWs = item.value.split('ws:')[1];
+        sessionState.current_workspace = targetWs;
+        window.miseAPI.saveSession(sessionState);
+        renderWorkspaceUI(0);
+    } else {
+        handleNavigation(item.value);
+    }
+    hideSuggestions();
+}
+
+function hideSuggestions() {
+    const suggestionsList = document.getElementById('AddressSuggestions');
+    if (suggestionsList) suggestionsList.style.display = 'none';
+    addressSuggestions = [];
+    addressSelectionIdx = -1;
 }

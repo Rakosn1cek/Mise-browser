@@ -31,7 +31,12 @@
 
         <div id="right-content">
             <input type="text" id="WideAddressBar" placeholder="Search or enter address...">
-            
+
+			<div id="AddressBarContainer">
+			    <input type="text" id="WideAddressBar" placeholder="Search, enter address, or type 'ws <name>'..." autocomplete="off">
+			    <ul id="AddressSuggestions" style="display: none;"></ul>
+			</div>
+			            
             <div id="webview-container">
                 <!-- Command Palette DOM Nodes Block -->
                 <div id="CommandPaletteOverlay">

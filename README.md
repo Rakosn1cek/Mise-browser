@@ -22,6 +22,8 @@ Mise is engineered with a modular suite of tools that bridge the gap between web
 - **Notes**: Take notes right in the browser. All saved localy in notes.md. Suports markdown editing and preview.
 - **DevTolls**: Intagrated DevTools. Toggled via keybind or within the Command Palette. Opens in a new window.
 - **Hide/Unhide Sidebar**: Easy to hide and unhide sidebar with keybind of within the Command Palette.
+- **URL Bar Search Auto-complete**: History & Bookmark Matching in Address Bar: When opening Address Bar (Ctrl + L), query history and active workspace titles live as you type, allowing arrow key selection.
+
 ---
 
 ## Installation
