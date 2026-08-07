@@ -16,6 +16,10 @@ contextBridge.exposeInMainWorld('miseAPI', {
     setNativeTheme: (mode) => ipcRenderer.send('set-native-theme', mode),
     readNotes: () => ipcRenderer.invoke('read-notes'),
     saveNotes: (content) => ipcRenderer.invoke('save-notes', content),
+    readBookmarks: () => ipcRenderer.invoke('read-bookmarks'),
+    saveBookmarks: (data) => ipcRenderer.invoke('save-bookmarks', data),
+    readQuickmarks: () => ipcRenderer.invoke('read-quickmarks'),
+    saveQuickmarks: (data) => ipcRenderer.invoke('save-quickmarks', data),
     onMasterShortcut: (callback) => {
         ipcRenderer.on('master-shortcut', (event, action, ...args) => callback(action, ...args));
     }

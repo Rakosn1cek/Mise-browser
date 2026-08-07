@@ -79,9 +79,10 @@ Mise Browser is designed to be fully controllable via keyboard shortcuts. Below 
 | Ctrl + P | Toggle the command palette |
 | Ctrl + Shift + P | Toggle private browsing mode |
 | Ctrl + H | Toggle the help / shortcut reference overlay |
-| Ctrl + N | Open Notes overlay |
-| Ctrl + Shift + I | Opens DevTools in new window | 
+| Ctrl + N | Open Notes overlay | 
 | Ctrl + Shift + Z | Hide/unhide Sidebar |
+| Ctrl + Shift + B | Opens Bookmarks and Quickmarks |
+| DELETE | Deletes/Removes Bookmarks/Quickmarks when selected |
 
 ### Web Interaction
 
@@ -89,6 +90,10 @@ Mise Browser is designed to be fully controllable via keyboard shortcuts. Below 
 | :---  | :---  |
 | Ctrl + F | Toggle link hints overlay |
 | Right Click | Open contextual menu (Copy, Paste, Save Image As, etc.) |
+| Ctrl + Shift + I | Opens DevTools in new window |
+| Ctrl + Shift + Q [key] | Binds current page URL to that key slot (e.g., press Ctrl + Shift + Q then g for GitHub) |
+| Ctrl + J [key] | Instantly opens the URL assigned to that key |
+| Ctrl + A | Bookmarks the current tab into bookmarks.json |
 
 ### Search Bar 
 

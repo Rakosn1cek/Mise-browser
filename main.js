@@ -9,6 +9,8 @@ const security = require('./security');
 const CONFIG_DIR = path.join(app.getPath('home'), '.config', 'mise-browser');
 const CONFIG_PATH = path.join(CONFIG_DIR, 'config.json');
 const NOTES_PATH = path.join(CONFIG_DIR, 'notes.md');
+const BOOKMARKS_PATH = path.join(CONFIG_DIR, 'bookmarks.json');
+const QUICKMARKS_PATH = path.join(CONFIG_DIR, 'quickmarks.json');
 
 const DEFAULT_CONFIG = {
     disable_gpu: false,          // Keep false by default for cool video playback!
@@ -308,6 +310,22 @@ function createWindow() {
              event.preventDefault();
              mainWindow.webContents.send('master-shortcut', 'toggle-zen-mode');
          }
+         else if (isCtrl && isShift && key === 'q') {
+             event.preventDefault();
+             mainWindow.webContents.send('master-shortcut', 'set-quickmark');
+         }
+         else if (isCtrl && key === 'j') {
+             event.preventDefault();
+             mainWindow.webContents.send('master-shortcut', 'jump-quickmark');
+         }
+         else if (isCtrl && key === 'a') {
+             event.preventDefault();
+             mainWindow.webContents.send('master-shortcut', 'add-bookmark');
+         }
+         else if (isCtrl && isShift && key === 'b') {
+             event.preventDefault();
+             mainWindow.webContents.send('master-shortcut', 'toggle-bookmarks');
+         }
     });
 }
 
@@ -401,6 +419,34 @@ ipcMain.handle('purge-history', async () => {
 ipcMain.on('toggle-menu-bar', () => {
     const isVisible = mainWindow.isMenuBarVisible();
     mainWindow.setMenuBarVisibility(!isVisible);
+});
+
+ipcMain.handle('read-bookmarks', async () => {
+    try {
+        if (!fs.existsSync(BOOKMARKS_PATH)) fs.writeFileSync(BOOKMARKS_PATH, JSON.stringify([]), 'utf-8');
+        return JSON.parse(fs.readFileSync(BOOKMARKS_PATH, 'utf-8'));
+    } catch (err) { return []; }
+});
+
+ipcMain.handle('save-bookmarks', async (event, data) => {
+    try {
+        fs.writeFileSync(BOOKMARKS_PATH, JSON.stringify(data, null, 4), 'utf-8');
+        return true;
+    } catch (err) { return false; }
+});
+
+ipcMain.handle('read-quickmarks', async () => {
+    try {
+        if (!fs.existsSync(QUICKMARKS_PATH)) fs.writeFileSync(QUICKMARKS_PATH, JSON.stringify({}), 'utf-8');
+        return JSON.parse(fs.readFileSync(QUICKMARKS_PATH, 'utf-8'));
+    } catch (err) { return {}; }
+});
+
+ipcMain.handle('save-quickmarks', async (event, data) => {
+    try {
+        fs.writeFileSync(QUICKMARKS_PATH, JSON.stringify(data, null, 4), 'utf-8');
+        return true;
+    } catch (err) { return false; }
 });
 
 const { clipboard } = require('electron');
@@ -522,46 +568,47 @@ app.on('web-contents-created', (event, webContents) => {
             return { action: 'deny' };
         });
 
+        // Consolidated webview keybinding listener
         webContents.on('before-input-event', (inputEvent, input) => {
             if (input.type !== 'keyDown') return;
+
             const isCtrl = input.control;
+            const isShift = input.shift;
             const key = input.key.toLowerCase();
-            
+
+            if (!mainWindow || !mainWindow.webContents) return;
+
             if (isCtrl && key === 'r') {
                 inputEvent.preventDefault();
                 webContents.reload();
             }
             else if (isCtrl && key === 's') {
                 inputEvent.preventDefault();
-                if (mainWindow && mainWindow.webContents) {
-                    mainWindow.webContents.send('master-shortcut', 'toggle-find');
-                }
+                mainWindow.webContents.send('master-shortcut', 'toggle-find');
             }
-        });
-        
-        webContents.on('before-input-event', (inputEvent, input) => {
-            if (input.type !== 'keyDown') return;
-            const isCtrl = input.control;
-            const key = input.key.toLowerCase();
-
-            if (isCtrl && key === 'n') {
+            else if (isCtrl && key === 'n') {
                 inputEvent.preventDefault();
-                if (mainWindow && mainWindow.webContents) {
-                    mainWindow.webContents.send('master-shortcut', 'toggle-notes');
-                }
+                mainWindow.webContents.send('master-shortcut', 'toggle-notes');
             }
-        });
-        webContents.on('before-input-event', (inputEvent, input) => {
-            if (input.type !== 'keyDown') return;
-            const isCtrl = input.control;
-            const isShift = input.shift;
-            const key = input.key.toLowerCase();
-
-            if (isCtrl && isShift && key === 'z') {
+            else if (isCtrl && isShift && key === 'z') {
                 inputEvent.preventDefault();
-                if (mainWindow && mainWindow.webContents) {
-                    mainWindow.webContents.send('master-shortcut', 'toggle-zen-mode');
-                }
+                mainWindow.webContents.send('master-shortcut', 'toggle-zen-mode');
+            }
+            else if (isCtrl && isShift && key === 'q') {
+                inputEvent.preventDefault();
+                mainWindow.webContents.send('master-shortcut', 'set-quickmark');
+            }
+            else if (isCtrl && key === 'j') {
+                inputEvent.preventDefault();
+                mainWindow.webContents.send('master-shortcut', 'jump-quickmark');
+            }
+            else if (isCtrl && key === 'a') {
+                inputEvent.preventDefault();
+                mainWindow.webContents.send('master-shortcut', 'add-bookmark');
+            }
+            else if (isCtrl && isShift && key === 'b') {
+                inputEvent.preventDefault();
+                mainWindow.webContents.send('master-shortcut', 'toggle-bookmarks');
             }
         });
     }

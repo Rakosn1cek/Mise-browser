@@ -360,8 +360,8 @@ webview {
 }
 
 #HelpMenuContent {
-    width: 550px;
-    height: 700px;
+    width: 750px;
+    height: 800px;
     white-space: pre-wrap;
     font-family: monospace;
     font-size: 14px;
@@ -764,4 +764,141 @@ body.zen-mode #right-content {
     padding: 2px 6px;
     border-radius: 3px;
     flex-shrink: 0;
+}
+
+/* Bookmarks Modal Overlay Setup */
+#BookmarksOverlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 3000;
+    justify-content: right;
+    align-items: flex-start; /* Aligns container to the top edge */
+    padding-top: 10px;       /* Gives it clean breathing room from the top border */
+}
+
+.bookmarks-card {
+    width: 620px;
+    background-color: var(--bg-sidebar);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6);
+    max-height: 480px;
+    overflow: hidden;
+}
+
+.bookmarks-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    border-bottom: 1px solid var(--border);
+}
+
+/* Custom dark search input styling */
+#BookmarkSearchInput {
+    flex-grow: 1;
+    background-color: var(--bg-main);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 10px 12px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.15s ease;
+}
+
+#BookmarkSearchInput:focus {
+    border-color: var(--accent);
+}
+
+.bookmark-item-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.bookmark-item-row:hover {
+    background-color: var(--selected);
+}
+
+.bookmark-item-row.selected {
+    background-color: var(--selected);
+    border-left: 2px solid var(--accent);
+}
+
+.bookmark-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.bookmark-delete-btn {
+    background: transparent;
+    color: var(--text);
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+    opacity: 0.5;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all 0.15s ease;
+}
+
+.bookmark-delete-btn:hover {
+    color: #ef4444;
+    opacity: 1;
+    background-color: rgba(239, 68, 68, 0.1);
+}
+.quickmarks-section-title {
+    font-size: 11px;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: var(--accent);
+    padding: 8px 4px 4px 4px;
+    letter-spacing: 0.5px;
+    border-bottom: 1px dashed var(--border);
+    margin-bottom: 6px;
+}
+
+.quickmark-key-badge {
+    background-color: var(--selected);
+    color: var(--accent);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-weight: bold;
+    font-size: 12px;
+    margin-right: 10px;
+    font-family: monospace;
+}.quickmarks-section-title {
+    font-size: 11px;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: var(--accent);
+    padding: 8px 4px 4px 4px;
+    letter-spacing: 0.5px;
+    border-bottom: 1px dashed var(--border);
+    margin-bottom: 6px;
+}
+
+.quickmark-key-badge {
+    background-color: var(--selected);
+    color: var(--accent);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-weight: bold;
+    font-size: 12px;
+    margin-right: 10px;
+    font-family: monospace;
 }

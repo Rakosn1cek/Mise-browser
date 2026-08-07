@@ -26,6 +26,14 @@ let isEditingNotes = false;
 let addressSuggestions = [];
 let addressSelectionIdx = -1;
 
+let quickmarks = {};
+let bookmarks = [];
+let awaitingQuickmarkKey = false;
+let quickmarkMode = null; // 'set' or 'jump'
+let bookmarksActive = false;
+let bookmarkSelectionIdx = 0;
+let filteredBookmarksCache = [];
+
 // --- GLOBAL UTILITY HELPERS ---
 // Returns true if the browser interface is currently in dark mode
 const isDarkMode = () => document.body.classList.contains('dark-mode');
@@ -44,6 +52,7 @@ const commandRegistry = {
     "Toggle Floating Address Bar": () => displayAddressOverlay(),
     "Toggle Link Hints Overlay": () => triggerLinkHints(),
     "Find In Page": () => toggleInPageSearch(),
+    "Toggle Bookmarks Manager": () => toggleBookmarksOverlay(),
     "Toggle Quick Notes": () => toggleNotesOverlay(),
     "Toggle Zen Mode (Hide Sidebar)": () => toggleZenMode(),
     "Focus Sidebar Tab List": () => {
@@ -114,6 +123,7 @@ async function initializeBrowser() {
     renderWorkspaceUI();
     setupNotesListeners();
     setupAddressBarAutocomplete();
+    setupBookmarkOverlayListeners()
 }
 
 function setupEventListeners() {
@@ -159,10 +169,20 @@ function setupEventListeners() {
             case 'toggle-address': displayAddressOverlay(); break;
             case 'toggle-dashboard': toggleDashboardView(); break;
             case 'toggle-devtools': toggleActiveDevTools(); break;
+            case 'toggle-bookmarks': toggleBookmarksOverlay(); break;
             case 'toggle-notes': toggleNotesOverlay(); break;
             case 'toggle-find': toggleInPageSearch(); break;
             case 'remove-tab': handleTabRemoval(); break;
             case 'toggle-zen-mode': toggleZenMode(); break;
+            case 'set-quickmark': promptQuickmark('set'); break;
+            case 'jump-quickmark': promptQuickmark('jump'); break;
+            case 'add-bookmark': addCurrentPageToBookmarks(); break;
+            case 'delete-bookmark-entry': {
+                if (bookmarksActive && filteredBookmarksCache[bookmarkSelectionIdx]) {
+                    deleteBookmark(filteredBookmarksCache[bookmarkSelectionIdx].url);
+                }
+                break;
+            }
             case 'focus-sidebar': {
                 const selectedTab = document.querySelector('#TabList li.selected');
                 if (selectedTab) selectedTab.focus();
@@ -375,6 +395,10 @@ function setupEventListeners() {
             toggleHistoryOverlay();
         }
     });
+
+    loadBookmarksAndQuickmarks().then(() => {
+        populateBookmarksInPalette();
+    });
 }
 
 function handlePrivateBrowsingStateShift(isPrivate) {
@@ -555,7 +579,7 @@ function toggleHelpMenuWindow() {
         // Use our clean utility helper instead of manual color definitions
         applyThemeToOverlayElement(content, "#124647", "#f5f6f9", "#c0caf5", "#3c3e4f");
         
-        content.innerHTML = `Mise Browser — v0.1.5\n==================================================\n
+        content.innerHTML = `Mise Browser — v0.1.6\n==================================================\n
 NAVIGATION & WORKSPACES
 --------------------------------------------------
 Ctrl + T           New DuckDuckGo Tab
@@ -573,12 +597,17 @@ Ctrl + Shift + P   Toggle Private Browsing Mode On/Off
 Ctrl + N           Open Notes Taking Overlay
 Ctrl + Shift + Tab Focus sidebar nav buttons
 Ctrl + Shift + Z   Hide/Unhide Sidebar
+Ctrl + Shift + B   Open Bookmarks and Quickmarks
+Delete             Deletes/Removes Bookmarks/Quickmarks When Selected
 
 WEB INTERACTION
 --------------------------------------------------
-Ctrl + F           Toggle Link Hints Overlay
-Right Click        Contextual Actions + (Arch Wiki)
-Ctrl + Shift + i   Toggle DevTools
+Ctrl + F                    Toggle Link Hints Overlay
+Right Click                 Contextual Actions + (Arch Wiki)
+Ctrl + Shift + i            Toggle DevTools
+Ctrl + Shift + Q [key]      Set quickmark (e.g., press Ctrl + Shift + Q then g for GitHub).
+Ctrl + J then [key]         Jump to quickmark
+Ctrl + A                    Add bookmark into bookmarks.json.
 
 SIDEBAR CONTROLS
 --------------------------------------------------
@@ -1612,6 +1641,12 @@ function setupAddressBarAutocomplete() {
             }
         }
     });
+
+    bookmarks.forEach(bm => {
+        if (bm.title.toLowerCase().includes(query.toLowerCase()) || bm.url.toLowerCase().includes(query.toLowerCase())) {
+            matches.push({ title: bm.title, value: bm.url, type: 'Bookmark' });
+        }
+    });
 }
 
 function renderSuggestions(items) {
@@ -1673,4 +1708,309 @@ function hideSuggestions() {
     if (suggestionsList) suggestionsList.style.display = 'none';
     addressSuggestions = [];
     addressSelectionIdx = -1;
+}
+
+async function loadBookmarksAndQuickmarks() {
+    if (window.miseAPI) {
+        bookmarks = await window.miseAPI.readBookmarks();
+        quickmarks = await window.miseAPI.readQuickmarks();
+    }
+}
+
+function promptQuickmark(mode) {
+    quickmarkMode = mode;
+    awaitingQuickmarkKey = true;
+
+    // Temporarily take focus away from webview so window captures the target slot keypress
+    if (document.activeElement) {
+        document.activeElement.blur();
+    }
+    window.focus();
+
+    const listener = (e) => {
+        // Ignore modifier key presses/releases
+        if (['control', 'shift', 'alt', 'meta'].includes(e.key.toLowerCase())) {
+            return;
+        }
+
+        e.preventDefault();
+        e.stopPropagation();
+        window.removeEventListener('keydown', listener, true);
+
+        awaitingQuickmarkKey = false;
+
+        if (e.key === 'Escape') {
+            focusActiveWebview();
+            return;
+        }
+
+        const key = e.key.toLowerCase();
+
+        if (quickmarkMode === 'set') {
+            const activeWv = getActiveWebview();
+            if (!activeWv) return;
+            const url = activeWv.getURL();
+            const title = activeWv.getTitle() || url;
+
+            quickmarks[key] = { url, title };
+            if (window.miseAPI && typeof window.miseAPI.saveQuickmarks === 'function') {
+                window.miseAPI.saveQuickmarks(quickmarks);
+            }
+            focusActiveWebview();
+        } else if (quickmarkMode === 'jump') {
+            if (quickmarks[key]) {
+                spawnTabWithUrl(quickmarks[key].url);
+            } else {
+                focusActiveWebview();
+            }
+        }
+    };
+
+    window.addEventListener('keydown', listener, true);
+}
+
+async function addCurrentPageToBookmarks() {
+    const activeWv = getActiveWebview();
+    if (!activeWv) return;
+    
+    const url = activeWv.getURL();
+    const title = activeWv.getTitle() || url;
+    
+    if (!url || url === 'about:blank') return;
+
+    // Prevent duplicate entries
+    if (!bookmarks.some(b => b.url === url)) {
+        bookmarks.unshift({ title, url, timestamp: Date.now() });
+        await window.miseAPI.saveBookmarks(bookmarks);
+    }
+}
+
+// Add Bookmarks to Command Palette execution
+function populateBookmarksInPalette() {
+    bookmarks.forEach(bm => {
+        const cmdKey = `Bookmark: ${bm.title}`;
+        commandRegistry[cmdKey] = () => spawnTabWithUrl(bm.url);
+    });
+}
+
+function toggleBookmarksOverlay() {
+    const overlay = document.getElementById('BookmarksOverlay');
+    const input = document.getElementById('BookmarkSearchInput');
+
+    if (!overlay) return;
+
+    bookmarksActive = !bookmarksActive;
+
+    if (bookmarksActive) {
+        if (paletteActive) toggleCommandPaletteView();
+        if (helpActive) toggleHelpMenuWindow();
+        if (dashboardActive) toggleDashboardView();
+        if (historyActive) toggleHistoryOverlay();
+        if (notesActive) toggleNotesOverlay();
+
+        overlay.style.display = 'flex';
+        bookmarkSelectionIdx = 0;
+        if (input) {
+            input.value = '';
+            input.focus();
+        }
+        renderBookmarksList('');
+    } else {
+        overlay.style.display = 'none';
+        focusActiveWebview();
+    }
+}
+
+// Render both Quickmarks and Bookmarks inside the manager overlay
+function renderBookmarksList(filterText = '') {
+    const container = document.getElementById('BookmarksResultsList');
+    if (!container) return;
+
+    container.innerHTML = '';
+    const query = filterText.toLowerCase().trim();
+    filteredBookmarksCache = [];
+
+    // 1. Build Quickmarks Cache & DOM
+    const quickmarkKeys = Object.keys(quickmarks).filter(key => {
+        const qm = quickmarks[key];
+        return key.toLowerCase().includes(query) || 
+               (qm.title && qm.title.toLowerCase().includes(query)) || 
+               (qm.url && qm.url.toLowerCase().includes(query));
+    });
+
+    if (quickmarkKeys.length > 0) {
+        const qmHeader = document.createElement('div');
+        qmHeader.className = 'quickmarks-section-title';
+        qmHeader.textContent = 'Quickmarks (Ctrl + J + [key])';
+        container.appendChild(qmHeader);
+
+        quickmarkKeys.forEach(key => {
+            const qm = quickmarks[key];
+            const itemObj = { type: 'quickmark', key: key, url: qm.url, title: qm.title };
+            filteredBookmarksCache.push(itemObj);
+
+            const itemEl = document.createElement('div');
+            itemEl.className = 'bookmark-item-row quickmark-row';
+            itemEl.setAttribute('tabindex', '-1');
+
+            itemEl.innerHTML = `
+                <div class="quickmark-key-badge">${escapeHtml(key.toUpperCase())}</div>
+                <div class="bookmark-info">
+                    <div class="history-item-title">${escapeHtml(qm.title)}</div>
+                    <div class="history-item-url">${escapeHtml(qm.url)}</div>
+                </div>
+                <button class="bookmark-delete-btn" title="Delete Quickmark"><i class="fa-solid fa-trash-can"></i></button>
+            `;
+
+            itemEl.querySelector('.bookmark-info').addEventListener('click', () => {
+                spawnTabWithUrl(qm.url);
+                toggleBookmarksOverlay();
+            });
+
+            itemEl.querySelector('.bookmark-delete-btn').addEventListener('click', async (e) => {
+                e.stopPropagation();
+                deleteQuickmark(key);
+            });
+
+            container.appendChild(itemEl);
+        });
+    }
+
+    // 2. Build Standard Bookmarks Cache & DOM
+    const matchingBookmarks = bookmarks.filter(bm => 
+        (bm.title && bm.title.toLowerCase().includes(query)) || 
+        (bm.url && bm.url.toLowerCase().includes(query))
+    );
+
+    if (matchingBookmarks.length > 0) {
+        const bmHeader = document.createElement('div');
+        bmHeader.className = 'quickmarks-section-title';
+        bmHeader.textContent = 'Bookmarks';
+        container.appendChild(bmHeader);
+
+        matchingBookmarks.forEach(bm => {
+            const itemObj = { type: 'bookmark', url: bm.url, title: bm.title };
+            filteredBookmarksCache.push(itemObj);
+
+            const itemEl = document.createElement('div');
+            itemEl.className = 'bookmark-item-row';
+            itemEl.setAttribute('tabindex', '-1');
+
+            itemEl.innerHTML = `
+                <div class="bookmark-info">
+                    <div class="history-item-title">${escapeHtml(bm.title)}</div>
+                    <div class="history-item-url">${escapeHtml(bm.url)}</div>
+                </div>
+                <button class="bookmark-delete-btn" title="Delete Bookmark"><i class="fa-solid fa-trash-can"></i></button>
+            `;
+
+            itemEl.querySelector('.bookmark-info').addEventListener('click', () => {
+                spawnTabWithUrl(bm.url);
+                toggleBookmarksOverlay();
+            });
+
+            itemEl.querySelector('.bookmark-delete-btn').addEventListener('click', async (e) => {
+                e.stopPropagation();
+                deleteBookmark(bm.url);
+            });
+
+            container.appendChild(itemEl);
+        });
+    }
+
+    if (filteredBookmarksCache.length === 0) {
+        container.innerHTML = '<div class="history-empty">No bookmarks or quickmarks found.</div>';
+        bookmarkSelectionIdx = 0;
+        return;
+    }
+
+    if (bookmarkSelectionIdx >= filteredBookmarksCache.length) {
+        bookmarkSelectionIdx = Math.max(0, filteredBookmarksCache.length - 1);
+    }
+
+    updateBookmarkVisualSelection();
+}
+
+function updateBookmarkVisualSelection() {
+    const items = document.querySelectorAll('#BookmarksResultsList .bookmark-item-row');
+    items.forEach((item, idx) => {
+        if (idx === bookmarkSelectionIdx) {
+            item.classList.add('selected');
+            item.scrollIntoView({ block: 'nearest' });
+        } else {
+            item.classList.remove('selected');
+        }
+    });
+}
+
+async function deleteQuickmark(key) {
+    if (!key || !quickmarks[key]) return;
+    delete quickmarks[key];
+    if (window.miseAPI && typeof window.miseAPI.saveQuickmarks === 'function') {
+        await window.miseAPI.saveQuickmarks(quickmarks);
+    }
+    const searchInput = document.getElementById('BookmarkSearchInput');
+    renderBookmarksList(searchInput ? searchInput.value : '');
+}
+
+function setupBookmarkOverlayListeners() {
+    const searchInput = document.getElementById('BookmarkSearchInput');
+    const closeBtn = document.getElementById('CloseBookmarksBtn');
+    const overlay = document.getElementById('BookmarksOverlay');
+
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            bookmarkSelectionIdx = 0;
+            renderBookmarksList(e.target.value);
+        });
+
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                toggleBookmarksOverlay();
+                return;
+            }
+
+            if (filteredBookmarksCache.length === 0) return;
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                bookmarkSelectionIdx = (bookmarkSelectionIdx + 1) % filteredBookmarksCache.length;
+                updateBookmarkVisualSelection();
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                bookmarkSelectionIdx = (bookmarkSelectionIdx - 1 + filteredBookmarksCache.length) % filteredBookmarksCache.length;
+                updateBookmarkVisualSelection();
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                const targetItem = filteredBookmarksCache[bookmarkSelectionIdx];
+                if (targetItem && targetItem.url) {
+                    spawnTabWithUrl(targetItem.url);
+                    toggleBookmarksOverlay();
+                }
+            } else if (e.key === 'Delete') {
+                e.preventDefault();
+                const targetItem = filteredBookmarksCache[bookmarkSelectionIdx];
+                if (targetItem) {
+                    if (targetItem.type === 'quickmark') {
+                        deleteQuickmark(targetItem.key);
+                    } else if (targetItem.type === 'bookmark') {
+                        deleteBookmark(targetItem.url);
+                    }
+                }
+            }
+        });
+    }
+
+    if (closeBtn) {
+        closeBtn.addEventListener('click', toggleBookmarksOverlay);
+    }
+
+    if (overlay) {
+        overlay.addEventListener('click', (e) => {
+            if (e.target.id === 'BookmarksOverlay') {
+                toggleBookmarksOverlay();
+            }
+        });
+    }
 }
