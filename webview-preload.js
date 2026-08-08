@@ -2,7 +2,7 @@
 
 const injectScript = () => {
     const script = document.createElement('script');
-    script.textContent = `(function() {
+    const codeToInject = `(function() {
         Object.defineProperty(navigator, 'doNotTrack', { get: () => '1', configurable: true });
         Object.defineProperty(navigator, 'globalPrivacyControl', { get: () => true, configurable: true });
 
@@ -73,16 +73,6 @@ const injectScript = () => {
                 return origGetExt.apply(this, arguments);
             };
 
-            // The "Hash of WebGL fingerprint" field never moved under any
-            // amount of pixel-level noise (readPixels, toDataURL), which
-            // means it's very likely not pixel-based at all — the older
-            // fingerprintjs2-style WebGL test instead just concatenates a
-            // long list of getParameter() capability values plus this
-            // extensions list and hashes that string. Shuffling the order
-            // here (not the contents — nothing is added or removed) changes
-            // that joined string on every call without changing what
-            // features are actually reported as available, so real
-            // extension checks like .includes(name) are unaffected.
             const origGetSupportedExtensions = ctx.getSupportedExtensions;
             ctx.getSupportedExtensions = function() {
                 const list = origGetSupportedExtensions.apply(this, arguments);
@@ -125,13 +115,6 @@ const injectScript = () => {
                 origReadPixels.apply(this, arguments);
                 const pixels = arguments[6];
                 if (pixels && pixels.length) {
-                    // A fixed pixels[0] ^= 1 produces the exact same output
-                    // on every call, which is why this was still coming
-                    // back as a static hash rather than "randomised" (the
-                    // way the AudioContext noise below does, since that one
-                    // uses Math.random() per call). Use per-call random
-                    // noise across the buffer instead, so two calls in the
-                    // same page load actually differ.
                     for (let i = 0; i < pixels.length; i += 4) {
                         const delta = (Math.random() < 0.5 ? -1 : 1);
                         pixels[i] = Math.min(255, Math.max(0, pixels[i] + delta));
@@ -143,36 +126,27 @@ const injectScript = () => {
         if (typeof WebGL2RenderingContext !== 'undefined') hookWebGLReadPixels(WebGL2RenderingContext.prototype);
         // -----------------------------------------------------
 
-        // Canvas noise — per-call random (not a fixed ^= 1), so repeated
-        // calls in the same page load produce different output. A static
-        // toggle just swaps one unique fingerprint for another; it doesn't
-        // reduce uniqueness the way genuine per-call randomness does.
         const origGetImageData = CanvasRenderingContext2D.prototype.getImageData;
         const origToDataURL = HTMLCanvasElement.prototype.toDataURL;
 
+        // OPTIMISED: Sample every 16th pixel instead of mutating every single pixel channel
         const addCanvasNoise = (imgData) => {
             const data = imgData.data;
-            for (let i = 0; i < data.length; i += 4) {
+            // Step by 16 channels to drastically reduce CPU overhead during heavy renders
+            for (let i = 0; i < data.length; i += 16) {
                 const delta = (Math.random() < 0.5 ? -1 : 1);
-                data[i]     = Math.min(255, Math.max(0, data[i]     + delta));
-                data[i + 1] = Math.min(255, Math.max(0, data[i + 1] + delta));
-                data[i + 2] = Math.min(255, Math.max(0, data[i + 2] + delta));
+                data[i] = Math.min(255, Math.max(0, data[i] + delta));
             }
             return imgData;
         };
 
         const addWebGLCanvasNoise = (gl) => {
-            // toDataURL() on a WebGL canvas serialises whatever is
-            // currently in the drawing buffer — there's no putImageData
-            // equivalent for WebGL, so nudge one pixel via the scissor
-            // test right before serialisation, then put GL state back
-            // exactly as it was so nothing else on the page notices.
             try {
                 const prevScissorEnabled = gl.isEnabled(gl.SCISSOR_TEST);
                 const prevScissorBox = gl.getParameter(gl.SCISSOR_BOX);
                 const prevClearColor = gl.getParameter(gl.COLOR_CLEAR_VALUE);
 
-                const step = 1 / 255; // smallest possible 8-bit channel change
+                const step = 1 / 255;
                 const jitter = () => (Math.random() < 0.5 ? -step : step);
 
                 gl.enable(gl.SCISSOR_TEST);
@@ -198,10 +172,6 @@ const injectScript = () => {
                 const imgData = origGetImageData.call(ctx, 0, 0, w, h);
                 ctx.putImageData(addCanvasNoise(imgData), 0, 0);
             } else {
-                // A canvas can only ever have one context type — once it's
-                // WebGL, getContext('2d') above returns null and this branch
-                // was silently doing nothing, which is why the WebGL hash
-                // never changed even after the canvas one started working.
                 const glCtx = this.getContext('webgl2') || this.getContext('webgl') || this.getContext('experimental-webgl');
                 if (glCtx) addWebGLCanvasNoise(glCtx);
             }
@@ -225,6 +195,16 @@ const injectScript = () => {
         }
     })();`;
 
+    // Modern CSP Compliant Injection (Avoids TrustedScript assignment error)
+    if (window.trustedTypes && window.trustedTypes.createPolicy) {
+        const policy = window.trustedTypes.defaultPolicy || window.trustedTypes.createPolicy('mise-preload', {
+            createScript: (s) => s
+        });
+        script.text = policy.createScript(codeToInject);
+    } else {
+        script.text = codeToInject;
+    }
+
     (document.head || document.documentElement).appendChild(script);
     script.remove();
 };
@@ -241,9 +221,24 @@ const { ipcRenderer } = require('electron');
 // PRE-EXISTING WEBVIEW KEYBOARD BUBBLING
 // ==========================================
 window.addEventListener('keydown', (e) => {
-    if (e.ctrlKey) {
-        const key = e.key.toLowerCase();
-        
+    const key = e.key.toLowerCase();
+    const isCtrl = e.ctrlKey || e.metaKey;
+
+    // Handle Ctrl + Shift combinations
+    if (isCtrl && e.shiftKey) {
+        if (key === 'w') {
+            e.preventDefault();
+            ipcRenderer.send('bubble-webview-key', 'toggle-dashboard');
+            return;
+        } else if (key === 'i') {
+            e.preventDefault();
+            ipcRenderer.send('bubble-webview-key', 'toggle-devtools');
+            return;
+        }
+    }
+
+    // Handle standard Ctrl combinations
+    if (isCtrl && !e.shiftKey) {
         if (key === 'm') {
             ipcRenderer.send('bubble-webview-key', 'focus-sidebar');
         } else if (key === 'b') {
@@ -261,5 +256,11 @@ window.addEventListener('keydown', (e) => {
         } else if (key === 'h') {
             ipcRenderer.send('bubble-webview-key', 'toggle-help');
         }
+    }
+
+    // Standard F12 toggle for DevTools
+    if (e.key === 'F12') {
+        e.preventDefault();
+        ipcRenderer.send('bubble-webview-key', 'toggle-devtools');
     }
 });

@@ -23,8 +23,19 @@ async function initialiseAdblocker(targetSession) {
     if (!blockerInstance) {
         try {
             if (fs.existsSync(CACHE_PATH)) {
-                const buffer = fs.readFileSync(CACHE_PATH);
-                blockerInstance = ElectronBlocker.deserialize(buffer);
+                try {
+                    const buffer = fs.readFileSync(CACHE_PATH);
+                    blockerInstance = ElectronBlocker.deserialize(buffer);
+                } catch (deserializeErr) {
+                    // Cache file is corrupt or engine version mismatched; purge and rebuild
+                    console.warn('Adblocker cache version mismatch or corrupted file. Rebuilding cache...');
+                    if (fs.existsSync(CACHE_PATH)) {
+                        fs.unlinkSync(CACHE_PATH);
+                    }
+                    blockerInstance = await ElectronBlocker.fromPrebuiltAdsAndTracking();
+                    const buffer = blockerInstance.serialize();
+                    fs.writeFileSync(CACHE_PATH, buffer);
+                }
             } else {
                 blockerInstance = await ElectronBlocker.fromPrebuiltAdsAndTracking();
                 const buffer = blockerInstance.serialize();
@@ -38,7 +49,6 @@ async function initialiseAdblocker(targetSession) {
 
     try {
         if (ipcInitialized) {
-            // Remove existing handlers so Ghostery can re-register them cleanly for secondary sessions
             GHOSTERY_IPC_CHANNELS.forEach(channel => {
                 ipcMain.removeHandler(channel);
             });

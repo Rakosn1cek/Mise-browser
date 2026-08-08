@@ -90,7 +90,7 @@ Mise Browser is designed to be fully controllable via keyboard shortcuts. Below 
 | :---  | :---  |
 | Ctrl + F | Toggle link hints overlay |
 | Right Click | Open contextual menu (Copy, Paste, Save Image As, etc.) |
-| Ctrl + Shift + I | Opens DevTools in new window |
+| Ctrl + Shift + I or F12 | Opens DevTools in new window |
 | Ctrl + Shift + Q [key] | Binds current page URL to that key slot (e.g., press Ctrl + Shift + Q then g for GitHub) |
 | Ctrl + J [key] | Instantly opens the URL assigned to that key |
 | Ctrl + A | Bookmarks the current tab into bookmarks.json |
@@ -113,13 +113,26 @@ Mise Browser is designed to be fully controllable via keyboard shortcuts. Below 
 
 ## Project Structure
 
-- **`main.js`**: Configures the Electron main process, window creation, ad/telemetry blocking, and IPC message routing.
-- **`preload.js`**: Safe bridge exposing specific APIs to the renderer context via `contextBridge`.
-- **`renderer.js`**: Manages browser state, workspace layout, UI event handlers, and themes.
-- **`hinter.js`**: Injectable script implementing the Link Hints overlay.
-- **`webview-preload.js`**: Webview-level preload script bubbling key events and handling custom context menus.
-- **`style.css`**: Standard stylesheet defining the dark and light theme colours and layout elements.
-- **`launch.sh`**: Helper shell script to launch the application safely.
+├── main.js                   Configures Electron main process, window creation, and IPC routing
+├── preload.js                Secure bridge exposing API handlers to the renderer context
+├── renderer.js               Renderer entry point initializing modules and event listeners
+├── security.js               Network filtering, session hardening, and adblocker engine
+├── webview-preload.js        Webview preload script for keyboard event bubbling and fingerprint spoofing
+├── hinter.js                 Injectable script implementing the Link Hints overlay
+├── style.css                 Master stylesheet defining CSS variables, layouts, and themes
+├── launch.sh                 Helper execution script to start the application
+└── modules/                  Renderer module distribution
+├── state.js                  Global application state store
+├── utils.js                  DOM helpers, webview lookup, and theme utilities
+├── webview.js                Workspace rendering, tab spawning, and webview navigation
+├── navigation.js             Address bar overlay, URL parsing, and search autocomplete
+└── overlays/                 UI overlay handlers
+├── bookmarks.js              Bookmarks manager and quickmarks
+├── commandPalette.js         Command palette registry and search engine
+├── dashboard.js              Workspace tree and dashboard navigation
+├── help.js                   Keyboard shortcuts reference window
+├── history.js                History search overlay and purge tools
+└── notes.js                  Markdown quick-notes engine
 
 ---
 
