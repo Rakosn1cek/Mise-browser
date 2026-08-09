@@ -18,7 +18,7 @@ export function toggleHelpMenuWindow() {
         
         applyThemeToOverlayElement(content, "#124647", "#f5f6f9", "#c0caf5", "#3c3e4f");
         
-        content.innerHTML = `Mise Browser — v0.2.6\n==================================================\n
+        content.innerHTML = `Mise Browser — v0.2.7\n==================================================\n
 NAVIGATION & WORKSPACES
 --------------------------------------------------
 Ctrl + T           New DuckDuckGo Tab
