@@ -70,14 +70,6 @@ export const commandRegistry = {
     "Toggle Active Webview DevTools": () => window.toggleActiveDevTools && window.toggleActiveDevTools()
 };
 
-export function populateBookmarksInPalette() {
-    if (!state.bookmarks) return;
-    state.bookmarks.forEach(bm => {
-        const cmdKey = `Bookmark: ${bm.title}`;
-        commandRegistry[cmdKey] = () => spawnTabWithUrl(bm.url);
-    });
-}
-
 export function toggleCommandPaletteView() {
     const overlay = document.getElementById('CommandPaletteOverlay');
     const input = document.getElementById('PaletteInput');

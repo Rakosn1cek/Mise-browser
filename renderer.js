@@ -33,7 +33,6 @@ import {
 
 import { 
     commandRegistry, 
-    populateBookmarksInPalette, 
     toggleCommandPaletteView, 
     filterPaletteCommands, 
     updatePaletteVisualSelection, 
@@ -364,9 +363,7 @@ function setupEventListeners() {
         }
     });
 
-    loadBookmarksAndQuickmarks().then(() => {
-        populateBookmarksInPalette();
-    });
+    loadBookmarksAndQuickmarks();
 }
 
 function handlePrivateBrowsingStateShift(isPrivate) {
