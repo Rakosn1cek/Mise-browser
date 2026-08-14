@@ -18,7 +18,7 @@ export function toggleHelpMenuWindow() {
         
         applyThemeToOverlayElement(content, "#124647", "#f5f6f9", "#c0caf5", "#3c3e4f");
         
-        content.innerHTML = `Mise Browser — v0.2.7\n==================================================\n
+        content.innerHTML = `Mise Browser — v0.2.8\n==================================================\n
 NAVIGATION & WORKSPACES
 --------------------------------------------------
 Ctrl + T           New DuckDuckGo Tab
@@ -43,10 +43,11 @@ WEB INTERACTION
 --------------------------------------------------
 Ctrl + F                    Toggle Link Hints Overlay
 Right Click                 Contextual Actions + (Arch Wiki)
-Ctrl + Shift + i            Toggle DevTools
-Ctrl + Shift + Q [key]      Set quickmark (e.g., press Ctrl + Shift + Q then g for GitHub).
+Ctrl + Shift + i [F12]      Toggle DevTools
+Ctrl + Shift + Q [key]      Set quickmark (e.g., press Ctrl + Shift + Q then g for GitHub)
 Ctrl + J then [key]         Jump to quickmark
-Ctrl + A                    Add bookmark into bookmarks.json.
+Ctrl + A                    Add bookmark into bookmarks.json
+Ctrl + Shift + P [F10]      Play/Pause video playback
 
 SIDEBAR CONTROLS
 --------------------------------------------------

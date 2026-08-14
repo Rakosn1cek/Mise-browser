@@ -3,6 +3,16 @@
 const injectScript = () => {
     const script = document.createElement('script');
     const codeToInject = `(function() {
+        // Guard against this script executing more than once against the same
+        // window/document (e.g. preload re-injection edge cases). Without this,
+        // getContext/getImageData/toDataURL/getChannelData/resolvedOptions all
+        // get wrapped repeatedly, compounding into deep or infinitely recursive
+        // call chains under heavy canvas usage (seen as
+        // "RangeError: Maximum call stack size exceeded" during YouTube's
+        // Polymer dom-repeat construction).
+        if (window.__miseFingerprintPatchesApplied) return;
+        window.__miseFingerprintPatchesApplied = true;
+
         Object.defineProperty(navigator, 'doNotTrack', { get: () => '1', configurable: true });
         Object.defineProperty(navigator, 'globalPrivacyControl', { get: () => true, configurable: true });
 
@@ -107,15 +117,14 @@ const injectScript = () => {
             };
         }
 
-        // --- TARGETED FIX FOR HASH OF WEBGL FINGERPRINT ONLY ---
         const hookWebGLReadPixels = (proto) => {
             if (!proto || !proto.readPixels) return;
             const origReadPixels = proto.readPixels;
             proto.readPixels = function() {
                 origReadPixels.apply(this, arguments);
                 const pixels = arguments[6];
-                if (pixels && pixels.length) {
-                    for (let i = 0; i < pixels.length; i += 4) {
+                if (pixels && pixels.length && pixels.length < 50000) {
+                    for (let i = 0; i < pixels.length; i += 16) {
                         const delta = (Math.random() < 0.5 ? -1 : 1);
                         pixels[i] = Math.min(255, Math.max(0, pixels[i] + delta));
                     }
@@ -124,15 +133,12 @@ const injectScript = () => {
         };
         if (typeof WebGLRenderingContext !== 'undefined') hookWebGLReadPixels(WebGLRenderingContext.prototype);
         if (typeof WebGL2RenderingContext !== 'undefined') hookWebGLReadPixels(WebGL2RenderingContext.prototype);
-        // -----------------------------------------------------
 
         const origGetImageData = CanvasRenderingContext2D.prototype.getImageData;
         const origToDataURL = HTMLCanvasElement.prototype.toDataURL;
 
-        // OPTIMISED: Sample every 16th pixel instead of mutating every single pixel channel
         const addCanvasNoise = (imgData) => {
             const data = imgData.data;
-            // Step by 16 channels to drastically reduce CPU overhead during heavy renders
             for (let i = 0; i < data.length; i += 16) {
                 const delta = (Math.random() < 0.5 ? -1 : 1);
                 data[i] = Math.min(255, Math.max(0, data[i] + delta));
@@ -173,7 +179,7 @@ const injectScript = () => {
                 ctx.putImageData(addCanvasNoise(imgData), 0, 0);
             } else {
                 const glCtx = this.getContext('webgl2') || this.getContext('webgl') || this.getContext('experimental-webgl');
-                if (glCtx) addWebGLCanvasNoise(glCtx);
+                if (glCtx && this.width < 1000 && this.height < 1000) addWebGLCanvasNoise(glCtx);
             }
             return origToDataURL.apply(this, arguments);
         };
@@ -195,7 +201,6 @@ const injectScript = () => {
         }
     })();`;
 
-    // Modern CSP Compliant Injection (Avoids TrustedScript assignment error)
     if (window.trustedTypes && window.trustedTypes.createPolicy) {
         const policy = window.trustedTypes.defaultPolicy || window.trustedTypes.createPolicy('mise-preload', {
             createScript: (s) => s
@@ -224,7 +229,6 @@ window.addEventListener('keydown', (e) => {
     const key = e.key.toLowerCase();
     const isCtrl = e.ctrlKey || e.metaKey;
 
-    // Handle Ctrl + Shift combinations
     if (isCtrl && e.shiftKey) {
         if (key === 'w') {
             e.preventDefault();
@@ -234,10 +238,13 @@ window.addEventListener('keydown', (e) => {
             e.preventDefault();
             ipcRenderer.send('bubble-webview-key', 'toggle-devtools');
             return;
+        } else if (key === '0') {
+            e.preventDefault();
+            ipcRenderer.send('bubble-webview-key', 'toggle-global-media');
+            return;
         }
     }
 
-    // Handle standard Ctrl combinations
     if (isCtrl && !e.shiftKey) {
         if (key === 'm') {
             ipcRenderer.send('bubble-webview-key', 'focus-sidebar');
@@ -255,12 +262,17 @@ window.addEventListener('keydown', (e) => {
             ipcRenderer.send('bubble-webview-key', 'toggle-palette');
         } else if (key === 'h') {
             ipcRenderer.send('bubble-webview-key', 'toggle-help');
-        }
+        } 
     }
 
-    // Standard F12 toggle for DevTools
     if (e.key === 'F12') {
         e.preventDefault();
         ipcRenderer.send('bubble-webview-key', 'toggle-devtools');
+    }
+
+    if (e.key === 'F10') {
+        e.preventDefault();
+        ipcRenderer.send('bubble-webview-key', 'toggle-global-media');
+        return;
     }
 });

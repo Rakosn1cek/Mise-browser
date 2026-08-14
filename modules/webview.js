@@ -74,6 +74,18 @@ export function renderWorkspaceUI(targetTabToFocus = null) {
                     state.sessionState.workspaces[currentWS][idx] = e.url;
                     window.miseAPI.saveSession(state.sessionState);
                 }
+                webview.executeJavaScript(`
+                    (function() {
+                        try {
+                            document.querySelectorAll('video').forEach(v => {
+                                const prevDisplay = v.style.display;
+                                v.style.display = 'none';
+                                void v.offsetHeight; // force synchronous reflow
+                                v.style.display = prevDisplay;
+                            });
+                        } catch (e) {}
+                    })();
+                `, false).catch(() => {});
             });
 
             webview.addEventListener('new-window', (e) => {
@@ -110,8 +122,17 @@ export function renderWorkspaceUI(targetTabToFocus = null) {
                 }
             });
 
+            webview.addEventListener('media-started-playing', () => {
+                updateTabMediaIndicator(currentWS, idx, true);
+            });
+            
+            webview.addEventListener('media-paused', () => {
+                updateTabMediaIndicator(currentWS, idx, false);
+            });
+
             webview.addEventListener('did-start-loading', () => {
                 webview.style.opacity = '1';
+                updateTabMediaIndicator(currentWS, idx, false);
             });
 
             webview.addEventListener('dom-ready', async () => {
@@ -120,7 +141,12 @@ export function renderWorkspaceUI(targetTabToFocus = null) {
 
                 try {
                     const hinterCode = await window.miseAPI.readHinterCode();
-                    if (hinterCode) webview.executeJavaScript(hinterCode);
+                    if (hinterCode && typeof webview.executeJavaScript === 'function') {
+                        // Wrap script evaluation in a self-executing try-catch inside the guest context
+                        // to prevent Electron IPC execution bridge rejections during SPA frame updates
+                        const safeExecutionWrapper = `try { ${hinterCode} } catch(e) {}`;
+                        webview.executeJavaScript(safeExecutionWrapper, false).catch(() => {});
+                    }
                 } catch (err) {}
             });
 
@@ -278,5 +304,56 @@ export function navigateFrameForward() {
     const currentIdx = Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem);
     if (state.activeViewsCache[currentWS] && state.activeViewsCache[currentWS][currentIdx]) {
         state.activeViewsCache[currentWS][currentIdx].goForward();
+    }
+}
+
+export function toggleGlobalMediaPlayback() {
+    Object.values(state.activeViewsCache).forEach(workspaceViews => {
+        workspaceViews.forEach(wv => {
+            if (wv && typeof wv.executeJavaScript === 'function') {
+                wv.executeJavaScript(`
+                    (function() {
+                        try {
+                            const mediaElements = Array.from(document.querySelectorAll('video, audio'));
+                            if (mediaElements.length === 0) return false;
+                            
+                            const hasPlaying = mediaElements.some(m => !m.paused && !m.ended && m.readyState > 2);
+                            
+                            mediaElements.forEach(m => {
+                                if (hasPlaying) {
+                                    m.pause();
+                                } else {
+                                    m.play().catch(() => {});
+                                }
+                            });
+                            return true;
+                        } catch (e) { return false; }
+                    })();
+                `, false).catch(() => {});
+            }
+        });
+    });
+}
+
+export function updateTabMediaIndicator(workspaceId, tabIdx, isAudible) {
+    if (state.sessionState.current_workspace !== workspaceId) return;
+
+    const tabList = document.querySelectorAll('#TabList li');
+    const targetLi = tabList[tabIdx];
+    if (!targetLi) return;
+
+    let mediaBadge = targetLi.querySelector('.tab-media-badge');
+
+    if (isAudible) {
+        if (!mediaBadge) {
+            mediaBadge = document.createElement('span');
+            mediaBadge.className = 'tab-media-badge';
+            mediaBadge.innerHTML = ' 🔊';
+            targetLi.appendChild(mediaBadge);
+        }
+    } else {
+        if (mediaBadge) {
+            mediaBadge.remove();
+        }
     }
 }

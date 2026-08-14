@@ -902,3 +902,12 @@ body.zen-mode #right-content {
     margin-right: 10px;
     font-family: monospace;
 }
+
+.tab-media-badge {
+    font-size: 0.85em;
+    margin-left: 6px;
+    opacity: 0.9;
+    user-select: none;
+    display: inline-block;
+    vertical-align: middle;
+}

@@ -16,7 +16,8 @@ import {
     handleTabRemoval, 
     navigateFrameBack, 
     navigateFrameForward, 
-    applyCSSThemeToView 
+    applyCSSThemeToView,
+    toggleGlobalMediaPlayback
 } from './modules/webview.js';
 
 import { 
@@ -90,11 +91,11 @@ window.executeGlobalCacheWipe = executeGlobalCacheWipe;
 window.toggleActiveDevTools = toggleActiveDevTools;
 window.toggleCommandPaletteView = toggleCommandPaletteView;
 window.buildDashboardTree = buildDashboardTree;
+window.toggleGlobalMediaPlayback = toggleGlobalMediaPlayback;
 
 let findActive = false;
 
 async function initializeBrowser() {
-    // Fix: mutate state.sessionState directly
     state.sessionState = await window.miseAPI.getSession();
     
     if (window.miseAPI && typeof window.miseAPI.setNativeTheme === 'function') {
@@ -142,6 +143,13 @@ function setupEventListeners() {
         }
     });
 
+    window.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === '0') {
+            e.preventDefault();
+            toggleGlobalMediaPlayback();
+        }
+    });
+
     window.miseAPI.onMasterShortcut((action, ...args) => {
         switch (action) {
             case 'spawn-tab': spawnNewBlankTab(); break;
@@ -157,6 +165,7 @@ function setupEventListeners() {
             case 'set-quickmark': promptQuickmark('set'); break;
             case 'jump-quickmark': promptQuickmark('jump'); break;
             case 'add-bookmark': addCurrentPageToBookmarks(); break;
+            case 'toggle-global-media': toggleGlobalMediaPlayback(); break;
             case 'delete-bookmark-entry': {
                 if (state.bookmarksActive && state.filteredBookmarksCache[state.bookmarkSelectionIdx]) {
                     deleteBookmark(state.filteredBookmarksCache[state.bookmarkSelectionIdx].url);
