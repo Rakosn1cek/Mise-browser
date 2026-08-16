@@ -35,6 +35,7 @@ import {
 import { 
     commandRegistry, 
     toggleCommandPaletteView, 
+    togglePreferencesView,
     filterPaletteCommands, 
     updatePaletteVisualSelection, 
     handlePaletteInputNavigation, 
@@ -55,8 +56,6 @@ import {
     toggleHistoryOverlay, 
     filterHistoryItems 
 } from './modules/overlays/history.js';
-
-import { toggleHelpMenuWindow } from './modules/overlays/help.js';
 
 import { 
     parseMarkdownToHtml, 
@@ -83,7 +82,7 @@ window.toggleInPageSearch = toggleInPageSearch;
 window.toggleNotesOverlay = toggleNotesOverlay;
 window.toggleZenMode = toggleZenMode;
 window.toggleInterfaceTheme = toggleInterfaceTheme;
-window.toggleHelpMenuWindow = toggleHelpMenuWindow;
+window.togglePreferencesView = togglePreferencesView;
 window.toggleHistoryOverlay = toggleHistoryOverlay;
 window.handlePrivateBrowsingStateShift = handlePrivateBrowsingStateShift;
 window.executeSurgicalCookieWipe = executeSurgicalCookieWipe;
@@ -181,7 +180,7 @@ function setupEventListeners() {
             case 'focus-webview': focusActiveWebview(); break;
             case 'trigger-hints': triggerLinkHints(); break;
             case 'toggle-palette': toggleCommandPaletteView(); break;
-            case 'toggle-help': toggleHelpMenuWindow(); break;
+            case 'toggle-help': togglePreferencesView(); break;
             case 'toggle-history': toggleHistoryOverlay(); break;
             case 'go-back-signal': navigateFrameBack(); break;
             case 'go-forward-signal': navigateFrameForward(); break;
@@ -199,9 +198,6 @@ function setupEventListeners() {
     });
 
     paletteInput.addEventListener('keydown', handlePaletteInputNavigation);
-    document.getElementById('HelpMenuOverlay').addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') toggleHelpMenuWindow();
-    });
 
     const topNavIds = ['back-btn', 'forward-btn', 'toggle-nav-btn', 'menu-btn'];
     topNavIds.forEach((id, idx) => {
@@ -334,10 +330,10 @@ function setupEventListeners() {
 
     document.getElementById('Sidebar').addEventListener('focusout', (e) => {
         if (e.relatedTarget && !document.getElementById('Sidebar').contains(e.relatedTarget)) {
-            if (state.dashboardActive || state.paletteActive || state.helpActive) return;
+            if (state.dashboardActive || state.paletteActive) return;
             
             if (e.relatedTarget.id === 'PaletteInput' || e.relatedTarget.id === 'PaletteList') return;
-            if (e.relatedTarget.id === 'HelpMenuOverlay' || e.relatedTarget.id === 'HelpMenuContent') return;
+            if (e.relatedTarget.id === 'PreferencesOverlay') return;
 
             if (window.miseAllowWebviewFocus) {
                 window.miseAllowWebviewFocus = false;
@@ -417,10 +413,9 @@ function triggerLinkHints() {
     const activeListItem = document.querySelector('#TabList li.selected');
     if (activeListItem) {
         const currentIdx = Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem);
-        if (state.activeViewsCache[currentWS] && state.activeViewsCache[currentWS][currentIdx]) {
-            try {
-                state.activeViewsCache[currentWS][currentIdx].executeJavaScript("if (typeof window.toggleHints === 'function') { window.toggleHints(); }");
-            } catch (err) {}
+        const activeWv = state.activeViewsCache[currentWS]?.[currentIdx];
+        if (activeWv && typeof activeWv.executeJavaScript === 'function') {
+            activeWv.executeJavaScript("if (typeof window.toggleHints === 'function') { window.toggleHints(); }").catch(() => {});
         }
     }
 }
@@ -450,11 +445,6 @@ function toggleInterfaceTheme() {
     allWebviews.forEach((webview) => {
         applyCSSThemeToView(webview);
     });
-    
-    if (state.helpActive) {
-        const content = document.getElementById('HelpMenuContent');
-        applyThemeToOverlayElement(content, "#124647", "#f5f6f9", "#c0caf5", "#3c3e4f");
-    }
 }
 
 function enforceActiveGlobalThemeMode() {

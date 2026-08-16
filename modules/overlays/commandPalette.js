@@ -1,38 +1,31 @@
 import { state } from '../state.js';
-import { focusActiveWebview, isTargetScript } from '../utils.js';
+import { focusActiveWebview, isTargetScript, isDarkMode } from '../utils.js';
 import { renderWorkspaceUI, switchTabFocus, spawnTabWithUrl, spawnNewBlankTab, handleTabRemoval } from '../webview.js';
 import { toggleBookmarksOverlay } from './bookmarks.js';
 
+function returnFocusToWebview() {
+    window.miseAllowWebviewFocus = true;
+    focusActiveWebview();
+}
+
 export const commandRegistry = {
-    "Toggle Workspace Dashboard": () => window.toggleDashboardView && window.toggleDashboardView(),
     "New DuckDuckGo Tab": () => spawnNewBlankTab(),
+    "Toggle Workspace Dashboard": () => window.toggleDashboardView && window.toggleDashboardView(),
     "Toggle Floating Address Bar": () => window.displayAddressOverlay && window.displayAddressOverlay(),
     "Toggle Link Hints Overlay": () => window.triggerLinkHints && window.triggerLinkHints(),
     "Find In Page": () => window.toggleInPageSearch && window.toggleInPageSearch(),
     "Toggle Bookmarks Manager": () => toggleBookmarksOverlay(),
     "Toggle Quick Notes": () => window.toggleNotesOverlay && window.toggleNotesOverlay(),
     "Toggle Zen Mode (Hide Sidebar)": () => window.toggleZenMode && window.toggleZenMode(),
-    "Focus Sidebar Tab List": () => {
-        const backBtn = document.getElementById('back-btn');
-        if (backBtn) {
-            backBtn.focus();
-        } else {
-            const selectedTab = document.querySelector('#TabList li.selected');
-            if (selectedTab) selectedTab.focus();
-        }
-    },
-    "Focus Active Webview": () => focusActiveWebview(),
+    "Open Preferences": () => togglePreferencesView(),
+    "Toggle Actionable History": () => window.toggleHistoryOverlay && window.toggleHistoryOverlay(),
     "Mute/Unmute Active Tab": () => {
         const currentWS = state.sessionState.current_workspace;
         const activeListItem = document.querySelector('#TabList li.selected');
         if (!activeListItem) return;
         const currentIdx = Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem);
         const activeWv = state.activeViewsCache[currentWS]?.[currentIdx];
-        
-        if (activeWv) {
-            const isMuted = activeWv.isAudioMuted();
-            activeWv.setAudioMuted(!isMuted);
-        }
+        if (activeWv) activeWv.setAudioMuted(!activeWv.isAudioMuted());
     },
     "Reset Tab Zoom Level": () => {
         const currentWS = state.sessionState.current_workspace;
@@ -40,35 +33,123 @@ export const commandRegistry = {
         if (!activeListItem) return;
         const currentIdx = Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem);
         const activeWv = state.activeViewsCache[currentWS]?.[currentIdx];
-        
-        if (activeWv) {
-            activeWv.setZoomLevel(0);
-        }
+        if (activeWv) activeWv.setZoomLevel(0);
     },
-    "Toggle Light/Dark Layout": () => window.toggleInterfaceTheme && window.toggleInterfaceTheme(),
-    "Show Shortcuts Reference": () => window.toggleHelpMenuWindow && window.toggleHelpMenuWindow(),
-    "Toggle Actionable History": () => window.toggleHistoryOverlay && window.toggleHistoryOverlay(),
-    "Toggle Private Browsing": () => {
-        state.globalPrivateModeActive = !state.globalPrivateModeActive;
-        if (window.handlePrivateBrowsingStateShift) {
-            window.handlePrivateBrowsingStateShift(state.globalPrivateModeActive);
-        }
-    },
-    "Force Reload Page (Clear Cache)": () => {
-        const currentWS = state.sessionState.current_workspace;
-        const activeListItem = document.querySelector('#TabList li.selected');
-        if (!activeListItem) return;
-        const currentIdx = Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem);
-        const activeWv = state.activeViewsCache[currentWS]?.[currentIdx];
-        
-        if (activeWv) {
-            activeWv.reloadIgnoringCache();
-        }
-    },
-    "Clear Current Site Cookies": () => window.executeSurgicalCookieWipe && window.executeSurgicalCookieWipe(),
-    "Clear Active Profile Cache": () => window.executeGlobalCacheWipe && window.executeGlobalCacheWipe(),
     "Toggle Active Webview DevTools": () => window.toggleActiveDevTools && window.toggleActiveDevTools()
 };
+
+let preferencesActive = false;
+
+export async function syncPreferencesUI() {
+    if (!window.miseAPI || typeof window.miseAPI.getBrowserSettings !== 'function') return;
+
+    try {
+        const cfg = await window.miseAPI.getBrowserSettings();
+        if (cfg) {
+            const gpuToggle = document.getElementById('setting-gpu-toggle');
+            const throttleToggle = document.getElementById('setting-throttling-toggle');
+            const processSelect = document.getElementById('setting-process-limit');
+
+            if (gpuToggle) gpuToggle.checked = !cfg.disable_gpu;
+            if (throttleToggle) throttleToggle.checked = !!cfg.background_throttling;
+            if (processSelect) processSelect.value = String(cfg.process_limit || 3);
+        }
+    } catch (err) {}
+
+    const themeToggle = document.getElementById('setting-theme-toggle');
+    if (themeToggle) themeToggle.checked = document.body.classList.contains('dark-mode');
+
+    const privateToggle = document.getElementById('setting-private-toggle');
+    if (privateToggle) privateToggle.checked = !!state.globalPrivateModeActive;
+}
+
+export function setupPreferencesListeners() {
+    const closeBtn = document.getElementById('CloseSettingsBtn');
+    if (closeBtn) {
+        closeBtn.onclick = (e) => {
+            e.preventDefault();
+            togglePreferencesView();
+        };
+    }
+
+    const overlay = document.getElementById('PreferencesOverlay');
+    if (overlay) {
+        overlay.onkeydown = (e) => {
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                togglePreferencesView();
+            }
+        };
+    }
+
+    const themeToggle = document.getElementById('setting-theme-toggle');
+    if (themeToggle) {
+        themeToggle.onchange = () => {
+            if (window.toggleInterfaceTheme) window.toggleInterfaceTheme();
+        };
+    }
+
+    const saveBtn = document.getElementById('setting-save-config-btn');
+    if (saveBtn) {
+        saveBtn.onclick = async () => {
+            const gpuToggle = document.getElementById('setting-gpu-toggle');
+            const throttleToggle = document.getElementById('setting-throttling-toggle');
+            const processSelect = document.getElementById('setting-process-limit');
+
+            const newCfg = {
+                disable_gpu: gpuToggle ? !gpuToggle.checked : false,
+                background_throttling: throttleToggle ? throttleToggle.checked : true,
+                process_limit: processSelect ? parseInt(processSelect.value, 10) : 3
+            };
+
+            if (window.miseAPI && typeof window.miseAPI.saveBrowserSettings === 'function') {
+                await window.miseAPI.saveBrowserSettings(newCfg);
+            }
+        };
+    }
+
+    const privateToggle = document.getElementById('setting-private-toggle');
+    if (privateToggle) {
+        privateToggle.onchange = (e) => {
+            state.globalPrivateModeActive = e.target.checked;
+            if (window.handlePrivateBrowsingStateShift) {
+                window.handlePrivateBrowsingStateShift(state.globalPrivateModeActive);
+            }
+        };
+    }
+
+    const clearCookiesBtn = document.getElementById('setting-clear-cookies-btn');
+    if (clearCookiesBtn) {
+        clearCookiesBtn.onclick = () => {
+            if (window.executeSurgicalCookieWipe) window.executeSurgicalCookieWipe();
+        };
+    }
+
+    const clearCacheBtn = document.getElementById('setting-clear-cache-btn');
+    if (clearCacheBtn) {
+        clearCacheBtn.onclick = () => {
+            if (window.executeGlobalCacheWipe) window.executeGlobalCacheWipe();
+        };
+    }
+}
+
+export async function togglePreferencesView() {
+    const overlay = document.getElementById('PreferencesOverlay');
+    if (!overlay) return;
+
+    preferencesActive = !preferencesActive;
+    if (preferencesActive) {
+        if (state.paletteActive) toggleCommandPaletteView();
+        if (state.dashboardActive) document.getElementById('DashboardOverlay').style.display = 'none';
+
+        overlay.style.display = 'block';
+        await syncPreferencesUI();
+        overlay.focus();
+    } else {
+        overlay.style.display = 'none';
+        returnFocusToWebview();
+    }
+}
 
 export function toggleCommandPaletteView() {
     const overlay = document.getElementById('CommandPaletteOverlay');
@@ -76,10 +157,7 @@ export function toggleCommandPaletteView() {
     
     state.paletteActive = !state.paletteActive;
     if (state.paletteActive) {
-        if (state.helpActive) {
-            state.helpActive = false;
-            document.getElementById('HelpMenuOverlay').style.display = 'none';
-        }
+        if (preferencesActive) togglePreferencesView();
         if (state.dashboardActive) {
             state.dashboardActive = false;
             document.getElementById('DashboardOverlay').style.display = 'none';
@@ -90,7 +168,7 @@ export function toggleCommandPaletteView() {
         input.focus();
     } else {
         overlay.style.display = 'none';
-        focusActiveWebview();
+        returnFocusToWebview();
     }
 }
 
@@ -158,17 +236,17 @@ export function executePaletteSelection(rawInputText) {
 
     if (targetCommand && commandRegistry[targetCommand]) {
         commandRegistry[targetCommand]();
+        returnFocusToWebview();
         return;
     }
 
     if (!rawInputText) {
-        focusActiveWebview();
+        returnFocusToWebview();
         return;
     }
 
     let finalCommandToCopy = rawInputText;
     const lowerInput = rawInputText.toLowerCase();
-
     const isRawWebUrl = lowerInput.startsWith('http://') || lowerInput.startsWith('https://');
     const isDangerousSysCall = lowerInput.startsWith('sudo ') || lowerInput.startsWith('curl ') || lowerInput.startsWith('wget ');
 
@@ -177,5 +255,11 @@ export function executePaletteSelection(rawInputText) {
     }
 
     window.miseAPI.executeTerminalCommand(finalCommandToCopy);
-    focusActiveWebview();
+    returnFocusToWebview();
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupPreferencesListeners);
+} else {
+    setupPreferencesListeners();
 }

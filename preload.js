@@ -8,6 +8,8 @@ contextBridge.exposeInMainWorld('miseAPI', {
     getWebviewPreloadPath: () => ipcRenderer.sendSync('get-webview-preload-path'),
     readHinterCode: () => ipcRenderer.invoke('read-hinter-code'),
     showContextMenu: (params) => ipcRenderer.send('show-context-menu', params),
+    getBrowserSettings: () => ipcRenderer.invoke('get-browser-settings'),
+    saveBrowserSettings: (cfg) => ipcRenderer.invoke('save-browser-settings', cfg),
     clearDomainCookies: (data) => ipcRenderer.invoke('clear-domain-cookies', data),
     clearActiveCache: (isPrivate) => ipcRenderer.invoke('clear-active-cache', isPrivate),
     executeTerminalCommand: (commandStr) => ipcRenderer.send('execute-terminal-command', commandStr),

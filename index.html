@@ -38,24 +38,187 @@
 			</div>
 			            
             <div id="webview-container">
-                <!-- Command Palette DOM Nodes Block -->
+                <!-- Floating Command Palette Window -->
                 <div id="CommandPaletteOverlay">
                     <div class="palette-window">
-                        <input type="text" id="PaletteInput" placeholder="Search commands...">
+                        <input type="text" id="PaletteInput" placeholder="Search commands or type shell utility...">
                         <ul id="PaletteList" tabindex="0"></ul>
                     </div>
                 </div>
-
-                <!-- Help Window Modal Frame -->
-                <div id="HelpMenuOverlay" tabindex="0">
-                    <div id="HelpMenuContent"></div>
+                
+                <!-- Full-Page Preferences / Settings View -->
+                <div id="PreferencesOverlay" tabindex="0" style="display: none;">
+                    <div class="settings-page">
+                        <div class="settings-header">
+                            <h1 class="settings-title">Preferences</h1>
+                            <button id="CloseSettingsBtn" class="nav-icon-button" title="Close Preferences"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                
+                        <div class="settings-content">
+                            <!-- Performance & Hardware Section -->
+                            <section class="settings-section">
+                                <h2>Performance & Hardware (Requires Restart)</h2>
+                                <div class="setting-item">
+                                    <div class="setting-info">
+                                        <span class="setting-label">Hardware GPU Acceleration</span>
+                                        <span class="setting-desc">Enables hardware-accelerated video decoding and rasterisation.</span>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="setting-gpu-toggle">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                
+                                <div class="setting-item">
+                                    <div class="setting-info">
+                                        <span class="setting-label">Background Throttling</span>
+                                        <span class="setting-desc">Throttles timers and delays tasks in inactive tabs to save CPU and battery.</span>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="setting-throttling-toggle">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                
+                                <div class="setting-item">
+                                    <div class="setting-info">
+                                        <span class="setting-label">Renderer Process Limit</span>
+                                        <span class="setting-desc">Hard caps background Chromium process forks.</span>
+                                    </div>
+                                    <select id="setting-process-limit" class="settings-select">
+                                        <option value="1">1 process</option>
+                                        <option value="2">2 processes</option>
+                                        <option value="3">3 processes</option>
+                                        <option value="4">4 processes</option>
+                                        <option value="5">5 processes</option>
+                                    </select>
+                                </div>
+                
+                                <div style="display: flex; justify-content: flex-end; margin-top: 10px;">
+                                    <button id="setting-save-config-btn" class="settings-action-btn" style="background-color: var(--accent); color: #000; font-weight: bold; padding: 8px 16px;">
+                                        Save & Restart Engine
+                                    </button>
+                                </div>
+                            </section>
+                
+                            <!-- Appearance Section -->
+                            <section class="settings-section">
+                                <h2>Appearance</h2>
+                                <div class="setting-item">
+                                    <div class="setting-info">
+                                        <span class="setting-label">Dark Theme Layout</span>
+                                        <span class="setting-desc">Toggle between Tokyo Night dark theme and high-contrast light theme.</span>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="setting-theme-toggle">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                            </section>
+                
+                            <!-- Privacy & Protection Section -->
+                            <section class="settings-section">
+                                <h2>Privacy & Protection</h2>
+                                <div class="setting-item">
+                                    <div class="setting-info">
+                                        <span class="setting-label">Global Private Browsing</span>
+                                        <span class="setting-desc">Isolates navigation into an in-memory session partition.</span>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="setting-private-toggle">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                
+                                <div class="setting-item">
+                                    <div class="setting-info">
+                                        <span class="setting-label">Active Site Data</span>
+                                        <span class="setting-desc">Clear session cache or surgical cookies for the current domain.</span>
+                                    </div>
+                                    <div class="setting-actions">
+                                        <button id="setting-clear-cookies-btn" class="settings-action-btn">Clear Site Cookies</button>
+                                        <button id="setting-clear-cache-btn" class="settings-action-btn">Clear Cache</button>
+                                    </div>
+                                </div>
+                            </section>
+                
+                            <!-- Complete Help Reference & Shortcuts Section -->
+                            <section class="settings-section">
+                                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--border); padding-bottom: 8px;">
+                                    <h2 style="border-bottom: none; padding-bottom: 0; margin-bottom: 0;">Help & Shortcuts Reference</h2>
+                                    <span style="font-family: monospace; font-size: 12px; color: var(--accent);">Mise Browser v0.2.9</span>
+                                </div>
+                
+                                <div class="reference-category">
+                                    <h3 class="reference-subheading">Navigation & Workspaces</h3>
+                                    <div class="shortcuts-grid">
+                                        <div class="shortcut-row"><span class="shortcut-key">Ctrl + T</span><span class="shortcut-desc">New DuckDuckGo Tab</span></div>
+                                        <div class="shortcut-row"><span class="shortcut-key">Ctrl + L</span><span class="shortcut-desc">Toggle Floating Address Bar</span></div>
+                                        <div class="shortcut-row"><span class="shortcut-key">Ctrl + W</span><span class="shortcut-desc">Close Current Tab (or Node)</span></div>
+                                        <div class="shortcut-row"><span class="shortcut-key">Ctrl + Shift + W</span><span class="shortcut-desc">Toggle Workspace Dashboard</span></div>
+                                        <div class="shortcut-row"><span class="shortcut-key">Ctrl + S</span><span class="shortcut-desc">Quick Save Active Workspace / Find In Page</span></div>
+                                        <div class="shortcut-row"><span class="shortcut-key">Ctrl + R</span><span class="shortcut-desc">Reload Active Tab</span></div>
+                                        <div class="shortcut-row"><span class="shortcut-key">Ctrl + D</span><span class="shortcut-desc">Quick Remove Current Tab</span></div>
+                                        <div class="shortcut-row"><span class="shortcut-key">Ctrl + M</span><span class="shortcut-desc">Focus Sidebar Tab List</span></div>
+                                        <div class="shortcut-row"><span class="shortcut-key">Ctrl + B</span><span class="shortcut-desc">Focus Active Webview</span></div>
+                                        <div class="shortcut-row"><span class="shortcut-key">Enter</span><span class="shortcut-desc">Switch to Selected Sidebar Tab</span></div>
+                                        <div class="shortcut-row"><span class="shortcut-key">Ctrl + P</span><span class="shortcut-desc">Toggle Command Palette</span></div>
+                                        <div class="shortcut-row"><span class="shortcut-key">Ctrl + Shift + P</span><span class="shortcut-desc">Toggle Private Browsing Mode On/Off</span></div>
+                                        <div class="shortcut-row"><span class="shortcut-key">Ctrl + N</span><span class="shortcut-desc">Open Notes Taking Overlay</span></div>
+                                        <div class="shortcut-row"><span class="shortcut-key">Ctrl + Shift + Tab</span><span class="shortcut-desc">Focus sidebar nav buttons</span></div>
+                                        <div class="shortcut-row"><span class="shortcut-key">Ctrl + Shift + Z</span><span class="shortcut-desc">Hide/Unhide Sidebar (Zen Mode)</span></div>
+                                        <div class="shortcut-row"><span class="shortcut-key">Ctrl + Shift + B</span><span class="shortcut-desc">Open Bookmarks and Quickmarks</span></div>
+                                        <div class="shortcut-row"><span class="shortcut-key">Delete</span><span class="shortcut-desc">Deletes/Removes Bookmarks/Quickmarks When Selected</span></div>
+                                    </div>
+                                </div>
+                
+                                <div class="reference-category">
+                                    <h3 class="reference-subheading">Web Interaction</h3>
+                                    <div class="shortcuts-grid">
+                                        <div class="shortcut-row"><span class="shortcut-key">Ctrl + F</span><span class="shortcut-desc">Toggle Link Hints Overlay</span></div>
+                                        <div class="shortcut-row"><span class="shortcut-key">Right Click</span><span class="shortcut-desc">Contextual Actions + (Arch Wiki)</span></div>
+                                        <div class="shortcut-row"><span class="shortcut-key">Ctrl + Shift + I [F12]</span><span class="shortcut-desc">Toggle Active Webview DevTools</span></div>
+                                        <div class="shortcut-row"><span class="shortcut-key">Ctrl + Shift + Q [key]</span><span class="shortcut-desc">Set quickmark (e.g. Ctrl + Shift + Q then g for GitHub)</span></div>
+                                        <div class="shortcut-row"><span class="shortcut-key">Ctrl + J [key]</span><span class="shortcut-desc">Jump to quickmark</span></div>
+                                        <div class="shortcut-row"><span class="shortcut-key">Ctrl + A</span><span class="shortcut-desc">Add bookmark into bookmarks.json</span></div>
+                                        <div class="shortcut-row"><span class="shortcut-key">Ctrl + Shift + 0 [F10]</span><span class="shortcut-desc">Play/Pause video playback globally</span></div>
+                                    </div>
+                                </div>
+                
+                                <div class="reference-category">
+                                    <h3 class="reference-subheading">Sidebar Controls</h3>
+                                    <div class="shortcuts-grid">
+                                        <div class="shortcut-row"><span class="shortcut-key">Arrow Keys L/R</span><span class="shortcut-desc">Move around top navigation buttons</span></div>
+                                        <div class="shortcut-row"><span class="shortcut-key">Sun/Moon Icon</span><span class="shortcut-desc">Toggle Light/Dark Layout</span></div>
+                                        <div class="shortcut-row"><span class="shortcut-key">Bell Icon</span><span class="shortcut-desc">Toggle Web Notifications</span></div>
+                                    </div>
+                                </div>
+                
+                                <div class="reference-category">
+                                    <h3 class="reference-subheading">Search Bar Aliases</h3>
+                                    <div class="aliases-grid">
+                                        <div class="alias-card"><span class="alias-prefix">g</span><span class="alias-target">Google Search</span></div>
+                                        <div class="alias-card"><span class="alias-prefix">yt</span><span class="alias-target">YouTube Search</span></div>
+                                        <div class="alias-card"><span class="alias-prefix">a</span><span class="alias-target">Arch Linux Wiki</span></div>
+                                        <div class="alias-card"><span class="alias-prefix">gh</span><span class="alias-target">GitHub Search</span></div>
+                                        <div class="alias-card"><span class="alias-prefix">ddg</span><span class="alias-target">DuckDuckGo Search</span></div>
+                                        <div class="alias-card"><span class="alias-prefix">pkg</span><span class="alias-target">Arch Packages</span></div>
+                                        <div class="alias-card"><span class="alias-prefix">so</span><span class="alias-target">StackOverflow</span></div>
+                                        <div class="alias-card"><span class="alias-prefix">r</span><span class="alias-target">Reddit Search</span></div>
+                                    </div>
+                                </div>
+                            </section>
+                        </div>
+                    </div>
                 </div>
 
+                <!-- Find Bar Overlay -->
                 <div id="FindBarOverlay">
                     <input type="text" id="FindInput" placeholder="Find in page...">
                     <span id="FindMatchCount"></span>
                 </div>
-				
+
+				<!-- Dashboard Overlay -->
                 <div id="DashboardOverlay" tabindex="0">
                     <div class="dashboard-header">
                         <div class="dashboard-title">Workspace Dashboard</div>

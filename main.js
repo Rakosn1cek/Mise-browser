@@ -184,8 +184,8 @@ function createWindow() {
                 { type: 'separator' },
                 {
                     label: 'Renderer Process Limit',
-                    submenu: [2, 3, 4, 5].map(num => ({
-                        label: `Limit to ${num} processes`,
+                    submenu: [1, 2, 3, 4, 5].map(num => ({
+                        label: `Limit to ${num} process${num === 1 ? '' : 'es'}`,
                         type: 'radio',
                         checked: cfg.process_limit === num,
                         click: () => {
@@ -351,8 +351,6 @@ ipcMain.handle('save-notes', async (event, content) => {
 
 ipcMain.on('toggle-active-devtools', (event) => {
     if (!mainWindow) return;
-
-    // Send a signal back to renderer to handle webview DevTools directly
     mainWindow.webContents.send('master-shortcut', 'toggle-devtools');
 });
 
@@ -364,6 +362,11 @@ ipcMain.on('set-native-theme', (event, mode) => {
 // --- IPC CONFIG CHANNELS FOR THE UI ---
 ipcMain.handle('get-browser-settings', async () => {
     return loadBrowserConfig();
+});
+
+ipcMain.handle('save-browser-settings', async (event, newCfg) => {
+    saveBrowserConfig(newCfg);
+    return true;
 });
 
 // --- IPC CHANNELS AND UTILITY HANDLERS ---
@@ -496,6 +499,7 @@ ipcMain.on('execute-terminal-command', (event, commandStr) => {
 // Monitor all global frame allocations to catch child webview tags securely
 app.on('web-contents-created', (event, webContents) => {
     if (webContents.getType() === 'webview') {
+        webContents.setMaxListeners(30);
 
         webContents.on('did-navigate', (navEvent, url) => {
             const title = webContents.getTitle();
