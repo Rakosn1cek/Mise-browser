@@ -10,7 +10,7 @@ export const state = {
     // UI Active Flags
     dashboardActive: false,
     paletteActive: false,
-    helpActive: false,
+    preferencesActive: false,
     historyActive: false,
     globalPrivateModeActive: false,
     notesActive: false,

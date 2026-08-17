@@ -311,7 +311,7 @@ function setupEventListeners() {
     const overlay = document.getElementById('DashboardOverlay');
     overlay.addEventListener('keydown', (e) => {
         if (!state.dashboardActive || state.dashboardItems.length === 0) return;
-        if (document.activeElement === document.getElementById('NewWorkspaceTitleInput')) return;
+        if (document.activeElement === document.getElementById('NewWorkspaceTitleInput') || document.activeElement.classList.contains('dashboard-rename-input')) return;
 
         if (e.key === 'ArrowDown') {
             e.preventDefault();
@@ -325,15 +325,18 @@ function setupEventListeners() {
             e.preventDefault();
             const targetItem = state.dashboardItems[state.dashboardSelectionIdx];
             if (targetItem) executeDashboardItemActivation(targetItem.payload);
+        } else if (e.key === 'Delete') {
+            e.preventDefault();
+            handleTabRemoval();
         }
     });
 
     document.getElementById('Sidebar').addEventListener('focusout', (e) => {
         if (e.relatedTarget && !document.getElementById('Sidebar').contains(e.relatedTarget)) {
-            if (state.dashboardActive || state.paletteActive) return;
+            if (state.dashboardActive || state.paletteActive || state.preferencesActive) return;
             
             if (e.relatedTarget.id === 'PaletteInput' || e.relatedTarget.id === 'PaletteList') return;
-            if (e.relatedTarget.id === 'PreferencesOverlay') return;
+            if (e.relatedTarget.id === 'PreferencesOverlay' || document.getElementById('PreferencesOverlay')?.contains(e.relatedTarget)) return;
 
             if (window.miseAllowWebviewFocus) {
                 window.miseAllowWebviewFocus = false;

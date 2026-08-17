@@ -6,8 +6,8 @@ export function toggleDashboardView() {
     if (state.paletteActive && typeof window.toggleCommandPaletteView === 'function') {
         window.toggleCommandPaletteView();
     }
-    if (state.helpActive && typeof window.toggleHelpMenuWindow === 'function') {
-        window.toggleHelpMenuWindow();
+    if (state.preferencesActive && typeof window.togglePreferencesView === 'function') {
+        window.togglePreferencesView();
     }
     
     const overlay = document.getElementById('DashboardOverlay');
@@ -27,29 +27,167 @@ export function toggleDashboardView() {
     }
 }
 
+export function renameWorkspace(oldName, newName) {
+    const trimmed = newName ? newName.trim() : '';
+    if (!trimmed || trimmed === oldName || state.sessionState.workspaces[trimmed]) return;
+
+    // Migrate workspace tabs and references
+    state.sessionState.workspaces[trimmed] = state.sessionState.workspaces[oldName];
+    delete state.sessionState.workspaces[oldName];
+
+    if (state.activeViewsCache[oldName]) {
+        state.activeViewsCache[trimmed] = state.activeViewsCache[oldName];
+        delete state.activeViewsCache[oldName];
+    }
+
+    if (state.activeTitlesCache[oldName]) {
+        state.activeTitlesCache[trimmed] = state.activeTitlesCache[oldName];
+        delete state.activeTitlesCache[oldName];
+    }
+
+    if (state.sessionState.current_workspace === oldName) {
+        state.sessionState.current_workspace = trimmed;
+    }
+
+    window.miseAPI.saveSession(state.sessionState);
+    renderWorkspaceUI();
+    buildDashboardTree();
+}
+
+export function deleteWorkspace(wsName) {
+    const totalWorkspaces = Object.keys(state.sessionState.workspaces);
+    if (totalWorkspaces.length <= 1) return;
+
+    if (wsName === state.sessionState.current_workspace) {
+        const fallbackWS = totalWorkspaces.find(k => k !== wsName);
+        state.sessionState.current_workspace = fallbackWS;
+    }
+
+    if (state.activeViewsCache[wsName]) {
+        state.activeViewsCache[wsName].forEach(wv => wv.remove());
+        delete state.activeViewsCache[wsName];
+    }
+    delete state.activeTitlesCache[wsName];
+    delete state.sessionState.workspaces[wsName];
+    
+    window.miseAPI.saveSession(state.sessionState);
+    renderWorkspaceUI();
+    buildDashboardTree();
+}
+
 export function buildDashboardTree() {
     const container = document.getElementById('DashboardTreeContainer');
     container.innerHTML = '';
     state.dashboardItems = [];
 
-    Object.keys(state.sessionState.workspaces).forEach((wsName) => {
+    const wsKeys = Object.keys(state.sessionState.workspaces);
+
+    wsKeys.forEach((wsName) => {
         const node = document.createElement('div');
         node.className = 'workspace-tree-node';
 
-        const header = document.createElement('div');
-        header.className = 'workspace-tree-header';
-        header.textContent = wsName + (wsName === state.sessionState.current_workspace ? ' (Active)' : '');
+        const headerContainer = document.createElement('div');
+        headerContainer.className = 'workspace-tree-header';
+        headerContainer.style.display = 'flex';
+        headerContainer.style.alignItems = 'center';
+        headerContainer.style.justifyContent = 'space-between';
+
+        const titleSpan = document.createElement('span');
+        titleSpan.textContent = wsName + (wsName === state.sessionState.current_workspace ? ' (Active)' : '');
+        titleSpan.style.flex = '1';
+        titleSpan.style.cursor = 'pointer';
+
+        const actionsDiv = document.createElement('div');
+        actionsDiv.style.display = 'flex';
+        actionsDiv.style.gap = '6px';
+
+        // Trigger inline edit mode
+        const activateRenameMode = () => {
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = wsName;
+            input.className = 'dashboard-rename-input';
+            input.style.flex = '1';
+            input.style.background = 'var(--bg-main)';
+            input.style.color = 'var(--text)';
+            input.style.border = '1px solid var(--accent)';
+            input.style.borderRadius = '3px';
+            input.style.padding = '2px 6px';
+            input.style.fontSize = '14px';
+            input.style.outline = 'none';
+
+            let saved = false;
+            const submitRename = () => {
+                if (saved) return;
+                saved = true;
+                const val = input.value.trim();
+                if (val && val !== wsName) {
+                    renameWorkspace(wsName, val);
+                } else {
+                    buildDashboardTree();
+                }
+            };
+
+            input.addEventListener('keydown', (ie) => {
+                ie.stopPropagation();
+                if (ie.key === 'Enter') {
+                    submitRename();
+                } else if (ie.key === 'Escape') {
+                    saved = true;
+                    buildDashboardTree();
+                }
+            });
+
+            input.addEventListener('blur', submitRename);
+
+            headerContainer.replaceChild(input, titleSpan);
+            input.focus();
+            input.select();
+        };
+
+        // Dedicated Rename Button
+        const renameBtn = document.createElement('button');
+        renameBtn.className = 'nav-icon-button';
+        renameBtn.innerHTML = '<i class="fa-solid fa-pen-to-square"></i>';
+        renameBtn.title = 'Rename Workspace';
+        renameBtn.style.width = '24px';
+        renameBtn.style.height = '24px';
+        renameBtn.style.fontSize = '11px';
+        renameBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            activateRenameMode();
+        });
+        actionsDiv.appendChild(renameBtn);
+
+        // Dedicated Delete Button
+        if (wsKeys.length > 1) {
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'nav-icon-button';
+            deleteBtn.innerHTML = '<i class="fa-solid fa-trash-can"></i>';
+            deleteBtn.title = 'Delete Workspace';
+            deleteBtn.style.width = '24px';
+            deleteBtn.style.height = '24px';
+            deleteBtn.style.fontSize = '11px';
+            deleteBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                deleteWorkspace(wsName);
+            });
+            actionsDiv.appendChild(deleteBtn);
+        }
+
+        headerContainer.appendChild(titleSpan);
+        headerContainer.appendChild(actionsDiv);
         
         const wsPayload = ['workspace', wsName, null];
-        const wsItemRef = { element: header, payload: wsPayload };
+        const wsItemRef = { element: headerContainer, payload: wsPayload };
         state.dashboardItems.push(wsItemRef);
 
-        header.addEventListener('click', () => {
+        titleSpan.addEventListener('click', () => {
             executeDashboardItemActivation(wsPayload);
         });
 
-        header.addEventListener('dragover', (e) => e.preventDefault());
-        header.addEventListener('drop', (e) => {
+        headerContainer.addEventListener('dragover', (e) => e.preventDefault());
+        headerContainer.addEventListener('drop', (e) => {
             e.preventDefault();
             try {
                 const data = JSON.parse(e.dataTransfer.getData('text/plain'));
@@ -85,7 +223,7 @@ export function buildDashboardTree() {
             }
         });
 
-        node.appendChild(header);
+        node.appendChild(headerContainer);
 
         const urls = state.sessionState.workspaces[wsName] || [];
         urls.forEach((url, idx) => {
