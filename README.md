@@ -83,6 +83,7 @@ Mise Browser is designed to be fully controllable via keyboard shortcuts. Below 
 | Ctrl + Shift + Z | Hide/unhide Sidebar |
 | Ctrl + Shift + B | Opens Bookmarks and Quickmarks |
 | DELETE | Deletes/Removes Bookmarks/Quickmarks when selected |
+| Ctrl + A | Select All Text |
 
 ### Web Interaction
 
@@ -93,7 +94,7 @@ Mise Browser is designed to be fully controllable via keyboard shortcuts. Below 
 | Ctrl + Shift + I or F12 | Opens DevTools in new window |
 | Ctrl + Shift + Q [key] | Binds current page URL to that key slot (e.g., press Ctrl + Shift + Q then g for GitHub) |
 | Ctrl + J [key] | Instantly opens the URL assigned to that key |
-| Ctrl + A | Bookmarks the current tab into bookmarks.json |
+| Ctrl + Shift + A | Bookmarks the current tab into bookmarks.json |
 
 ### Search Bar 
 
