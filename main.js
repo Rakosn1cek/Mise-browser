@@ -318,7 +318,7 @@ function createWindow() {
              event.preventDefault();
              mainWindow.webContents.send('master-shortcut', 'jump-quickmark');
          }
-         else if (isCtrl && key === 'a') {
+         else if (isCtrl && isShift && key === 'a') {
              event.preventDefault();
              mainWindow.webContents.send('master-shortcut', 'add-bookmark');
          }
@@ -606,7 +606,7 @@ app.on('web-contents-created', (event, webContents) => {
                 inputEvent.preventDefault();
                 mainWindow.webContents.send('master-shortcut', 'jump-quickmark');
             }
-            else if (isCtrl && key === 'a') {
+            else if (isCtrl && isShift && key === 'a') {
                 inputEvent.preventDefault();
                 mainWindow.webContents.send('master-shortcut', 'add-bookmark');
             }
