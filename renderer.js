@@ -74,6 +74,8 @@ import {
     hideSuggestions 
 } from './modules/navigation.js';
 
+import { openTransientShareModal } from './modules/overlays/shareModal.js';
+
 // Attach functions needed across module boundaries to window
 window.toggleDashboardView = toggleDashboardView;
 window.displayAddressOverlay = displayAddressOverlay;
@@ -153,6 +155,7 @@ function setupEventListeners() {
         switch (action) {
             case 'spawn-tab': spawnNewBlankTab(); break;
             case 'spawn-tab-with-url': spawnTabWithUrl(args[0]); break;
+            case 'open-transient-share': openTransientShareModal(args[0]); break;
             case 'toggle-address': displayAddressOverlay(); break;
             case 'toggle-dashboard': toggleDashboardView(); break;
             case 'toggle-devtools': toggleActiveDevTools(); break;

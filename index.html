@@ -93,6 +93,22 @@
                                         <option value="5">5 processes</option>
                                     </select>
                                 </div>
+
+                                <!-- Share via Email Section -->
+                                <div class="setting-item">
+                                    <div class="setting-info">
+                                        <span class="setting-label">Default Email Handler</span>
+                                        <span class="setting-desc">Choose between native OS mail client or a webmail compose provider.</span>
+                                    </div>
+                                    <select id="setting-email-handler" class="settings-select">
+                                        <option value="system">System Default (mailto:)</option>
+                                        <option value="https://mail.zoho.eu/zm/comp.do?originalMode=compose&app=6&subject=%s&body=%b">Zoho Mail (EU)</option>
+                                        <option value="https://mail.google.com/mail/u/0/#inbox?compose=new&subject=%s&body=%b">Gmail</option>
+                                        <option value="https://outlook.live.com/mail/0/deeplink/compose?subject=%s&body=%b">Outlook Web</option>
+                                        <option value="https://mail.proton.me/u/0/compose?subject=%s&body=%b">ProtonMail</option>
+                                        <option value="https://app.fastmail.com/mail/compose?subject=%s&body=%b">Fastmail</option>
+                                    </select>
+                                </div>
                 
                                 <div style="display: flex; justify-content: flex-end; margin-top: 10px;">
                                     <button id="setting-save-config-btn" class="settings-action-btn" style="background-color: var(--accent); color: #000; font-weight: bold; padding: 8px 16px;">
@@ -146,7 +162,7 @@
                             <section class="settings-section">
                                 <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--border); padding-bottom: 8px;">
                                     <h2 style="border-bottom: none; padding-bottom: 0; margin-bottom: 0;">Help & Shortcuts Reference</h2>
-                                    <span style="font-family: monospace; font-size: 12px; color: var(--accent);">Mise Browser v0.3.1</span>
+                                    <span style="font-family: monospace; font-size: 12px; color: var(--accent);">Mise Browser v0.3.2</span>
                                 </div>
                 
                                 <div class="reference-category">
@@ -277,6 +293,17 @@
         </div>
     </div>
 
+	<!-- Share Modal Overlay -->
+	<div id="ShareModalOverlay" class="share-modal-overlay" style="display: none;">
+	    <div class="share-modal-window">
+	        <div class="share-modal-header">
+	            <span class="share-modal-title"><i class="fa-solid fa-paper-plane"></i> Quick Share</span>
+	            <button id="CloseShareModalBtn" class="nav-icon-button" title="Close (Esc)"><i class="fa-solid fa-xmark"></i></button>
+	        </div>
+	        <div id="ShareModalWebviewContainer" class="share-modal-content"></div>
+	    </div>
+	</div>
+	
     <script type="module" src="renderer.js"></script>
 </body>
 </html>

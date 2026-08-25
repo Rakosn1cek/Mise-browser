@@ -49,10 +49,12 @@ export async function syncPreferencesUI() {
             const gpuToggle = document.getElementById('setting-gpu-toggle');
             const throttleToggle = document.getElementById('setting-throttling-toggle');
             const processSelect = document.getElementById('setting-process-limit');
+            const emailSelect = document.getElementById('setting-email-handler');
 
             if (gpuToggle) gpuToggle.checked = !cfg.disable_gpu;
             if (throttleToggle) throttleToggle.checked = !!cfg.background_throttling;
             if (processSelect) processSelect.value = String(cfg.process_limit || 3);
+            if (emailSelect) emailSelect.value = cfg.email_handler || 'system';
         }
     } catch (err) {}
 
@@ -95,11 +97,13 @@ export function setupPreferencesListeners() {
             const gpuToggle = document.getElementById('setting-gpu-toggle');
             const throttleToggle = document.getElementById('setting-throttling-toggle');
             const processSelect = document.getElementById('setting-process-limit');
+            const emailSelect = document.getElementById('setting-email-handler');
 
             const newCfg = {
                 disable_gpu: gpuToggle ? !gpuToggle.checked : false,
                 background_throttling: throttleToggle ? throttleToggle.checked : true,
-                process_limit: processSelect ? parseInt(processSelect.value, 10) : 3
+                process_limit: processSelect ? parseInt(processSelect.value, 10) : 3,
+                email_handler: emailSelect ? emailSelect.value : 'system'
             };
 
             if (window.miseAPI && typeof window.miseAPI.saveBrowserSettings === 'function') {

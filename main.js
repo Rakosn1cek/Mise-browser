@@ -15,7 +15,8 @@ const QUICKMARKS_PATH = path.join(CONFIG_DIR, 'quickmarks.json');
 const DEFAULT_CONFIG = {
     disable_gpu: false,          // Keep false by default for cool video playback!
     background_throttling: true,
-    process_limit: 3
+    process_limit: 3,
+    email_handler: 'system' // 'system' or template
 };
 
 function loadBrowserConfig() {
@@ -516,6 +517,24 @@ app.on('web-contents-created', (event, webContents) => {
             
             const menu = new Menu();
 
+            const openShareModal = (url) => {
+                if (mainWindow && mainWindow.webContents) {
+                    mainWindow.webContents.send('master-shortcut', 'open-transient-share', url);
+                }
+            };
+
+            const openLinkTab = (url) => {
+                if (mainWindow && mainWindow.webContents) {
+                    mainWindow.webContents.send('master-shortcut', 'spawn-tab-with-url', url);
+                }
+            };
+
+            const targetUrl = params.linkURL || params.srcURL || params.pageURL || webContents.getURL();
+            const targetText = params.selectionText ? params.selectionText.trim() : webContents.getTitle();
+            
+            const encodedUrl = encodeURIComponent(targetUrl || '');
+            const encodedText = encodeURIComponent(targetText || '');
+        
             if (params.dictionarySuggestions && params.dictionarySuggestions.length > 0) {
                 params.dictionarySuggestions.forEach(suggestion => {
                     menu.append(new MenuItem({
@@ -525,25 +544,30 @@ app.on('web-contents-created', (event, webContents) => {
                 });
                 menu.append(new MenuItem({ type: 'separator' }));
             }
-
+        
             if (params.selectionText && params.selectionText.trim() !== '') {
                 menu.append(new MenuItem({ label: 'Copy', role: 'copy' }));
             }
+            
             if (params.linkURL && params.linkURL.trim() !== '') {
                 menu.append(new MenuItem({
                     label: 'Open Link in New Tab',
+                    click: () => openLinkTab(params.linkURL)
+                }));
+                menu.append(new MenuItem({
+                    label: 'Copy Link Address',
                     click: () => {
-                        if (mainWindow && mainWindow.webContents) {
-                            mainWindow.webContents.send('master-shortcut', 'spawn-tab-with-url', params.linkURL);
-                        }
+                        clipboard.writeText(params.linkURL);
                     }
                 }));
             }
+        
             if (params.isEditable) {
                 menu.append(new MenuItem({ label: 'Paste', role: 'paste' }));
                 menu.append(new MenuItem({ label: 'Cut', role: 'cut' }));
                 menu.append(new MenuItem({ label: 'Select All', role: 'selectall' }));
             }
+        
             if (params.mediaType === 'image') {
                 menu.append(new MenuItem({
                     label: 'Save Image As...',
@@ -551,15 +575,105 @@ app.on('web-contents-created', (event, webContents) => {
                 }));
                 menu.append(new MenuItem({
                     label: 'Copy Image Address',
-                    click: () => { const { clipboard } = require('electron'); clipboard.writeText(params.srcURL); }
+                    click: () => { 
+                        clipboard.writeText(params.srcURL); 
+                    }
                 }));
             }
-            if (menu.items.length === 0) {
+        
+            menu.append(new MenuItem({ type: 'separator' }));
+        
+            const shareSubmenu = new Menu();
+        
+            shareSubmenu.append(new MenuItem({
+                label: 'Share to WhatsApp',
+                click: () => openShareModal(`https://web.whatsapp.com/send?text=${encodedText}%20${encodedUrl}`)
+            }));
+        
+            shareSubmenu.append(new MenuItem({
+                label: 'Share to X (Twitter)',
+                click: () => openShareModal(`https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`)
+            }));
+        
+            shareSubmenu.append(new MenuItem({
+                label: 'Share to Telegram',
+                click: () => openShareModal(`https://t.me/share/url?url=${encodedUrl}&text=${encodedText}`)
+            }));
+        
+            shareSubmenu.append(new MenuItem({
+                label: 'Share to Reddit',
+                click: () => openShareModal(`https://www.reddit.com/submit?url=${encodedUrl}&title=${encodedText}`)
+            }));
+        
+            shareSubmenu.append(new MenuItem({
+                label: 'Share via Email',
+                click: () => {
+                    const cfg = loadBrowserConfig();
+                    const handler = cfg.email_handler || 'system';
+        
+                    const pageTitle = webContents.getTitle() || 'Shared link';
+                    const currentUrl = params.pageURL || webContents.getURL() || '';
+                    const selectedSnippet = params.selectionText ? params.selectionText.trim() : '';
+                    const imageSrc = params.srcURL || '';
+        
+                    let emailSubject = pageTitle;
+                    let emailBody = '';
+        
+                    if (selectedSnippet) {
+                        emailSubject = `Snippet from: ${pageTitle}`;
+                        emailBody = `${selectedSnippet}\n\nSource: ${currentUrl}`;
+                        clipboard.writeText(selectedSnippet);
+                    } else if (imageSrc) {
+                        emailSubject = `Image from: ${pageTitle}`;
+                        emailBody = `${imageSrc}\n\nPage: ${currentUrl}`;
+                    } else {
+                        emailSubject = pageTitle;
+                        emailBody = currentUrl;
+                    }
+        
+                    const encSubject = encodeURIComponent(emailSubject);
+                    const encBody = encodeURIComponent(emailBody);
+        
+                    if (handler === 'system') {
+                        const { shell } = require('electron');
+                        const mailto = `mailto:?subject=${encSubject}&body=${encBody}`;
+                        shell.openExternal(mailto).catch(() => {
+                            openShareModal(`https://mail.google.com/mail/?view=cm&fs=1&su=${encSubject}&body=${encBody}`);
+                        });
+                    } else {
+                        let composeUrl = handler;
+                        if (composeUrl.includes('%s')) {
+                            composeUrl = composeUrl.replace('%s', encSubject);
+                        }
+                        if (composeUrl.includes('%b')) {
+                            composeUrl = composeUrl.replace('%b', encBody);
+                        }
+                        openShareModal(composeUrl);
+                    }
+                }
+            }));
+        
+            shareSubmenu.append(new MenuItem({ type: 'separator' }));
+        
+            shareSubmenu.append(new MenuItem({
+                label: 'Copy Markdown Link',
+                click: () => {
+                    const md = `[${targetText || targetUrl}](${targetUrl})`;
+                    clipboard.writeText(md);
+                }
+            }));
+        
+            menu.append(new MenuItem({
+                label: 'Share...',
+                submenu: shareSubmenu
+            }));
+        
+            if (menu.items.length <= 2) {
                 menu.append(new MenuItem({ label: 'Back', click: () => { webContents.send('master-shortcut', 'go-back-signal'); } }));
                 menu.append(new MenuItem({ label: 'Forward', click: () => { webContents.send('master-shortcut', 'go-forward-signal'); } }));
                 menu.append(new MenuItem({ label: 'Reload', click: () => { webContents.reload(); } }));
             }
-
+        
             menu.popup({ window: mainWindow });
         });
 
