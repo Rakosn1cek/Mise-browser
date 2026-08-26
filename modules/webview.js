@@ -197,10 +197,25 @@ export function switchTabFocus(targetIdx) {
     }
 }
 
-export function spawnNewBlankTab() {
+export async function spawnNewBlankTab() {
     const currentWS = state.sessionState.current_workspace;
     if (!state.sessionState.workspaces[currentWS]) state.sessionState.workspaces[currentWS] = [];
-    state.sessionState.workspaces[currentWS].push("https://duckduckgo.com");
+
+    let defaultUrl = 'https://duckduckgo.com';
+    if (window.miseAPI && typeof window.miseAPI.getBrowserSettings === 'function') {
+        try {
+            const cfg = await window.miseAPI.getBrowserSettings();
+            if (cfg && cfg.search_engine) {
+                // Extract base hostname from the search engine query template
+                const parsedUrl = new URL(cfg.search_engine.split('?')[0]);
+                defaultUrl = `${parsedUrl.protocol}//${parsedUrl.host}`;
+            }
+        } catch (err) {
+            defaultUrl = 'https://duckduckgo.com';
+        }
+    }
+
+    state.sessionState.workspaces[currentWS].push(defaultUrl);
     window.miseAPI.saveSession(state.sessionState);
     
     const newTargetIdx = state.sessionState.workspaces[currentWS].length - 1;

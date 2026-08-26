@@ -1,6 +1,7 @@
 import { state } from './state.js';
 import { escapeHtml, focusActiveWebview, getActiveWebview } from './utils.js';
 import { renderWorkspaceUI, switchTabFocus, spawnTabWithUrl, spawnNewBlankTab, handleTabRemoval } from './webview.js';
+import { formatSearchUrl } from './overlays/searchEngine.js';
 
 export function displayAddressOverlay() {
     const addressBar = document.getElementById('WideAddressBar');
@@ -26,7 +27,7 @@ export function displayAddressOverlay() {
     }
 }
 
-export function handleNavigation(input) {
+export async function handleNavigation(input) {
     if (!input) return;
     
     const trimmedInput = input.trim();
@@ -71,8 +72,20 @@ export function handleNavigation(input) {
     } else {
         targetUrl = trimmedInput;
         if (!trimmedInput.startsWith('http://') && !trimmedInput.startsWith('https://')) {
-            if (trimmedInput.includes('.') && !trimmedInput.includes(' ')) targetUrl = `https://${trimmedInput}`;
-            else targetUrl = `https://duckduckgo.com/?q=${encodeURIComponent(trimmedInput)}`;
+            if (trimmedInput.includes('.') && !trimmedInput.includes(' ')) {
+                targetUrl = `https://${trimmedInput}`;
+            } else {
+                let searchTemplate = 'https://duckduckgo.com/?q=%s';
+                if (window.miseAPI && typeof window.miseAPI.getBrowserSettings === 'function') {
+                    try {
+                        const cfg = await window.miseAPI.getBrowserSettings();
+                        if (cfg && cfg.search_engine) {
+                            searchTemplate = cfg.search_engine;
+                        }
+                    } catch (e) {}
+                }
+                targetUrl = formatSearchUrl(trimmedInput, searchTemplate);
+            }
         }
     }
 

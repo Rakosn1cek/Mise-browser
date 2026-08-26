@@ -10,6 +10,7 @@ contextBridge.exposeInMainWorld('miseAPI', {
     showContextMenu: (params) => ipcRenderer.send('show-context-menu', params),
     getBrowserSettings: () => ipcRenderer.invoke('get-browser-settings'),
     saveBrowserSettings: (cfg) => ipcRenderer.invoke('save-browser-settings', cfg),
+    updateBrowserSettings: (cfg) => ipcRenderer.invoke('update-browser-settings', cfg),
     clearDomainCookies: (data) => ipcRenderer.invoke('clear-domain-cookies', data),
     clearActiveCache: (isPrivate) => ipcRenderer.invoke('clear-active-cache', isPrivate),
     executeTerminalCommand: (commandStr) => ipcRenderer.send('execute-terminal-command', commandStr),

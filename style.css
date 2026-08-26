@@ -57,8 +57,8 @@ body, html {
     height: 100%;
     background-image: url('./assets/logo.svg');
     background-repeat: no-repeat;
-    background-position: center 65%;
-    background-size: 220px;
+    background-position: center 55%;
+    background-size: 180px;
     opacity: 0.5;
     z-index: 0;
     pointer-events: none;
@@ -1186,4 +1186,54 @@ body.zen-mode #right-content {
     height: 100%;
     border: none;
     display: inline-flex;
+}
+
+/* Search Engines Switch */
+.pref-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+    width: 100%;
+}
+
+.pref-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.pref-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text, #c0caf5);
+}
+
+.pref-desc {
+    font-size: 11px;
+    color: var(--text-muted, #565f89);
+}
+
+.pref-select {
+    background: var(--bg-sidebar, #16161e);
+    color: var(--text, #c0caf5);
+    border: 1px solid var(--border-color, #24283b);
+    border-radius: 4px;
+    padding: 5px 10px;
+    font-size: 12px;
+    font-family: inherit;
+    outline: none;
+    cursor: pointer;
+    min-width: 160px;
+    text-align: left;
+}
+
+.pref-select:hover,
+.pref-select:focus {
+    border-color: var(--accent, #7aa2f7);
+}
+
+.pref-select option {
+    background: var(--bg-sidebar, #16161e);
+    color: var(--text, #c0caf5);
 }

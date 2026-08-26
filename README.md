@@ -137,6 +137,6 @@ Mise Browser is designed to be fully controllable via keyboard shortcuts. Below 
 
 ---
 
-## Licence
+## License
 
-This project is licensed under the terms of the licence included in this repository.
+This project is licensed under the terms of the GNU General Public Licence v3.0 (or any later version). See the [LICENSE](LICENSE) file for details.

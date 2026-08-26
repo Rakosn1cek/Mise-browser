@@ -109,7 +109,22 @@
                                         <option value="https://app.fastmail.com/mail/compose?subject=%s&body=%b">Fastmail</option>
                                     </select>
                                 </div>
-                
+
+	                            <!-- Search Engine Switch Section -->
+								<div class="pref-row">
+								    <div class="pref-text">
+								        <div class="pref-label">Default Search Engine</div>
+								        <div class="pref-desc">Fallback provider for non-URL queries entered in the address bar.</div>
+								    </div>
+								    <select id="SearchEngineSelect" class="pref-select">
+								        <option value="https://duckduckgo.com/?q=%s">DuckDuckGo</option>
+								        <option value="https://www.google.com/search?q=%s">Google</option>
+								        <option value="https://www.startpage.com/sp/search?query=%s">Startpage</option>
+								        <option value="https://search.brave.com/search?q=%s">Brave Search</option>
+								        <option value="https://kagi.com/search?q=%s">Kagi</option>
+								    </select>
+								</div>
+				                              
                                 <div style="display: flex; justify-content: flex-end; margin-top: 10px;">
                                     <button id="setting-save-config-btn" class="settings-action-btn" style="background-color: var(--accent); color: #000; font-weight: bold; padding: 8px 16px;">
                                         Save & Restart Engine
@@ -162,7 +177,7 @@
                             <section class="settings-section">
                                 <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--border); padding-bottom: 8px;">
                                     <h2 style="border-bottom: none; padding-bottom: 0; margin-bottom: 0;">Help & Shortcuts Reference</h2>
-                                    <span style="font-family: monospace; font-size: 12px; color: var(--accent);">Mise Browser v0.3.2</span>
+                                    <span style="font-family: monospace; font-size: 12px; color: var(--accent);">Mise Browser v0.3.3</span>
                                 </div>
                 
                                 <div class="reference-category">

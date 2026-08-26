@@ -16,7 +16,8 @@ const DEFAULT_CONFIG = {
     disable_gpu: false,          // Keep false by default for cool video playback!
     background_throttling: true,
     process_limit: 3,
-    email_handler: 'system' // 'system' or template
+    email_handler: 'system',    // 'system' or template
+    search_engine: 'https://duckduckgo.com/?q=%s'  // Falback default search engine
 };
 
 function loadBrowserConfig() {
@@ -494,6 +495,17 @@ ipcMain.on('execute-terminal-command', (event, commandStr) => {
                 }).unref();
             }
         });
+    }
+});
+
+// Update Browser Settings - Search Engine Switch
+ipcMain.handle('update-browser-settings', async (event, newCfg) => {
+    try {
+        if (!fs.existsSync(CONFIG_DIR)) fs.mkdirSync(CONFIG_DIR, { recursive: true });
+        fs.writeFileSync(CONFIG_PATH, JSON.stringify(newCfg, null, 4), 'utf-8');
+        return true;
+    } catch (e) {
+        return false;
     }
 });
 

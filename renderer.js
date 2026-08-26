@@ -75,6 +75,7 @@ import {
 } from './modules/navigation.js';
 
 import { openTransientShareModal } from './modules/overlays/shareModal.js';
+import { initSearchEnginePreference } from './modules/overlays/searchEngine.js';
 
 // Attach functions needed across module boundaries to window
 window.toggleDashboardView = toggleDashboardView;
@@ -108,6 +109,7 @@ async function initializeBrowser() {
     setupNotesListeners();
     setupAddressBarAutocomplete();
     setupBookmarkOverlayListeners();
+    initSearchEnginePreference();
 }
 
 function setupEventListeners() {
