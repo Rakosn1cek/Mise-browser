@@ -113,6 +113,7 @@ Mise Browser is designed to be fully controllable via keyboard shortcuts. Below 
 ---
 
 ## Project Structure
+```text
 ==root/ ==
 --main.js                        # Configures Electron main process, window creation, and IPC routing
 --preload.js                     # Secure bridge exposing API handlers to the renderer context
@@ -139,7 +140,7 @@ Mise Browser is designed to be fully controllable via keyboard shortcuts. Below 
 --notes.js                       # Markdown quick-notes engine
 --searchEngine.js                # Search engine switch settings
 --shareModal.js                  # Share Via right click modal pop up
-
+```
 ---
 
 ## License
