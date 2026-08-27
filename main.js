@@ -17,7 +17,8 @@ const DEFAULT_CONFIG = {
     background_throttling: true,
     process_limit: 3,
     email_handler: 'system',    // 'system' or template
-    search_engine: 'https://duckduckgo.com/?q=%s'  // Falback default search engine
+    search_engine: 'https://duckduckgo.com/?q=%s',  // Falback default search engine
+    theme: 'dark'
 };
 
 function loadBrowserConfig() {
@@ -43,7 +44,6 @@ function saveBrowserConfig(cfg) {
 
 function initializeEngineSwitches() {
     const cfg = loadBrowserConfig();
-	app.commandLine.appendSwitch('remote-debugging-port', '9229');
 
     // Force a generic Chrome Desktop User-Agent
     const standardUA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36';

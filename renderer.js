@@ -100,8 +100,34 @@ let findActive = false;
 async function initializeBrowser() {
     state.sessionState = await window.miseAPI.getSession();
     
-    if (window.miseAPI && typeof window.miseAPI.setNativeTheme === 'function') {
-        window.miseAPI.setNativeTheme(isDarkMode() ? 'dark' : 'light');
+    // Load persisted theme preference from configuration
+    let savedTheme = 'dark';
+    if (window.miseAPI && typeof window.miseAPI.getBrowserSettings === 'function') {
+        try {
+            const cfg = await window.miseAPI.getBrowserSettings();
+            if (cfg && cfg.theme) {
+                savedTheme = cfg.theme;
+            }
+        } catch (e) {}
+    }
+
+    const body = document.body;
+    const button = document.getElementById('theme-toggle-btn');
+
+    if (savedTheme === 'light') {
+        body.classList.remove('dark-mode');
+        body.classList.add('light-mode');
+        if (button) button.innerHTML = '<i class="fa-solid fa-sun"></i>';
+        if (window.miseAPI && typeof window.miseAPI.setNativeTheme === 'function') {
+            window.miseAPI.setNativeTheme('light');
+        }
+    } else {
+        body.classList.remove('light-mode');
+        body.classList.add('dark-mode');
+        if (button) button.innerHTML = '<i class="fa-solid fa-moon"></i>';
+        if (window.miseAPI && typeof window.miseAPI.setNativeTheme === 'function') {
+            window.miseAPI.setNativeTheme('dark');
+        }
     }
 
     setupEventListeners();
@@ -428,15 +454,17 @@ function triggerLinkHints() {
     }
 }
   
-function toggleInterfaceTheme() {
+async function toggleInterfaceTheme() {
     const body = document.body;
     const button = document.getElementById('theme-toggle-btn');
     const isDark = body.classList.contains('dark-mode');
+    let newTheme = 'dark';
     
     if (isDark) {
         body.classList.remove('dark-mode');
         body.classList.add('light-mode');
         button.innerHTML = '<i class="fa-solid fa-sun"></i>';
+        newTheme = 'light';
         if (window.miseAPI && typeof window.miseAPI.setNativeTheme === 'function') {
             window.miseAPI.setNativeTheme('light');
         }
@@ -444,9 +472,18 @@ function toggleInterfaceTheme() {
         body.classList.remove('light-mode');
         body.classList.add('dark-mode');
         button.innerHTML = '<i class="fa-solid fa-moon"></i>';
+        newTheme = 'dark';
         if (window.miseAPI && typeof window.miseAPI.setNativeTheme === 'function') {
             window.miseAPI.setNativeTheme('dark');
         }
+    }
+    
+    if (window.miseAPI && typeof window.miseAPI.updateBrowserSettings === 'function') {
+        try {
+            const cfg = await window.miseAPI.getBrowserSettings();
+            cfg.theme = newTheme;
+            await window.miseAPI.updateBrowserSettings(cfg);
+        } catch (err) {}
     }
     
     const allWebviews = document.getElementById('webview-container').querySelectorAll('webview');

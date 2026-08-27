@@ -109,6 +109,11 @@ function hardenWebviewPreferences(webPreferences) {
     webPreferences.webgl = true;
     webPreferences.accelerated2dCanvas = true;
     webPreferences.experimentalFeatures = false;
+    webPreferences.sandbox = true;
+    webPreferences.contextIsolation = true;
+    webPreferences.nodeIntegration = false;
+    webPreferences.nodeIntegrationInSubFrames = false;
+    webPreferences.enableRemoteModule = false;
 }
 
 module.exports = {
