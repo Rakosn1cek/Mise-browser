@@ -18,7 +18,8 @@ const DEFAULT_CONFIG = {
     process_limit: 3,
     email_handler: 'system',    // 'system' or template
     search_engine: 'https://duckduckgo.com/?q=%s',  // Falback default search engine
-    theme: 'dark'
+    theme: 'dark',
+    trusted_domains: []         // Sites (e.g. banks, shops) exempt from anti-fingerprinting/ad-blocking
 };
 
 function loadBrowserConfig() {
@@ -225,6 +226,16 @@ function createWindow() {
     // Enforce isolated sessions and intercept filters via security module
     security.hardenSession(session.defaultSession);
     security.hardenSession(session.fromPartition('MisePrivateProfile'));
+
+    // Load the user's trusted-domain allowlist (banking/shopping sites that
+    // need real device signals) so protections relax only for those sites.
+    security.setTrustedDomains(loadBrowserConfig().trusted_domains || []);
+
+    // Sync check used by the webview preload script to decide whether to
+    // apply fingerprint spoofing for the site it's about to run in.
+    ipcMain.on('is-trusted-domain', (event, hostname) => {
+        event.returnValue = security.isTrustedDomain(hostname);
+    });
 
     // Intercept webviews before they attach to strip out unwanted capabilities like WebGL
     mainWindow.webContents.on('will-attach-webview', (event, webPreferences, params) => {
@@ -503,6 +514,11 @@ ipcMain.handle('update-browser-settings', async (event, newCfg) => {
     try {
         if (!fs.existsSync(CONFIG_DIR)) fs.mkdirSync(CONFIG_DIR, { recursive: true });
         fs.writeFileSync(CONFIG_PATH, JSON.stringify(newCfg, null, 4), 'utf-8');
+        if (Array.isArray(newCfg.trusted_domains)) {
+            // Apply immediately, no relaunch needed - existing tabs on a
+            // newly-trusted domain will pick it up on their next navigation.
+            security.setTrustedDomains(newCfg.trusted_domains);
+        }
         return true;
     } catch (e) {
         return false;

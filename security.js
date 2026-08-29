@@ -9,8 +9,57 @@ const { app, ipcMain } = require('electron');
 let blockerInstance = null;
 let ipcInitialized = false;
 
+// Domains the user has explicitly marked as trusted (e.g. their bank, their
+// usual checkout sites). Anti-fingerprinting and ad/tracker blocking are
+// relaxed ONLY for these domains so the sites' fraud-detection checks pass.
+// Every other site keeps full protection.
+let trustedDomains = [];
+let appliedExceptionFilters = [];
+
 // Define a permanent location for the compiled adblocker cache file
 const CACHE_PATH = path.join(app.getPath('userData'), 'adblock_cache.bin');
+
+function isTrustedDomain(hostname) {
+    if (!hostname) return false;
+    const host = hostname.toLowerCase();
+    return trustedDomains.some(entry => {
+        const domain = String(entry || '').toLowerCase().trim();
+        if (!domain) return false;
+        return host === domain || host.endsWith('.' + domain);
+    });
+}
+
+function buildExceptionFilters(domains) {
+    const filters = [];
+    domains.forEach(entry => {
+        const domain = String(entry || '').toLowerCase().trim();
+        if (!domain) return;
+        // Disable network-level ad/tracker blocking for the whole domain
+        filters.push(`@@||${domain}^$document`);
+        // Disable cosmetic filter injection for the domain
+        filters.push(`${domain}#@#*`);
+    });
+    return filters;
+}
+
+async function applyTrustedDomainExceptions() {
+    if (!blockerInstance) return;
+    const newFilters = buildExceptionFilters(trustedDomains);
+    try {
+        blockerInstance.updateFromDiff({
+            removed: appliedExceptionFilters,
+            added: newFilters
+        });
+        appliedExceptionFilters = newFilters;
+    } catch (err) {
+        console.warn('Failed to update trusted-domain ad-blocker exceptions:', err);
+    }
+}
+
+function setTrustedDomains(domains) {
+    trustedDomains = Array.isArray(domains) ? domains.filter(Boolean) : [];
+    applyTrustedDomainExceptions();
+}
 
 // Known IPC channels registered internally by @ghostery/adblocker-electron
 const GHOSTERY_IPC_CHANNELS = [
@@ -58,6 +107,10 @@ async function initialiseAdblocker(targetSession) {
         console.warn('Failed to apply adblocker exception rules:', err);
     }
 
+    // Re-apply any user-configured trusted-domain exceptions (banking,
+    // shopping, etc.) now that the engine instance exists.
+    await applyTrustedDomainExceptions();
+
     try {
         if (ipcInitialized) {
             GHOSTERY_IPC_CHANNELS.forEach(channel => {
@@ -82,6 +135,12 @@ function hardenSession(targetSession) {
     const blockedPermissions = ['media', 'geolocation', 'notifications', 'midiSysex', 'audio', 'video'];
 
     targetSession.setPermissionRequestHandler((webContents, permission, callback) => {
+        let hostname = '';
+        try { hostname = new URL(webContents.getURL()).hostname; } catch (e) {}
+
+        if (isTrustedDomain(hostname)) {
+            return callback(true);
+        }
         if (blockedPermissions.includes(permission)) {
             return callback(false);
         }
@@ -89,6 +148,12 @@ function hardenSession(targetSession) {
     });
 
     targetSession.setPermissionCheckHandler((webContents, permission, origin) => {
+        let hostname = '';
+        try { hostname = new URL(origin).hostname; } catch (e) {}
+
+        if (isTrustedDomain(hostname)) {
+            return true;
+        }
         if (blockedPermissions.includes(permission)) {
             return false;
         }
@@ -96,9 +161,14 @@ function hardenSession(targetSession) {
     });
 
     targetSession.webRequest.onBeforeSendHeaders((details, callback) => {
-        for (const header of Object.keys(details.requestHeaders)) {
-            if (header.toLowerCase().startsWith('sec-ch-ua')) {
-                delete details.requestHeaders[header];
+        let hostname = '';
+        try { hostname = new URL(details.url).hostname; } catch (e) {}
+
+        if (!isTrustedDomain(hostname)) {
+            for (const header of Object.keys(details.requestHeaders)) {
+                if (header.toLowerCase().startsWith('sec-ch-ua')) {
+                    delete details.requestHeaders[header];
+                }
             }
         }
         callback({ requestHeaders: details.requestHeaders });
@@ -118,5 +188,7 @@ function hardenWebviewPreferences(webPreferences) {
 
 module.exports = {
     hardenSession,
-    hardenWebviewPreferences
+    hardenWebviewPreferences,
+    setTrustedDomains,
+    isTrustedDomain
 };

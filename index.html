@@ -171,13 +171,25 @@
                                         <button id="setting-clear-cache-btn" class="settings-action-btn">Clear Cache</button>
                                     </div>
                                 </div>
+
+                                <div class="setting-item setting-item-stacked">
+                                    <div class="setting-info">
+                                        <span class="setting-label">Trusted Sites (Banking / Shopping)</span>
+                                        <span class="setting-desc">Sites listed here skip fingerprint randomisation, tracker blocking and permission blocking, since banks and checkout flows treat those protections as fraud signals. Every other site keeps full protection. One domain per line, e.g. <code>yourbank.co.uk</code> (subdomains are covered automatically). Applies immediately, no restart needed.</span>
+                                    </div>
+                                    <textarea id="setting-trusted-domains" class="settings-textarea" rows="4" placeholder="yourbank.co.uk&#10;amazon.co.uk"></textarea>
+                                    <div style="display: flex; justify-content: flex-end; align-items: center; gap: 10px;">
+                                        <span id="setting-trusted-domains-note" class="settings-save-note"></span>
+                                        <button id="setting-save-trusted-domains-btn" class="settings-action-btn">Save Trusted Sites</button>
+                                    </div>
+                                </div>
                             </section>
                 
                             <!-- Complete Help Reference & Shortcuts Section -->
                             <section class="settings-section">
                                 <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--border); padding-bottom: 8px;">
                                     <h2 style="border-bottom: none; padding-bottom: 0; margin-bottom: 0;">Help & Shortcuts Reference</h2>
-                                    <span style="font-family: monospace; font-size: 12px; color: var(--accent);">Mise Browser v0.3.4</span>
+                                    <span style="font-family: monospace; font-size: 12px; color: var(--accent);">Mise Browser v0.4.0</span>
                                 </div>
                 
                                 <div class="reference-category">
@@ -196,7 +208,7 @@
                                         <div class="shortcut-row"><span class="shortcut-key">Ctrl + P</span><span class="shortcut-desc">Toggle Command Palette</span></div>
                                         <div class="shortcut-row"><span class="shortcut-key">Ctrl + Shift + P</span><span class="shortcut-desc">Toggle Private Browsing Mode On/Off</span></div>
                                         <div class="shortcut-row"><span class="shortcut-key">Ctrl + N</span><span class="shortcut-desc">Open Notes Taking Overlay</span></div>
-                                        <div class="shortcut-row"><span class="shortcut-key">Ctrl + Shift + Tab</span><span class="shortcut-desc">Focus sidebar nav buttons</span></div>
+                                        <div class="shortcut-row"><span class="shortcut-key">Ctrl + Tab</span><span class="shortcut-desc">Focus sidebar nav buttons</span></div>
                                         <div class="shortcut-row"><span class="shortcut-key">Ctrl + Shift + Z</span><span class="shortcut-desc">Hide/Unhide Sidebar (Zen Mode)</span></div>
                                         <div class="shortcut-row"><span class="shortcut-key">Ctrl + Shift + B</span><span class="shortcut-desc">Open Bookmarks and Quickmarks</span></div>
                                         <div class="shortcut-row"><span class="shortcut-key">Delete</span><span class="shortcut-desc">Deletes/Removes Bookmarks/Quickmarks When Selected</span></div>
@@ -238,6 +250,9 @@
                                         <div class="alias-card"><span class="alias-prefix">pkg</span><span class="alias-target">Arch Packages</span></div>
                                         <div class="alias-card"><span class="alias-prefix">so</span><span class="alias-target">StackOverflow</span></div>
                                         <div class="alias-card"><span class="alias-prefix">r</span><span class="alias-target">Reddit Search</span></div>
+                                        <div class="alias-card"><span class="alias-prefix">sp</span><span class="alias-target">Startpage Search</span></div>
+                                        <div class="alias-card"><span class="alias-prefix">b</span><span class="alias-target">Brave Search</span></div>
+                                        <div class="alias-card"><span class="alias-prefix">k</span><span class="alias-target">Kagi Search</span></div>
                                     </div>
                                 </div>
                             </section>

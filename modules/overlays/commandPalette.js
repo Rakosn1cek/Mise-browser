@@ -55,6 +55,11 @@ export async function syncPreferencesUI() {
             if (throttleToggle) throttleToggle.checked = !!cfg.background_throttling;
             if (processSelect) processSelect.value = String(cfg.process_limit || 3);
             if (emailSelect) emailSelect.value = cfg.email_handler || 'system';
+
+            const trustedDomainsField = document.getElementById('setting-trusted-domains');
+            if (trustedDomainsField) {
+                trustedDomainsField.value = Array.isArray(cfg.trusted_domains) ? cfg.trusted_domains.join('\n') : '';
+            }
         }
     } catch (err) {}
 
@@ -133,6 +138,39 @@ export function setupPreferencesListeners() {
     if (clearCacheBtn) {
         clearCacheBtn.onclick = () => {
             if (window.executeGlobalCacheWipe) window.executeGlobalCacheWipe();
+        };
+    }
+
+    const saveTrustedDomainsBtn = document.getElementById('setting-save-trusted-domains-btn');
+    if (saveTrustedDomainsBtn) {
+        saveTrustedDomainsBtn.onclick = async () => {
+            const field = document.getElementById('setting-trusted-domains');
+            const note = document.getElementById('setting-trusted-domains-note');
+            if (!field || !window.miseAPI || typeof window.miseAPI.updateBrowserSettings !== 'function') return;
+
+            const trustedDomains = field.value
+                .split(/[\n,]/)
+                .map(d => d.trim().toLowerCase())
+                .filter(Boolean);
+
+            try {
+                const currentCfg = (typeof window.miseAPI.getBrowserSettings === 'function')
+                    ? (await window.miseAPI.getBrowserSettings()) || {}
+                    : {};
+                const mergedCfg = { ...currentCfg, trusted_domains: trustedDomains };
+                await window.miseAPI.updateBrowserSettings(mergedCfg);
+
+                if (note) {
+                    note.textContent = 'Saved — applied immediately, no restart needed.';
+                    note.classList.add('visible');
+                    setTimeout(() => note.classList.remove('visible'), 2500);
+                }
+            } catch (err) {
+                if (note) {
+                    note.textContent = 'Failed to save trusted sites.';
+                    note.classList.add('visible');
+                }
+            }
         };
     }
 }

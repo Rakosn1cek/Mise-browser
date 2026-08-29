@@ -1,6 +1,21 @@
 // webview-preload.js
 
+const { ipcRenderer } = require('electron');
+
+// Ask the main process whether this site is on the user's trusted-domain
+// allowlist (banking, shopping, etc.). Trusted sites skip fingerprint
+// spoofing so their fraud-detection checks see a consistent, real device
+// profile instead of randomized/noised values.
+let isTrustedSite = false;
+try {
+    isTrustedSite = !!ipcRenderer.sendSync('is-trusted-domain', window.location.hostname);
+} catch (e) {
+    isTrustedSite = false;
+}
+
 const injectScript = () => {
+    if (isTrustedSite) return; // Skip anti-fingerprinting patches on trusted sites
+
     const script = document.createElement('script');
     const codeToInject = `(function() {
         // Guard against this script executing more than once against the same
@@ -219,8 +234,6 @@ if (document.documentElement) {
 } else {
     document.addEventListener('DOMContentLoaded', injectScript, { once: true });
 }
-
-const { ipcRenderer } = require('electron');
 
 // ==========================================
 // PRE-EXISTING WEBVIEW KEYBOARD BUBBLING

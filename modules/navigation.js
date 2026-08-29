@@ -62,7 +62,10 @@ export async function handleNavigation(input) {
         'ddg': 'https://duckduckgo.com/?q=',
         'pkg': 'https://archlinux.org/packages/?q=',
         'so': 'https://stackoverflow.com/search?q=',
-        'r': 'https://www.reddit.com/search/?q='
+        'r': 'https://www.reddit.com/search/?q=',
+        'sp': 'https://www.startpage.com/sp/search?query=',
+        'b': 'https://search.brave.com/search?q=',
+        'k': 'https://kagi.com/search?q='
     };
 
     let targetUrl;
