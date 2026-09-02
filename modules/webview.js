@@ -5,6 +5,66 @@ export function applyCSSThemeToView(webview) {
     // Left as stub matching existing codebase implementation
 }
 
+function extractHostname(url) {
+    try {
+        return new URL(url).hostname.toLowerCase();
+    } catch {
+        return '';
+    }
+}
+
+export function updateTabShieldStatus(tabLi, url, trustedDomains = []) {
+    const shieldBtn = tabLi.querySelector('.tab-shield-btn');
+    if (!shieldBtn) return;
+
+    const host = extractHostname(url);
+    if (!host || url.startsWith('about:') || url.startsWith('file:')) {
+        shieldBtn.style.display = 'none';
+        return;
+    }
+
+    shieldBtn.style.display = 'inline-flex';
+    const isTrusted = trustedDomains.some(d => host === d || host.endsWith('.' + d));
+    const icon = shieldBtn.querySelector('i');
+
+    if (isTrusted) {
+        icon.className = 'fa-solid fa-shield shield-off';
+        shieldBtn.title = 'Shields Down (Site is in Trusted Sites)';
+    } else {
+        icon.className = 'fa-solid fa-shield-halved shield-on';
+        shieldBtn.title = 'Shields Active (Full Protection)';
+    }
+}
+
+export function attachShieldToggleListener(tabLi, webview) {
+    const shieldBtn = tabLi.querySelector('.tab-shield-btn');
+    if (!shieldBtn) return;
+
+    shieldBtn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const currentUrl = webview.getURL();
+        const host = extractHostname(currentUrl);
+        if (!host) return;
+
+        const cfg = (await window.miseAPI.getBrowserSettings()) || {};
+        let domains = Array.isArray(cfg.trusted_domains) ? [...cfg.trusted_domains] : [];
+
+        const isTrusted = domains.some(d => host === d || host.endsWith('.' + d));
+
+        if (isTrusted) {
+            domains = domains.filter(d => d !== host && !host.endsWith('.' + d));
+        } else {
+            domains.push(host);
+        }
+
+        cfg.trusted_domains = domains;
+        await window.miseAPI.updateBrowserSettings(cfg);
+
+        updateTabShieldStatus(tabLi, currentUrl, domains);
+        webview.reload();
+    });
+}
+
 export function renderWorkspaceUI(targetTabToFocus = null) {
     document.getElementById('WorkspaceLabel').textContent = state.sessionState.current_workspace;
     const tabList = document.getElementById('TabList');
@@ -21,10 +81,20 @@ export function renderWorkspaceUI(targetTabToFocus = null) {
     urls.forEach((url, idx) => {
         const cachedTitle = state.activeTitlesCache[currentWS][idx] || "Loading...";
         const li = document.createElement('li');
-        li.textContent = cachedTitle.length > 24 ? cachedTitle.slice(0, 24) + "..." : cachedTitle;
         li.setAttribute('tabindex', '0');
+
+        const titleSpan = document.createElement('span');
+        titleSpan.className = 'tab-title';
+        titleSpan.textContent = cachedTitle.length > 24 ? cachedTitle.slice(0, 24) + "..." : cachedTitle;
+        li.appendChild(titleSpan);
+
+        const shieldBtn = document.createElement('button');
+        shieldBtn.className = 'tab-shield-btn';
+        shieldBtn.innerHTML = '<i class="fa-solid fa-shield-halved shield-on"></i>';
+        li.appendChild(shieldBtn);
         
-        li.addEventListener('click', () => {
+        li.addEventListener('click', (e) => {
+            if (e.target.closest('.tab-shield-btn')) return;
             if (state.dashboardActive && typeof window.toggleDashboardView === 'function') {
                 window.toggleDashboardView();
             }
@@ -58,21 +128,34 @@ export function renderWorkspaceUI(targetTabToFocus = null) {
                 state.activeTitlesCache[currentWS][idx] = e.title;
                 const targetLi = document.querySelectorAll('#TabList li')[idx];
                 if (targetLi && state.sessionState.current_workspace === currentWS) {
-                    targetLi.textContent = e.title.length > 24 ? e.title.slice(0, 24) + "..." : e.title;
+                    const titleEl = targetLi.querySelector('.tab-title');
+                    if (titleEl) {
+                        titleEl.textContent = e.title.length > 24 ? e.title.slice(0, 24) + "..." : e.title;
+                    }
                 }
             });
 
-            webview.addEventListener('did-navigate', (e) => {
+            webview.addEventListener('did-navigate', async (e) => {
                 if (state.sessionState.workspaces[currentWS] && state.sessionState.workspaces[currentWS][idx]) {
                     state.sessionState.workspaces[currentWS][idx] = e.url;
                     window.miseAPI.saveSession(state.sessionState);
                 }
+                const targetLi = document.querySelectorAll('#TabList li')[idx];
+                if (targetLi) {
+                    const cfg = (await window.miseAPI.getBrowserSettings()) || {};
+                    updateTabShieldStatus(targetLi, e.url, cfg.trusted_domains || []);
+                }
             });
 
-            webview.addEventListener('did-navigate-in-page', (e) => {
+            webview.addEventListener('did-navigate-in-page', async (e) => {
                 if (state.sessionState.workspaces[currentWS] && state.sessionState.workspaces[currentWS][idx]) {
                     state.sessionState.workspaces[currentWS][idx] = e.url;
                     window.miseAPI.saveSession(state.sessionState);
+                }
+                const targetLi = document.querySelectorAll('#TabList li')[idx];
+                if (targetLi) {
+                    const cfg = (await window.miseAPI.getBrowserSettings()) || {};
+                    updateTabShieldStatus(targetLi, e.url, cfg.trusted_domains || []);
                 }
                 webview.executeJavaScript(`
                     (function() {
@@ -139,19 +222,30 @@ export function renderWorkspaceUI(targetTabToFocus = null) {
                 applyCSSThemeToView(webview);
                 webview.style.opacity = '1';
 
+                const targetLi = document.querySelectorAll('#TabList li')[idx];
+                if (targetLi) {
+                    const cfg = (await window.miseAPI.getBrowserSettings()) || {};
+                    updateTabShieldStatus(targetLi, webview.getURL(), cfg.trusted_domains || []);
+                }
+
                 try {
                     const hinterCode = await window.miseAPI.readHinterCode();
                     if (hinterCode && typeof webview.executeJavaScript === 'function') {
-                        // Wrap script evaluation in a self-executing try-catch inside the guest context
-                        // to prevent Electron IPC execution bridge rejections during SPA frame updates
                         const safeExecutionWrapper = `try { ${hinterCode} } catch(e) {}`;
                         webview.executeJavaScript(safeExecutionWrapper, false).catch(() => {});
                     }
                 } catch (err) {}
             });
 
+            attachShieldToggleListener(li, webview);
             container.appendChild(webview);
             state.activeViewsCache[currentWS][idx] = webview;
+        } else {
+            const existingWebview = state.activeViewsCache[currentWS][idx];
+            attachShieldToggleListener(li, existingWebview);
+            window.miseAPI.getBrowserSettings().then(cfg => {
+                updateTabShieldStatus(li, existingWebview.getURL(), cfg?.trusted_domains || []);
+            }).catch(() => {});
         }
     });
 
@@ -206,7 +300,6 @@ export async function spawnNewBlankTab() {
         try {
             const cfg = await window.miseAPI.getBrowserSettings();
             if (cfg && cfg.search_engine) {
-                // Extract base hostname from the search engine query template
                 const parsedUrl = new URL(cfg.search_engine.split('?')[0]);
                 defaultUrl = `${parsedUrl.protocol}//${parsedUrl.host}`;
             }
