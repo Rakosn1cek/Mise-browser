@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Mise
+Comment=Minimalist Keyboard-Driven Web Browser
+Exec=/home/rk1/.local/bin/mise %u
+Icon=mise
+Terminal=false
+Type=Application
+Categories=Network;WebBrowser;
+MimeType=text/html;text/xml;application/xhtml+xml;x-scheme-handler/http;x-scheme-handler/https;
+StartupWMClass=mise

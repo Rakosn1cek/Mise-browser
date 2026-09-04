@@ -151,6 +151,7 @@ function createWindow() {
     mainWindow = new BrowserWindow({
         width: 1600,
         height: 1040,
+        icon: path.join(__dirname, 'assets', 'icons', '256x256.png'),
         frame: true,
         autoHideMenuBar: true,
         webPreferences: {
