@@ -109,7 +109,9 @@ Mise Browser is designed to be fully controllable via keyboard shortcuts. Below 
 | pkg | https://archlinux.org/packages/?q= |
 | so | https://stackoverflow.com/search?q= |
 | r | https://www.reddit.com/search/?q= |
-
+| sp | https://www.startpage.com/sp/search?query= |
+| b | https://search.brave.com/search?q= |
+| k | https://kagi.com/search?q= |
 
 ---
 
