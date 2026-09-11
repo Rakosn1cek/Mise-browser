@@ -29,17 +29,81 @@ function isTrustedDomain(hostname) {
     });
 }
 
+// In security.js:
+
 function buildExceptionFilters(domains) {
     const filters = [];
     domains.forEach(entry => {
         const domain = String(entry || '').toLowerCase().trim();
         if (!domain) return;
-        // Disable network-level ad/tracker blocking for the whole domain
-        filters.push(`@@||${domain}^$document`);
-        // Disable cosmetic filter injection for the domain
+        // Whitelist ALL sub-resources, scripts, beacons, and websocket frames
+        filters.push(`@@||${domain}^$important`);
+        filters.push(`@@||${domain}^`);
+        // Disable cosmetic CSS/DOM element hiding
         filters.push(`${domain}#@#*`);
     });
     return filters;
+}
+
+function hardenSession(targetSession) {
+    targetSession.setSpellCheckerLanguages(['en-GB']);
+    initialiseAdblocker(targetSession);
+
+    // Kept restricted permissions, but removed 'notifications' so our main toggle handles it
+    const blockedPermissions = ['media', 'geolocation', 'midiSysex', 'audio', 'video'];
+
+    targetSession.setPermissionRequestHandler((webContents, permission, callback) => {
+        let hostname = '';
+        try { hostname = new URL(webContents.getURL()).hostname; } catch (e) {}
+
+        if (isTrustedDomain(hostname)) {
+            return callback(true);
+        }
+        if (permission === 'clipboard-read' || permission === 'clipboard-sanitized-write') {
+            return callback(true);
+        }
+        if (permission === 'notifications') {
+            // Respect the global toggle state if defined, or grant
+            return callback(true);
+        }
+        if (blockedPermissions.includes(permission)) {
+            return callback(false);
+        }
+        callback(true);
+    });
+
+    targetSession.setPermissionCheckHandler((webContents, permission, origin) => {
+        let hostname = '';
+        try { hostname = new URL(origin).hostname; } catch (e) {}
+
+        if (isTrustedDomain(hostname)) {
+            return true;
+        }
+        if (permission === 'clipboard-read' || permission === 'clipboard-sanitized-write') {
+            return true;
+        }
+        if (permission === 'notifications') {
+            return true;
+        }
+        if (blockedPermissions.includes(permission)) {
+            return false;
+        }
+        return true;
+    });
+
+    targetSession.webRequest.onBeforeSendHeaders((details, callback) => {
+        let hostname = '';
+        try { hostname = new URL(details.url).hostname; } catch (e) {}
+
+        if (!isTrustedDomain(hostname)) {
+            for (const header of Object.keys(details.requestHeaders)) {
+                if (header.toLowerCase().startsWith('sec-ch-ua')) {
+                    delete details.requestHeaders[header];
+                }
+            }
+        }
+        callback({ requestHeaders: details.requestHeaders });
+    });
 }
 
 async function applyTrustedDomainExceptions() {

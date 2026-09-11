@@ -11,6 +11,8 @@ contextBridge.exposeInMainWorld('miseAPI', {
     getBrowserSettings: () => ipcRenderer.invoke('get-browser-settings'),
     saveBrowserSettings: (cfg) => ipcRenderer.invoke('save-browser-settings', cfg),
     updateBrowserSettings: (cfg) => ipcRenderer.invoke('update-browser-settings', cfg),
+    toggleGlobalNotifications: (enabled) => ipcRenderer.invoke('toggle-global-notifications', enabled),
+    getGlobalNotificationsState: () => ipcRenderer.invoke('get-global-notifications-state'),
     clearDomainCookies: (data) => ipcRenderer.invoke('clear-domain-cookies', data),
     clearActiveCache: (isPrivate) => ipcRenderer.invoke('clear-active-cache', isPrivate),
     executeTerminalCommand: (commandStr) => ipcRenderer.send('execute-terminal-command', commandStr),

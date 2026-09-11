@@ -1,6 +1,7 @@
-const { app, BrowserWindow, ipcMain, session, Menu, MenuItem, nativeTheme } = require('electron');
+const { app, BrowserWindow, ipcMain, session, Menu, MenuItem, nativeTheme, Notification, clipboard, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const { exec, spawn } = require('child_process');
 
 // Require the security config module to isolate filtering and hardening rules
 const security = require('./security');
@@ -11,15 +12,17 @@ const CONFIG_PATH = path.join(CONFIG_DIR, 'config.json');
 const NOTES_PATH = path.join(CONFIG_DIR, 'notes.md');
 const BOOKMARKS_PATH = path.join(CONFIG_DIR, 'bookmarks.json');
 const QUICKMARKS_PATH = path.join(CONFIG_DIR, 'quickmarks.json');
+const sessionPath = path.join(CONFIG_DIR, 'session.json');
+const historyPath = path.join(CONFIG_DIR, 'history.json');
 
 const DEFAULT_CONFIG = {
-    disable_gpu: false,          // Keep false by default for cool video playback!
+    disable_gpu: false,
     background_throttling: true,
-    process_limit: 3,
-    email_handler: 'system',    // 'system' or template
-    search_engine: 'https://duckduckgo.com/?q=%s',  // Falback default search engine
+    process_limit: 4,
+    email_handler: 'system',
+    search_engine: 'https://duckduckgo.com/?q=%s',
     theme: 'dark',
-    trusted_domains: []         // Sites (e.g. banks, shops) exempt from anti-fingerprinting/ad-blocking
+    trusted_domains: []
 };
 
 function loadBrowserConfig() {
@@ -38,27 +41,25 @@ function loadBrowserConfig() {
 function saveBrowserConfig(cfg) {
     try {
         fs.writeFileSync(CONFIG_PATH, JSON.stringify(cfg, null, 4), 'utf-8');
-        app.relaunch(); // Relaunches a clean window with the new flags active
-        app.exit(0);    // Exits the current window
+        app.relaunch();
+        app.exit(0);
     } catch (e) {}
 }
 
 function initializeEngineSwitches() {
     const cfg = loadBrowserConfig();
 
-    // Force a generic Chrome Desktop User-Agent
     const standardUA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36';
     app.commandLine.appendSwitch('user-agent', standardUA);
-
-    // Lock down WebRTC local IP leaks
     app.commandLine.appendSwitch('force-webrtc-ip-handling-policy', 'default_public_interface_only');
 
-    // Disable invasive background privacy-sandbox and tracking APIs
-    app.commandLine.appendSwitch('disable-features', 
-        'Translate,PrivacySandboxSettings4,PrivacySandboxAdsAPIsOverride,' +
-        'PrivacySandboxAdsAPIsM1Override,InterestGroupStorage,' +
-        'AttributionReportingCrossAppWeb,FencedFrames,WebUSB,WebBluetooth,Serial,GenericSensor,WebOTP'
-    );
+    const disabledFeatures = [
+        'Translate', 'PrivacySandboxSettings4', 'PrivacySandboxAdsAPIsOverride',
+        'PrivacySandboxAdsAPIsM1Override', 'InterestGroupStorage',
+        'AttributionReportingCrossAppWeb', 'FencedFrames', 'WebUSB',
+        'WebBluetooth', 'Serial', 'GenericSensor', 'WebOTP', 'Vulkan'
+    ];
+    app.commandLine.appendSwitch('disable-features', disabledFeatures.join(','));
 
     if (cfg.disable_gpu) {
         app.commandLine.appendSwitch('disable-gpu');
@@ -81,10 +82,8 @@ function initializeEngineSwitches() {
         app.commandLine.appendSwitch('add-delay-to-background-timer-tasks');
     }
     
-    app.commandLine.appendSwitch('renderer-process-limit', String(cfg.process_limit || 3));
-
+    app.commandLine.appendSwitch('renderer-process-limit', String(cfg.process_limit || 4));
     app.commandLine.appendSwitch('disable-shared-workers');
-    app.commandLine.appendSwitch('disable-features', 'Vulkan');
     app.commandLine.appendSwitch('disable-smooth-scrolling');
     app.commandLine.appendSwitch('enable-strict-mixed-content-checking');
     app.commandLine.appendSwitch('disable-battery-saver');
@@ -92,19 +91,12 @@ function initializeEngineSwitches() {
     app.commandLine.appendSwitch('disable-speech-api');
 }
 
-// Fire the switches before the browser engine starts up
 initializeEngineSwitches();
 
 let mainWindow;
-const sessionPath = path.join(app.getPath('home'), '.config', 'mise-browser', 'session.json');
-
-// --- HISTORY CONFIGURATION & HELPERS ---
-const historyPath = path.join(app.getPath('home'), '.config', 'mise-browser', 'history.json');
-const MAX_HISTORY_ITEMS = 500; // Hard cap to prevent disk bloat
-
 let privateBrowsingEnabled = false;
+const MAX_HISTORY_ITEMS = 500;
 
-// Helper to read history safely
 function readHistory() {
     try {
         if (fs.existsSync(historyPath)) {
@@ -114,7 +106,6 @@ function readHistory() {
     return [];
 }
 
-// Helper to save history safely
 function saveHistory(historyData) {
     try {
         const dir = path.dirname(historyPath);
@@ -123,12 +114,10 @@ function saveHistory(historyData) {
     } catch (err) {}
 }
 
-// Helper to log user-initiated page visits
 function logVisit(title, url) {
     if (!url || url === 'about:blank' || url.startsWith('file://')) return;
 
     let history = readHistory();
-    
     const newEntry = {
         title: title || url,
         url: url,
@@ -138,20 +127,268 @@ function logVisit(title, url) {
     if (history.length > 0 && history[0].url === url) return;
 
     history.unshift(newEntry);
-
     if (history.length > MAX_HISTORY_ITEMS) {
         history = history.slice(0, MAX_HISTORY_ITEMS);
     }
-
     saveHistory(history);
 }
-// ---------------------------------------
+
+function sendSystemNotification(title, body) {
+    if (!Notification.isSupported()) return;
+
+    const notification = new Notification({
+        title: title,
+        body: body,
+        icon: path.join(__dirname, 'assets', 'icons', 'Mise-logo256.png'),
+        urgency: 'low',
+        silent: true
+    });
+
+    notification.show();
+}
+
+let globalNotificationsEnabled = true;
+
+function configureSessionPermissions(targetSession) {
+    targetSession.setPermissionRequestHandler((webContents, permission, callback) => {
+        if (permission === 'notifications') {
+            return callback(globalNotificationsEnabled);
+        }
+        if (permission === 'clipboard-read' || permission === 'clipboard-sanitized-write') {
+            return callback(true);
+        }
+        callback(false);
+    });
+
+    targetSession.setPermissionCheckHandler((webContents, permission) => {
+        if (permission === 'notifications') {
+            return globalNotificationsEnabled;
+        }
+        if (permission === 'clipboard-read' || permission === 'clipboard-sanitized-write') {
+            return true;
+        }
+        return false;
+    });
+}
+
+ipcMain.handle('toggle-global-notifications', (event, enabled) => {
+    globalNotificationsEnabled = enabled;
+    return globalNotificationsEnabled;
+});
+
+// --- IPC HANDLERS ---
+ipcMain.handle('clear-active-cache', async (event, isPrivate) => {
+    const targetSession = isPrivate ? session.fromPartition('MisePrivateProfile') : session.defaultSession;
+    try {
+        await targetSession.clearCache();
+        await targetSession.clearStorageData({
+            storages: ['cachestorage', 'serviceworkers', 'shadercache']
+        });
+        sendSystemNotification('Mise Browser', 'Cache and storage cleared successfully.');
+        return true;
+    } catch (err) {
+        sendSystemNotification('Mise Error', `Cache clear failed: ${err.message}`);
+        return false;
+    }
+});
+
+ipcMain.handle('clear-domain-cookies', async (event, { urlStr, isPrivate }) => {
+    const targetSession = isPrivate ? session.fromPartition('MisePrivateProfile') : session.defaultSession;
+    try {
+        const parsed = new URL(urlStr);
+        const cookies = await targetSession.cookies.get({ domain: parsed.hostname });
+        
+        for (const cookie of cookies) {
+            const protocol = cookie.secure ? 'https://' : 'http://';
+            const domain = cookie.domain.replace(/^\./, '');
+            await targetSession.cookies.remove(`${protocol}${domain}${cookie.path}`, cookie.name);
+        }
+
+        sendSystemNotification('Mise Browser', `Cookies cleared for ${parsed.hostname}`);
+        return true;
+    } catch (err) {
+        sendSystemNotification('Mise Error', `Cookie wipe failed: ${err.message}`);
+        return false;
+    }
+});
+
+ipcMain.handle('read-notes', async () => {
+    try {
+        if (!fs.existsSync(CONFIG_DIR)) fs.mkdirSync(CONFIG_DIR, { recursive: true });
+        if (!fs.existsSync(NOTES_PATH)) fs.writeFileSync(NOTES_PATH, '', 'utf-8');
+        return fs.readFileSync(NOTES_PATH, 'utf-8');
+    } catch (err) {
+        return '';
+    }
+});
+
+ipcMain.handle('save-notes', async (event, content) => {
+    try {
+        if (!fs.existsSync(CONFIG_DIR)) fs.mkdirSync(CONFIG_DIR, { recursive: true });
+        fs.writeFileSync(NOTES_PATH, content, 'utf-8');
+        return true;
+    } catch (err) {
+        return false;
+    }
+});
+
+ipcMain.on('toggle-active-devtools', () => {
+    if (!mainWindow) return;
+    mainWindow.webContents.send('master-shortcut', 'toggle-devtools');
+});
+
+ipcMain.on('set-native-theme', (event, mode) => {
+    nativeTheme.themeSource = mode;
+});
+
+ipcMain.handle('get-browser-settings', async () => {
+    return loadBrowserConfig();
+});
+
+ipcMain.handle('save-browser-settings', async (event, newCfg) => {
+    saveBrowserConfig(newCfg);
+    return true;
+});
+
+ipcMain.on('get-webview-preload-path', (event) => { 
+    event.returnValue = path.join(__dirname, 'webview-preload.js'); 
+});
+
+ipcMain.handle('read-hinter-code', async () => {
+    try {
+        const hinterPath = path.join(__dirname, 'hinter.js');
+        if (fs.existsSync(hinterPath)) return fs.readFileSync(hinterPath, 'utf8');
+    } catch (err) {}
+    return '';
+});
+
+ipcMain.handle('get-session', async () => {
+    try {
+        if (fs.existsSync(sessionPath)) return JSON.parse(fs.readFileSync(sessionPath, 'utf8'));
+    } catch (err) {}
+    return { current_workspace: "Workspace 1", workspaces: { "Workspace 1": ["https://duckduckgo.com"] } };
+});
+
+ipcMain.handle('save-session', async (event, sessionData) => {
+    try {
+        const dir = path.dirname(sessionPath);
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+        fs.writeFileSync(sessionPath, JSON.stringify(sessionData, null, 4), 'utf8');
+        return true;
+    } catch (err) { return false; }
+});
+
+ipcMain.handle('search-history', async (event, query) => {
+    const history = readHistory();
+    if (!query || !query.trim()) return history;
+
+    const lowerQuery = query.toLowerCase();
+    return history.filter(item => 
+        item.title.toLowerCase().includes(lowerQuery) || 
+        item.url.toLowerCase().includes(lowerQuery)
+    );
+});
+
+ipcMain.handle('purge-history', async () => {
+    try {
+        if (fs.existsSync(historyPath)) {
+            fs.writeFileSync(historyPath, JSON.stringify([], null, 4), 'utf8');
+        }
+        return true;
+    } catch (err) {
+        return false;
+    }
+});
+
+ipcMain.on('toggle-menu-bar', () => {
+    const isVisible = mainWindow.isMenuBarVisible();
+    mainWindow.setMenuBarVisibility(!isVisible);
+});
+
+ipcMain.handle('read-bookmarks', async () => {
+    try {
+        if (!fs.existsSync(BOOKMARKS_PATH)) fs.writeFileSync(BOOKMARKS_PATH, JSON.stringify([]), 'utf-8');
+        return JSON.parse(fs.readFileSync(BOOKMARKS_PATH, 'utf-8'));
+    } catch (err) { return []; }
+});
+
+ipcMain.handle('save-bookmarks', async (event, data) => {
+    try {
+        fs.writeFileSync(BOOKMARKS_PATH, JSON.stringify(data, null, 4), 'utf-8');
+        return true;
+    } catch (err) { return false; }
+});
+
+ipcMain.handle('read-quickmarks', async () => {
+    try {
+        if (!fs.existsSync(QUICKMARKS_PATH)) fs.writeFileSync(QUICKMARKS_PATH, JSON.stringify({}), 'utf-8');
+        return JSON.parse(fs.readFileSync(QUICKMARKS_PATH, 'utf-8'));
+    } catch (err) { return {}; }
+});
+
+ipcMain.handle('save-quickmarks', async (event, data) => {
+    try {
+        fs.writeFileSync(QUICKMARKS_PATH, JSON.stringify(data, null, 4), 'utf-8');
+        return true;
+    } catch (err) { return false; }
+});
+
+ipcMain.on('execute-terminal-command', (event, commandStr) => {
+    if (!commandStr || !commandStr.trim()) return;
+
+    clipboard.writeText(commandStr);
+
+    const platform = process.platform;
+    if (platform === 'linux') {
+        const emulators = ["kitty", "alacritty", "foot", "st", "xterm"];
+        exec("which " + emulators.join(" "), (err, stdout) => {
+            let chosenTerm = "";
+            if (stdout) {
+                const paths = stdout.trim().split("\n");
+                if (paths.length > 0) {
+                    chosenTerm = paths[0].split("/").pop();
+                }
+            }
+            if (!chosenTerm) {
+                chosenTerm = "xdg-terminal-exec";
+            }
+            spawn(chosenTerm, [], { detached: true, stdio: 'ignore' }).unref();
+        });
+    } else if (platform === 'darwin') {
+        spawn('open', ['-a', 'Terminal'], { detached: true, stdio: 'ignore' }).unref();
+    } else if (platform === 'win32') {
+        exec('where wt', (err) => {
+            if (!err) {
+                spawn('wt', [], { detached: true, stdio: 'ignore' }).unref();
+            } else {
+                spawn('cmd.exe', [], { 
+                    detached: true, 
+                    stdio: 'ignore',
+                    windowsHide: false
+                }).unref();
+            }
+        });
+    }
+});
+
+ipcMain.handle('update-browser-settings', async (event, newCfg) => {
+    try {
+        if (!fs.existsSync(CONFIG_DIR)) fs.mkdirSync(CONFIG_DIR, { recursive: true });
+        fs.writeFileSync(CONFIG_PATH, JSON.stringify(newCfg, null, 4), 'utf-8');
+        if (Array.isArray(newCfg.trusted_domains)) {
+            security.setTrustedDomains(newCfg.trusted_domains);
+        }
+        return true;
+    } catch (e) {
+        return false;
+    }
+});
 
 function createWindow() {
     mainWindow = new BrowserWindow({
         width: 1600,
         height: 1040,
-        icon: path.join(__dirname, 'assets', 'icons', '256x256.png'),
+        icon: path.join(__dirname, 'assets', 'icons', 'Mise-logo256.png'),
         frame: true,
         autoHideMenuBar: true,
         webPreferences: {
@@ -224,56 +461,20 @@ function createWindow() {
         }
     });
 
-    // Enforce isolated sessions and intercept filters via security module
+    // Enforce isolated sessions, intercept filters, and configure permissions
     security.hardenSession(session.defaultSession);
     security.hardenSession(session.fromPartition('MisePrivateProfile'));
+    configureSessionPermissions(session.defaultSession);
+    configureSessionPermissions(session.fromPartition('MisePrivateProfile'));
 
-    // Load the user's trusted-domain allowlist (banking/shopping sites that
-    // need real device signals) so protections relax only for those sites.
     security.setTrustedDomains(loadBrowserConfig().trusted_domains || []);
 
-    // Sync check used by the webview preload script to decide whether to
-    // apply fingerprint spoofing for the site it's about to run in.
     ipcMain.on('is-trusted-domain', (event, hostname) => {
         event.returnValue = security.isTrustedDomain(hostname);
     });
 
-    // Intercept webviews before they attach to strip out unwanted capabilities like WebGL
-    mainWindow.webContents.on('will-attach-webview', (event, webPreferences, params) => {
+    mainWindow.webContents.on('will-attach-webview', (event, webPreferences) => {
         security.hardenWebviewPreferences(webPreferences);
-    });
-
-    ipcMain.handle('clear-domain-cookies', async (event, { urlStr, isPrivate }) => {
-        const targetSession = isPrivate ? session.fromPartition('MisePrivateProfile') : session.defaultSession;
-        try {
-            const urlObj = new URL(urlStr);
-            const host = urlObj.hostname.toLowerCase();
-            if (!host || urlStr === "about:blank") return "All profile cookies cleared globally";
-            
-            const rootDomain = host.split('.').slice(-2).join('.');
-            const cookies = await targetSession.cookies.get({});
-            
-            for (const cookie of cookies) {
-                if (cookie.domain.toLowerCase().includes(rootDomain)) {
-                    const cookieUrl = `http${cookie.secure ? 's' : ''}://${cookie.domain}${cookie.path}`;
-                    await targetSession.cookies.remove(cookieUrl, cookie.name);
-                }
-            }
-            return `Cookies cleared for ${rootDomain}`;
-        } catch (err) {
-            await targetSession.clearStorageData({ storages: ['cookies'] });
-            return "All profile cookies cleared globally";
-        }
-    });
-
-    ipcMain.handle('clear-active-cache', async (event, isPrivate) => {
-        const targetSession = isPrivate ? session.fromPartition('MisePrivateProfile') : session.defaultSession;
-        try {
-            await targetSession.clearCache();
-            return "Browser HTTP network cache cleared";
-        } catch (err) {
-            return `Cache clear initialization failed: ${err.message}`;
-        }
     });
 
     ipcMain.on('bubble-webview-key', (event, action) => {
@@ -321,224 +522,38 @@ function createWindow() {
             mainWindow.webContents.send('master-shortcut', 'toggle-notes');
         }
         else if (isCtrl && isShift && key === 'z') {
-             event.preventDefault();
-             mainWindow.webContents.send('master-shortcut', 'toggle-zen-mode');
-         }
-         else if (isCtrl && isShift && key === 'q') {
-             event.preventDefault();
-             mainWindow.webContents.send('master-shortcut', 'set-quickmark');
-         }
-         else if (isCtrl && key === 'j') {
-             event.preventDefault();
-             mainWindow.webContents.send('master-shortcut', 'jump-quickmark');
-         }
-         else if (isCtrl && isShift && key === 'a') {
-             event.preventDefault();
-             mainWindow.webContents.send('master-shortcut', 'add-bookmark');
-         }
-         else if (isCtrl && isShift && key === 'b') {
-             event.preventDefault();
-             mainWindow.webContents.send('master-shortcut', 'toggle-bookmarks');
-         }
+            event.preventDefault();
+            mainWindow.webContents.send('master-shortcut', 'toggle-zen-mode');
+        }
+        else if (isCtrl && isShift && key === 'q') {
+            event.preventDefault();
+            mainWindow.webContents.send('master-shortcut', 'set-quickmark');
+        }
+        else if (isCtrl && key === 'j') {
+            event.preventDefault();
+            mainWindow.webContents.send('master-shortcut', 'jump-quickmark');
+        }
+        else if (isCtrl && isShift && key === 'a') {
+            event.preventDefault();
+            mainWindow.webContents.send('master-shortcut', 'add-bookmark');
+        }
+        else if (isCtrl && isShift && key === 'b') {
+            event.preventDefault();
+            mainWindow.webContents.send('master-shortcut', 'toggle-bookmarks');
+        }
     });
 }
 
-ipcMain.handle('read-notes', async () => {
-    try {
-        if (!fs.existsSync(CONFIG_DIR)) fs.mkdirSync(CONFIG_DIR, { recursive: true });
-        if (!fs.existsSync(NOTES_PATH)) fs.writeFileSync(NOTES_PATH, '', 'utf-8');
-        return fs.readFileSync(NOTES_PATH, 'utf-8');
-    } catch (err) {
-        return '';
-    }
-});
-
-ipcMain.handle('save-notes', async (event, content) => {
-    try {
-        if (!fs.existsSync(CONFIG_DIR)) fs.mkdirSync(CONFIG_DIR, { recursive: true });
-        fs.writeFileSync(NOTES_PATH, content, 'utf-8');
-        return true;
-    } catch (err) {
-        return false;
-    }
-});
-
-ipcMain.on('toggle-active-devtools', (event) => {
-    if (!mainWindow) return;
-    mainWindow.webContents.send('master-shortcut', 'toggle-devtools');
-});
-
-// Sync system theme settings with the main process
-ipcMain.on('set-native-theme', (event, mode) => {
-    nativeTheme.themeSource = mode;
-});
-
-// --- IPC CONFIG CHANNELS FOR THE UI ---
-ipcMain.handle('get-browser-settings', async () => {
-    return loadBrowserConfig();
-});
-
-ipcMain.handle('save-browser-settings', async (event, newCfg) => {
-    saveBrowserConfig(newCfg);
-    return true;
-});
-
-// --- IPC CHANNELS AND UTILITY HANDLERS ---
-ipcMain.on('get-webview-preload-path', (event) => { event.returnValue = path.join(__dirname, 'webview-preload.js'); });
-
-ipcMain.handle('read-hinter-code', async () => {
-    try {
-        const hinterPath = path.join(__dirname, 'hinter.js');
-        if (fs.existsSync(hinterPath)) return fs.readFileSync(hinterPath, 'utf8');
-    } catch (err) {}
-    return '';
-});
-
-ipcMain.handle('get-session', async () => {
-    try {
-        if (fs.existsSync(sessionPath)) return JSON.parse(fs.readFileSync(sessionPath, 'utf8'));
-    } catch (err) {}
-    return { current_workspace: "Workspace 1", workspaces: { "Workspace 1": ["https://duckduckgo.com"] } };
-});
-ipcMain.handle('save-session', async (event, sessionData) => {
-    try {
-        const dir = path.dirname(sessionPath);
-        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-        fs.writeFileSync(sessionPath, JSON.stringify(sessionData, null, 4), 'utf8');
-        return true;
-    } catch (err) { return false; }
-});
-
-// --- IPC HISTORY CHANNELS ---
-ipcMain.handle('search-history', async (event, query) => {
-    const history = readHistory();
-    if (!query || !query.trim()) return history;
-
-    const lowerQuery = query.toLowerCase();
-    return history.filter(item => 
-        item.title.toLowerCase().includes(lowerQuery) || 
-        item.url.toLowerCase().includes(lowerQuery)
-    );
-});
-
-ipcMain.handle('purge-history', async () => {
-    try {
-        if (fs.existsSync(historyPath)) {
-            fs.writeFileSync(historyPath, JSON.stringify([], null, 4), 'utf8');
-        }
-        return true;
-    } catch (err) {
-        return false;
-    }
-});
-
-// Toggle menu bar visibility on demand
-ipcMain.on('toggle-menu-bar', () => {
-    const isVisible = mainWindow.isMenuBarVisible();
-    mainWindow.setMenuBarVisibility(!isVisible);
-});
-
-ipcMain.handle('read-bookmarks', async () => {
-    try {
-        if (!fs.existsSync(BOOKMARKS_PATH)) fs.writeFileSync(BOOKMARKS_PATH, JSON.stringify([]), 'utf-8');
-        return JSON.parse(fs.readFileSync(BOOKMARKS_PATH, 'utf-8'));
-    } catch (err) { return []; }
-});
-
-ipcMain.handle('save-bookmarks', async (event, data) => {
-    try {
-        fs.writeFileSync(BOOKMARKS_PATH, JSON.stringify(data, null, 4), 'utf-8');
-        return true;
-    } catch (err) { return false; }
-});
-
-ipcMain.handle('read-quickmarks', async () => {
-    try {
-        if (!fs.existsSync(QUICKMARKS_PATH)) fs.writeFileSync(QUICKMARKS_PATH, JSON.stringify({}), 'utf-8');
-        return JSON.parse(fs.readFileSync(QUICKMARKS_PATH, 'utf-8'));
-    } catch (err) { return {}; }
-});
-
-ipcMain.handle('save-quickmarks', async (event, data) => {
-    try {
-        fs.writeFileSync(QUICKMARKS_PATH, JSON.stringify(data, null, 4), 'utf-8');
-        return true;
-    } catch (err) { return false; }
-});
-
-const { clipboard } = require('electron');
-const { exec, spawn } = require('child_process');
-
-ipcMain.on('execute-terminal-command', (event, commandStr) => {
-    if (!commandStr || !commandStr.trim()) return;
-
-    clipboard.writeText(commandStr);
-
-    const platform = process.platform;
-
-    if (platform === 'linux') {
-        const emulators = ["kitty", "alacritty", "foot", "st", "xterm"];
-        exec("which " + emulators.join(" "), (err, stdout) => {
-            let chosenTerm = "";
-            if (stdout) {
-                const paths = stdout.trim().split("\n");
-                if (paths.length > 0) {
-                    chosenTerm = paths[0].split("/").pop();
-                }
-            }
-            if (!chosenTerm) {
-                chosenTerm = "xdg-terminal-exec";
-            }
-            spawn(chosenTerm, [], { detached: true, stdio: 'ignore' }).unref();
-        });
-    } 
-    else if (platform === 'darwin') {
-        spawn('open', ['-a', 'Terminal'], { detached: true, stdio: 'ignore' }).unref();
-    } 
-    else if (platform === 'win32') {
-        exec('where wt', (err) => {
-            if (!err) {
-                spawn('wt', [], { detached: true, stdio: 'ignore' }).unref();
-            } else {
-                spawn('cmd.exe', [], { 
-                    detached: true, 
-                    stdio: 'ignore',
-                    windowsHide: false
-                }).unref();
-            }
-        });
-    }
-});
-
-// Update Browser Settings - Search Engine Switch
-ipcMain.handle('update-browser-settings', async (event, newCfg) => {
-    try {
-        if (!fs.existsSync(CONFIG_DIR)) fs.mkdirSync(CONFIG_DIR, { recursive: true });
-        fs.writeFileSync(CONFIG_PATH, JSON.stringify(newCfg, null, 4), 'utf-8');
-        if (Array.isArray(newCfg.trusted_domains)) {
-            // Apply immediately, no relaunch needed - existing tabs on a
-            // newly-trusted domain will pick it up on their next navigation.
-            security.setTrustedDomains(newCfg.trusted_domains);
-        }
-        return true;
-    } catch (e) {
-        return false;
-    }
-});
-
-// Monitor all global frame allocations to catch child webview tags securely
 app.on('web-contents-created', (event, webContents) => {
     if (webContents.getType() === 'webview') {
         webContents.setMaxListeners(30);
 
         webContents.on('did-navigate', (navEvent, url) => {
-            const title = webContents.getTitle();
-            logVisit(title, url);
+            logVisit(webContents.getTitle(), url);
         });
 
         webContents.on('did-navigate-in-page', (navEvent, url) => {
-            const title = webContents.getTitle();
-            logVisit(title, url);
+            logVisit(webContents.getTitle(), url);
         });
 
         webContents.on('context-menu', (contextEvent, params) => {
@@ -613,22 +628,18 @@ app.on('web-contents-created', (event, webContents) => {
             menu.append(new MenuItem({ type: 'separator' }));
         
             const shareSubmenu = new Menu();
-        
             shareSubmenu.append(new MenuItem({
                 label: 'Share to WhatsApp',
                 click: () => openShareModal(`https://web.whatsapp.com/send?text=${encodedText}%20${encodedUrl}`)
             }));
-        
             shareSubmenu.append(new MenuItem({
                 label: 'Share to X (Twitter)',
                 click: () => openShareModal(`https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`)
             }));
-        
             shareSubmenu.append(new MenuItem({
                 label: 'Share to Telegram',
                 click: () => openShareModal(`https://t.me/share/url?url=${encodedUrl}&text=${encodedText}`)
             }));
-        
             shareSubmenu.append(new MenuItem({
                 label: 'Share to Reddit',
                 click: () => openShareModal(`https://www.reddit.com/submit?url=${encodedUrl}&title=${encodedText}`)
@@ -664,7 +675,6 @@ app.on('web-contents-created', (event, webContents) => {
                     const encBody = encodeURIComponent(emailBody);
         
                     if (handler === 'system') {
-                        const { shell } = require('electron');
                         const mailto = `mailto:?subject=${encSubject}&body=${encBody}`;
                         shell.openExternal(mailto).catch(() => {
                             openShareModal(`https://mail.google.com/mail/?view=cm&fs=1&su=${encSubject}&body=${encBody}`);
@@ -683,7 +693,6 @@ app.on('web-contents-created', (event, webContents) => {
             }));
         
             shareSubmenu.append(new MenuItem({ type: 'separator' }));
-        
             shareSubmenu.append(new MenuItem({
                 label: 'Copy Markdown Link',
                 click: () => {
@@ -715,7 +724,6 @@ app.on('web-contents-created', (event, webContents) => {
             return { action: 'deny' };
         });
 
-        // Consolidated webview keybinding listener
         webContents.on('before-input-event', (inputEvent, input) => {
             if (input.type !== 'keyDown') return;
 

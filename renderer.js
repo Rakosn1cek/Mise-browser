@@ -433,13 +433,17 @@ async function executeSurgicalCookieWipe() {
     const urlStr = state.sessionState.workspaces[currentWS][currentIdx] || "";
     
     const isTargetPrivate = state.globalPrivateModeActive || urlStr.toLowerCase().includes("ycombinator.com");
-    const result = await window.miseAPI.clearDomainCookies({ urlStr, isPrivate: isTargetPrivate });
-    alert(result);
+    await window.miseAPI.clearDomainCookies({ urlStr, isPrivate: isTargetPrivate });
+    
+    window.miseAllowWebviewFocus = true;
+    focusActiveWebview();
 }
 
 async function executeGlobalCacheWipe() {
-    const result = await window.miseAPI.clearActiveCache(state.globalPrivateModeActive);
-    alert(result);
+    await window.miseAPI.clearActiveCache(state.globalPrivateModeActive);
+    
+    window.miseAllowWebviewFocus = true;
+    focusActiveWebview();
 }
 
 function triggerLinkHints() {
@@ -499,15 +503,23 @@ function enforceActiveGlobalThemeMode() {
     });
 }
 
-document.getElementById('noti-toggle-btn').addEventListener('click', () => {
+document.getElementById('noti-toggle-btn').addEventListener('click', async () => {
     const btn = document.getElementById('noti-toggle-btn');
-    const isMuted = btn.querySelector('.fa-bell-slash');
-    
-    if (isMuted) {
+    const isMuted = !!btn.querySelector('.fa-bell-slash');
+    const targetState = isMuted; // If muted, enable notifications; otherwise, mute
+
+    if (window.miseAPI && typeof window.miseAPI.toggleGlobalNotifications === 'function') {
+        await window.miseAPI.toggleGlobalNotifications(targetState);
+    }
+
+    if (targetState) {
         btn.innerHTML = '<i class="fa-solid fa-bell"></i>';
     } else {
         btn.innerHTML = '<i class="fa-solid fa-bell-slash"></i>';
     }
+
+    window.miseAllowWebviewFocus = true;
+    focusActiveWebview();
 });
 
 document.addEventListener('DOMContentLoaded', initializeBrowser);
