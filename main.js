@@ -53,11 +53,13 @@ function initializeEngineSwitches() {
     app.commandLine.appendSwitch('user-agent', standardUA);
     app.commandLine.appendSwitch('force-webrtc-ip-handling-policy', 'default_public_interface_only');
 
+    // Added CanvasOopRasterization to disabled features to stop Skia picture buffering
     const disabledFeatures = [
-        'Translate', 'PrivacySandboxSettings4', 'PrivacySandboxAdsAPIsOverride',
-        'PrivacySandboxAdsAPIsM1Override', 'InterestGroupStorage',
-        'AttributionReportingCrossAppWeb', 'FencedFrames', 'WebUSB',
-        'WebBluetooth', 'Serial', 'GenericSensor', 'WebOTP', 'Vulkan'
+        'CanvasOopRasterization', 'Translate', 'PrivacySandboxSettings4',
+        'PrivacySandboxAdsAPIsOverride', 'PrivacySandboxAdsAPIsM1Override',
+        'InterestGroupStorage', 'AttributionReportingCrossAppWeb',
+        'FencedFrames', 'WebUSB', 'WebBluetooth', 'Serial',
+        'GenericSensor', 'WebOTP', 'Vulkan'
     ];
     app.commandLine.appendSwitch('disable-features', disabledFeatures.join(','));
 
@@ -67,11 +69,10 @@ function initializeEngineSwitches() {
     } else {
         if (process.platform === 'linux') {
             app.commandLine.appendSwitch('ignore-gpu-blocklist');
-            app.commandLine.appendSwitch('enable-zero-copy');
             app.commandLine.appendSwitch('enable-gpu-rasterization');
-            app.commandLine.appendSwitch('enable-oop-rasterization');
             app.commandLine.appendSwitch('enable-accelerated-video-decode');
-            app.commandLine.appendSwitch('enable-features', 'VaapiVideoDecoder,VaapiVideoEncoder,CanvasOopRasterization,TLSExtensionGrease');
+            // Kept VA-API hardware decode/encode, removed CanvasOopRasterization
+            app.commandLine.appendSwitch('enable-features', 'VaapiVideoDecoder,VaapiVideoEncoder,TLSExtensionGrease');
         } else {
             app.commandLine.appendSwitch('enable-features', 'TLSExtensionGrease');
         }
@@ -82,6 +83,10 @@ function initializeEngineSwitches() {
         app.commandLine.appendSwitch('add-delay-to-background-timer-tasks');
     }
     
+    // Hard V8 old space ceiling and compositor texture boundary
+    app.commandLine.appendSwitch('js-flags', '--max-old-space-size=756');
+    app.commandLine.appendSwitch('force-gpu-mem-available-mb', '512');
+
     app.commandLine.appendSwitch('renderer-process-limit', String(cfg.process_limit || 4));
     app.commandLine.appendSwitch('disable-shared-workers');
     app.commandLine.appendSwitch('disable-smooth-scrolling');
@@ -547,6 +552,21 @@ function createWindow() {
 app.on('web-contents-created', (event, webContents) => {
     if (webContents.getType() === 'webview') {
         webContents.setMaxListeners(30);
+
+        // Inject performance clamp to neutralize continuous CSS repaint loops
+        const PERF_CSS = `
+            *, *::before, *::after {
+                animation-duration: 0.001s !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.001s !important;
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+            }
+        `;
+
+        webContents.on('dom-ready', () => {
+            webContents.insertCSS(PERF_CSS).catch(() => {});
+        });
 
         webContents.on('did-navigate', (navEvent, url) => {
             logVisit(webContents.getTitle(), url);
