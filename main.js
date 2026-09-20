@@ -84,7 +84,7 @@ function initializeEngineSwitches() {
     }
     
     // Hard V8 old space ceiling and compositor texture boundary
-    app.commandLine.appendSwitch('js-flags', '--max-old-space-size=756');
+    app.commandLine.appendSwitch('js-flags', '--max-old-space-size=768');
     app.commandLine.appendSwitch('force-gpu-mem-available-mb', '512');
 
     app.commandLine.appendSwitch('renderer-process-limit', String(cfg.process_limit || 4));
