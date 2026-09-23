@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, session, Menu, MenuItem, nativeTheme, Notification, clipboard, shell } = require('electron');
+const { app, BrowserWindow, ipcMain, session, Menu, MenuItem, nativeTheme, Notification, clipboard, shell, webContents } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { exec, spawn } = require('child_process');
@@ -155,24 +155,25 @@ function sendSystemNotification(title, body) {
 let globalNotificationsEnabled = true;
 
 function configureSessionPermissions(targetSession) {
+    const blockedPermissions = ['media', 'geolocation', 'midiSysex', 'audio', 'video'];
+
     targetSession.setPermissionRequestHandler((webContents, permission, callback) => {
-        if (permission === 'notifications') {
-            return callback(globalNotificationsEnabled);
-        }
-        if (permission === 'clipboard-read' || permission === 'clipboard-sanitized-write') {
-            return callback(true);
-        }
-        callback(false);
+        let hostname = '';
+        try { hostname = new URL(webContents.getURL()).hostname; } catch (e) {}
+        if (security.isTrustedDomain(hostname)) return callback(true);
+        if (permission === 'notifications') return callback(globalNotificationsEnabled);
+        if (permission === 'clipboard-read' || permission === 'clipboard-sanitized-write') return callback(true);
+        if (blockedPermissions.includes(permission)) return callback(false);
+        callback(true);
     });
 
-    targetSession.setPermissionCheckHandler((webContents, permission) => {
-        if (permission === 'notifications') {
-            return globalNotificationsEnabled;
-        }
-        if (permission === 'clipboard-read' || permission === 'clipboard-sanitized-write') {
-            return true;
-        }
-        return false;
+    targetSession.setPermissionCheckHandler((webContents, permission, origin) => {
+        let hostname = '';
+        try { hostname = new URL(origin).hostname; } catch (e) {}
+        if (security.isTrustedDomain(hostname)) return true;
+        if (permission === 'notifications') return globalNotificationsEnabled;
+        if (permission === 'clipboard-read' || permission === 'clipboard-sanitized-write') return true;
+        return !blockedPermissions.includes(permission);
     });
 }
 
@@ -388,6 +389,20 @@ ipcMain.handle('update-browser-settings', async (event, newCfg) => {
         return false;
     }
 });
+
+function initializeMemoryWatcher() {
+    setInterval(() => {
+        const metrics = app.getAppMetrics();
+        metrics.forEach(metric => {
+            if (metric.type === 'Renderer' && metric.memory.residentSet > 300 * 1024 * 1024) {
+                const wc = webContents.fromId(metric.webContentsId);
+                if (wc && !wc.isFocused()) {
+                    wc.reload(); // Simple discard strategy: reload
+                }
+            }
+        });
+    }, 10000); // Poll every 10 seconds
+}
 
 function createWindow() {
     mainWindow = new BrowserWindow({
@@ -789,4 +804,7 @@ app.on('web-contents-created', (event, webContents) => {
     }
 });
 
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+    createWindow();
+    initializeMemoryWatcher();
+});

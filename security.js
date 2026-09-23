@@ -189,56 +189,6 @@ async function initialiseAdblocker(targetSession) {
     }
 }
 
-function hardenSession(targetSession) {
-    // Enforce UK English spellchecking
-    targetSession.setSpellCheckerLanguages(['en-GB']);
-
-    // Trigger the dynamic tracking rule engine injection
-    initialiseAdblocker(targetSession);
-
-    const blockedPermissions = ['media', 'geolocation', 'notifications', 'midiSysex', 'audio', 'video'];
-
-    targetSession.setPermissionRequestHandler((webContents, permission, callback) => {
-        let hostname = '';
-        try { hostname = new URL(webContents.getURL()).hostname; } catch (e) {}
-
-        if (isTrustedDomain(hostname)) {
-            return callback(true);
-        }
-        if (blockedPermissions.includes(permission)) {
-            return callback(false);
-        }
-        callback(true);
-    });
-
-    targetSession.setPermissionCheckHandler((webContents, permission, origin) => {
-        let hostname = '';
-        try { hostname = new URL(origin).hostname; } catch (e) {}
-
-        if (isTrustedDomain(hostname)) {
-            return true;
-        }
-        if (blockedPermissions.includes(permission)) {
-            return false;
-        }
-        return true;
-    });
-
-    targetSession.webRequest.onBeforeSendHeaders((details, callback) => {
-        let hostname = '';
-        try { hostname = new URL(details.url).hostname; } catch (e) {}
-
-        if (!isTrustedDomain(hostname)) {
-            for (const header of Object.keys(details.requestHeaders)) {
-                if (header.toLowerCase().startsWith('sec-ch-ua')) {
-                    delete details.requestHeaders[header];
-                }
-            }
-        }
-        callback({ requestHeaders: details.requestHeaders });
-    });
-}
-
 function hardenWebviewPreferences(webPreferences) {
     webPreferences.webgl = true;
     webPreferences.accelerated2dCanvas = true;
