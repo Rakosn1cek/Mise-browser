@@ -1020,45 +1020,43 @@ body.zen-mode #right-content {
     flex-shrink: 0;
 }
 
-/* Bookmarks Modal Overlay Setup */
+/* Full Page Bookmarks & Quickmarks Overlay Setup */
 #BookmarksOverlay {
-    display: none;
-    position: fixed;
+    position: absolute;
     top: 0;
     left: 0;
-    width: 100vw;
-    height: 100vh;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: 3000;
-    justify-content: right;
-    align-items: flex-start; /* Aligns container to the top edge */
-    padding-top: 10px;       /* Gives it clean breathing room from the top border */
-}
-
-.bookmarks-card {
-    width: 620px;
-    background-color: var(--bg-sidebar);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    display: flex;
+    width: 100%;
+    height: 100%;
+    background-color: var(--bg-main);
+    color: var(--text);
+    z-index: 500;
+    display: none;
     flex-direction: column;
-    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6);
-    max-height: 480px;
-    overflow: hidden;
+    padding: 30px;
+    overflow-y: auto;
+    outline: none;
 }
 
-.bookmarks-header {
+.bookmarks-overlay-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+}
+
+.bookmarks-header-actions {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 12px;
-    border-bottom: 1px solid var(--border);
+    gap: 12px;
+    width: 500px;
 }
 
 /* Custom dark search input styling */
 #BookmarkSearchInput {
     flex-grow: 1;
-    background-color: var(--bg-main);
+    background-color: var(--bg-sidebar);
     color: var(--text);
     border: 1px solid var(--border);
     border-radius: 4px;
@@ -1072,40 +1070,87 @@ body.zen-mode #right-content {
     border-color: var(--accent);
 }
 
+.bookmarks-columns-container {
+    display: flex;
+    gap: 24px;
+    flex: 1;
+    min-height: 0;
+}
+
+.bookmarks-column-pane {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--bg-sidebar);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    overflow: hidden;
+    max-height: calc(100vh - 160px);
+    transition: border-color 0.15s ease;
+}
+
+.bookmarks-column-pane.active-pane {
+    border-color: var(--accent);
+}
+
+.bookmarks-results-list {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 10px;
+    outline: none;
+}
+
 .bookmark-item-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 10px 12px;
-    border-bottom: 1px solid var(--border);
+    background-color: var(--bg-main);
+    border: 1px solid var(--border);
     border-radius: 4px;
     cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
 .bookmark-item-row:hover {
     background-color: var(--selected);
+    border-color: var(--accent);
 }
 
 .bookmark-item-row.selected {
     background-color: var(--selected);
-    border-left: 2px solid var(--accent);
+    border-color: var(--accent);
+    border-left: 3px solid var(--accent);
 }
 
 .bookmark-info {
     flex: 1;
     min-width: 0;
+    margin-right: 8px;
 }
 
 .bookmark-delete-btn {
     background: transparent;
     color: var(--text);
-    border: none;
+    border: 1px solid var(--border);
     cursor: pointer;
     font-size: 13px;
-    opacity: 0.5;
-    padding: 4px 8px;
+    opacity: 0.6;
+    padding: 6px 10px;
     border-radius: 4px;
     transition: all 0.15s ease;
+    flex-shrink: 0;
+}
+
+.bookmark-delete-btn:hover {
+    color: #ef4444;
+    opacity: 1;
+    background-color: rgba(239, 68, 68, 0.1);
+    border-color: #ef4444;
 }
 
 .bookmark-delete-btn:hover {

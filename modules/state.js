@@ -31,6 +31,9 @@ export const state = {
     // Bookmarks and Quickmarks State
     quickmarks: {},
     bookmarks: [],
+    bookmarkActiveColumn: 'quickmarks',
+    quickmarkSelectionIdx: 0,
     bookmarkSelectionIdx: 0,
+    filteredQuickmarksCache: [],
     filteredBookmarksCache: []
 };

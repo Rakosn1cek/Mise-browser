@@ -189,7 +189,7 @@
                             <section class="settings-section">
                                 <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--border); padding-bottom: 8px;">
                                     <h2 style="border-bottom: none; padding-bottom: 0; margin-bottom: 0;">Help & Shortcuts Reference</h2>
-                                    <span style="font-family: monospace; font-size: 12px; color: var(--accent);">Mise Browser v0.4.4</span>
+                                    <span style="font-family: monospace; font-size: 12px; color: var(--accent);">Mise Browser v0.4.5</span>
                                 </div>
                 
                                 <div class="reference-category">
@@ -313,13 +313,23 @@
     </div>
 
     <!-- Actionable Bookmarks Overlay -->
-    <div id="BookmarksOverlay" style="display: none;">
-        <div class="bookmarks-card">
-            <div class="bookmarks-header">
-                <input type="text" id="BookmarkSearchInput" placeholder="Search bookmarks..." autocomplete="off">
-                <button id="CloseBookmarksBtn" class="history-action-btn" title="Close"><i class="fa-solid fa-xmark"></i></button>
+    <div id="BookmarksOverlay" tabindex="0" style="display: none;">
+        <div class="bookmarks-overlay-header">
+            <div class="dashboard-title"><i class="fa-solid fa-bookmark"></i> Bookmarks & Quickmarks Manager</div>
+            <div class="bookmarks-header-actions">
+                <input type="text" id="BookmarkSearchInput" placeholder="Search bookmarks and quickmarks..." autocomplete="off">
+                <button id="CloseBookmarksBtn" class="history-action-btn" title="Close (Esc)"><i class="fa-solid fa-xmark"></i> Close</button>
             </div>
-            <div id="BookmarksResultsList" class="history-results"></div>
+        </div>
+        <div class="bookmarks-columns-container">
+            <div class="bookmarks-column-pane">
+                <div class="quickmarks-section-title">Quickmarks (Ctrl + J + [key])</div>
+                <div id="QuickmarksResultsList" class="bookmarks-results-list" tabindex="0"></div>
+            </div>
+            <div class="bookmarks-column-pane">
+                <div class="quickmarks-section-title">Bookmarks</div>
+                <div id="BookmarksResultsList" class="bookmarks-results-list" tabindex="0"></div>
+            </div>
         </div>
     </div>
 

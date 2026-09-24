@@ -84,6 +84,8 @@ export function toggleBookmarksOverlay() {
 
     if (state.bookmarksActive) {
         overlay.style.display = 'flex';
+        state.bookmarkActiveColumn = 'quickmarks';
+        state.quickmarkSelectionIdx = 0;
         state.bookmarkSelectionIdx = 0;
         if (input) {
             input.value = '';
@@ -97,14 +99,17 @@ export function toggleBookmarksOverlay() {
 }
 
 export function renderBookmarksList(filterText = '') {
-    const container = document.getElementById('BookmarksResultsList');
-    if (!container) return;
+    const qmContainer = document.getElementById('QuickmarksResultsList');
+    const bmContainer = document.getElementById('BookmarksResultsList');
+    if (!qmContainer || !bmContainer) return;
 
-    container.innerHTML = '';
+    qmContainer.innerHTML = '';
+    bmContainer.innerHTML = '';
     const query = filterText.toLowerCase().trim();
+    state.filteredQuickmarksCache = [];
     state.filteredBookmarksCache = [];
 
-    // 1. Build Quickmarks Cache & DOM
+    // Build quickmarks cache and dom
     const quickmarkKeys = Object.keys(state.quickmarks).filter(key => {
         const qm = state.quickmarks[key];
         return key.toLowerCase().includes(query) || 
@@ -113,15 +118,10 @@ export function renderBookmarksList(filterText = '') {
     });
 
     if (quickmarkKeys.length > 0) {
-        const qmHeader = document.createElement('div');
-        qmHeader.className = 'quickmarks-section-title';
-        qmHeader.textContent = 'Quickmarks (Ctrl + J + [key])';
-        container.appendChild(qmHeader);
-
         quickmarkKeys.forEach(key => {
             const qm = state.quickmarks[key];
             const itemObj = { type: 'quickmark', key: key, url: qm.url, title: qm.title };
-            state.filteredBookmarksCache.push(itemObj);
+            state.filteredQuickmarksCache.push(itemObj);
 
             const itemEl = document.createElement('div');
             itemEl.className = 'bookmark-item-row quickmark-row';
@@ -146,22 +146,19 @@ export function renderBookmarksList(filterText = '') {
                 deleteQuickmark(key);
             });
 
-            container.appendChild(itemEl);
+            qmContainer.appendChild(itemEl);
         });
+    } else {
+        qmContainer.innerHTML = '<div class="history-empty">No quickmarks found.</div>';
     }
 
-    // 2. Build Standard Bookmarks Cache & DOM
+    // Build standard bookmarks cache and dom
     const matchingBookmarks = state.bookmarks.filter(bm => 
         (bm.title && bm.title.toLowerCase().includes(query)) || 
         (bm.url && bm.url.toLowerCase().includes(query))
     );
 
     if (matchingBookmarks.length > 0) {
-        const bmHeader = document.createElement('div');
-        bmHeader.className = 'quickmarks-section-title';
-        bmHeader.textContent = 'Bookmarks';
-        container.appendChild(bmHeader);
-
         matchingBookmarks.forEach(bm => {
             const itemObj = { type: 'bookmark', url: bm.url, title: bm.title };
             state.filteredBookmarksCache.push(itemObj);
@@ -188,16 +185,15 @@ export function renderBookmarksList(filterText = '') {
                 deleteBookmark(bm.url);
             });
 
-            container.appendChild(itemEl);
+            bmContainer.appendChild(itemEl);
         });
+    } else {
+        bmContainer.innerHTML = '<div class="history-empty">No bookmarks found.</div>';
     }
 
-    if (state.filteredBookmarksCache.length === 0) {
-        container.innerHTML = '<div class="history-empty">No bookmarks or quickmarks found.</div>';
-        state.bookmarkSelectionIdx = 0;
-        return;
+    if (state.quickmarkSelectionIdx >= state.filteredQuickmarksCache.length) {
+        state.quickmarkSelectionIdx = Math.max(0, state.filteredQuickmarksCache.length - 1);
     }
-
     if (state.bookmarkSelectionIdx >= state.filteredBookmarksCache.length) {
         state.bookmarkSelectionIdx = Math.max(0, state.filteredBookmarksCache.length - 1);
     }
@@ -206,15 +202,38 @@ export function renderBookmarksList(filterText = '') {
 }
 
 export function updateBookmarkVisualSelection() {
-    const items = document.querySelectorAll('#BookmarksResultsList .bookmark-item-row');
-    items.forEach((item, idx) => {
-        if (idx === state.bookmarkSelectionIdx) {
+    const qmItems = document.querySelectorAll('#QuickmarksResultsList .bookmark-item-row');
+    const bmItems = document.querySelectorAll('#BookmarksResultsList .bookmark-item-row');
+    const qmPane = document.getElementById('QuickmarksResultsList')?.closest('.bookmarks-column-pane');
+    const bmPane = document.getElementById('BookmarksResultsList')?.closest('.bookmarks-column-pane');
+
+    qmItems.forEach((item, idx) => {
+        if (state.bookmarkActiveColumn === 'quickmarks' && idx === state.quickmarkSelectionIdx) {
             item.classList.add('selected');
             item.scrollIntoView({ block: 'nearest' });
         } else {
             item.classList.remove('selected');
         }
     });
+
+    bmItems.forEach((item, idx) => {
+        if (state.bookmarkActiveColumn === 'bookmarks' && idx === state.bookmarkSelectionIdx) {
+            item.classList.add('selected');
+            item.scrollIntoView({ block: 'nearest' });
+        } else {
+            item.classList.remove('selected');
+        }
+    });
+
+    if (qmPane && bmPane) {
+        if (state.bookmarkActiveColumn === 'quickmarks') {
+            qmPane.classList.add('active-pane');
+            bmPane.classList.remove('active-pane');
+        } else {
+            bmPane.classList.add('active-pane');
+            qmPane.classList.remove('active-pane');
+        }
+    }
 }
 
 export async function deleteBookmark(url) {
@@ -231,7 +250,7 @@ export async function deleteQuickmark(key) {
     if (!key || !state.quickmarks[key]) return;
     delete state.quickmarks[key];
     if (window.miseAPI && typeof window.miseAPI.saveQuickmarks === 'function') {
-        await window.miseAPI.saveQuickmarks(state.quickmarks);
+        window.miseAPI.saveQuickmarks(state.quickmarks);
     }
     const searchInput = document.getElementById('BookmarkSearchInput');
     renderBookmarksList(searchInput ? searchInput.value : '');
@@ -242,39 +261,61 @@ export function setupBookmarkOverlayListeners() {
     const closeBtn = document.getElementById('CloseBookmarksBtn');
     const overlay = document.getElementById('BookmarksOverlay');
 
-    if (searchInput) {
-        searchInput.addEventListener('input', (e) => {
-            state.bookmarkSelectionIdx = 0;
-            renderBookmarksList(e.target.value);
-        });
+    window.addEventListener('keydown', (e) => {
+        if (!state.bookmarksActive) return;
 
-        searchInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                e.preventDefault();
-                toggleBookmarksOverlay();
-                return;
-            }
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            e.stopPropagation();
+            toggleBookmarksOverlay();
+            return;
+        }
 
-            if (state.filteredBookmarksCache.length === 0) return;
+        const activeEl = document.activeElement;
+        const isInsideOverlay = overlay && overlay.contains(activeEl);
+        const isBodyOrNull = !activeEl || activeEl === document.body;
 
-            if (e.key === 'ArrowDown') {
+        if (isInsideOverlay || isBodyOrNull) {
+            if (e.key === 'ArrowRight') {
                 e.preventDefault();
-                state.bookmarkSelectionIdx = (state.bookmarkSelectionIdx + 1) % state.filteredBookmarksCache.length;
-                updateBookmarkVisualSelection();
-            } else if (e.key === 'ArrowUp') {
+                if (state.bookmarkActiveColumn === 'quickmarks' && state.filteredBookmarksCache.length > 0) {
+                    state.bookmarkActiveColumn = 'bookmarks';
+                    updateBookmarkVisualSelection();
+                }
+            } else if (e.key === 'ArrowLeft') {
                 e.preventDefault();
-                state.bookmarkSelectionIdx = (state.bookmarkSelectionIdx - 1 + state.filteredBookmarksCache.length) % state.filteredBookmarksCache.length;
-                updateBookmarkVisualSelection();
+                if (state.bookmarkActiveColumn === 'bookmarks' && state.filteredQuickmarksCache.length > 0) {
+                    state.bookmarkActiveColumn = 'quickmarks';
+                    updateBookmarkVisualSelection();
+                }
+            } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                const currentCache = state.bookmarkActiveColumn === 'quickmarks' ? state.filteredQuickmarksCache : state.filteredBookmarksCache;
+                if (currentCache.length > 0) {
+                    let selIdx = state.bookmarkActiveColumn === 'quickmarks' ? state.quickmarkSelectionIdx : state.bookmarkSelectionIdx;
+                    if (e.key === 'ArrowDown') {
+                        selIdx = (selIdx + 1) % currentCache.length;
+                    } else {
+                        selIdx = (selIdx - 1 + currentCache.length) % currentCache.length;
+                    }
+                    if (state.bookmarkActiveColumn === 'quickmarks') state.quickmarkSelectionIdx = selIdx;
+                    else state.bookmarkSelectionIdx = selIdx;
+                    updateBookmarkVisualSelection();
+                }
             } else if (e.key === 'Enter') {
                 e.preventDefault();
-                const targetItem = state.filteredBookmarksCache[state.bookmarkSelectionIdx];
+                const currentCache = state.bookmarkActiveColumn === 'quickmarks' ? state.filteredQuickmarksCache : state.filteredBookmarksCache;
+                let selIdx = state.bookmarkActiveColumn === 'quickmarks' ? state.quickmarkSelectionIdx : state.bookmarkSelectionIdx;
+                const targetItem = currentCache[selIdx];
                 if (targetItem && targetItem.url) {
                     spawnTabWithUrl(targetItem.url);
                     toggleBookmarksOverlay();
                 }
             } else if (e.key === 'Delete') {
                 e.preventDefault();
-                const targetItem = state.filteredBookmarksCache[state.bookmarkSelectionIdx];
+                const currentCache = state.bookmarkActiveColumn === 'quickmarks' ? state.filteredQuickmarksCache : state.filteredBookmarksCache;
+                let selIdx = state.bookmarkActiveColumn === 'quickmarks' ? state.quickmarkSelectionIdx : state.bookmarkSelectionIdx;
+                const targetItem = currentCache[selIdx];
                 if (targetItem) {
                     if (targetItem.type === 'quickmark') {
                         deleteQuickmark(targetItem.key);
@@ -283,6 +324,14 @@ export function setupBookmarkOverlayListeners() {
                     }
                 }
             }
+        }
+    });
+
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            state.quickmarkSelectionIdx = 0;
+            state.bookmarkSelectionIdx = 0;
+            renderBookmarksList(e.target.value);
         });
     }
 
