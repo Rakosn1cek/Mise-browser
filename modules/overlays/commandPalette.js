@@ -17,6 +17,7 @@ export const commandRegistry = {
     "Toggle Bookmarks Manager": () => toggleBookmarksOverlay(),
     "Toggle Quick Notes": () => window.toggleNotesOverlay && window.toggleNotesOverlay(),
     "Toggle Zen Mode (Hide Sidebar)": () => window.toggleZenMode && window.toggleZenMode(),
+    "Toggle Mise Settings (Menu Bar) [F1]": () => window.miseAPI && typeof window.miseAPI.toggleMenuBar === 'function' && window.miseAPI.toggleMenuBar(),
     "Open Preferences": () => togglePreferencesView(),
     "Toggle Actionable History": () => window.toggleHistoryOverlay && window.toggleHistoryOverlay(),
     "Mute/Unmute Active Tab": () => {

@@ -30,13 +30,11 @@
         </div>
 
         <div id="right-content">
-            <input type="text" id="WideAddressBar" placeholder="Search or enter address...">
-
-			<div id="AddressBarContainer">
-			    <input type="text" id="WideAddressBar" placeholder="Search, enter address, or type 'ws <name>'..." autocomplete="off">
-			    <ul id="AddressSuggestions" style="display: none;"></ul>
-			</div>
-			            
+            <div id="AddressBarContainer">
+                <input type="text" id="WideAddressBar" placeholder="Search, enter address, or type 'ws <name>'..." autocomplete="off">
+                <ul id="AddressSuggestions" style="display: none;"></ul>
+            </div>
+            
             <div id="webview-container">
                 <!-- Empty Workspace Welcome View -->
                 <div id="EmptyWorkspaceWelcome" style="display: none;">
@@ -218,12 +216,13 @@
                             <section class="settings-section">
                                 <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--border); padding-bottom: 8px;">
                                     <h2 style="border-bottom: none; padding-bottom: 0; margin-bottom: 0;">Help & Shortcuts Reference</h2>
-                                    <span style="font-family: monospace; font-size: 12px; color: var(--accent);">Mise Browser v0.5.1</span>
+                                    <span style="font-family: monospace; font-size: 12px; color: var(--accent);">Mise Browser v0.5.2</span>
                                 </div>
                 
                                 <div class="reference-category">
                                     <h3 class="reference-subheading">Navigation & Workspaces</h3>
                                     <div class="shortcuts-grid">
+                                        <div class="shortcut-row"><span class="shortcut-key">F1</span><span class="shortcut-desc">Toggle Mise Settings (Menu Bar)</span></div>
                                         <div class="shortcut-row"><span class="shortcut-key">Ctrl + T</span><span class="shortcut-desc">New DuckDuckGo Tab</span></div>
                                         <div class="shortcut-row"><span class="shortcut-key">Ctrl + L</span><span class="shortcut-desc">Toggle Floating Address Bar</span></div>
                                         <div class="shortcut-row"><span class="shortcut-key">Ctrl + W</span><span class="shortcut-desc">Close Current Tab (or Node)</span></div>

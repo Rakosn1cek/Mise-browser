@@ -28,6 +28,7 @@ contextBridge.exposeInMainWorld('miseAPI', {
     onMasterShortcut: (callback) => {
         ipcRenderer.on('master-shortcut', (event, action, ...args) => callback(action, ...args));
     },
-    signalRendererReady: () => ipcRenderer.send('renderer-ready')
+    signalRendererReady: () => ipcRenderer.send('renderer-ready'),
+    toggleMenuBar: () => ipcRenderer.send('toggle-menu-bar')
 });
 

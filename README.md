@@ -68,6 +68,7 @@ Mise Browser is designed to be fully controllable via keyboard shortcuts. Below 
 
 | Shortcut | Action |
 | :--- | :--- |
+| F1 | Toggle Mise Settings (Menu Bar) |
 | Ctrl + T | Open a new tab |
 | Ctrl + L | Toggle the floating address bar |
 | Ctrl + W | Close the current tab |

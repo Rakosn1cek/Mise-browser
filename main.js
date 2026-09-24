@@ -478,7 +478,7 @@ function createWindow() {
         height: 1040,
         icon: path.join(__dirname, 'assets', 'icons', 'Mise-logo256.png'),
         frame: true,
-        autoHideMenuBar: true,
+        autoHideMenuBar: false,
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
             contextIsolation: true,
@@ -584,6 +584,13 @@ function createWindow() {
         const isCtrl = input.control;
         const isShift = input.shift;
         const key = input.key.toLowerCase();
+
+        if (key === 'f1') {
+            event.preventDefault();
+            const isVisible = mainWindow.isMenuBarVisible();
+            mainWindow.setMenuBarVisibility(!isVisible);
+            return;
+        }
 
         if (isCtrl && key === 't') { event.preventDefault(); mainWindow.webContents.send('master-shortcut', 'spawn-tab'); }
         else if (isCtrl && key === 'l') { event.preventDefault(); mainWindow.webContents.send('master-shortcut', 'toggle-address'); }
@@ -842,6 +849,13 @@ app.on('web-contents-created', (event, webContents) => {
             const key = input.key.toLowerCase();
 
             if (!mainWindow || !mainWindow.webContents) return;
+
+            if (key === 'f1') {
+                inputEvent.preventDefault();
+                const isVisible = mainWindow.isMenuBarVisible();
+                mainWindow.setMenuBarVisibility(!isVisible);
+                return;
+            }
 
             if (isCtrl && key === 'r') {
                 inputEvent.preventDefault();

@@ -166,7 +166,10 @@ function setupEventListeners() {
     const addressBar = document.getElementById('WideAddressBar');
     addressBar.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') handleNavigation(addressBar.value.trim());
-        else if (e.key === 'Escape') addressBar.style.display = 'none';
+        else if (e.key === 'Escape') {
+            addressBar.style.display = 'none';
+            hideSuggestions();
+        }
     });
 
     addressBar.addEventListener('focus', () => {
