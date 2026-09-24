@@ -2,7 +2,138 @@ import { state } from './state.js';
 import { getActiveWebview, focusActiveWebview } from './utils.js';
 
 export function applyCSSThemeToView(webview) {
-    // Left as stub matching existing codebase implementation
+    if (webview && typeof webview.executeJavaScript === 'function') {
+        const theme = state.isDarkMode ? 'dark' : 'light';
+        webview.executeJavaScript(`document.documentElement.setAttribute('data-theme', '${theme}');`, false).catch(() => {});
+    }
+}
+
+export function createWebView(url, currentWS, idx) {
+    const webview = document.createElement('webview');
+    webview.style.backgroundColor = '#1a1b26';
+    webview.setAttribute('preload', window.miseAPI.getWebviewPreloadPath());
+    webview.setAttribute('allowpopups', '');
+    
+    if (state.globalPrivateModeActive || url.toLowerCase().includes("ycombinator.com")) {
+        webview.setAttribute('partition', 'MisePrivateProfile');
+    }
+    
+    webview.setAttribute('src', url);
+    
+    webview.addEventListener('page-title-updated', (e) => {
+        state.activeTitlesCache[currentWS][idx] = e.title;
+        const targetLi = document.querySelectorAll('#TabList li')[idx];
+        if (targetLi && state.sessionState.current_workspace === currentWS) {
+            const titleEl = targetLi.querySelector('.tab-title');
+            if (titleEl) {
+                titleEl.textContent = e.title.length > 24 ? e.title.slice(0, 24) + "..." : e.title;
+            }
+        }
+    });
+
+    webview.addEventListener('did-navigate', async (e) => {
+        if (state.sessionState.workspaces[currentWS] && state.sessionState.workspaces[currentWS][idx]) {
+            state.sessionState.workspaces[currentWS][idx] = e.url;
+            window.miseAPI.saveSession(state.sessionState);
+        }
+        const targetLi = document.querySelectorAll('#TabList li')[idx];
+        if (targetLi) {
+            const cfg = (await window.miseAPI.getBrowserSettings()) || {};
+            updateTabShieldStatus(targetLi, e.url, cfg.trusted_domains || []);
+        }
+    });
+
+    webview.addEventListener('did-navigate-in-page', async (e) => {
+        if (state.sessionState.workspaces[currentWS] && state.sessionState.workspaces[currentWS][idx]) {
+            state.sessionState.workspaces[currentWS][idx] = e.url;
+            window.miseAPI.saveSession(state.sessionState);
+        }
+        const targetLi = document.querySelectorAll('#TabList li')[idx];
+        if (targetLi) {
+            const cfg = (await window.miseAPI.getBrowserSettings()) || {};
+            updateTabShieldStatus(targetLi, e.url, cfg.trusted_domains || []);
+        }
+        webview.executeJavaScript(`
+            (function() {
+                try {
+                    document.querySelectorAll('video').forEach(v => {
+                        const prevDisplay = v.style.display;
+                        v.style.display = 'none';
+                        void v.offsetHeight; // force synchronous reflow
+                        v.style.display = prevDisplay;
+                    });
+                } catch (e) {}
+            })();
+        `, false).catch(() => {});
+    });
+
+    webview.addEventListener('new-window', (e) => {
+        e.preventDefault();
+        const targetUrl = e.url;
+        
+        if (!state.sessionState.workspaces[currentWS]) {
+            state.sessionState.workspaces[currentWS] = [];
+        }
+        
+        state.sessionState.workspaces[currentWS].push(targetUrl);
+        window.miseAPI.saveSession(state.sessionState);
+        
+        const newTargetIdx = state.sessionState.workspaces[currentWS].length - 1;
+        renderWorkspaceUI(newTargetIdx);
+    });
+
+    webview.addEventListener('render-process-gone', (e) => {
+        if (e.reason !== 'clean-exit') {
+            setTimeout(() => {
+                webview.reload();
+            }, 500);
+        }
+    });
+
+    webview.addEventListener('found-in-page', (e) => {
+        if (e.result) {
+            const countEl = document.getElementById('FindMatchCount');
+            if (countEl) {
+                const activeMatch = e.result.activeMatchOrdinal || 0;
+                const totalMatches = e.result.matches || 0;
+                countEl.textContent = totalMatches > 0 ? `${activeMatch}/${totalMatches}` : '0/0';
+            }
+        }
+    });
+
+    webview.addEventListener('media-started-playing', () => {
+        updateTabMediaIndicator(currentWS, idx, true);
+    });
+    
+    webview.addEventListener('media-paused', () => {
+        updateTabMediaIndicator(currentWS, idx, false);
+    });
+
+    webview.addEventListener('did-start-loading', () => {
+        webview.style.opacity = '1';
+        updateTabMediaIndicator(currentWS, idx, false);
+    });
+
+    webview.addEventListener('dom-ready', async () => {
+        applyCSSThemeToView(webview);
+        webview.style.opacity = '1';
+
+        const targetLi = document.querySelectorAll('#TabList li')[idx];
+        if (targetLi) {
+            const cfg = (await window.miseAPI.getBrowserSettings()) || {};
+            updateTabShieldStatus(targetLi, webview.getURL(), cfg.trusted_domains || []);
+        }
+
+        try {
+            const hinterCode = await window.miseAPI.readHinterCode();
+            if (hinterCode && typeof webview.executeJavaScript === 'function') {
+                const safeExecutionWrapper = `try { ${hinterCode} } catch(e) {}`;
+                webview.executeJavaScript(safeExecutionWrapper, false).catch(() => {});
+            }
+        } catch (err) {}
+    });
+    
+    return webview;
 }
 
 function extractHostname(url) {
@@ -112,130 +243,9 @@ export function renderWorkspaceUI(targetTabToFocus = null) {
 
         tabList.appendChild(li);
 
+
         if (!state.activeViewsCache[currentWS][idx]) {
-            const webview = document.createElement('webview');
-            webview.style.backgroundColor = '#1a1b26';
-            webview.setAttribute('preload', window.miseAPI.getWebviewPreloadPath());
-            webview.setAttribute('allowpopups', '');
-            
-            if (state.globalPrivateModeActive || url.toLowerCase().includes("ycombinator.com")) {
-                webview.setAttribute('partition', 'MisePrivateProfile');
-            }
-            
-            webview.setAttribute('src', url);
-            
-            webview.addEventListener('page-title-updated', (e) => {
-                state.activeTitlesCache[currentWS][idx] = e.title;
-                const targetLi = document.querySelectorAll('#TabList li')[idx];
-                if (targetLi && state.sessionState.current_workspace === currentWS) {
-                    const titleEl = targetLi.querySelector('.tab-title');
-                    if (titleEl) {
-                        titleEl.textContent = e.title.length > 24 ? e.title.slice(0, 24) + "..." : e.title;
-                    }
-                }
-            });
-
-            webview.addEventListener('did-navigate', async (e) => {
-                if (state.sessionState.workspaces[currentWS] && state.sessionState.workspaces[currentWS][idx]) {
-                    state.sessionState.workspaces[currentWS][idx] = e.url;
-                    window.miseAPI.saveSession(state.sessionState);
-                }
-                const targetLi = document.querySelectorAll('#TabList li')[idx];
-                if (targetLi) {
-                    const cfg = (await window.miseAPI.getBrowserSettings()) || {};
-                    updateTabShieldStatus(targetLi, e.url, cfg.trusted_domains || []);
-                }
-            });
-
-            webview.addEventListener('did-navigate-in-page', async (e) => {
-                if (state.sessionState.workspaces[currentWS] && state.sessionState.workspaces[currentWS][idx]) {
-                    state.sessionState.workspaces[currentWS][idx] = e.url;
-                    window.miseAPI.saveSession(state.sessionState);
-                }
-                const targetLi = document.querySelectorAll('#TabList li')[idx];
-                if (targetLi) {
-                    const cfg = (await window.miseAPI.getBrowserSettings()) || {};
-                    updateTabShieldStatus(targetLi, e.url, cfg.trusted_domains || []);
-                }
-                webview.executeJavaScript(`
-                    (function() {
-                        try {
-                            document.querySelectorAll('video').forEach(v => {
-                                const prevDisplay = v.style.display;
-                                v.style.display = 'none';
-                                void v.offsetHeight; // force synchronous reflow
-                                v.style.display = prevDisplay;
-                            });
-                        } catch (e) {}
-                    })();
-                `, false).catch(() => {});
-            });
-
-            webview.addEventListener('new-window', (e) => {
-                e.preventDefault();
-                const targetUrl = e.url;
-                
-                if (!state.sessionState.workspaces[currentWS]) {
-                    state.sessionState.workspaces[currentWS] = [];
-                }
-                
-                state.sessionState.workspaces[currentWS].push(targetUrl);
-                window.miseAPI.saveSession(state.sessionState);
-                
-                const newTargetIdx = state.sessionState.workspaces[currentWS].length - 1;
-                renderWorkspaceUI(newTargetIdx);
-            });
-
-            webview.addEventListener('render-process-gone', (e) => {
-                if (e.reason !== 'clean-exit') {
-                    setTimeout(() => {
-                        webview.reload();
-                    }, 500);
-                }
-            });
-
-            webview.addEventListener('found-in-page', (e) => {
-                if (e.result) {
-                    const countEl = document.getElementById('FindMatchCount');
-                    if (countEl) {
-                        const activeMatch = e.result.activeMatchOrdinal || 0;
-                        const totalMatches = e.result.matches || 0;
-                        countEl.textContent = totalMatches > 0 ? `${activeMatch}/${totalMatches}` : '0/0';
-                    }
-                }
-            });
-
-            webview.addEventListener('media-started-playing', () => {
-                updateTabMediaIndicator(currentWS, idx, true);
-            });
-            
-            webview.addEventListener('media-paused', () => {
-                updateTabMediaIndicator(currentWS, idx, false);
-            });
-
-            webview.addEventListener('did-start-loading', () => {
-                webview.style.opacity = '1';
-                updateTabMediaIndicator(currentWS, idx, false);
-            });
-
-            webview.addEventListener('dom-ready', async () => {
-                applyCSSThemeToView(webview);
-                webview.style.opacity = '1';
-
-                const targetLi = document.querySelectorAll('#TabList li')[idx];
-                if (targetLi) {
-                    const cfg = (await window.miseAPI.getBrowserSettings()) || {};
-                    updateTabShieldStatus(targetLi, webview.getURL(), cfg.trusted_domains || []);
-                }
-
-                try {
-                    const hinterCode = await window.miseAPI.readHinterCode();
-                    if (hinterCode && typeof webview.executeJavaScript === 'function') {
-                        const safeExecutionWrapper = `try { ${hinterCode} } catch(e) {}`;
-                        webview.executeJavaScript(safeExecutionWrapper, false).catch(() => {});
-                    }
-                } catch (err) {}
-            });
+            const webview = createWebView(url, currentWS, idx);
 
             attachShieldToggleListener(li, webview);
             container.appendChild(webview);

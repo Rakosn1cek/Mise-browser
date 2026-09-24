@@ -394,7 +394,7 @@ function initializeMemoryWatcher() {
     setInterval(() => {
         const metrics = app.getAppMetrics();
         metrics.forEach(metric => {
-            if (metric.type === 'Renderer' && metric.memory.residentSet > 300 * 1024 * 1024) {
+            if (metric.type === 'Renderer' && metric.memory.residentSet > 150 * 1024 * 1024) {
                 const wc = webContents.fromId(metric.webContentsId);
                 if (wc && !wc.isFocused()) {
                     wc.reload(); // Simple discard strategy: reload
