@@ -10,7 +10,7 @@ export function applyCSSThemeToView(webview) {
 
 export function createWebView(url, currentWS, idx) {
     const webview = document.createElement('webview');
-    webview.style.backgroundColor = '#1a1b26';
+    webview.style.backgroundColor = '#ffffff';
     webview.setAttribute('preload', window.miseAPI.getWebviewPreloadPath());
     webview.setAttribute('allowpopups', '');
     
@@ -202,12 +202,28 @@ export function renderWorkspaceUI(targetTabToFocus = null) {
     tabList.innerHTML = '';
 
     const currentWS = state.sessionState.current_workspace;
-    const urls = state.sessionState.workspaces[currentWS] || ["https://duckduckgo.com"];
+    const urls = state.sessionState.workspaces[currentWS] || [];
+
+    const welcomeEl = document.getElementById('EmptyWorkspaceWelcome');
+    const container = document.getElementById('webview-container');
+    const allWebviews = container.querySelectorAll('webview');
+    allWebviews.forEach((wv) => wv.style.display = 'none');
+
+    if (urls.length === 0) {
+        if (welcomeEl) {
+            welcomeEl.style.display = 'flex';
+            const nameEl = document.getElementById('WelcomeWorkspaceName');
+            if (nameEl) nameEl.textContent = currentWS;
+        }
+        return;
+    } else {
+        if (welcomeEl) {
+            welcomeEl.style.display = 'none';
+        }
+    }
 
     if (!state.activeViewsCache[currentWS]) state.activeViewsCache[currentWS] = [];
     if (!state.activeTitlesCache[currentWS]) state.activeTitlesCache[currentWS] = [];
-
-    const container = document.getElementById('webview-container');
 
     urls.forEach((url, idx) => {
         const cachedTitle = state.activeTitlesCache[currentWS][idx] || "Loading...";
@@ -329,6 +345,30 @@ export async function spawnNewBlankTab() {
 }
 
 export function spawnTabWithUrl(url) {
+    if (state.dashboardActive && typeof window.toggleDashboardView === 'function') {
+        window.toggleDashboardView();
+    }
+    const addressBar = document.getElementById('WideAddressBar');
+    if (addressBar && addressBar.style.display !== 'none') {
+        addressBar.style.display = 'none';
+    }
+    const bookmarksOverlay = document.getElementById('BookmarksOverlay');
+    if (bookmarksOverlay && bookmarksOverlay.style.display !== 'none') {
+        if (typeof window.toggleBookmarksOverlay === 'function') {
+            window.toggleBookmarksOverlay();
+        } else {
+            bookmarksOverlay.style.display = 'none';
+        }
+    }
+    const notesOverlay = document.getElementById('NotesOverlay');
+    if (notesOverlay && notesOverlay.style.display !== 'none') {
+        if (typeof window.toggleNotesOverlay === 'function') {
+            window.toggleNotesOverlay();
+        } else {
+            notesOverlay.style.display = 'none';
+        }
+    }
+
     const currentWS = state.sessionState.current_workspace;
     if (!state.sessionState.workspaces[currentWS]) state.sessionState.workspaces[currentWS] = [];
     state.sessionState.workspaces[currentWS].push(url || "https://duckduckgo.com");
@@ -388,7 +428,7 @@ export function handleTabRemoval() {
 
     const currentIdx = Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem);
     const tabs = state.sessionState.workspaces[currentWS] || [];
-    if (tabs.length <= 1) return;
+    if (tabs.length === 0) return;
 
     tabs.splice(currentIdx, 1);
     if (state.activeViewsCache[currentWS] && state.activeViewsCache[currentWS][currentIdx]) {
@@ -400,7 +440,7 @@ export function handleTabRemoval() {
     window.miseAPI.saveSession(state.sessionState);
     window.miseAllowWebviewFocus = true;
 
-    renderWorkspaceUI(Math.max(0, currentIdx - 1));
+    renderWorkspaceUI(tabs.length > 0 ? Math.max(0, currentIdx - 1) : null);
 }
 
 export function navigateFrameBack() {

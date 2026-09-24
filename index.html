@@ -38,6 +38,35 @@
 			</div>
 			            
             <div id="webview-container">
+                <!-- Empty Workspace Welcome View -->
+                <div id="EmptyWorkspaceWelcome" style="display: none;">
+                    <div class="welcome-card">
+                        <div class="welcome-logo"><i class="fa-solid fa-compass"></i></div>
+                        <h1 class="welcome-title">Mise Browser</h1>
+                        <h2 class="welcome-subtitle" id="WelcomeWorkspaceName">Workspace</h2>
+                        <p class="welcome-desc">This workspace is currently empty. Use the quick actions below or keyboard shortcuts to get started:</p>
+                        
+                        <div class="welcome-shortcuts-grid">
+                            <div class="welcome-shortcut-card" id="WelcomeNewTabBtn">
+                                <span class="shortcut-key">Ctrl + T</span>
+                                <span class="shortcut-desc">Open New Tab</span>
+                            </div>
+                            <div class="welcome-shortcut-card" id="WelcomeBookmarksBtn">
+                                <span class="shortcut-key">Ctrl + Shift + B</span>
+                                <span class="shortcut-desc">Open Bookmarks</span>
+                            </div>
+                            <div class="welcome-shortcut-card" id="WelcomePaletteBtn">
+                                <span class="shortcut-key">Ctrl + P</span>
+                                <span class="shortcut-desc">Command Palette</span>
+                            </div>
+                            <div class="welcome-shortcut-card" id="WelcomeNotesBtn">
+                                <span class="shortcut-key">Ctrl + N</span>
+                                <span class="shortcut-desc">Open Quick Notes</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Floating Command Palette Window -->
                 <div id="CommandPaletteOverlay">
                     <div class="palette-window">
@@ -189,7 +218,7 @@
                             <section class="settings-section">
                                 <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--border); padding-bottom: 8px;">
                                     <h2 style="border-bottom: none; padding-bottom: 0; margin-bottom: 0;">Help & Shortcuts Reference</h2>
-                                    <span style="font-family: monospace; font-size: 12px; color: var(--accent);">Mise Browser v0.4.5</span>
+                                    <span style="font-family: monospace; font-size: 12px; color: var(--accent);">Mise Browser v0.5.1</span>
                                 </div>
                 
                                 <div class="reference-category">

@@ -3,6 +3,12 @@ const path = require('path');
 const fs = require('fs');
 const { exec, spawn } = require('child_process');
 
+// Single instance lock to prevent duplicate windows when opening external links
+const gotSingleInstanceLock = app.requestSingleInstanceLock();
+if (!gotSingleInstanceLock) {
+    app.quit();
+}
+
 // Require the security config module to isolate filtering and hardening rules
 const security = require('./security');
 
@@ -101,6 +107,58 @@ initializeEngineSwitches();
 let mainWindow;
 let privateBrowsingEnabled = false;
 const MAX_HISTORY_ITEMS = 500;
+
+// URL queue and readiness tracking for external link dispatch
+let isRendererReady = false;
+const pendingUrls = [];
+
+function extractUrlsFromArgs(argv) {
+    if (!argv || !Array.isArray(argv)) return [];
+    const urls = [];
+    for (let i = 1; i < argv.length; i++) {
+        let arg = (argv[i] || '').trim();
+        if (!arg) continue;
+        if (arg.startsWith('-')) continue;
+        arg = arg.replace(/^["']|["']$/g, '');
+        if (arg === '.' || arg.endsWith('main.js') || arg === __dirname) continue;
+
+        if (/^https?:\/\//i.test(arg) || /^file:\/\//i.test(arg)) {
+            urls.push(arg);
+        } else if (/^localhost(:\d+)?(\/.*)?$/i.test(arg) || /^127\.0\.0\.1(:\d+)?(\/.*)?$/i.test(arg)) {
+            urls.push('http://' + arg);
+        } else if (/^[a-zA-Z0-9][-a-zA-Z0-9]*\.[a-zA-Z]{2,}(\/.*)?$/i.test(arg)) {
+            urls.push('https://' + arg);
+        } else {
+            try {
+                if (fs.existsSync(arg) && fs.statSync(arg).isFile() && !arg.endsWith('.js') && !arg.endsWith('.json')) {
+                    urls.push('file://' + path.resolve(arg));
+                }
+            } catch (e) {}
+        }
+    }
+    return urls;
+}
+
+function dispatchTabUrl(url) {
+    if (!url) return;
+    if (isRendererReady && mainWindow && mainWindow.webContents) {
+        mainWindow.webContents.send('master-shortcut', 'spawn-tab-with-url', url);
+    } else {
+        pendingUrls.push(url);
+    }
+}
+
+function flushPendingUrls() {
+    if (!mainWindow || !mainWindow.webContents) return;
+    while (pendingUrls.length > 0) {
+        const nextUrl = pendingUrls.shift();
+        mainWindow.webContents.send('master-shortcut', 'spawn-tab-with-url', nextUrl);
+    }
+}
+
+// Queue initial command line URLs received on cold start
+extractUrlsFromArgs(process.argv).forEach(url => pendingUrls.push(url));
+
 
 function readHistory() {
     try {
@@ -244,7 +302,12 @@ ipcMain.on('toggle-active-devtools', () => {
 });
 
 ipcMain.on('set-native-theme', (event, mode) => {
-    nativeTheme.themeSource = mode;
+    if (mode) {
+        nativeTheme.themeSource = mode;
+        return;
+    }
+    const cfg = loadBrowserConfig();
+    nativeTheme.themeSource = cfg.theme === 'light' ? 'light' : 'system';
 });
 
 ipcMain.handle('get-browser-settings', async () => {
@@ -254,6 +317,11 @@ ipcMain.handle('get-browser-settings', async () => {
 ipcMain.handle('save-browser-settings', async (event, newCfg) => {
     saveBrowserConfig(newCfg);
     return true;
+});
+
+ipcMain.on('renderer-ready', () => {
+    isRendererReady = true;
+    flushPendingUrls();
 });
 
 ipcMain.on('get-webview-preload-path', (event) => { 
@@ -468,18 +536,14 @@ function createWindow() {
     mainWindow.setMenu(systemMenu);
     mainWindow.setMenuBarVisibility(false);
     
-    mainWindow.loadFile('index.html');
-
-    mainWindow.webContents.once('dom-ready', () => {
-        try {
-            const standardUA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36';
-            session.defaultSession.setUserAgent(standardUA);
-            const privateSession = session.fromPartition('MisePrivateProfile');
-            privateSession.setUserAgent(standardUA);
-        } catch (err) {
-            console.error('Failed to configure private session user agent:', err);
-        }
-    });
+    try {
+        const standardUA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36';
+        session.defaultSession.setUserAgent(standardUA);
+        const privateSession = session.fromPartition('MisePrivateProfile');
+        privateSession.setUserAgent(standardUA);
+    } catch (err) {
+        console.error('Failed to configure session user agent:', err);
+    }
 
     // Enforce isolated sessions, intercept filters, and configure permissions
     security.hardenSession(session.defaultSession);
@@ -488,6 +552,17 @@ function createWindow() {
     configureSessionPermissions(session.fromPartition('MisePrivateProfile'));
 
     security.setTrustedDomains(loadBrowserConfig().trusted_domains || []);
+
+    mainWindow.loadFile('index.html');
+
+    mainWindow.webContents.once('did-finish-load', () => {
+        setTimeout(() => {
+            if (!isRendererReady) {
+                isRendererReady = true;
+                flushPendingUrls();
+            }
+        }, 600);
+    });
 
     ipcMain.on('is-trusted-domain', (event, hostname) => {
         event.returnValue = security.isTrustedDomain(hostname);
@@ -804,7 +879,31 @@ app.on('web-contents-created', (event, webContents) => {
     }
 });
 
-app.whenReady().then(() => {
-    createWindow();
-    initializeMemoryWatcher();
-});
+if (gotSingleInstanceLock) {
+    app.on('second-instance', (event, commandLine) => {
+        if (mainWindow) {
+            if (mainWindow.isMinimized()) mainWindow.restore();
+            mainWindow.show();
+            mainWindow.focus();
+
+            const incomingUrls = extractUrlsFromArgs(commandLine);
+            incomingUrls.forEach(url => dispatchTabUrl(url));
+        }
+    });
+
+    app.on('open-url', (event, url) => {
+        event.preventDefault();
+        if (mainWindow) {
+            if (mainWindow.isMinimized()) mainWindow.restore();
+            mainWindow.show();
+            mainWindow.focus();
+        }
+        dispatchTabUrl(url);
+    });
+
+    app.whenReady().then(() => {
+        createWindow();
+        initializeMemoryWatcher();
+    });
+}
+

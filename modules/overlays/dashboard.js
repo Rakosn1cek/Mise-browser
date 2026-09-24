@@ -354,7 +354,7 @@ export function processWorkspaceCreation() {
     if (!name) return;
 
     if (!state.sessionState.workspaces[name]) {
-        state.sessionState.workspaces[name] = ["https://duckduckgo.com"];
+        state.sessionState.workspaces[name] = [];
         state.sessionState.current_workspace = name;
         window.miseAPI.saveSession(state.sessionState);
         hideWorkspaceInputDialog();
@@ -362,7 +362,7 @@ export function processWorkspaceCreation() {
         const overlay = document.getElementById('DashboardOverlay');
         state.dashboardActive = false;
         overlay.style.display = 'none';
-        renderWorkspaceUI(0);
+        renderWorkspaceUI();
     } else {
         hideWorkspaceInputDialog();
     }

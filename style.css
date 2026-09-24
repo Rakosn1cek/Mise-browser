@@ -181,7 +181,7 @@ webview {
     top: 0;
     left: 0;
     display: none;
-    background-color: var(--bg-main);
+    background-color: #ffffff;
 }
 
 #DashboardOverlay {
@@ -1343,6 +1343,110 @@ body.zen-mode #right-content {
 
 .shield-on {
     color: var(--accent);
+}
+
+/* Empty Workspace Welcome View */
+#EmptyWorkspaceWelcome {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--bg-main);
+    color: var(--text);
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 40px;
+    z-index: 100;
+}
+
+.welcome-card {
+    background-color: var(--bg-sidebar);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 40px;
+    max-width: 650px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+}
+
+.welcome-logo {
+    font-size: 48px;
+    color: var(--accent);
+    margin-bottom: 16px;
+}
+
+.welcome-title {
+    font-size: 28px;
+    font-weight: bold;
+    color: var(--text);
+    margin-bottom: 8px;
+}
+
+.welcome-subtitle {
+    font-size: 16px;
+    color: var(--accent);
+    font-weight: 600;
+    margin-bottom: 16px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.welcome-desc {
+    font-size: 14px;
+    color: var(--text);
+    opacity: 0.7;
+    margin-bottom: 30px;
+    line-height: 1.5;
+}
+
+.welcome-shortcuts-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    width: 100%;
+}
+
+.welcome-shortcut-card {
+    background-color: var(--bg-main);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.15s ease;
+}
+
+.welcome-shortcut-card:hover {
+    background-color: var(--selected);
+    border-color: var(--accent);
+    transform: translateY(-2px);
+}
+
+.welcome-shortcut-card .shortcut-key {
+    background-color: var(--selected);
+    color: var(--accent);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-family: monospace;
+    font-weight: bold;
+    font-size: 13px;
+}
+
+.welcome-shortcut-card .shortcut-desc {
+    font-size: 13px;
+    color: var(--text);
+    opacity: 0.9;
 }
 
 .shield-off {

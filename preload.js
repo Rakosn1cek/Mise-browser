@@ -27,5 +27,7 @@ contextBridge.exposeInMainWorld('miseAPI', {
     saveQuickmarks: (data) => ipcRenderer.invoke('save-quickmarks', data),
     onMasterShortcut: (callback) => {
         ipcRenderer.on('master-shortcut', (event, action, ...args) => callback(action, ...args));
-    }
+    },
+    signalRendererReady: () => ipcRenderer.send('renderer-ready')
 });
+

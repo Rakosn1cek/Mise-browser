@@ -136,6 +136,10 @@ async function initializeBrowser() {
     setupAddressBarAutocomplete();
     setupBookmarkOverlayListeners();
     initSearchEnginePreference();
+
+    if (window.miseAPI && typeof window.miseAPI.signalRendererReady === 'function') {
+        window.miseAPI.signalRendererReady();
+    }
 }
 
 function setupEventListeners() {
@@ -144,6 +148,11 @@ function setupEventListeners() {
     document.getElementById('back-btn').addEventListener('click', navigateFrameBack);
     document.getElementById('forward-btn').addEventListener('click', navigateFrameForward);
     document.getElementById('menu-btn').addEventListener('click', toggleDashboardView);
+
+    document.getElementById('WelcomeNewTabBtn')?.addEventListener('click', spawnNewBlankTab);
+    document.getElementById('WelcomeBookmarksBtn')?.addEventListener('click', toggleBookmarksOverlay);
+    document.getElementById('WelcomePaletteBtn')?.addEventListener('click', toggleCommandPaletteView);
+    document.getElementById('WelcomeNotesBtn')?.addEventListener('click', toggleNotesOverlay);
     
     document.getElementById('add-ws-btn').addEventListener('click', showWorkspaceInputDialog);
     document.getElementById('submit-ws-btn').addEventListener('click', processWorkspaceCreation);
@@ -341,7 +350,14 @@ function setupEventListeners() {
 
     const overlay = document.getElementById('DashboardOverlay');
     overlay.addEventListener('keydown', (e) => {
-        if (!state.dashboardActive || state.dashboardItems.length === 0) return;
+        if (!state.dashboardActive) return;
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            toggleDashboardView();
+            return;
+        }
+
+        if (state.dashboardItems.length === 0) return;
         if (document.activeElement === document.getElementById('NewWorkspaceTitleInput') || document.activeElement.classList.contains('dashboard-rename-input')) return;
 
         if (e.key === 'ArrowDown') {
