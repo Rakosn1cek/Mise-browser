@@ -44,13 +44,17 @@ const injectScript = () => {
             };
         } catch (e) {}
 
+        const chromeMatch = (navigator.userAgent || '').match(/Chrome\/(\d+)\.([\d.]+)/);
+        const chromeMajor = chromeMatch ? chromeMatch[1] : '152';
+        const chromeFull = chromeMatch ? (chromeMatch[1] + '.' + chromeMatch[2]) : '152.0.7977.130';
+
         if (navigator.userAgentData) {
             Object.defineProperty(navigator, 'userAgentData', {
                 get: function() {
                     return {
                         brands: [
-                            { brand: 'Chromium', version: '150' },
-                            { brand: 'Google Chrome', version: '150' },
+                            { brand: 'Chromium', version: chromeMajor },
+                            { brand: 'Google Chrome', version: chromeMajor },
                             { brand: 'Not-A.Brand', version: '99' }
                         ],
                         mobile: false,
@@ -60,14 +64,14 @@ const injectScript = () => {
                                 architecture: 'x86',
                                 bitness: '64',
                                 brands: [
-                                    { brand: 'Chromium', version: '150' },
-                                    { brand: 'Google Chrome', version: '150' }
+                                    { brand: 'Chromium', version: chromeMajor },
+                                    { brand: 'Google Chrome', version: chromeMajor }
                                 ],
                                 mobile: false,
                                 model: '',
                                 platform: 'Linux',
                                 platformVersion: '',
-                                uaFullVersion: '150.0.0.0'
+                                uaFullVersion: chromeFull
                             });
                         }
                     };

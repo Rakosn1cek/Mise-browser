@@ -59,8 +59,6 @@ function saveBrowserConfig(cfg) {
 function initializeEngineSwitches() {
     const cfg = loadBrowserConfig();
 
-    const standardUA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36';
-    app.commandLine.appendSwitch('user-agent', standardUA);
     app.commandLine.appendSwitch('force-webrtc-ip-handling-policy', 'default_public_interface_only');
 
     // Added CanvasOopRasterization to disabled features to stop Skia picture buffering
@@ -241,13 +239,6 @@ const configuredSessions = new WeakSet();
 function configureAndHardenSession(targetSession) {
     if (!targetSession || configuredSessions.has(targetSession)) return;
     configuredSessions.add(targetSession);
-
-    try {
-        const standardUA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36';
-        targetSession.setUserAgent(standardUA);
-    } catch (err) {
-        console.error('Failed to configure session user agent:', err);
-    }
 
     security.hardenSession(targetSession);
     configureSessionPermissions(targetSession);

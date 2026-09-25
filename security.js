@@ -91,19 +91,6 @@ function hardenSession(targetSession) {
         return true;
     });
 
-    targetSession.webRequest.onBeforeSendHeaders((details, callback) => {
-        let hostname = '';
-        try { hostname = new URL(details.url).hostname; } catch (e) {}
-
-        if (!isTrustedDomain(hostname)) {
-            for (const header of Object.keys(details.requestHeaders)) {
-                if (header.toLowerCase().startsWith('sec-ch-ua')) {
-                    delete details.requestHeaders[header];
-                }
-            }
-        }
-        callback({ requestHeaders: details.requestHeaders });
-    });
 }
 
 async function applyTrustedDomainExceptions() {
