@@ -14,7 +14,7 @@ contextBridge.exposeInMainWorld('miseAPI', {
     toggleGlobalNotifications: (enabled) => ipcRenderer.invoke('toggle-global-notifications', enabled),
     getGlobalNotificationsState: () => ipcRenderer.invoke('get-global-notifications-state'),
     clearDomainCookies: (data) => ipcRenderer.invoke('clear-domain-cookies', data),
-    clearActiveCache: (isPrivate) => ipcRenderer.invoke('clear-active-cache', isPrivate),
+    clearActiveCache: (options) => ipcRenderer.invoke('clear-active-cache', options),
     executeTerminalCommand: (commandStr) => ipcRenderer.send('execute-terminal-command', commandStr),
     searchHistory: (query) => ipcRenderer.invoke('search-history', query),
     purgeHistory: () => ipcRenderer.invoke('purge-history'),
@@ -33,6 +33,7 @@ contextBridge.exposeInMainWorld('miseAPI', {
     getKeybinds: () => ipcRenderer.invoke('get-keybinds'),
     saveKeybinds: (binds) => ipcRenderer.invoke('save-keybinds', binds),
     getActionMetadata: () => ipcRenderer.invoke('get-action-metadata'),
-    reloadKeybinds: () => ipcRenderer.invoke('reload-keybinds')
+    reloadKeybinds: () => ipcRenderer.invoke('reload-keybinds'),
+    getWorkspacePartition: (name) => ipcRenderer.invoke('get-workspace-partition', name)
 });
 

@@ -452,14 +452,15 @@ async function executeSurgicalCookieWipe() {
     const urlStr = state.sessionState.workspaces[currentWS][currentIdx] || "";
     
     const isTargetPrivate = state.globalPrivateModeActive || urlStr.toLowerCase().includes("ycombinator.com");
-    await window.miseAPI.clearDomainCookies({ urlStr, isPrivate: isTargetPrivate });
+    await window.miseAPI.clearDomainCookies({ urlStr, isPrivate: isTargetPrivate, workspace: currentWS });
     
     window.miseAllowWebviewFocus = true;
     focusActiveWebview();
 }
 
 async function executeGlobalCacheWipe() {
-    await window.miseAPI.clearActiveCache(state.globalPrivateModeActive);
+    const currentWS = state.sessionState.current_workspace;
+    await window.miseAPI.clearActiveCache({ isPrivate: state.globalPrivateModeActive, workspace: currentWS });
     
     window.miseAllowWebviewFocus = true;
     focusActiveWebview();

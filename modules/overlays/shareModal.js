@@ -1,4 +1,5 @@
 import { state } from '../state.js';
+import { getWorkspacePartition } from '../utils.js';
 
 export function openTransientShareModal(targetUrl) {
     const overlay = document.getElementById('ShareModalOverlay');
@@ -17,6 +18,9 @@ export function openTransientShareModal(targetUrl) {
 
     if (state && state.globalPrivateModeActive) {
         webview.setAttribute('partition', 'MisePrivateProfile');
+    } else {
+        const currentWS = state?.sessionState?.current_workspace;
+        webview.setAttribute('partition', getWorkspacePartition(currentWS));
     }
 
     if (window.miseAPI && typeof window.miseAPI.getWebviewPreloadPath === 'function') {

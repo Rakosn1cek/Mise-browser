@@ -1,5 +1,5 @@
 import { state } from '../state.js';
-import { focusActiveWebview } from '../utils.js';
+import { focusActiveWebview, getWorkspacePartition } from '../utils.js';
 import { renderWorkspaceUI, switchTabFocus, spawnTabWithUrl, spawnNewBlankTab, handleTabRemoval } from '../webview.js';
 
 export function toggleDashboardView() {
@@ -35,13 +35,13 @@ export function renameWorkspace(oldName, newName) {
     state.sessionState.workspaces[trimmed] = state.sessionState.workspaces[oldName];
     delete state.sessionState.workspaces[oldName];
 
+    // Dispose cached webviews so they are re-created with the new container partition
     if (state.activeViewsCache[oldName]) {
-        state.activeViewsCache[trimmed] = state.activeViewsCache[oldName];
+        state.activeViewsCache[oldName].forEach(wv => { if (wv) wv.remove(); });
         delete state.activeViewsCache[oldName];
     }
 
     if (state.activeTitlesCache[oldName]) {
-        state.activeTitlesCache[trimmed] = state.activeTitlesCache[oldName];
         delete state.activeTitlesCache[oldName];
     }
 
@@ -175,7 +175,20 @@ export function buildDashboardTree() {
             actionsDiv.appendChild(deleteBtn);
         }
 
+        const containerTag = document.createElement('span');
+        containerTag.className = 'workspace-container-tag';
+        containerTag.textContent = getWorkspacePartition(wsName).replace('persist:', '');
+        containerTag.style.fontSize = '11px';
+        containerTag.style.fontFamily = 'monospace';
+        containerTag.style.color = 'var(--accent)';
+        containerTag.style.background = 'rgba(255,255,255,0.06)';
+        containerTag.style.padding = '1px 6px';
+        containerTag.style.borderRadius = '3px';
+        containerTag.style.marginRight = '8px';
+        containerTag.title = `Container Partition: ${getWorkspacePartition(wsName)}`;
+
         headerContainer.appendChild(titleSpan);
+        headerContainer.appendChild(containerTag);
         headerContainer.appendChild(actionsDiv);
         
         const wsPayload = ['workspace', wsName, null];
@@ -264,10 +277,18 @@ export function buildDashboardTree() {
                     }
                     state.sessionState.workspaces[targetWS].splice(targetIdx, 0, movedUrl);
 
-                    if (state.activeViewsCache[sourceWS] && state.activeViewsCache[sourceWS][sourceIdx]) {
-                        const [movedView] = state.activeViewsCache[sourceWS].splice(sourceIdx, 1);
-                        if (!state.activeViewsCache[targetWS]) state.activeViewsCache[targetWS] = [];
-                        state.activeViewsCache[targetWS].splice(targetIdx, 0, movedView);
+                    if (sourceWS === targetWS) {
+                        if (state.activeViewsCache[sourceWS] && state.activeViewsCache[sourceWS][sourceIdx]) {
+                            const [movedView] = state.activeViewsCache[sourceWS].splice(sourceIdx, 1);
+                            if (!state.activeViewsCache[targetWS]) state.activeViewsCache[targetWS] = [];
+                            state.activeViewsCache[targetWS].splice(targetIdx, 0, movedView);
+                        }
+                    } else {
+                        // Dispose webview when moved across different workspaces so target workspace recreates it with its partition
+                        if (state.activeViewsCache[sourceWS] && state.activeViewsCache[sourceWS][sourceIdx]) {
+                            const [movedView] = state.activeViewsCache[sourceWS].splice(sourceIdx, 1);
+                            if (movedView) movedView.remove();
+                        }
                     }
 
                     if (state.activeTitlesCache[sourceWS] && state.activeTitlesCache[sourceWS][sourceIdx]) {

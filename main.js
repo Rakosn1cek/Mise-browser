@@ -216,6 +216,43 @@ function sendSystemNotification(title, body) {
 
 let globalNotificationsEnabled = true;
 
+// Generates a filesystem-safe persistent container partition string for a workspace
+function getWorkspacePartition(workspaceName) {
+    if (!workspaceName) return 'persist:default';
+    const clean = String(workspaceName).trim().toLowerCase().replace(/[^a-z0-9_-]/gi, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+    return `persist:${clean || 'default'}`;
+}
+
+function getSessionForContext(context) {
+    if (typeof context === 'string') {
+        return session.fromPartition(context);
+    }
+    if (context && typeof context === 'object') {
+        if (context.isPrivate) return session.fromPartition('MisePrivateProfile');
+        if (context.partition) return session.fromPartition(context.partition);
+        if (context.workspace) return session.fromPartition(getWorkspacePartition(context.workspace));
+    }
+    if (context === true) return session.fromPartition('MisePrivateProfile');
+    return session.defaultSession;
+}
+
+const configuredSessions = new WeakSet();
+
+function configureAndHardenSession(targetSession) {
+    if (!targetSession || configuredSessions.has(targetSession)) return;
+    configuredSessions.add(targetSession);
+
+    try {
+        const standardUA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36';
+        targetSession.setUserAgent(standardUA);
+    } catch (err) {
+        console.error('Failed to configure session user agent:', err);
+    }
+
+    security.hardenSession(targetSession);
+    configureSessionPermissions(targetSession);
+}
+
 function configureSessionPermissions(targetSession) {
     const blockedPermissions = ['media', 'geolocation', 'midiSysex', 'audio', 'video'];
 
@@ -245,8 +282,8 @@ ipcMain.handle('toggle-global-notifications', (event, enabled) => {
 });
 
 // --- IPC HANDLERS ---
-ipcMain.handle('clear-active-cache', async (event, isPrivate) => {
-    const targetSession = isPrivate ? session.fromPartition('MisePrivateProfile') : session.defaultSession;
+ipcMain.handle('clear-active-cache', async (event, context) => {
+    const targetSession = getSessionForContext(context);
     try {
         await targetSession.clearCache();
         await targetSession.clearStorageData({
@@ -260,10 +297,10 @@ ipcMain.handle('clear-active-cache', async (event, isPrivate) => {
     }
 });
 
-ipcMain.handle('clear-domain-cookies', async (event, { urlStr, isPrivate }) => {
-    const targetSession = isPrivate ? session.fromPartition('MisePrivateProfile') : session.defaultSession;
+ipcMain.handle('clear-domain-cookies', async (event, data) => {
+    const targetSession = getSessionForContext(data);
     try {
-        const parsed = new URL(urlStr);
+        const parsed = new URL(data.urlStr);
         const cookies = await targetSession.cookies.get({ domain: parsed.hostname });
         
         for (const cookie of cookies) {
@@ -278,6 +315,10 @@ ipcMain.handle('clear-domain-cookies', async (event, { urlStr, isPrivate }) => {
         sendSystemNotification('Mise Error', `Cookie wipe failed: ${err.message}`);
         return false;
     }
+});
+
+ipcMain.handle('get-workspace-partition', (event, name) => {
+    return getWorkspacePartition(name);
 });
 
 ipcMain.handle('read-notes', async () => {
@@ -583,20 +624,23 @@ function createWindow() {
     mainWindow.setMenu(systemMenu);
     mainWindow.setMenuBarVisibility(false);
     
-    try {
-        const standardUA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36';
-        session.defaultSession.setUserAgent(standardUA);
-        const privateSession = session.fromPartition('MisePrivateProfile');
-        privateSession.setUserAgent(standardUA);
-    } catch (err) {
-        console.error('Failed to configure session user agent:', err);
-    }
+    // Configure default and volatile private sessions
+    configureAndHardenSession(session.defaultSession);
+    configureAndHardenSession(session.fromPartition('MisePrivateProfile'));
 
-    // Enforce isolated sessions, intercept filters, and configure permissions
-    security.hardenSession(session.defaultSession);
-    security.hardenSession(session.fromPartition('MisePrivateProfile'));
-    configureSessionPermissions(session.defaultSession);
-    configureSessionPermissions(session.fromPartition('MisePrivateProfile'));
+    // Pre-configure all workspace container partitions from stored session
+    try {
+        if (fs.existsSync(sessionPath)) {
+            const initialSession = JSON.parse(fs.readFileSync(sessionPath, 'utf8'));
+            if (initialSession && initialSession.workspaces) {
+                Object.keys(initialSession.workspaces).forEach(wsName => {
+                    configureAndHardenSession(session.fromPartition(getWorkspacePartition(wsName)));
+                });
+            }
+        }
+    } catch (err) {
+        console.error('Failed to initialise workspace sessions:', err);
+    }
 
     security.setTrustedDomains(loadBrowserConfig().trusted_domains || []);
 
@@ -615,8 +659,12 @@ function createWindow() {
         event.returnValue = security.isTrustedDomain(hostname);
     });
 
-    mainWindow.webContents.on('will-attach-webview', (event, webPreferences) => {
+    mainWindow.webContents.on('will-attach-webview', (event, webPreferences, params) => {
         security.hardenWebviewPreferences(webPreferences);
+        const partitionStr = (webPreferences && webPreferences.partition) || (params && params.partition);
+        if (partitionStr) {
+            configureAndHardenSession(session.fromPartition(partitionStr));
+        }
     });
 
     ipcMain.on('bubble-webview-key', (event, action) => {
@@ -637,6 +685,10 @@ function createWindow() {
 }
 
 app.on('web-contents-created', (event, webContents) => {
+    if (webContents.session) {
+        configureAndHardenSession(webContents.session);
+    }
+
     if (webContents.getType() === 'webview') {
         webContents.setMaxListeners(30);
 

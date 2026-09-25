@@ -1,5 +1,5 @@
 import { state } from './state.js';
-import { getActiveWebview, focusActiveWebview } from './utils.js';
+import { getActiveWebview, focusActiveWebview, getWorkspacePartition } from './utils.js';
 
 export function applyCSSThemeToView(webview) {
     if (webview && typeof webview.executeJavaScript === 'function') {
@@ -16,6 +16,8 @@ export function createWebView(url, currentWS, idx) {
     
     if (state.globalPrivateModeActive || url.toLowerCase().includes("ycombinator.com")) {
         webview.setAttribute('partition', 'MisePrivateProfile');
+    } else {
+        webview.setAttribute('partition', getWorkspacePartition(currentWS));
     }
     
     webview.setAttribute('src', url);
@@ -197,11 +199,15 @@ export function attachShieldToggleListener(tabLi, webview) {
 }
 
 export function renderWorkspaceUI(targetTabToFocus = null) {
-    document.getElementById('WorkspaceLabel').textContent = state.sessionState.current_workspace;
+    const currentWS = state.sessionState.current_workspace;
+    const wsLabel = document.getElementById('WorkspaceLabel');
+    if (wsLabel) {
+        wsLabel.textContent = currentWS;
+        wsLabel.title = `Workspace: ${currentWS} (Container: ${getWorkspacePartition(currentWS)})`;
+    }
     const tabList = document.getElementById('TabList');
     tabList.innerHTML = '';
 
-    const currentWS = state.sessionState.current_workspace;
     const urls = state.sessionState.workspaces[currentWS] || [];
 
     const welcomeEl = document.getElementById('EmptyWorkspaceWelcome');
