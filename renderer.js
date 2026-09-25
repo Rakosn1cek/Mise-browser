@@ -184,13 +184,6 @@ function setupEventListeners() {
         }
     });
 
-    window.addEventListener('keydown', (e) => {
-        if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === '0') {
-            e.preventDefault();
-            toggleGlobalMediaPlayback();
-        }
-    });
-
     window.miseAPI.onMasterShortcut((action, ...args) => {
         switch (action) {
             case 'spawn-tab': spawnNewBlankTab(); break;
@@ -198,6 +191,11 @@ function setupEventListeners() {
             case 'open-transient-share': openTransientShareModal(args[0]); break;
             case 'toggle-address': displayAddressOverlay(); break;
             case 'toggle-dashboard': toggleDashboardView(); break;
+            case 'reload-active-tab': {
+                const activeWv = getActiveWebview();
+                if (activeWv) activeWv.reload();
+                break;
+            }
             case 'toggle-devtools': toggleActiveDevTools(); break;
             case 'toggle-bookmarks': toggleBookmarksOverlay(); break;
             case 'toggle-notes': toggleNotesOverlay(); break;
@@ -225,7 +223,9 @@ function setupEventListeners() {
             case 'toggle-palette': toggleCommandPaletteView(); break;
             case 'toggle-help': togglePreferencesView(); break;
             case 'toggle-history': toggleHistoryOverlay(); break;
+            case 'go-back':
             case 'go-back-signal': navigateFrameBack(); break;
+            case 'go-forward':
             case 'go-forward-signal': navigateFrameForward(); break;
             case 'toggle-private-mode': {
                 state.globalPrivateModeActive = args[0];

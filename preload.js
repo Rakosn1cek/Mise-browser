@@ -29,6 +29,10 @@ contextBridge.exposeInMainWorld('miseAPI', {
         ipcRenderer.on('master-shortcut', (event, action, ...args) => callback(action, ...args));
     },
     signalRendererReady: () => ipcRenderer.send('renderer-ready'),
-    toggleMenuBar: () => ipcRenderer.send('toggle-menu-bar')
+    toggleMenuBar: () => ipcRenderer.send('toggle-menu-bar'),
+    getKeybinds: () => ipcRenderer.invoke('get-keybinds'),
+    saveKeybinds: (binds) => ipcRenderer.invoke('save-keybinds', binds),
+    getActionMetadata: () => ipcRenderer.invoke('get-action-metadata'),
+    reloadKeybinds: () => ipcRenderer.invoke('reload-keybinds')
 });
 

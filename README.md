@@ -8,11 +8,11 @@ Mise is engineered with a modular suite of tools that bridge the gap between web
 
 - **Air-Gapped Terminal Handshake**: An input parsing algorithm identifies high-risk script extensions and raw network URIs inside the palette interface, automatically appending the `oversight` security wrapper. To eliminate remote code execution risks, the browser copies the formatted text to the system clipboard and opens an unmanaged, empty terminal instance for safe manual verification and execution.
 - **Vertical Tabs Sidebar**: A persistent vertical sidebar optimises screen real estate and keeps tab management highly accessible, allowing users to scroll, select, and switch between open web pages cleanly.
-- **Distro and Shell Agnostic Design**: The terminal spawning architecture dynamically branches based on the host platform, using localized environmental lookups to natively interface with Linux terminal emulators, macOS Terminal, or Windows Terminal/cmd without modifying backend configurations.
-- **Privacy-First Network Interception**: A distribution-agnostic request filter blocks global telemetry packages, marketing tracker modules, and background logging endpoints natively before they can initialize outward network connections.
+- **Distro and Shell Agnostic Design**: The terminal spawning architecture dynamically branches based on the host platform, using localised environmental lookups to natively interface with Linux terminal emulators, macOS Terminal, or Windows Terminal/cmd without modifying backend configurations.
+- **Privacy-First Network Interception**: A distribution-agnostic request filter blocks global telemetry packages, marketing tracker modules, and background logging endpoints natively before they can initialise outward network connections.
 - **Granular Profile Management**: Features an isolated private browsing mode that decouples from the primary session into a volatile, memory-only cache partition alongside targeted cleanup utilities designed to surgically clear individual domain cookies or global profile data.
 - **Dynamic Workspace Trees**: System profiles use persistent session caching to group concurrent tab layouts into distinct, named workspaces managed via a fluid, structural overlay dashboard.
-- **Keyboard-Centric Navigation**: Customise and control your browsing behaviour using a comprehensive set of keyboard shortcuts.
+- **Keyboard-Centric Navigation**: Customise and control your browsing behaviour using a comprehensive set of keyboard shortcuts. Users can customise bindings in `~/.config/mise-browser/keybinds.json`.
 - **Search Bar Aliases**: This allows for rapid navigation using shorthand keywords (e.g., `g` for Google, `a` for Arch Wiki, `gh` for GitHub).
 - **Link Hints Overlay**: Navigate web pages without a mouse. Pressing the hint shortcut overlays two-letter labels using a left-hand cluster of keys (`q, w, e, a, s, d, z, x, c, r, f, v`) onto all interactive elements for instant triggering.
 - **Interactive Command Palette**: Quickly filter and execute browser commands with the integrated search palette.
@@ -62,7 +62,7 @@ chmod +x launch.sh
 
 ## Keyboard Shortcuts
 
-Mise Browser is designed to be fully controllable via keyboard shortcuts. Below is a reference of the default bindings.
+Mise Browser is designed to be fully controllable via keyboard shortcuts. All shortcuts can be customised in `~/.config/mise-browser/keybinds.json`. Below is a reference of the default bindings.
 
 ### Navigation & Workspaces
 
@@ -84,6 +84,7 @@ Mise Browser is designed to be fully controllable via keyboard shortcuts. Below 
 | Ctrl + N | Open Notes overlay | 
 | Ctrl + Shift + Z | Hide/unhide Sidebar |
 | Ctrl + Shift + B | Opens Bookmarks and Quickmarks |
+| Ctrl + Shift + H | Toggle actionable history overlay |
 | DELETE | Deletes/Removes Bookmarks/Quickmarks when selected |
 | Ctrl + A | Select All Text |
 
@@ -97,6 +98,7 @@ Mise Browser is designed to be fully controllable via keyboard shortcuts. Below 
 | Ctrl + Shift + Q [key] | Binds current page URL to that key slot (e.g., press Ctrl + Shift + Q then g for GitHub) |
 | Ctrl + J [key] | Instantly opens the URL assigned to that key |
 | Ctrl + Shift + A | Bookmarks the current tab into bookmarks.json |
+| Ctrl + Shift + 0 or F10 | Play/pause media playback globally |
 
 ### Search Bar 
 
@@ -124,6 +126,7 @@ Mise Browser is designed to be fully controllable via keyboard shortcuts. Below 
 --renderer.js                    # Renderer entry point initializing modules and event listeners
 --security.js                    # Network filtering, session hardening, and adblocker engine
 --webview-preload.js             # Webview preload script for keyboard event bubbling and fingerprint spoofing
+--keybinds.js                    # All keybinds can be customised within this file.
 --hinter.js                      # Injectable script implementing the Link Hints overlay
 --style.css                      # Master stylesheet defining CSS variables, layouts, and themes
 --launch.sh                      # Helper execution script to start the application

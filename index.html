@@ -216,29 +216,30 @@
                             <section class="settings-section">
                                 <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--border); padding-bottom: 8px;">
                                     <h2 style="border-bottom: none; padding-bottom: 0; margin-bottom: 0;">Help & Shortcuts Reference</h2>
-                                    <span style="font-family: monospace; font-size: 12px; color: var(--accent);">Mise Browser v0.5.2</span>
+                                    <span style="font-family: monospace; font-size: 12px; color: var(--accent);">Mise Browser v0.5.3</span>
                                 </div>
+                                <p style="font-size: 12px; color: var(--accent); margin: 6px 0 14px 0;">All keyboard shortcuts can be customised in <code style="color: var(--accent);">~/.config/mise-browser/keybinds.json</code></p>
                 
                                 <div class="reference-category">
                                     <h3 class="reference-subheading">Navigation & Workspaces</h3>
                                     <div class="shortcuts-grid">
-                                        <div class="shortcut-row"><span class="shortcut-key">F1</span><span class="shortcut-desc">Toggle Mise Settings (Menu Bar)</span></div>
-                                        <div class="shortcut-row"><span class="shortcut-key">Ctrl + T</span><span class="shortcut-desc">New DuckDuckGo Tab</span></div>
-                                        <div class="shortcut-row"><span class="shortcut-key">Ctrl + L</span><span class="shortcut-desc">Toggle Floating Address Bar</span></div>
-                                        <div class="shortcut-row"><span class="shortcut-key">Ctrl + W</span><span class="shortcut-desc">Close Current Tab (or Node)</span></div>
-                                        <div class="shortcut-row"><span class="shortcut-key">Ctrl + Shift + W</span><span class="shortcut-desc">Toggle Workspace Dashboard</span></div>
-                                        <div class="shortcut-row"><span class="shortcut-key">Ctrl + S</span><span class="shortcut-desc">Quick Save Active Workspace / Find In Page</span></div>
-                                        <div class="shortcut-row"><span class="shortcut-key">Ctrl + R</span><span class="shortcut-desc">Reload Active Tab</span></div>
-                                        <div class="shortcut-row"><span class="shortcut-key">Ctrl + D</span><span class="shortcut-desc">Quick Remove Current Tab</span></div>
-                                        <div class="shortcut-row"><span class="shortcut-key">Ctrl + M</span><span class="shortcut-desc">Focus Sidebar Tab List</span></div>
-                                        <div class="shortcut-row"><span class="shortcut-key">Ctrl + B</span><span class="shortcut-desc">Focus Active Webview</span></div>
+                                        <div class="shortcut-row" data-action="toggle-menu-bar"><span class="shortcut-key">F1</span><span class="shortcut-desc">Toggle Mise Settings (Menu Bar)</span></div>
+                                        <div class="shortcut-row" data-action="spawn-tab"><span class="shortcut-key">Ctrl + T</span><span class="shortcut-desc">New DuckDuckGo Tab</span></div>
+                                        <div class="shortcut-row" data-action="toggle-address"><span class="shortcut-key">Ctrl + L</span><span class="shortcut-desc">Toggle Floating Address Bar</span></div>
+                                        <div class="shortcut-row" data-action="remove-tab"><span class="shortcut-key">Ctrl + W / Ctrl + D</span><span class="shortcut-desc">Close Current Tab (or Node)</span></div>
+                                        <div class="shortcut-row" data-action="toggle-dashboard"><span class="shortcut-key">Ctrl + Shift + W</span><span class="shortcut-desc">Toggle Workspace Dashboard</span></div>
+                                        <div class="shortcut-row" data-action="toggle-find"><span class="shortcut-key">Ctrl + S</span><span class="shortcut-desc">Quick Save Active Workspace / Find In Page</span></div>
+                                        <div class="shortcut-row" data-action="reload-active-tab"><span class="shortcut-key">Ctrl + R</span><span class="shortcut-desc">Reload Active Tab</span></div>
+                                        <div class="shortcut-row" data-action="focus-sidebar"><span class="shortcut-key">Ctrl + M</span><span class="shortcut-desc">Focus Sidebar Tab List</span></div>
+                                        <div class="shortcut-row" data-action="focus-webview"><span class="shortcut-key">Ctrl + B</span><span class="shortcut-desc">Focus Active Webview</span></div>
                                         <div class="shortcut-row"><span class="shortcut-key">Enter</span><span class="shortcut-desc">Switch to Selected Sidebar Tab</span></div>
-                                        <div class="shortcut-row"><span class="shortcut-key">Ctrl + P</span><span class="shortcut-desc">Toggle Command Palette</span></div>
-                                        <div class="shortcut-row"><span class="shortcut-key">Ctrl + Shift + P</span><span class="shortcut-desc">Toggle Private Browsing Mode On/Off</span></div>
-                                        <div class="shortcut-row"><span class="shortcut-key">Ctrl + N</span><span class="shortcut-desc">Open Notes Taking Overlay</span></div>
+                                        <div class="shortcut-row" data-action="toggle-palette"><span class="shortcut-key">Ctrl + P</span><span class="shortcut-desc">Toggle Command Palette</span></div>
+                                        <div class="shortcut-row" data-action="toggle-private-mode"><span class="shortcut-key">Ctrl + Shift + P</span><span class="shortcut-desc">Toggle Private Browsing Mode On/Off</span></div>
+                                        <div class="shortcut-row" data-action="toggle-notes"><span class="shortcut-key">Ctrl + N</span><span class="shortcut-desc">Open Notes Taking Overlay</span></div>
                                         <div class="shortcut-row"><span class="shortcut-key">Ctrl + Tab</span><span class="shortcut-desc">Focus sidebar nav buttons</span></div>
-                                        <div class="shortcut-row"><span class="shortcut-key">Ctrl + Shift + Z</span><span class="shortcut-desc">Hide/Unhide Sidebar (Zen Mode)</span></div>
-                                        <div class="shortcut-row"><span class="shortcut-key">Ctrl + Shift + B</span><span class="shortcut-desc">Open Bookmarks and Quickmarks</span></div>
+                                        <div class="shortcut-row" data-action="toggle-zen-mode"><span class="shortcut-key">Ctrl + Shift + Z</span><span class="shortcut-desc">Hide/Unhide Sidebar (Zen Mode)</span></div>
+                                        <div class="shortcut-row" data-action="toggle-bookmarks"><span class="shortcut-key">Ctrl + Shift + B</span><span class="shortcut-desc">Open Bookmarks and Quickmarks</span></div>
+                                        <div class="shortcut-row" data-action="toggle-history"><span class="shortcut-key">Ctrl + Shift + H</span><span class="shortcut-desc">Toggle Actionable History</span></div>
                                         <div class="shortcut-row"><span class="shortcut-key">Delete</span><span class="shortcut-desc">Deletes/Removes Bookmarks/Quickmarks When Selected</span></div>
                                         <div class="shortcut-row"><span class="shortcut-key">Ctrl + A</span><span class="shortcut-desc">Select All (text)</span></div>
 
@@ -248,13 +249,13 @@
                                 <div class="reference-category">
                                     <h3 class="reference-subheading">Web Interaction</h3>
                                     <div class="shortcuts-grid">
-                                        <div class="shortcut-row"><span class="shortcut-key">Ctrl + F</span><span class="shortcut-desc">Toggle Link Hints Overlay</span></div>
+                                        <div class="shortcut-row" data-action="trigger-hints"><span class="shortcut-key">Ctrl + F</span><span class="shortcut-desc">Toggle Link Hints Overlay</span></div>
                                         <div class="shortcut-row"><span class="shortcut-key">Right Click</span><span class="shortcut-desc">Contextual Actions</span></div>
-                                        <div class="shortcut-row"><span class="shortcut-key">Ctrl + Shift + I [F12]</span><span class="shortcut-desc">Toggle Active Webview DevTools</span></div>
-                                        <div class="shortcut-row"><span class="shortcut-key">Ctrl + Shift + Q [key]</span><span class="shortcut-desc">Set quickmark (e.g. Ctrl + Shift + Q then g for GitHub)</span></div>
-                                        <div class="shortcut-row"><span class="shortcut-key">Ctrl + J [key]</span><span class="shortcut-desc">Jump to quickmark</span></div>
-                                        <div class="shortcut-row"><span class="shortcut-key">Ctrl + Shift + A</span><span class="shortcut-desc">Add bookmark into bookmarks.json</span></div>
-                                        <div class="shortcut-row"><span class="shortcut-key">Ctrl + Shift + 0 [F10]</span><span class="shortcut-desc">Play/Pause video playback globally</span></div>
+                                        <div class="shortcut-row" data-action="toggle-devtools"><span class="shortcut-key">Ctrl + Shift + I / F12</span><span class="shortcut-desc">Toggle Active Webview DevTools</span></div>
+                                        <div class="shortcut-row" data-action="set-quickmark"><span class="shortcut-key">Ctrl + Shift + Q [key]</span><span class="shortcut-desc">Set quickmark (e.g. Ctrl + Shift + Q then g for GitHub)</span></div>
+                                        <div class="shortcut-row" data-action="jump-quickmark"><span class="shortcut-key">Ctrl + J [key]</span><span class="shortcut-desc">Jump to quickmark</span></div>
+                                        <div class="shortcut-row" data-action="add-bookmark"><span class="shortcut-key">Ctrl + Shift + A</span><span class="shortcut-desc">Add bookmark into bookmarks.json</span></div>
+                                        <div class="shortcut-row" data-action="toggle-global-media"><span class="shortcut-key">Ctrl + Shift + 0 / F10</span><span class="shortcut-desc">Play/Pause video playback globally</span></div>
                                     </div>
                                 </div>
                 

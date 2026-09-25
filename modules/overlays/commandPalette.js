@@ -69,6 +69,31 @@ export async function syncPreferencesUI() {
 
     const privateToggle = document.getElementById('setting-private-toggle');
     if (privateToggle) privateToggle.checked = !!state.globalPrivateModeActive;
+
+    if (window.miseAPI && typeof window.miseAPI.getKeybinds === 'function') {
+        try {
+            const keybinds = await window.miseAPI.getKeybinds();
+            if (keybinds) {
+                document.querySelectorAll('.shortcut-row[data-action]').forEach(row => {
+                    const action = row.getAttribute('data-action');
+                    const binding = keybinds[action];
+                    if (binding) {
+                        const keySpan = row.querySelector('.shortcut-key');
+                        if (keySpan) {
+                            const formatted = Array.isArray(binding)
+                                ? binding.map(b => b.replace(/\+/g, ' + ')).join(' / ')
+                                : binding.replace(/\+/g, ' + ');
+                            if (action === 'set-quickmark' || action === 'jump-quickmark') {
+                                keySpan.textContent = `${formatted} [key]`;
+                            } else {
+                                keySpan.textContent = formatted;
+                            }
+                        }
+                    }
+                });
+            }
+        } catch (err) {}
+    }
 }
 
 export function setupPreferencesListeners() {
