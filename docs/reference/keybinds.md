@@ -20,7 +20,7 @@ All keyboard shortcuts in Mise Browser are fully customisable via `~/.config/mis
 | **Ctrl + R** | `reload-active-tab` | Reloads the active tab |
 | **Ctrl + M** | `focus-sidebar` | Moves focus to the vertical tab sidebar |
 | **Ctrl + B** | `focus-webview` | Moves focus directly into the active web page |
-| **Ctrl + Shift + Z** | `toggle-zen-mode` | Toggles Zen Mode (hides or restores sidebar) |
+| **Ctrl + Shift + Z** | `toggle-zen-mode` | Toggles sidebar expansion or pin mode |
 | **Ctrl + P** | `toggle-palette` | Opens the Command Palette |
 | **Ctrl + Shift + P** | `toggle-private-mode`| Toggles volatile in-memory private browsing mode |
 | **Ctrl + H** | `toggle-help` | Opens the Preferences and settings overlay |

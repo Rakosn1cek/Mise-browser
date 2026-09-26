@@ -14,6 +14,7 @@ Mise leverages the Chromium rendering engine wrapped inside a streamlined Electr
 ## Key Highlights
 
 * **True Tab Hibernation**: Detaches idle `<webview>` tags completely from the DOM across all workspaces, terminating idle Chromium renderer processes and reducing RAM usage by 60% or more. Live URLs, page titles, and scroll offsets are restored on demand.
+* **Auto-Collapsing Vertical Strip**: The vertical sidebar collapses into a 36px icon strip displaying workspace badges and tab favicons, expanding smoothly as an overlay on hover or via shortcut without triggering webview layout shifts.
 * **Multi-Account Container Partitions**: Each workspace runs in its own isolated Electron persistent partition (`persist:work`, `persist:personal`), preventing cookie cross-contamination across accounts.
 * **Mouse-Free Navigation**: Complete keyboard control via Link Hints, floating address bar with search aliases, and customisable shortcuts in `keybinds.json`.
 * **Air-Gapped Terminal Handshake**: High-risk script execution and raw web commands trigger an air-gapped terminal protocol, safely copying vetted commands to your clipboard and opening an empty terminal emulator.

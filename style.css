@@ -38,7 +38,7 @@ body, html {
 }
 
 #Sidebar {
-    position: relative; /* This ensures the absolute pseudo-element stays within the sidebar borders */
+    position: relative;
     width: 260px;
     min-width: 260px;
     background-color: var(--bg-sidebar);
@@ -46,6 +46,61 @@ body, html {
     display: flex;
     flex-direction: column;
     padding: 10px;
+    transition: width 0.22s cubic-bezier(0.2, 0, 0, 1),
+                min-width 0.22s cubic-bezier(0.2, 0, 0, 1),
+                max-width 0.22s cubic-bezier(0.2, 0, 0, 1),
+                box-shadow 0.22s ease,
+                padding 0.22s ease;
+}
+
+/* Auto-collapse 36px strip mode */
+body.sidebar-auto-collapse #Sidebar {
+    width: 36px;
+    min-width: 36px;
+    max-width: 36px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    height: 100vh;
+    z-index: 90;
+    padding: 6px 3px;
+    overflow-x: hidden;
+    overflow-y: hidden;
+}
+
+body.sidebar-auto-collapse #right-content {
+    margin-left: 36px;
+    width: calc(100vw - 36px);
+    transition: margin-left 0.22s cubic-bezier(0.2, 0, 0, 1), width 0.22s cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* Smooth expansion on hover, focus-within, or when expanded via shortcut */
+body.sidebar-auto-collapse #Sidebar:hover,
+body.sidebar-auto-collapse #Sidebar.expanded,
+body.sidebar-auto-collapse #Sidebar:focus-within {
+    width: 260px;
+    min-width: 260px;
+    max-width: 260px;
+    padding: 10px;
+    box-shadow: 6px 0 28px rgba(0, 0, 0, 0.65);
+    overflow-y: auto;
+}
+
+/* Pinned (expanded) mode */
+body.sidebar-pinned #Sidebar {
+    position: relative;
+    width: 260px;
+    min-width: 260px;
+    max-width: 260px;
+    padding: 10px;
+    box-shadow: none;
+    overflow-y: auto;
+}
+
+body.sidebar-pinned #right-content {
+    margin-left: 0;
+    width: calc(100vw - 260px);
 }
 
 #Sidebar::before {
@@ -62,21 +117,100 @@ body, html {
     opacity: 0.5;
     z-index: 0;
     pointer-events: none;
+    transition: opacity 0.22s ease;
+}
+
+body.sidebar-auto-collapse #Sidebar:not(:hover):not(.expanded):not(:focus-within)::before {
+    opacity: 0;
+}
+
+/* Workspace Header & Badges */
+#WorkspaceHeader {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 3px 2px;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background 0.15s ease;
+    flex-shrink: 0;
+    min-height: 34px;
+}
+
+#WorkspaceHeader:hover {
+    background: var(--selected);
+}
+
+#WorkspaceBadge {
+    width: 28px;
+    min-width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: var(--border);
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 11px;
+    border: 1px solid var(--accent);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    margin: 0 auto;
+    transition: margin 0.2s ease, border-color 0.2s ease;
 }
 
 #WorkspaceLabel {
     color: var(--text);
     font-weight: bold;
-    font-size: 14px;
-    padding: 6px 0;
-    background: transparent;
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    opacity: 0;
+    max-width: 0;
+    display: none;
+    transition: opacity 0.18s ease, max-width 0.18s ease;
+}
+
+body.sidebar-auto-collapse #Sidebar:hover #WorkspaceLabel,
+body.sidebar-auto-collapse #Sidebar.expanded #WorkspaceLabel,
+body.sidebar-auto-collapse #Sidebar:focus-within #WorkspaceLabel,
+body.sidebar-pinned #WorkspaceLabel {
+    opacity: 1;
+    max-width: 180px;
+    display: inline-block;
+}
+
+body.sidebar-auto-collapse #Sidebar:hover #WorkspaceBadge,
+body.sidebar-auto-collapse #Sidebar.expanded #WorkspaceBadge,
+body.sidebar-auto-collapse #Sidebar:focus-within #WorkspaceBadge,
+body.sidebar-pinned #WorkspaceBadge {
+    margin: 0;
 }
 
 .nav-action-layout {
     display: flex;
-    gap: 8px;
-    padding: 8px 0;
+    gap: 6px;
+    padding: 0;
     align-items: center;
+    opacity: 0;
+    max-height: 0;
+    overflow: hidden;
+    pointer-events: none;
+    transition: opacity 0.18s ease, max-height 0.18s ease, margin 0.18s ease;
+    margin: 0;
+}
+
+body.sidebar-auto-collapse #Sidebar:hover .nav-action-layout,
+body.sidebar-auto-collapse #Sidebar.expanded .nav-action-layout,
+body.sidebar-auto-collapse #Sidebar:focus-within .nav-action-layout,
+body.sidebar-pinned .nav-action-layout {
+    opacity: 1;
+    max-height: 40px;
+    pointer-events: auto;
+    margin: 6px 0;
 }
 
 .nav-icon-button {
@@ -88,12 +222,13 @@ body, html {
     border-radius: 4px;
     padding: 2px;
     cursor: pointer;
-    width: 32px;
-    height: 28px;
+    width: 28px;
+    height: 26px;
     display: flex;
     align-items: center;
     justify-content: center;
     outline: none;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
 .nav-icon-button:hover, .nav-icon-button:focus {
@@ -105,40 +240,157 @@ body, html {
     list-style: none;
     flex-grow: 1;
     overflow-y: auto;
-    margin-top: 10px;
+    overflow-x: hidden;
+    margin-top: 4px;
     background-color: transparent;
     border: none;
     outline: none;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 
 #TabList li {
-    padding: 8px;
-    border-radius: 4px;
-    font-size: 14px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    font-size: 13px;
     color: var(--text);
     cursor: pointer;
     white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis;
-    margin-bottom: 4px;
     outline: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+    transition: background 0.15s ease, border-color 0.15s ease, width 0.2s ease, padding 0.2s ease;
+    border: 1px solid transparent;
+}
+
+/* Collapsed tab appearance in 36px strip */
+body.sidebar-auto-collapse #Sidebar:not(:hover):not(.expanded):not(:focus-within) #TabList li {
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    margin: 0 auto;
+    justify-content: center;
+    border-radius: 6px;
+}
+
+body.sidebar-auto-collapse #Sidebar:not(:hover):not(.expanded):not(:focus-within) #TabList li .tab-title,
+body.sidebar-auto-collapse #Sidebar:not(:hover):not(.expanded):not(:focus-within) #TabList li .tab-sleep-badge,
+body.sidebar-auto-collapse #Sidebar:not(:hover):not(.expanded):not(:focus-within) #TabList li .tab-media-badge,
+body.sidebar-auto-collapse #Sidebar:not(:hover):not(.expanded):not(:focus-within) #TabList li .tab-shield-btn {
+    display: none !important;
+}
+
+/* Tab Favicon Wrapper */
+.tab-favicon-wrapper {
+    width: 18px;
+    height: 18px;
+    min-width: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.tab-favicon {
+    width: 16px;
+    height: 16px;
+    border-radius: 2px;
+    object-fit: contain;
+    display: block;
+}
+
+.tab-fallback-icon {
+    font-size: 12px;
+    color: var(--accent);
+    display: none;
+}
+
+/* Mini indicators for 36px collapsed strip */
+.tab-sleep-dot {
+    display: none;
+    position: absolute;
+    bottom: -3px;
+    right: -3px;
+    font-size: 7px;
+    color: var(--accent);
+    background: var(--bg-sidebar);
+    border-radius: 50%;
+    padding: 1px;
+}
+
+.tab-audio-dot {
+    display: none;
+    position: absolute;
+    top: -3px;
+    right: -3px;
+    font-size: 7px;
+    color: #9ece6a;
+    background: var(--bg-sidebar);
+    border-radius: 50%;
+    padding: 1px;
+}
+
+body.sidebar-auto-collapse #Sidebar:not(:hover):not(.expanded):not(:focus-within) #TabList li.tab-sleeping .tab-sleep-dot {
+    display: block;
+}
+
+body.sidebar-auto-collapse #Sidebar:not(:hover):not(.expanded):not(:focus-within) #TabList li .tab-audio-dot {
+    display: block;
+}
+
+/* Sleeping tab styling */
+#TabList li.tab-sleeping .tab-favicon {
+    opacity: 0.55;
+    filter: grayscale(40%);
 }
 
 #TabList li.selected {
     background-color: var(--selected);
     color: var(--text);
+    border-color: var(--accent);
+}
+
+#TabList li:hover {
+    background-color: rgba(54, 74, 133, 0.45);
 }
 
 #TabList li:focus {
-    border: 1px solid var(--accent);
+    border-color: var(--accent);
 }
 
 .bottom-theme-layout {
     display: flex;
     gap: 8px;
-    padding-top: 10px;
+    padding-top: 8px;
     border-top: 1px solid var(--border);
     margin-top: auto;
+    align-items: center;
+    justify-content: flex-start;
+    transition: padding 0.18s ease;
+}
+
+body.sidebar-auto-collapse #Sidebar:not(:hover):not(.expanded):not(:focus-within) .bottom-theme-layout {
+    flex-direction: column;
+    gap: 6px;
+    border-top: none;
+    padding-top: 4px;
+    align-items: center;
+    justify-content: center;
+}
+
+body.sidebar-auto-collapse #Sidebar:not(:hover):not(.expanded):not(:focus-within) .bottom-theme-layout button:not(#pin-sidebar-btn) {
+    display: none;
+}
+
+#pin-sidebar-btn.pin-active {
+    color: var(--accent);
+    border-color: var(--accent);
+    background: var(--selected);
 }
 
 #right-content {
@@ -908,7 +1160,8 @@ body.zen-mode #Sidebar {
 }
 
 body.zen-mode #right-content {
-    width: 100vw;
+    margin-left: 0 !important;
+    width: 100vw !important;
     height: 100vh;
 }
 

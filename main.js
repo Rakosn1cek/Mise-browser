@@ -30,7 +30,8 @@ const DEFAULT_CONFIG = {
     search_engine: 'https://duckduckgo.com/?q=%s',
     theme: 'dark',
     trusted_domains: [],
-    tab_sleep_timeout_minutes: 15
+    tab_sleep_timeout_minutes: 15,
+    sidebar_auto_collapse: true
 };
 
 function loadBrowserConfig() {
@@ -627,6 +628,20 @@ function createWindow() {
                             fs.writeFileSync(CONFIG_PATH, JSON.stringify(cfg, null, 4), 'utf-8');
                         }
                     }))
+                },
+                { type: 'separator' },
+                {
+                    label: 'Auto-Collapse Sidebar (36px Strip)',
+                    type: 'checkbox',
+                    checked: cfg.sidebar_auto_collapse !== false,
+                    click: (menuItem) => {
+                        cfg.sidebar_auto_collapse = menuItem.checked;
+                        if (!fs.existsSync(CONFIG_DIR)) fs.mkdirSync(CONFIG_DIR, { recursive: true });
+                        fs.writeFileSync(CONFIG_PATH, JSON.stringify(cfg, null, 4), 'utf-8');
+                        if (mainWindow && !mainWindow.isDestroyed()) {
+                            mainWindow.webContents.send('master-shortcut', 'toggle-sidebar-collapse-mode', menuItem.checked);
+                        }
+                    }
                 },
                 { type: 'separator' },
                 {

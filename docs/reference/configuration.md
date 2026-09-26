@@ -18,6 +18,7 @@ Controls hardware switches, process limits, privacy whitelists, and search prefe
     "background_throttling": true,
     "process_limit": 1,
     "tab_sleep_timeout_minutes": 15,
+    "sidebar_auto_collapse": true,
     "email_handler": "system",
     "search_engine": "https://duckduckgo.com/?q=%s",
     "theme": "dark",
@@ -36,6 +37,7 @@ Controls hardware switches, process limits, privacy whitelists, and search prefe
 - **`background_throttling`**: Throttles timers and delays tasks in background tabs to conserve CPU cycles.
 - **`process_limit`**: Hard cap on Chromium renderer process forks (1 to 5).
 - **`tab_sleep_timeout_minutes`**: Inactivity timeout before background tabs detach and hibernate (5, 15, 30, 60, or 0 to disable).
+- **`sidebar_auto_collapse`**: When `true`, collapses the vertical sidebar into a 36px icon strip, expanding smoothly on hover or via shortcut.
 - **`email_handler`**: Choose between `system` (OS default `mailto:`) or webmail providers (Gmail, Zoho, Outlook, Fastmail, ProtonMail).
 - **`search_engine`**: Fallback search provider URL when non-URL queries are entered without an alias.
 - **`theme`**: Interface theme preference (`dark` for Tokyo Night or `light`).

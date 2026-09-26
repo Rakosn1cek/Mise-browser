@@ -36,6 +36,31 @@ export function createWebView(url, currentWS, idx) {
             if (titleEl) {
                 titleEl.textContent = e.title.length > 24 ? e.title.slice(0, 24) + "..." : e.title;
             }
+            targetLi.title = `${e.title}\n${state.sessionState.workspaces[currentWS]?.[idx] || ''}`;
+        }
+    });
+
+    webview.addEventListener('page-favicon-updated', (e) => {
+        if (e.favicons && e.favicons.length > 0) {
+            const iconUrl = e.favicons[0];
+            if (!state.tabFavicons) state.tabFavicons = {};
+            if (!state.tabFavicons[currentWS]) state.tabFavicons[currentWS] = [];
+            state.tabFavicons[currentWS][idx] = iconUrl;
+            if (!state.sessionState.tab_favicons) state.sessionState.tab_favicons = {};
+            if (!state.sessionState.tab_favicons[currentWS]) state.sessionState.tab_favicons[currentWS] = [];
+            state.sessionState.tab_favicons[currentWS][idx] = iconUrl;
+            window.miseAPI.saveSession(state.sessionState);
+
+            const targetLi = document.querySelectorAll('#TabList li')[idx];
+            if (targetLi && state.sessionState.current_workspace === currentWS) {
+                const favImg = targetLi.querySelector('.tab-favicon');
+                const favFallback = targetLi.querySelector('.tab-fallback-icon');
+                if (favImg) {
+                    favImg.src = iconUrl;
+                    favImg.style.display = 'block';
+                    if (favFallback) favFallback.style.display = 'none';
+                }
+            }
         }
     });
 
@@ -214,12 +239,48 @@ export function attachShieldToggleListener(tabLi, webview) {
     });
 }
 
+export function getWorkspaceBadgeText(wsName) {
+    if (!wsName) return '1';
+    const match = wsName.match(/(\d+)$/);
+    if (match) {
+        const num = match[1];
+        const prefix = wsName.trim()[0].toUpperCase();
+        return num.length <= 2 ? (wsName.length <= 3 ? wsName : `${prefix}${num}`) : num.slice(0, 2);
+    }
+    return wsName.slice(0, 2).toUpperCase();
+}
+
+export function getFaviconUrl(urlStr) {
+    if (!urlStr) return null;
+    try {
+        const parsed = new URL(urlStr);
+        if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+            return `https://www.google.com/s2/favicons?domain=${parsed.hostname}&sz=32`;
+        }
+    } catch (e) {}
+    return null;
+}
+
 export function renderWorkspaceUI(targetTabToFocus = null) {
     const currentWS = state.sessionState.current_workspace;
     const wsLabel = document.getElementById('WorkspaceLabel');
     if (wsLabel) {
         wsLabel.textContent = currentWS;
         wsLabel.title = `Workspace: ${currentWS} (Container: ${getWorkspacePartition(currentWS)})`;
+    }
+    const wsBadge = document.getElementById('WorkspaceBadge');
+    if (wsBadge) {
+        wsBadge.textContent = getWorkspaceBadgeText(currentWS);
+        wsBadge.title = `Workspace: ${currentWS} (Container: ${getWorkspacePartition(currentWS)})`;
+    }
+    const wsHeader = document.getElementById('WorkspaceHeader');
+    if (wsHeader && !wsHeader._hasClickListener) {
+        wsHeader._hasClickListener = true;
+        wsHeader.addEventListener('click', () => {
+            if (typeof window.toggleDashboardView === 'function') {
+                window.toggleDashboardView();
+            }
+        });
     }
     const tabList = document.getElementById('TabList');
     tabList.innerHTML = '';
@@ -249,14 +310,63 @@ export function renderWorkspaceUI(targetTabToFocus = null) {
     if (!state.tabSleepStates[currentWS]) state.tabSleepStates[currentWS] = [];
     if (!state.tabActivityTimestamps[currentWS]) state.tabActivityTimestamps[currentWS] = [];
     if (!state.tabMediaAudible[currentWS]) state.tabMediaAudible[currentWS] = [];
+    if (!state.tabFavicons) state.tabFavicons = {};
+    if (!state.tabFavicons[currentWS]) state.tabFavicons[currentWS] = [];
 
     urls.forEach((url, idx) => {
         const cachedTitle = state.activeTitlesCache[currentWS][idx] || "Loading...";
         const isSleeping = !!state.tabSleepStates[currentWS][idx];
+        const cachedFavicon = state.tabFavicons[currentWS]?.[idx] || null;
 
         const li = document.createElement('li');
         li.setAttribute('tabindex', '0');
+        li.className = 'tab-item';
+        li.title = `${cachedTitle}\n${url}`;
         if (isSleeping) li.classList.add('tab-sleeping');
+
+        // Favicon wrapper
+        const favWrapper = document.createElement('div');
+        favWrapper.className = 'tab-favicon-wrapper';
+
+        const favImg = document.createElement('img');
+        favImg.className = 'tab-favicon';
+        favImg.alt = '';
+
+        const favFallback = document.createElement('i');
+        favFallback.className = 'fa-solid fa-globe tab-fallback-icon';
+
+        const sleepDot = document.createElement('span');
+        sleepDot.className = 'tab-sleep-dot';
+        sleepDot.title = 'Sleeping tab';
+        sleepDot.innerHTML = '<i class="fa-solid fa-moon"></i>';
+
+        const audioDot = document.createElement('span');
+        audioDot.className = 'tab-audio-dot';
+        audioDot.title = 'Playing audio';
+        audioDot.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
+
+        favWrapper.appendChild(favImg);
+        favWrapper.appendChild(favFallback);
+        if (isSleeping) favWrapper.appendChild(sleepDot);
+        if (state.tabMediaAudible[currentWS]?.[idx]) favWrapper.appendChild(audioDot);
+
+        const initialFav = cachedFavicon || getFaviconUrl(url);
+        if (initialFav) {
+            favImg.src = initialFav;
+            favImg.onload = () => {
+                favImg.style.display = 'block';
+                favFallback.style.display = 'none';
+            };
+            favImg.onerror = () => {
+                favImg.style.display = 'none';
+                favFallback.style.display = 'inline-block';
+            };
+        } else {
+            favImg.style.display = 'none';
+            favFallback.style.display = 'inline-block';
+        }
+
+        li.appendChild(favWrapper);
 
         const titleSpan = document.createElement('span');
         titleSpan.className = 'tab-title';
@@ -467,6 +577,8 @@ export function handleTabRemoval() {
                 if (state.tabMediaAudible[wsName]) state.tabMediaAudible[wsName].splice(idx, 1);
                 if (state.sessionState.tab_titles?.[wsName]) state.sessionState.tab_titles[wsName].splice(idx, 1);
                 if (state.sessionState.tab_sleep_states?.[wsName]) state.sessionState.tab_sleep_states[wsName].splice(idx, 1);
+                if (state.tabFavicons?.[wsName]) state.tabFavicons[wsName].splice(idx, 1);
+                if (state.sessionState.tab_favicons?.[wsName]) state.sessionState.tab_favicons[wsName].splice(idx, 1);
 
                 window.miseAPI.saveSession(state.sessionState);
                 renderWorkspaceUI();
@@ -489,8 +601,10 @@ export function handleTabRemoval() {
                 delete state.tabSleepStates[wsName];
                 delete state.tabActivityTimestamps[wsName];
                 delete state.tabMediaAudible[wsName];
+                delete state.tabFavicons?.[wsName];
                 if (state.sessionState.tab_titles?.[wsName]) delete state.sessionState.tab_titles[wsName];
                 if (state.sessionState.tab_sleep_states?.[wsName]) delete state.sessionState.tab_sleep_states[wsName];
+                if (state.sessionState.tab_favicons?.[wsName]) delete state.sessionState.tab_favicons[wsName];
                 delete state.sessionState.workspaces[wsName];
                 
                 window.miseAPI.saveSession(state.sessionState);
@@ -522,8 +636,10 @@ export function handleTabRemoval() {
     if (state.tabSleepStates[currentWS]) state.tabSleepStates[currentWS].splice(currentIdx, 1);
     if (state.tabActivityTimestamps[currentWS]) state.tabActivityTimestamps[currentWS].splice(currentIdx, 1);
     if (state.tabMediaAudible[currentWS]) state.tabMediaAudible[currentWS].splice(currentIdx, 1);
+    if (state.tabFavicons?.[currentWS]) state.tabFavicons[currentWS].splice(currentIdx, 1);
     if (state.sessionState.tab_titles?.[currentWS]) state.sessionState.tab_titles[currentWS].splice(currentIdx, 1);
     if (state.sessionState.tab_sleep_states?.[currentWS]) state.sessionState.tab_sleep_states[currentWS].splice(currentIdx, 1);
+    if (state.sessionState.tab_favicons?.[currentWS]) state.sessionState.tab_favicons[currentWS].splice(currentIdx, 1);
 
     window.miseAPI.saveSession(state.sessionState);
     window.miseAllowWebviewFocus = true;

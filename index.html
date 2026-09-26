@@ -10,7 +10,10 @@
 <body class="dark-mode">
     <div class="main-container">
         <div id="Sidebar">
-            <div id="WorkspaceLabel">Workspace 1</div>
+            <div id="WorkspaceHeader" title="Workspace: Click to open Workspace Dashboard (Ctrl+Shift+W)">
+                <div id="WorkspaceBadge" class="workspace-badge">1</div>
+                <span id="WorkspaceLabel" class="workspace-label">Workspace 1</span>
+            </div>
             
             <div class="nav-action-layout">
                 <button id="back-btn" class="nav-icon-button" title="Go Back"><i class="fa-solid fa-angle-left"></i></button>
@@ -24,6 +27,7 @@
             </ul>
 
             <div class="bottom-theme-layout">
+                <button id="pin-sidebar-btn" class="nav-icon-button" title="Pin / Auto-Collapse Sidebar (Ctrl+Shift+Z)"><i class="fa-solid fa-thumbtack"></i></button>
                 <button id="theme-toggle-btn" class="nav-icon-button" title="Toggle Light/Dark Mode"><i class="fa-solid fa-moon"></i></button>
                 <button id="noti-toggle-btn" class="nav-icon-button" title="Toggle Web Notifications"><i class="fa-regular fa-bell"></i></button>
             </div>
@@ -135,6 +139,17 @@
                                     </select>
                                 </div>
 
+                                <div class="setting-item">
+                                    <div class="setting-info">
+                                        <span class="setting-label">Auto-Collapse Sidebar (36px Strip)</span>
+                                        <span class="setting-desc">Shrinks the vertical sidebar to a 36px icon strip, expanding smoothly on hover or shortcut.</span>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="setting-sidebar-collapse-toggle" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+
                                 <!-- Share via Email Section -->
                                 <div class="setting-item">
                                     <div class="setting-info">
@@ -230,7 +245,7 @@
                             <section class="settings-section">
                                 <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--border); padding-bottom: 8px;">
                                     <h2 style="border-bottom: none; padding-bottom: 0; margin-bottom: 0;">Help & Shortcuts Reference</h2>
-                                    <span style="font-family: monospace; font-size: 12px; color: var(--accent);">Mise Browser v0.7.0</span>
+                                    <span style="font-family: monospace; font-size: 12px; color: var(--accent);">Mise Browser v0.7.1</span>
                                 </div>
                                 <p style="font-size: 12px; color: var(--accent); margin: 6px 0 14px 0;">All keyboard shortcuts can be customised in <code style="color: var(--accent);">~/.config/mise-browser/keybinds.json</code></p>
                 

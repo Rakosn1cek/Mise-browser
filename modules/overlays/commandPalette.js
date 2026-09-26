@@ -17,6 +17,8 @@ export const commandRegistry = {
     "Toggle Bookmarks Manager": () => toggleBookmarksOverlay(),
     "Toggle Quick Notes": () => window.toggleNotesOverlay && window.toggleNotesOverlay(),
     "Toggle Zen Mode (Hide Sidebar)": () => window.toggleZenMode && window.toggleZenMode(),
+    "Toggle Sidebar (Expand/Collapse) [Ctrl+Shift+Z]": () => window.toggleSidebarExpansion && window.toggleSidebarExpansion(),
+    "Toggle Auto-Collapse Sidebar (Pin/Unpin)": () => window.toggleSidebarPin && window.toggleSidebarPin(),
     "Toggle Mise Settings (Menu Bar) [F1]": () => window.miseAPI && typeof window.miseAPI.toggleMenuBar === 'function' && window.miseAPI.toggleMenuBar(),
     "Open Preferences": () => togglePreferencesView(),
     "Toggle Actionable History": () => window.toggleHistoryOverlay && window.toggleHistoryOverlay(),
@@ -54,12 +56,14 @@ export async function syncPreferencesUI() {
             const processSelect = document.getElementById('setting-process-limit');
             const emailSelect = document.getElementById('setting-email-handler');
             const sleepSelect = document.getElementById('setting-sleep-timeout');
+            const sidebarToggle = document.getElementById('setting-sidebar-collapse-toggle');
 
             if (gpuToggle) gpuToggle.checked = !cfg.disable_gpu;
             if (throttleToggle) throttleToggle.checked = !!cfg.background_throttling;
             if (processSelect) processSelect.value = String(cfg.process_limit || 3);
             if (emailSelect) emailSelect.value = cfg.email_handler || 'system';
             if (sleepSelect) sleepSelect.value = String(cfg.tab_sleep_timeout_minutes ?? 15);
+            if (sidebarToggle) sidebarToggle.checked = cfg.sidebar_auto_collapse !== false;
 
             const trustedDomainsField = document.getElementById('setting-trusted-domains');
             if (trustedDomainsField) {
@@ -134,17 +138,32 @@ export function setupPreferencesListeners() {
             const processSelect = document.getElementById('setting-process-limit');
             const emailSelect = document.getElementById('setting-email-handler');
             const sleepSelect = document.getElementById('setting-sleep-timeout');
+            const sidebarToggle = document.getElementById('setting-sidebar-collapse-toggle');
 
             const newCfg = {
                 disable_gpu: gpuToggle ? !gpuToggle.checked : false,
                 background_throttling: throttleToggle ? throttleToggle.checked : true,
                 process_limit: processSelect ? parseInt(processSelect.value, 10) : 3,
                 tab_sleep_timeout_minutes: sleepSelect ? parseInt(sleepSelect.value, 10) : 15,
+                sidebar_auto_collapse: sidebarToggle ? sidebarToggle.checked : true,
                 email_handler: emailSelect ? emailSelect.value : 'system'
             };
 
             if (window.miseAPI && typeof window.miseAPI.saveBrowserSettings === 'function') {
                 await window.miseAPI.saveBrowserSettings(newCfg);
+            }
+        };
+    }
+
+    const sidebarToggle = document.getElementById('setting-sidebar-collapse-toggle');
+    if (sidebarToggle) {
+        sidebarToggle.onchange = async () => {
+            const isAuto = sidebarToggle.checked;
+            if (window.applySidebarMode) window.applySidebarMode(isAuto);
+            if (window.miseAPI && typeof window.miseAPI.getBrowserSettings === 'function') {
+                const cfg = (await window.miseAPI.getBrowserSettings()) || {};
+                cfg.sidebar_auto_collapse = isAuto;
+                await window.miseAPI.updateBrowserSettings(cfg);
             }
         };
     }

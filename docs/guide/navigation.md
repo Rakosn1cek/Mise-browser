@@ -48,23 +48,32 @@ When typing queries into the address bar, prepend shorthand prefixes to route se
 
 If no alias is entered, Mise uses your configured default search engine set in Preferences.
 
----
+***
+
+## Auto-Collapsing Vertical Sidebar (36px Strip)
+
+To dedicate maximum horizontal screen real estate to web content, Mise features an auto-collapsible vertical sidebar:
+
+* **Compact 36px Strip**: In its default collapsed state, the sidebar shrinks to a 36px icon bar displaying only your workspace badge and crisp tab favicons.
+* **Smooth Flyout on Hover**: Moving your mouse pointer over the 36px strip smoothly expands the sidebar to 260px as an overlay flyout with drop shadow. Because this expands as an overlay, the active webview never resizes, preventing GPU lag and page reflows on fanless hardware.
+* **Shortcut Expansion**: Press **Ctrl + Shift + Z** to toggle sidebar expansion, or press **Ctrl + M** to focus the sidebar and expand it immediately for arrow-key navigation. Pressing **Escape** or **Ctrl + B** collapses the sidebar smoothly back to the 36px strip.
+* **Pinning**: Click the pin icon button at the bottom of the sidebar, toggle **Auto-Collapse Sidebar** in Preferences (**Ctrl + H**), or run **Pin / Unpin Sidebar** in the Command Palette to pin the sidebar permanently open at 260px.
+
+***
 
 ## Sidebar and Webview Focus Management
 
 Mise maintains clean separation between sidebar navigation and active web page interaction:
 
-- **Ctrl + M**: Shifts keyboard focus to the vertical tab sidebar. Use the **Up** and **Down** arrow keys to cycle through open tabs, and press **Enter** to switch to the highlighted tab.
-- **Ctrl + B**: Shifts keyboard focus directly into the active webview, allowing you to scroll and interact with the page immediately.
+- **Ctrl + M**: Shifts keyboard focus to the vertical tab sidebar, smoothly expanding it. Use the **Up** and **Down** arrow keys to cycle through open tabs, and press **Enter** to switch to the highlighted tab.
+- **Ctrl + B**: Shifts keyboard focus directly into the active webview, automatically collapsing the sidebar back to the 36px strip.
 - **Ctrl + W** or **Ctrl + D**: Closes the currently active tab.
 - **Ctrl + R**: Reloads the active tab.
 
----
+***
 
-## Zen Mode (`Ctrl + Shift + Z`)
+## Workspace Badges & Favicons
 
-When you want to maximise reading area or eliminate visual distractions:
+* **Workspace Badges**: The top of the strip displays a compact letter or number badge for the current workspace (such as `W1` or `P`). Clicking the workspace badge opens the Workspace Dashboard (**Ctrl + Shift + W**).
+* **Favicons & Indicators**: Each tab renders its website favicon with smart local and remote caching. Sleeping tabs display a subtle moon indicator, while tabs playing audio render a green audio badge.
 
-- Press **Ctrl + Shift + Z** to toggle Zen Mode.
-- Zen Mode smoothly hides the vertical sidebar and navigations, dedicating the entire window frame to the web page content.
-- Press **Ctrl + Shift + Z** again to restore the sidebar.

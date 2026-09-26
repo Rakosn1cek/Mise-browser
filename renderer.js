@@ -88,6 +88,9 @@ window.triggerLinkHints = triggerLinkHints;
 window.toggleInPageSearch = toggleInPageSearch;
 window.toggleNotesOverlay = toggleNotesOverlay;
 window.toggleZenMode = toggleZenMode;
+window.toggleSidebarExpansion = toggleSidebarExpansion;
+window.toggleSidebarPin = toggleSidebarPin;
+window.applySidebarMode = applySidebarMode;
 window.toggleInterfaceTheme = toggleInterfaceTheme;
 window.togglePreferencesView = togglePreferencesView;
 window.toggleHistoryOverlay = toggleHistoryOverlay;
@@ -104,9 +107,12 @@ let findActive = false;
 async function initializeBrowser() {
     state.sessionState = await window.miseAPI.getSession();
     
-    // Restore cached titles and sleeping tab states if present
+    // Restore cached titles, sleeping tab states, and favicons if present
     if (state.sessionState.tab_titles) {
         state.activeTitlesCache = { ...state.sessionState.tab_titles };
+    }
+    if (state.sessionState.tab_favicons) {
+        state.tabFavicons = { ...state.sessionState.tab_favicons };
     }
     if (state.sessionState.tab_sleep_states) {
         state.tabSleepStates = { ...state.sessionState.tab_sleep_states };
@@ -131,16 +137,22 @@ async function initializeBrowser() {
         });
     }
 
-    // Load persisted theme preference from configuration
+    // Load persisted theme and sidebar preferences from configuration
     let savedTheme = 'dark';
+    let sidebarAutoCollapse = true;
     if (window.miseAPI && typeof window.miseAPI.getBrowserSettings === 'function') {
         try {
             const cfg = await window.miseAPI.getBrowserSettings();
-            if (cfg && cfg.theme) {
-                savedTheme = cfg.theme;
+            if (cfg) {
+                if (cfg.theme) savedTheme = cfg.theme;
+                if (typeof cfg.sidebar_auto_collapse === 'boolean') {
+                    sidebarAutoCollapse = cfg.sidebar_auto_collapse;
+                }
             }
         } catch (e) {}
     }
+
+    applySidebarMode(sidebarAutoCollapse);
 
     const body = document.body;
     const button = document.getElementById('theme-toggle-btn');
@@ -233,7 +245,8 @@ function setupEventListeners() {
             case 'toggle-notes': toggleNotesOverlay(); break;
             case 'toggle-find': toggleInPageSearch(); break;
             case 'remove-tab': handleTabRemoval(); break;
-            case 'toggle-zen-mode': toggleZenMode(); break;
+            case 'toggle-zen-mode': toggleSidebarExpansion(); break;
+            case 'toggle-sidebar-collapse-mode': applySidebarMode(args[0]); break;
             case 'set-quickmark': promptQuickmark('set'); break;
             case 'jump-quickmark': promptQuickmark('jump'); break;
             case 'add-bookmark': addCurrentPageToBookmarks(); break;
@@ -275,6 +288,11 @@ function setupEventListeners() {
 
     paletteInput.addEventListener('keydown', handlePaletteInputNavigation);
 
+    const pinSidebarBtn = document.getElementById('pin-sidebar-btn');
+    if (pinSidebarBtn) {
+        pinSidebarBtn.onclick = () => toggleSidebarPin();
+    }
+
     const topNavIds = ['back-btn', 'forward-btn', 'toggle-nav-btn', 'menu-btn'];
     topNavIds.forEach((id, idx) => {
         const btn = document.getElementById(id);
@@ -301,27 +319,27 @@ function setupEventListeners() {
         });
     });
 
-    const bottomButtons = ['theme-toggle-btn', 'noti-toggle-btn'];
+    const bottomButtons = ['pin-sidebar-btn', 'theme-toggle-btn', 'noti-toggle-btn'];
     bottomButtons.forEach((id, idx) => {
         const btn = document.getElementById(id);
         if (!btn) return;
 
         btn.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowRight' || (e.key === 'Tab' && !e.shiftKey && id === 'theme-toggle-btn')) {
+            if (e.key === 'ArrowRight' || (e.key === 'Tab' && !e.shiftKey && idx < bottomButtons.length - 1)) {
                 e.preventDefault();
-                const nextBtn = document.getElementById('noti-toggle-btn');
+                const nextBtn = document.getElementById(bottomButtons[idx + 1]);
                 if (nextBtn) nextBtn.focus();
-            } else if (e.key === 'ArrowLeft' || (e.key === 'Tab' && e.shiftKey && id === 'noti-toggle-btn')) {
+            } else if (e.key === 'ArrowLeft' || (e.key === 'Tab' && e.shiftKey && idx > 0)) {
                 e.preventDefault();
-                const prevBtn = document.getElementById('theme-toggle-btn');
+                const prevBtn = document.getElementById(bottomButtons[idx - 1]);
                 if (prevBtn) prevBtn.focus();
-            } else if (e.key === 'ArrowUp' || (e.key === 'Tab' && e.shiftKey && id === 'theme-toggle-btn')) {
+            } else if (e.key === 'ArrowUp' || (e.key === 'Tab' && e.shiftKey && idx === 0)) {
                 e.preventDefault();
                 const tabItems = Array.from(document.querySelectorAll('#TabList li'));
                 if (tabItems.length > 0) {
                     tabItems[tabItems.length - 1].focus();
                 }
-            } else if (e.key === 'Tab' && !e.shiftKey && id === 'noti-toggle-btn') {
+            } else if (e.key === 'Tab' && !e.shiftKey && idx === bottomButtons.length - 1) {
                 e.preventDefault();
                 const backBtn = document.getElementById('back-btn');
                 if (backBtn) backBtn.focus();
@@ -332,6 +350,13 @@ function setupEventListeners() {
     const tabListContainer = document.getElementById('TabList');
     tabListContainer.addEventListener('keydown', (e) => {
         if (state.dashboardActive) return;
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            const sidebar = document.getElementById('Sidebar');
+            if (sidebar) sidebar.classList.remove('expanded');
+            focusActiveWebview();
+            return;
+        }
         const tabItems = Array.from(document.querySelectorAll('#TabList li'));
         const activeListItem = document.querySelector('#TabList li.selected');
         let currentIdx = tabItems.indexOf(activeListItem);
@@ -615,4 +640,45 @@ function toggleActiveDevTools() {
 
 function toggleZenMode() {
     document.body.classList.toggle('zen-mode');
+}
+
+export function applySidebarMode(autoCollapse) {
+    const body = document.body;
+    const pinBtn = document.getElementById('pin-sidebar-btn');
+    if (autoCollapse) {
+        body.classList.remove('sidebar-pinned');
+        body.classList.add('sidebar-auto-collapse');
+        if (pinBtn) pinBtn.classList.remove('pin-active');
+    } else {
+        body.classList.remove('sidebar-auto-collapse');
+        body.classList.add('sidebar-pinned');
+        if (pinBtn) pinBtn.classList.add('pin-active');
+        const sidebar = document.getElementById('Sidebar');
+        if (sidebar) sidebar.classList.remove('expanded');
+    }
+}
+
+export function toggleSidebarExpansion() {
+    const sidebar = document.getElementById('Sidebar');
+    if (!sidebar) return;
+    sidebar.classList.toggle('expanded');
+    if (sidebar.classList.contains('expanded')) {
+        const selectedTab = document.querySelector('#TabList li.selected');
+        if (selectedTab) selectedTab.focus();
+    } else {
+        focusActiveWebview();
+    }
+}
+
+export async function toggleSidebarPin() {
+    const isCurrentlyPinned = document.body.classList.contains('sidebar-pinned');
+    const newAutoCollapse = isCurrentlyPinned;
+    applySidebarMode(newAutoCollapse);
+    if (window.miseAPI && typeof window.miseAPI.getBrowserSettings === 'function') {
+        try {
+            const cfg = (await window.miseAPI.getBrowserSettings()) || {};
+            cfg.sidebar_auto_collapse = newAutoCollapse;
+            await window.miseAPI.updateBrowserSettings(cfg);
+        } catch (e) {}
+    }
 }

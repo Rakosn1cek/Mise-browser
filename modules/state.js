@@ -9,6 +9,7 @@ export const state = {
     tabSleepStates: {},
     tabActivityTimestamps: {},
     tabMediaAudible: {},
+    tabFavicons: {},
     
     // UI Active Flags
     dashboardActive: false,
