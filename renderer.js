@@ -17,7 +17,11 @@ import {
     navigateFrameBack, 
     navigateFrameForward, 
     applyCSSThemeToView,
-    toggleGlobalMediaPlayback
+    toggleGlobalMediaPlayback,
+    initializeTabSleepManager,
+    hibernateInactiveTabs,
+    wakeTab,
+    wakeAllTabsInWorkspace
 } from './modules/webview.js';
 
 import { 
@@ -100,6 +104,33 @@ let findActive = false;
 async function initializeBrowser() {
     state.sessionState = await window.miseAPI.getSession();
     
+    // Restore cached titles and sleeping tab states if present
+    if (state.sessionState.tab_titles) {
+        state.activeTitlesCache = { ...state.sessionState.tab_titles };
+    }
+    if (state.sessionState.tab_sleep_states) {
+        state.tabSleepStates = { ...state.sessionState.tab_sleep_states };
+    } else {
+        // Initialise background tabs as sleeping on boot to conserve memory
+        Object.keys(state.sessionState.workspaces || {}).forEach(ws => {
+            const urls = state.sessionState.workspaces[ws] || [];
+            if (!state.tabSleepStates[ws]) state.tabSleepStates[ws] = [];
+            urls.forEach((u, i) => {
+                if (ws !== state.sessionState.current_workspace || i !== 0) {
+                    state.tabSleepStates[ws][i] = {
+                        url: u,
+                        title: state.activeTitlesCache[ws]?.[i] || u,
+                        scrollX: 0,
+                        scrollY: 0,
+                        hibernatedAt: Date.now()
+                    };
+                } else {
+                    state.tabSleepStates[ws][i] = null;
+                }
+            });
+        });
+    }
+
     // Load persisted theme preference from configuration
     let savedTheme = 'dark';
     if (window.miseAPI && typeof window.miseAPI.getBrowserSettings === 'function') {
@@ -132,6 +163,7 @@ async function initializeBrowser() {
 
     setupEventListeners();
     renderWorkspaceUI();
+    initializeTabSleepManager();
     setupNotesListeners();
     setupAddressBarAutocomplete();
     setupBookmarkOverlayListeners();
@@ -232,6 +264,7 @@ function setupEventListeners() {
                 handlePrivateBrowsingStateShift(state.globalPrivateModeActive);
                 break;
             }
+            case 'hibernate-inactive-tabs': hibernateInactiveTabs(); break;
         }
     });
 

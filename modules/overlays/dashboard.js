@@ -42,7 +42,29 @@ export function renameWorkspace(oldName, newName) {
     }
 
     if (state.activeTitlesCache[oldName]) {
+        state.activeTitlesCache[trimmed] = state.activeTitlesCache[oldName];
         delete state.activeTitlesCache[oldName];
+    }
+
+    if (state.tabSleepStates[oldName]) {
+        state.tabSleepStates[trimmed] = state.tabSleepStates[oldName];
+        delete state.tabSleepStates[oldName];
+    }
+    if (state.tabActivityTimestamps[oldName]) {
+        state.tabActivityTimestamps[trimmed] = state.tabActivityTimestamps[oldName];
+        delete state.tabActivityTimestamps[oldName];
+    }
+    if (state.tabMediaAudible[oldName]) {
+        state.tabMediaAudible[trimmed] = state.tabMediaAudible[oldName];
+        delete state.tabMediaAudible[oldName];
+    }
+    if (state.sessionState.tab_titles?.[oldName]) {
+        state.sessionState.tab_titles[trimmed] = state.sessionState.tab_titles[oldName];
+        delete state.sessionState.tab_titles[oldName];
+    }
+    if (state.sessionState.tab_sleep_states?.[oldName]) {
+        state.sessionState.tab_sleep_states[trimmed] = state.sessionState.tab_sleep_states[oldName];
+        delete state.sessionState.tab_sleep_states[oldName];
     }
 
     if (state.sessionState.current_workspace === oldName) {
@@ -64,10 +86,15 @@ export function deleteWorkspace(wsName) {
     }
 
     if (state.activeViewsCache[wsName]) {
-        state.activeViewsCache[wsName].forEach(wv => wv.remove());
+        state.activeViewsCache[wsName].forEach(wv => { if (wv) wv.remove(); });
         delete state.activeViewsCache[wsName];
     }
     delete state.activeTitlesCache[wsName];
+    delete state.tabSleepStates[wsName];
+    delete state.tabActivityTimestamps[wsName];
+    delete state.tabMediaAudible[wsName];
+    if (state.sessionState.tab_titles?.[wsName]) delete state.sessionState.tab_titles[wsName];
+    if (state.sessionState.tab_sleep_states?.[wsName]) delete state.sessionState.tab_sleep_states[wsName];
     delete state.sessionState.workspaces[wsName];
     
     window.miseAPI.saveSession(state.sessionState);
@@ -228,6 +255,24 @@ export function buildDashboardTree() {
                     state.activeTitlesCache[targetWS].push(movedTitle);
                 }
 
+                if (state.tabSleepStates[sourceWS]) {
+                    const [movedSleep] = state.tabSleepStates[sourceWS].splice(sourceIdx, 1);
+                    if (!state.tabSleepStates[targetWS]) state.tabSleepStates[targetWS] = [];
+                    state.tabSleepStates[targetWS].push(movedSleep);
+                }
+                if (state.tabActivityTimestamps[sourceWS]) {
+                    const [movedTime] = state.tabActivityTimestamps[sourceWS].splice(sourceIdx, 1);
+                    if (!state.tabActivityTimestamps[targetWS]) state.tabActivityTimestamps[targetWS] = [];
+                    state.tabActivityTimestamps[targetWS].push(movedTime);
+                }
+                if (state.tabMediaAudible[sourceWS]) {
+                    const [movedMedia] = state.tabMediaAudible[sourceWS].splice(sourceIdx, 1);
+                    if (!state.tabMediaAudible[targetWS]) state.tabMediaAudible[targetWS] = [];
+                    state.tabMediaAudible[targetWS].push(movedMedia);
+                }
+                state.sessionState.tab_titles = state.activeTitlesCache;
+                state.sessionState.tab_sleep_states = state.tabSleepStates;
+
                 window.miseAPI.saveSession(state.sessionState);
                 renderWorkspaceUI();
                 buildDashboardTree();
@@ -243,7 +288,9 @@ export function buildDashboardTree() {
             const tabItem = document.createElement('div');
             tabItem.className = 'dashboard-tab-item';
             const cachedTitle = (state.activeTitlesCache[wsName] && state.activeTitlesCache[wsName][idx]) || url;
-            tabItem.textContent = `- ${cachedTitle}`;
+            const isSleeping = state.tabSleepStates[wsName] && state.tabSleepStates[wsName][idx];
+            const sleepBadge = isSleeping ? ' 🌙' : '';
+            tabItem.textContent = `- ${cachedTitle}${sleepBadge}`;
             
             tabItem.setAttribute('draggable', 'true');
 
@@ -296,6 +343,24 @@ export function buildDashboardTree() {
                         if (!state.activeTitlesCache[targetWS]) state.activeTitlesCache[targetWS] = [];
                         state.activeTitlesCache[targetWS].splice(targetIdx, 0, movedTitle);
                     }
+
+                    if (state.tabSleepStates[sourceWS]) {
+                        const [movedSleep] = state.tabSleepStates[sourceWS].splice(sourceIdx, 1);
+                        if (!state.tabSleepStates[targetWS]) state.tabSleepStates[targetWS] = [];
+                        state.tabSleepStates[targetWS].splice(targetIdx, 0, movedSleep);
+                    }
+                    if (state.tabActivityTimestamps[sourceWS]) {
+                        const [movedTime] = state.tabActivityTimestamps[sourceWS].splice(sourceIdx, 1);
+                        if (!state.tabActivityTimestamps[targetWS]) state.tabActivityTimestamps[targetWS] = [];
+                        state.tabActivityTimestamps[targetWS].splice(targetIdx, 0, movedTime);
+                    }
+                    if (state.tabMediaAudible[sourceWS]) {
+                        const [movedMedia] = state.tabMediaAudible[sourceWS].splice(sourceIdx, 1);
+                        if (!state.tabMediaAudible[targetWS]) state.tabMediaAudible[targetWS] = [];
+                        state.tabMediaAudible[targetWS].splice(targetIdx, 0, movedMedia);
+                    }
+                    state.sessionState.tab_titles = state.activeTitlesCache;
+                    state.sessionState.tab_sleep_states = state.tabSleepStates;
 
                     window.miseAPI.saveSession(state.sessionState);
                     renderWorkspaceUI();

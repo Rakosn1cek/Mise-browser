@@ -29,7 +29,8 @@ const DEFAULT_CONFIG = {
     email_handler: 'system',
     search_engine: 'https://duckduckgo.com/?q=%s',
     theme: 'dark',
-    trusted_domains: []
+    trusted_domains: [],
+    tab_sleep_timeout_minutes: 15
 };
 
 function loadBrowserConfig() {
@@ -512,16 +513,21 @@ ipcMain.handle('update-browser-settings', async (event, newCfg) => {
 
 function initializeMemoryWatcher() {
     setInterval(() => {
+        if (!mainWindow || mainWindow.isDestroyed()) return;
         const metrics = app.getAppMetrics();
+        let shouldHibernate = false;
         metrics.forEach(metric => {
-            if (metric.type === 'Renderer' && metric.memory.residentSet > 150 * 1024 * 1024) {
+            if (metric.type === 'Renderer' && metric.memory.residentSet > 200 * 1024 * 1024) {
                 const wc = webContents.fromId(metric.webContentsId);
                 if (wc && !wc.isFocused()) {
-                    wc.reload(); // Simple discard strategy: reload
+                    shouldHibernate = true;
                 }
             }
         });
-    }, 10000); // Poll every 10 seconds
+        if (shouldHibernate) {
+            mainWindow.webContents.send('master-shortcut', 'hibernate-inactive-tabs');
+        }
+    }, 15000);
 }
 
 function handleAppAction(action, sourceWebContents) {
@@ -603,6 +609,35 @@ function createWindow() {
                     }))
                 },
                 { type: 'separator' },
+                {
+                    label: 'Tab Hibernation (Sleep Timeout)',
+                    submenu: [
+                        { minutes: 5, label: '5 minutes' },
+                        { minutes: 15, label: '15 minutes (Default)' },
+                        { minutes: 30, label: '30 minutes' },
+                        { minutes: 60, label: '1 hour' },
+                        { minutes: 0, label: 'Never (Disabled)' }
+                    ].map(opt => ({
+                        label: opt.label,
+                        type: 'radio',
+                        checked: (cfg.tab_sleep_timeout_minutes ?? 15) === opt.minutes,
+                        click: () => {
+                            cfg.tab_sleep_timeout_minutes = opt.minutes;
+                            if (!fs.existsSync(CONFIG_DIR)) fs.mkdirSync(CONFIG_DIR, { recursive: true });
+                            fs.writeFileSync(CONFIG_PATH, JSON.stringify(cfg, null, 4), 'utf-8');
+                        }
+                    }))
+                },
+                { type: 'separator' },
+                {
+                    label: 'Open Full Preferences Overlay',
+                    accelerator: 'Ctrl+H',
+                    click: () => {
+                        if (mainWindow && !mainWindow.isDestroyed()) {
+                            mainWindow.webContents.send('master-shortcut', 'toggle-help');
+                        }
+                    }
+                },
                 {
                     label: 'Restart Browser Now',
                     click: () => { app.relaunch(); app.exit(0); }

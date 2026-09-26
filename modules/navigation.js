@@ -1,6 +1,6 @@
 import { state } from './state.js';
 import { escapeHtml, focusActiveWebview, getActiveWebview } from './utils.js';
-import { renderWorkspaceUI, switchTabFocus, spawnTabWithUrl, spawnNewBlankTab, handleTabRemoval } from './webview.js';
+import { renderWorkspaceUI, switchTabFocus, spawnTabWithUrl, spawnNewBlankTab, handleTabRemoval, wakeTab } from './webview.js';
 import { formatSearchUrl } from './overlays/searchEngine.js';
 
 export function displayAddressOverlay() {
@@ -103,6 +103,8 @@ export async function handleNavigation(input) {
 
     if (state.activeViewsCache[currentWS] && state.activeViewsCache[currentWS][currentIdx]) {
         state.activeViewsCache[currentWS][currentIdx].setAttribute('src', targetUrl);
+    } else {
+        wakeTab(currentWS, currentIdx);
     }
 
     hideSuggestions();

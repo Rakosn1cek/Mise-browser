@@ -20,3 +20,8 @@ notes.txt
 .gemini/
 electron-dev-skill/
 electron-dev.skill
+
+# VitePress build and cache
+.vitepress/
+docs/.vitepress/dist/
+docs/.vitepress/cache/

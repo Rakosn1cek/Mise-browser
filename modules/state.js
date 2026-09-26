@@ -6,6 +6,9 @@ export const state = {
     },
     activeViewsCache: {},
     activeTitlesCache: {},
+    tabSleepStates: {},
+    tabActivityTimestamps: {},
+    tabMediaAudible: {},
     
     // UI Active Flags
     dashboardActive: false,

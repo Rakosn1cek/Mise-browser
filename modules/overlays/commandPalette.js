@@ -1,6 +1,6 @@
 import { state } from '../state.js';
 import { focusActiveWebview, isTargetScript, isDarkMode } from '../utils.js';
-import { renderWorkspaceUI, switchTabFocus, spawnTabWithUrl, spawnNewBlankTab, handleTabRemoval } from '../webview.js';
+import { renderWorkspaceUI, switchTabFocus, spawnTabWithUrl, spawnNewBlankTab, handleTabRemoval, hibernateInactiveTabs, wakeAllTabsInWorkspace } from '../webview.js';
 import { toggleBookmarksOverlay } from './bookmarks.js';
 
 function returnFocusToWebview() {
@@ -20,6 +20,8 @@ export const commandRegistry = {
     "Toggle Mise Settings (Menu Bar) [F1]": () => window.miseAPI && typeof window.miseAPI.toggleMenuBar === 'function' && window.miseAPI.toggleMenuBar(),
     "Open Preferences": () => togglePreferencesView(),
     "Toggle Actionable History": () => window.toggleHistoryOverlay && window.toggleHistoryOverlay(),
+    "Hibernate Inactive Tabs": () => hibernateInactiveTabs(),
+    "Wake All Tabs in Workspace": () => wakeAllTabsInWorkspace(state.sessionState.current_workspace),
     "Mute/Unmute Active Tab": () => {
         const currentWS = state.sessionState.current_workspace;
         const activeListItem = document.querySelector('#TabList li.selected');
@@ -51,11 +53,13 @@ export async function syncPreferencesUI() {
             const throttleToggle = document.getElementById('setting-throttling-toggle');
             const processSelect = document.getElementById('setting-process-limit');
             const emailSelect = document.getElementById('setting-email-handler');
+            const sleepSelect = document.getElementById('setting-sleep-timeout');
 
             if (gpuToggle) gpuToggle.checked = !cfg.disable_gpu;
             if (throttleToggle) throttleToggle.checked = !!cfg.background_throttling;
             if (processSelect) processSelect.value = String(cfg.process_limit || 3);
             if (emailSelect) emailSelect.value = cfg.email_handler || 'system';
+            if (sleepSelect) sleepSelect.value = String(cfg.tab_sleep_timeout_minutes ?? 15);
 
             const trustedDomainsField = document.getElementById('setting-trusted-domains');
             if (trustedDomainsField) {
@@ -129,11 +133,13 @@ export function setupPreferencesListeners() {
             const throttleToggle = document.getElementById('setting-throttling-toggle');
             const processSelect = document.getElementById('setting-process-limit');
             const emailSelect = document.getElementById('setting-email-handler');
+            const sleepSelect = document.getElementById('setting-sleep-timeout');
 
             const newCfg = {
                 disable_gpu: gpuToggle ? !gpuToggle.checked : false,
                 background_throttling: throttleToggle ? throttleToggle.checked : true,
                 process_limit: processSelect ? parseInt(processSelect.value, 10) : 3,
+                tab_sleep_timeout_minutes: sleepSelect ? parseInt(sleepSelect.value, 10) : 15,
                 email_handler: emailSelect ? emailSelect.value : 'system'
             };
 
@@ -149,6 +155,18 @@ export function setupPreferencesListeners() {
             state.globalPrivateModeActive = e.target.checked;
             if (window.handlePrivateBrowsingStateShift) {
                 window.handlePrivateBrowsingStateShift(state.globalPrivateModeActive);
+            }
+        };
+    }
+
+    const liveSleepSelect = document.getElementById('setting-sleep-timeout');
+    if (liveSleepSelect) {
+        liveSleepSelect.onchange = async () => {
+            const timeoutMinutes = parseInt(liveSleepSelect.value, 10);
+            if (window.miseAPI && typeof window.miseAPI.getBrowserSettings === 'function') {
+                const cfg = (await window.miseAPI.getBrowserSettings()) || {};
+                cfg.tab_sleep_timeout_minutes = timeoutMinutes;
+                await window.miseAPI.updateBrowserSettings(cfg);
             }
         };
     }

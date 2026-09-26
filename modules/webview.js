@@ -23,7 +23,13 @@ export function createWebView(url, currentWS, idx) {
     webview.setAttribute('src', url);
     
     webview.addEventListener('page-title-updated', (e) => {
+        if (!state.activeTitlesCache[currentWS]) state.activeTitlesCache[currentWS] = [];
         state.activeTitlesCache[currentWS][idx] = e.title;
+        if (!state.sessionState.tab_titles) state.sessionState.tab_titles = {};
+        if (!state.sessionState.tab_titles[currentWS]) state.sessionState.tab_titles[currentWS] = [];
+        state.sessionState.tab_titles[currentWS][idx] = e.title;
+        window.miseAPI.saveSession(state.sessionState);
+
         const targetLi = document.querySelectorAll('#TabList li')[idx];
         if (targetLi && state.sessionState.current_workspace === currentWS) {
             const titleEl = targetLi.querySelector('.tab-title');
@@ -38,6 +44,8 @@ export function createWebView(url, currentWS, idx) {
             state.sessionState.workspaces[currentWS][idx] = e.url;
             window.miseAPI.saveSession(state.sessionState);
         }
+        if (!state.tabActivityTimestamps[currentWS]) state.tabActivityTimestamps[currentWS] = [];
+        state.tabActivityTimestamps[currentWS][idx] = Date.now();
         const targetLi = document.querySelectorAll('#TabList li')[idx];
         if (targetLi) {
             const cfg = (await window.miseAPI.getBrowserSettings()) || {};
@@ -50,6 +58,8 @@ export function createWebView(url, currentWS, idx) {
             state.sessionState.workspaces[currentWS][idx] = e.url;
             window.miseAPI.saveSession(state.sessionState);
         }
+        if (!state.tabActivityTimestamps[currentWS]) state.tabActivityTimestamps[currentWS] = [];
+        state.tabActivityTimestamps[currentWS][idx] = Date.now();
         const targetLi = document.querySelectorAll('#TabList li')[idx];
         if (targetLi) {
             const cfg = (await window.miseAPI.getBrowserSettings()) || {};
@@ -85,7 +95,7 @@ export function createWebView(url, currentWS, idx) {
     });
 
     webview.addEventListener('render-process-gone', (e) => {
-        if (e.reason !== 'clean-exit') {
+        if (e.reason !== 'clean-exit' && e.reason !== 'killed') {
             setTimeout(() => {
                 webview.reload();
             }, 500);
@@ -104,15 +114,21 @@ export function createWebView(url, currentWS, idx) {
     });
 
     webview.addEventListener('media-started-playing', () => {
+        if (!state.tabMediaAudible[currentWS]) state.tabMediaAudible[currentWS] = [];
+        state.tabMediaAudible[currentWS][idx] = true;
         updateTabMediaIndicator(currentWS, idx, true);
     });
     
     webview.addEventListener('media-paused', () => {
+        if (!state.tabMediaAudible[currentWS]) state.tabMediaAudible[currentWS] = [];
+        state.tabMediaAudible[currentWS][idx] = false;
         updateTabMediaIndicator(currentWS, idx, false);
     });
 
     webview.addEventListener('did-start-loading', () => {
         webview.style.opacity = '1';
+        if (!state.tabActivityTimestamps[currentWS]) state.tabActivityTimestamps[currentWS] = [];
+        state.tabActivityTimestamps[currentWS][idx] = Date.now();
         updateTabMediaIndicator(currentWS, idx, false);
     });
 
@@ -230,16 +246,37 @@ export function renderWorkspaceUI(targetTabToFocus = null) {
 
     if (!state.activeViewsCache[currentWS]) state.activeViewsCache[currentWS] = [];
     if (!state.activeTitlesCache[currentWS]) state.activeTitlesCache[currentWS] = [];
+    if (!state.tabSleepStates[currentWS]) state.tabSleepStates[currentWS] = [];
+    if (!state.tabActivityTimestamps[currentWS]) state.tabActivityTimestamps[currentWS] = [];
+    if (!state.tabMediaAudible[currentWS]) state.tabMediaAudible[currentWS] = [];
 
     urls.forEach((url, idx) => {
         const cachedTitle = state.activeTitlesCache[currentWS][idx] || "Loading...";
+        const isSleeping = !!state.tabSleepStates[currentWS][idx];
+
         const li = document.createElement('li');
         li.setAttribute('tabindex', '0');
+        if (isSleeping) li.classList.add('tab-sleeping');
 
         const titleSpan = document.createElement('span');
         titleSpan.className = 'tab-title';
         titleSpan.textContent = cachedTitle.length > 24 ? cachedTitle.slice(0, 24) + "..." : cachedTitle;
         li.appendChild(titleSpan);
+
+        if (isSleeping) {
+            const sleepBadge = document.createElement('span');
+            sleepBadge.className = 'tab-sleep-badge';
+            sleepBadge.title = 'Sleeping tab to save memory (click to wake)';
+            sleepBadge.innerHTML = '<i class="fa-solid fa-moon"></i>';
+            li.appendChild(sleepBadge);
+        }
+
+        if (state.tabMediaAudible[currentWS][idx]) {
+            const mediaBadge = document.createElement('span');
+            mediaBadge.className = 'tab-media-badge';
+            mediaBadge.innerHTML = ' 🔊';
+            li.appendChild(mediaBadge);
+        }
 
         const shieldBtn = document.createElement('button');
         shieldBtn.className = 'tab-shield-btn';
@@ -265,10 +302,13 @@ export function renderWorkspaceUI(targetTabToFocus = null) {
 
         tabList.appendChild(li);
 
-
-        if (!state.activeViewsCache[currentWS][idx]) {
+        if (isSleeping) {
+            state.activeViewsCache[currentWS][idx] = null;
+            window.miseAPI.getBrowserSettings().then(cfg => {
+                updateTabShieldStatus(li, url, cfg?.trusted_domains || []);
+            }).catch(() => {});
+        } else if (!state.activeViewsCache[currentWS][idx]) {
             const webview = createWebView(url, currentWS, idx);
-
             attachShieldToggleListener(li, webview);
             container.appendChild(webview);
             state.activeViewsCache[currentWS][idx] = webview;
@@ -290,7 +330,6 @@ export function renderWorkspaceUI(targetTabToFocus = null) {
 export function switchTabFocus(targetIdx) {
     const tabItems = document.querySelectorAll('#TabList li');
     const currentWS = state.sessionState.current_workspace;
-    const currentWSViews = state.activeViewsCache[currentWS] || [];
 
     if (targetIdx >= tabItems.length) {
         targetIdx = Math.max(0, tabItems.length - 1);
@@ -301,12 +340,21 @@ export function switchTabFocus(targetIdx) {
         else item.classList.remove('selected');
     });
 
+    if (!state.activeViewsCache[currentWS]?.[targetIdx] || state.tabSleepStates[currentWS]?.[targetIdx]) {
+        wakeTab(currentWS, targetIdx);
+    }
+
+    const currentWSViews = state.activeViewsCache[currentWS] || [];
+
     const allWebviews = document.getElementById('webview-container').querySelectorAll('webview');
     allWebviews.forEach((wv) => wv.style.display = 'none');
     
     if (!state.dashboardActive && currentWSViews[targetIdx]) {
         currentWSViews[targetIdx].style.display = 'flex';
         
+        if (!state.tabActivityTimestamps[currentWS]) state.tabActivityTimestamps[currentWS] = [];
+        state.tabActivityTimestamps[currentWS][targetIdx] = Date.now();
+
         setTimeout(() => {
             const currentFocused = document.activeElement;
             const sidebarHasFocus = document.getElementById('Sidebar').contains(currentFocused);
@@ -344,6 +392,13 @@ export async function spawnNewBlankTab() {
     window.miseAPI.saveSession(state.sessionState);
     
     const newTargetIdx = state.sessionState.workspaces[currentWS].length - 1;
+    if (!state.tabSleepStates[currentWS]) state.tabSleepStates[currentWS] = [];
+    state.tabSleepStates[currentWS][newTargetIdx] = null;
+    if (!state.tabActivityTimestamps[currentWS]) state.tabActivityTimestamps[currentWS] = [];
+    state.tabActivityTimestamps[currentWS][newTargetIdx] = Date.now();
+    if (!state.tabMediaAudible[currentWS]) state.tabMediaAudible[currentWS] = [];
+    state.tabMediaAudible[currentWS][newTargetIdx] = false;
+
     renderWorkspaceUI(newTargetIdx);
     if (typeof window.displayAddressOverlay === 'function') {
         window.displayAddressOverlay();
@@ -381,6 +436,13 @@ export function spawnTabWithUrl(url) {
     window.miseAPI.saveSession(state.sessionState);
     
     const newTargetIdx = state.sessionState.workspaces[currentWS].length - 1;
+    if (!state.tabSleepStates[currentWS]) state.tabSleepStates[currentWS] = [];
+    state.tabSleepStates[currentWS][newTargetIdx] = null;
+    if (!state.tabActivityTimestamps[currentWS]) state.tabActivityTimestamps[currentWS] = [];
+    state.tabActivityTimestamps[currentWS][newTargetIdx] = Date.now();
+    if (!state.tabMediaAudible[currentWS]) state.tabMediaAudible[currentWS] = [];
+    state.tabMediaAudible[currentWS][newTargetIdx] = false;
+
     renderWorkspaceUI(newTargetIdx);
 }
 
@@ -396,8 +458,16 @@ export function handleTabRemoval() {
                 if (state.activeViewsCache[wsName] && state.activeViewsCache[wsName][idx]) {
                     state.activeViewsCache[wsName][idx].remove();
                     state.activeViewsCache[wsName].splice(idx, 1);
+                } else if (state.activeViewsCache[wsName]) {
+                    state.activeViewsCache[wsName].splice(idx, 1);
                 }
                 if (state.activeTitlesCache[wsName]) state.activeTitlesCache[wsName].splice(idx, 1);
+                if (state.tabSleepStates[wsName]) state.tabSleepStates[wsName].splice(idx, 1);
+                if (state.tabActivityTimestamps[wsName]) state.tabActivityTimestamps[wsName].splice(idx, 1);
+                if (state.tabMediaAudible[wsName]) state.tabMediaAudible[wsName].splice(idx, 1);
+                if (state.sessionState.tab_titles?.[wsName]) state.sessionState.tab_titles[wsName].splice(idx, 1);
+                if (state.sessionState.tab_sleep_states?.[wsName]) state.sessionState.tab_sleep_states[wsName].splice(idx, 1);
+
                 window.miseAPI.saveSession(state.sessionState);
                 renderWorkspaceUI();
                 if (typeof window.buildDashboardTree === 'function') {
@@ -412,10 +482,15 @@ export function handleTabRemoval() {
                     state.sessionState.current_workspace = fallbackWS;
                 }
                 if (state.activeViewsCache[wsName]) {
-                    state.activeViewsCache[wsName].forEach(wv => wv.remove());
+                    state.activeViewsCache[wsName].forEach(wv => { if (wv) wv.remove(); });
                     delete state.activeViewsCache[wsName];
                 }
                 delete state.activeTitlesCache[wsName];
+                delete state.tabSleepStates[wsName];
+                delete state.tabActivityTimestamps[wsName];
+                delete state.tabMediaAudible[wsName];
+                if (state.sessionState.tab_titles?.[wsName]) delete state.sessionState.tab_titles[wsName];
+                if (state.sessionState.tab_sleep_states?.[wsName]) delete state.sessionState.tab_sleep_states[wsName];
                 delete state.sessionState.workspaces[wsName];
                 
                 window.miseAPI.saveSession(state.sessionState);
@@ -440,8 +515,15 @@ export function handleTabRemoval() {
     if (state.activeViewsCache[currentWS] && state.activeViewsCache[currentWS][currentIdx]) {
         state.activeViewsCache[currentWS][currentIdx].remove();
         state.activeViewsCache[currentWS].splice(currentIdx, 1);
+    } else if (state.activeViewsCache[currentWS]) {
+        state.activeViewsCache[currentWS].splice(currentIdx, 1);
     }
     if (state.activeTitlesCache[currentWS]) state.activeTitlesCache[currentWS].splice(currentIdx, 1);
+    if (state.tabSleepStates[currentWS]) state.tabSleepStates[currentWS].splice(currentIdx, 1);
+    if (state.tabActivityTimestamps[currentWS]) state.tabActivityTimestamps[currentWS].splice(currentIdx, 1);
+    if (state.tabMediaAudible[currentWS]) state.tabMediaAudible[currentWS].splice(currentIdx, 1);
+    if (state.sessionState.tab_titles?.[currentWS]) state.sessionState.tab_titles[currentWS].splice(currentIdx, 1);
+    if (state.sessionState.tab_sleep_states?.[currentWS]) state.sessionState.tab_sleep_states[currentWS].splice(currentIdx, 1);
 
     window.miseAPI.saveSession(state.sessionState);
     window.miseAllowWebviewFocus = true;
@@ -513,11 +595,263 @@ export function updateTabMediaIndicator(workspaceId, tabIdx, isAudible) {
             mediaBadge = document.createElement('span');
             mediaBadge.className = 'tab-media-badge';
             mediaBadge.innerHTML = ' 🔊';
-            targetLi.appendChild(mediaBadge);
+            const shieldBtn = targetLi.querySelector('.tab-shield-btn');
+            if (shieldBtn) {
+                targetLi.insertBefore(mediaBadge, shieldBtn);
+            } else {
+                targetLi.appendChild(mediaBadge);
+            }
         }
     } else {
         if (mediaBadge) {
             mediaBadge.remove();
         }
     }
+}
+
+export function updateTabSleepUI(tabIdx, isSleeping) {
+    const tabList = document.querySelectorAll('#TabList li');
+    const targetLi = tabList[tabIdx];
+    if (!targetLi) return;
+
+    if (isSleeping) {
+        targetLi.classList.add('tab-sleeping');
+        let sleepBadge = targetLi.querySelector('.tab-sleep-badge');
+        if (!sleepBadge) {
+            sleepBadge = document.createElement('span');
+            sleepBadge.className = 'tab-sleep-badge';
+            sleepBadge.title = 'Sleeping tab to save memory (click to wake)';
+            sleepBadge.innerHTML = '<i class="fa-solid fa-moon"></i>';
+            const shieldBtn = targetLi.querySelector('.tab-shield-btn');
+            if (shieldBtn) {
+                targetLi.insertBefore(sleepBadge, shieldBtn);
+            } else {
+                targetLi.appendChild(sleepBadge);
+            }
+        }
+    } else {
+        targetLi.classList.remove('tab-sleeping');
+        const sleepBadge = targetLi.querySelector('.tab-sleep-badge');
+        if (sleepBadge) {
+            sleepBadge.remove();
+        }
+    }
+}
+
+export function wakeTab(currentWS, idx) {
+    if (!currentWS) currentWS = state.sessionState.current_workspace;
+    const urls = state.sessionState.workspaces[currentWS];
+    if (!urls || idx < 0 || idx >= urls.length) return null;
+
+    if (state.activeViewsCache[currentWS]?.[idx]) {
+        if (state.tabSleepStates[currentWS]) {
+            state.tabSleepStates[currentWS][idx] = null;
+        }
+        if (currentWS === state.sessionState.current_workspace) {
+            updateTabSleepUI(idx, false);
+        }
+        return state.activeViewsCache[currentWS][idx];
+    }
+
+    const sleepRecord = state.tabSleepStates[currentWS]?.[idx];
+    const targetUrl = sleepRecord?.url || urls[idx];
+    const scrollX = sleepRecord?.scrollX || 0;
+    const scrollY = sleepRecord?.scrollY || 0;
+
+    const container = document.getElementById('webview-container');
+    const webview = createWebView(targetUrl, currentWS, idx);
+
+    if (scrollX > 0 || scrollY > 0) {
+        const restoreScroll = () => {
+            webview.executeJavaScript(`window.scrollTo(${scrollX}, ${scrollY});`, false).catch(() => {});
+            setTimeout(() => {
+                webview.executeJavaScript(`window.scrollTo(${scrollX}, ${scrollY});`, false).catch(() => {});
+            }, 300);
+        };
+        webview.addEventListener('dom-ready', restoreScroll, { once: true });
+    }
+
+    if (!state.activeViewsCache[currentWS]) state.activeViewsCache[currentWS] = [];
+    state.activeViewsCache[currentWS][idx] = webview;
+    container.appendChild(webview);
+
+    if (state.tabSleepStates[currentWS]) {
+        state.tabSleepStates[currentWS][idx] = null;
+    }
+
+    if (!state.tabActivityTimestamps[currentWS]) state.tabActivityTimestamps[currentWS] = [];
+    state.tabActivityTimestamps[currentWS][idx] = Date.now();
+
+    if (currentWS === state.sessionState.current_workspace) {
+        const tabList = document.querySelectorAll('#TabList li');
+        const targetLi = tabList[idx];
+        if (targetLi) {
+            attachShieldToggleListener(targetLi, webview);
+            updateTabSleepUI(idx, false);
+        }
+    }
+
+    state.sessionState.tab_sleep_states = state.tabSleepStates;
+    window.miseAPI.saveSession(state.sessionState);
+
+    return webview;
+}
+
+export async function hibernateTab(currentWS, idx) {
+    if (!currentWS) currentWS = state.sessionState.current_workspace;
+    const urls = state.sessionState.workspaces[currentWS];
+    if (!urls || idx < 0 || idx >= urls.length) return false;
+
+    if (state.tabSleepStates[currentWS] && state.tabSleepStates[currentWS][idx]) {
+        return false;
+    }
+
+    if (currentWS === state.sessionState.current_workspace) {
+        const tabItems = document.querySelectorAll('#TabList li');
+        const activeLi = document.querySelector('#TabList li.selected');
+        const activeIdx = activeLi ? Array.from(tabItems).indexOf(activeLi) : -1;
+        if (idx === activeIdx && !state.dashboardActive) {
+            return false;
+        }
+    }
+
+    if (state.tabMediaAudible[currentWS]?.[idx]) {
+        return false;
+    }
+
+    const webview = state.activeViewsCache[currentWS]?.[idx];
+    if (webview) {
+        if (typeof webview.isCurrentlyAudible === 'function' && webview.isCurrentlyAudible()) {
+            if (!state.tabMediaAudible[currentWS]) state.tabMediaAudible[currentWS] = [];
+            state.tabMediaAudible[currentWS][idx] = true;
+            return false;
+        }
+    }
+
+    let scrollX = 0;
+    let scrollY = 0;
+    let finalUrl = urls[idx];
+    let finalTitle = state.activeTitlesCache[currentWS]?.[idx] || 'Tab';
+
+    if (webview) {
+        try {
+            const scrollPos = await webview.executeJavaScript(`[window.scrollX || window.pageXOffset || 0, window.scrollY || window.pageYOffset || 0]`);
+            if (Array.isArray(scrollPos)) {
+                scrollX = scrollPos[0] || 0;
+                scrollY = scrollPos[1] || 0;
+            }
+        } catch (err) {}
+
+        try {
+            const liveUrl = webview.getURL();
+            if (liveUrl && !liveUrl.startsWith('about:blank')) {
+                finalUrl = liveUrl;
+                urls[idx] = finalUrl;
+            }
+            const liveTitle = webview.getTitle();
+            if (liveTitle) {
+                finalTitle = liveTitle;
+                if (!state.activeTitlesCache[currentWS]) state.activeTitlesCache[currentWS] = [];
+                state.activeTitlesCache[currentWS][idx] = finalTitle;
+            }
+        } catch (err) {}
+
+        try {
+            webview.remove();
+        } catch (err) {}
+        state.activeViewsCache[currentWS][idx] = null;
+    }
+
+    if (!state.tabSleepStates[currentWS]) state.tabSleepStates[currentWS] = [];
+    state.tabSleepStates[currentWS][idx] = {
+        url: finalUrl,
+        title: finalTitle,
+        scrollX,
+        scrollY,
+        hibernatedAt: Date.now()
+    };
+
+    if (currentWS === state.sessionState.current_workspace) {
+        updateTabSleepUI(idx, true);
+    }
+
+    state.sessionState.tab_sleep_states = state.tabSleepStates;
+    state.sessionState.tab_titles = state.activeTitlesCache;
+    window.miseAPI.saveSession(state.sessionState);
+
+    return true;
+}
+
+export async function hibernateInactiveTabs() {
+    const currentWS = state.sessionState.current_workspace;
+    const tabItems = document.querySelectorAll('#TabList li');
+    const activeLi = document.querySelector('#TabList li.selected');
+    const activeIdx = activeLi ? Array.from(tabItems).indexOf(activeLi) : -1;
+
+    for (const wsName of Object.keys(state.sessionState.workspaces || {})) {
+        const urls = state.sessionState.workspaces[wsName] || [];
+        for (let i = 0; i < urls.length; i++) {
+            if (wsName === currentWS && i === activeIdx && !state.dashboardActive) {
+                continue;
+            }
+            if (state.tabSleepStates[wsName] && state.tabSleepStates[wsName][i]) {
+                continue;
+            }
+            if (state.tabMediaAudible[wsName]?.[i]) {
+                continue;
+            }
+            await hibernateTab(wsName, i);
+        }
+    }
+}
+
+export function wakeAllTabsInWorkspace(wsName) {
+    if (!wsName) wsName = state.sessionState.current_workspace;
+    const urls = state.sessionState.workspaces[wsName] || [];
+    urls.forEach((_, idx) => {
+        if (state.tabSleepStates[wsName]?.[idx]) {
+            wakeTab(wsName, idx);
+        }
+    });
+}
+
+let sleepTimerId = null;
+
+export function initializeTabSleepManager() {
+    if (sleepTimerId) clearInterval(sleepTimerId);
+
+    sleepTimerId = setInterval(async () => {
+        try {
+            const cfg = (await window.miseAPI.getBrowserSettings()) || {};
+            const timeoutMinutes = cfg.tab_sleep_timeout_minutes !== undefined ? parseInt(cfg.tab_sleep_timeout_minutes, 10) : 15;
+            if (timeoutMinutes <= 0) return;
+
+            const timeoutMs = timeoutMinutes * 60 * 1000;
+            const now = Date.now();
+            const currentWS = state.sessionState.current_workspace;
+
+            const tabItems = document.querySelectorAll('#TabList li');
+            const activeLi = document.querySelector('#TabList li.selected');
+            const activeIdx = activeLi ? Array.from(tabItems).indexOf(activeLi) : -1;
+
+            for (const wsName of Object.keys(state.sessionState.workspaces || {})) {
+                const urls = state.sessionState.workspaces[wsName] || [];
+                for (let i = 0; i < urls.length; i++) {
+                    if (wsName === currentWS && i === activeIdx && !state.dashboardActive) {
+                        continue;
+                    }
+                    if (state.tabSleepStates[wsName] && state.tabSleepStates[wsName][i]) {
+                        continue;
+                    }
+                    if (state.tabMediaAudible[wsName]?.[i]) {
+                        continue;
+                    }
+                    const lastActive = state.tabActivityTimestamps[wsName]?.[i] || 0;
+                    if (lastActive > 0 && (now - lastActive) >= timeoutMs) {
+                        hibernateTab(wsName, i);
+                    }
+                }
+            }
+        } catch (err) {}
+    }, 30000);
 }
