@@ -17,7 +17,7 @@ hero:
       link: /reference/keybinds
     - theme: alt
       text: View on GitHub
-      link: https://github.com/Rakosn1cek/MiseBrowser
+      link: https://github.com/Rakosn1cek/Mise-browser
 
 features:
   - icon: 🌙
