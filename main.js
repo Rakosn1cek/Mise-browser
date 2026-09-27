@@ -9,6 +9,15 @@ if (!gotSingleInstanceLock) {
     app.quit();
 }
 
+// Sanitise default User Agent to remove application and Electron tokens, matching stable Chrome
+if (app.userAgentFallback) {
+    app.userAgentFallback = app.userAgentFallback
+        .replace(/mise-browser\/[0-9.]+\s*/gi, '')
+        .replace(/Electron\/[0-9.]+\s*/gi, '')
+        .replace(/Chrome\/[0-9.]+/i, 'Chrome/153.0.0.0')
+        .trim();
+}
+
 // Require the security config module to isolate filtering and hardening rules
 const security = require('./security');
 const keybinds = require('./keybinds');

@@ -24,6 +24,17 @@ For volatile browsing sessions where no trace should remain:
 
 ---
 
+## Fingerprint Protection & Farbling
+
+Mise actively protects against passive browser fingerprinting:
+
+- **User Agent Standardisation**: Strips internal Electron and Mise application tokens from HTTP headers and JavaScript `navigator` properties (`userAgent`, `appVersion`, and `userAgentData` client hints), matching a clean Chromium release.
+- **Canvas & WebGL Farbling**: Applies subtle, imperceptible noise to Canvas data exports (`toDataURL`, `toBlob`, `getImageData`) and rotates WebGL extension order. Fingerprinting auditors such as EFF Cover Your Tracks recognise this as a randomised, non-trackable fingerprint.
+- **Hardware Profile Masking**: Standardises `hardwareConcurrency` (8 cores), `deviceMemory` (8 GB), and WebGL unmasked vendor/renderer to a common Brave/Chromium baseline to blend into large anonymity pools.
+- **Trusted Domains Exemption**: Any domain added to Trusted Sites automatically bypasses farbling, ensuring sensitive fraud-detection checks (like banking) see consistent device metrics.
+
+---
+
 ## Trusted Sites (Online Banking & Shopping)
 
 Modern online banks, Google authentication, and e-commerce sites (such as Amazon or checkout payment gateways) employ sophisticated anti-fraud algorithms. When a browser randomises fingerprints, alters user-agent client hints, or strips verification headers, fraud systems flag the session as suspicious and block logins or payments.

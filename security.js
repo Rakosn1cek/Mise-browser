@@ -49,6 +49,40 @@ function hardenSession(targetSession) {
     targetSession.setSpellCheckerLanguages(['en-GB']);
     initialiseAdblocker(targetSession);
 
+    const cleanUserAgent = (ua) => {
+        return (ua || '')
+            .replace(/mise-browser\/[0-9.]+\s*/gi, '')
+            .replace(/Electron\/[0-9.]+\s*/gi, '')
+            .replace(/Chrome\/[0-9.]+/i, 'Chrome/153.0.0.0')
+            .trim();
+    };
+
+    if (typeof targetSession.getUserAgent === 'function') {
+        const currentUa = targetSession.getUserAgent();
+        if (currentUa) {
+            targetSession.setUserAgent(cleanUserAgent(currentUa));
+        }
+    }
+
+    if (targetSession.webRequest && typeof targetSession.webRequest.onBeforeSendHeaders === 'function') {
+        targetSession.webRequest.onBeforeSendHeaders((details, callback) => {
+            const headers = details.requestHeaders;
+            if (headers) {
+                if (headers['User-Agent']) {
+                    headers['User-Agent'] = cleanUserAgent(headers['User-Agent']);
+                }
+                if (headers['sec-ch-ua']) {
+                    headers['sec-ch-ua'] = '"Chromium";v="153", "Google Chrome";v="153", "Not_A Brand";v="24"';
+                }
+                if (headers['sec-ch-ua-full-version-list']) {
+                    headers['sec-ch-ua-full-version-list'] = '"Chromium";v="153.0.0.0", "Google Chrome";v="153.0.0.0", "Not_A Brand";v="24.0.0.0"';
+                }
+                headers['Accept-Language'] = 'en-GB,en-US;q=0.9,en;q=0.8';
+            }
+            callback({ requestHeaders: headers });
+        });
+    }
+
     // Kept restricted permissions, but removed 'notifications' so our main toggle handles it
     const blockedPermissions = ['media', 'geolocation', 'midiSysex', 'audio', 'video'];
 
