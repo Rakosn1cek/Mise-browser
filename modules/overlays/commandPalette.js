@@ -40,7 +40,8 @@ export const commandRegistry = {
         const activeWv = state.activeViewsCache[currentWS]?.[currentIdx];
         if (activeWv) activeWv.setZoomLevel(0);
     },
-    "Toggle Active Webview DevTools": () => window.toggleActiveDevTools && window.toggleActiveDevTools()
+    "Toggle Active Webview DevTools": () => window.toggleActiveDevTools && window.toggleActiveDevTools(),
+    "Toggle Downloads Shelf [Ctrl+Shift+D]": () => window.toggleDownloadShelf && window.toggleDownloadShelf()
 };
 
 let preferencesActive = false;

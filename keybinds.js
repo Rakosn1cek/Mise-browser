@@ -26,7 +26,8 @@ const DEFAULT_KEYBINDS = {
     'add-bookmark': 'Ctrl+Shift+A',
     'toggle-bookmarks': 'Ctrl+Shift+B',
     'toggle-global-media': ['Ctrl+Shift+0', 'F10'],
-    'toggle-history': 'Ctrl+Shift+H'
+    'toggle-history': 'Ctrl+Shift+H',
+    'toggle-downloads': 'Ctrl+Shift+D'
 };
 
 const ACTION_METADATA = {
@@ -51,7 +52,8 @@ const ACTION_METADATA = {
     'add-bookmark': { label: 'Add Current Page to Bookmarks', category: 'Web Interaction' },
     'toggle-bookmarks': { label: 'Open Bookmarks and Quickmarks', category: 'Navigation & Workspaces' },
     'toggle-global-media': { label: 'Play/Pause Media Playback Globally', category: 'Web Interaction' },
-    'toggle-history': { label: 'Toggle Actionable History', category: 'Navigation & Workspaces' }
+    'toggle-history': { label: 'Toggle Actionable History', category: 'Navigation & Workspaces' },
+    'toggle-downloads': { label: 'Toggle Downloads Shelf', category: 'Navigation & Workspaces' }
 };
 
 let activeKeybinds = { ...DEFAULT_KEYBINDS };

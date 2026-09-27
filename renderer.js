@@ -80,6 +80,7 @@ import {
 
 import { openTransientShareModal } from './modules/overlays/shareModal.js';
 import { initSearchEnginePreference } from './modules/overlays/searchEngine.js';
+import { initDownloadShelf, toggleDownloadShelf } from './modules/downloads.js';
 
 // Attach functions needed across module boundaries to window
 window.toggleDashboardView = toggleDashboardView;
@@ -87,6 +88,7 @@ window.displayAddressOverlay = displayAddressOverlay;
 window.triggerLinkHints = triggerLinkHints;
 window.toggleInPageSearch = toggleInPageSearch;
 window.toggleNotesOverlay = toggleNotesOverlay;
+window.toggleDownloadShelf = toggleDownloadShelf;
 window.toggleZenMode = toggleZenMode;
 window.toggleSidebarExpansion = toggleSidebarExpansion;
 window.toggleSidebarPin = toggleSidebarPin;
@@ -180,6 +182,14 @@ async function initializeBrowser() {
     setupAddressBarAutocomplete();
     setupBookmarkOverlayListeners();
     initSearchEnginePreference();
+    initDownloadShelf();
+
+    if (window.miseAPI && typeof window.miseAPI.getAppVersion === 'function') {
+        window.miseAPI.getAppVersion().then((version) => {
+            const badge = document.getElementById('MiseVersionBadge');
+            if (badge && version) badge.textContent = `Mise Browser v${version}`;
+        }).catch(() => {});
+    }
 
     if (window.miseAPI && typeof window.miseAPI.signalRendererReady === 'function') {
         window.miseAPI.signalRendererReady();
@@ -243,6 +253,7 @@ function setupEventListeners() {
             case 'toggle-devtools': toggleActiveDevTools(); break;
             case 'toggle-bookmarks': toggleBookmarksOverlay(); break;
             case 'toggle-notes': toggleNotesOverlay(); break;
+            case 'toggle-downloads': toggleDownloadShelf(); break;
             case 'toggle-find': toggleInPageSearch(); break;
             case 'remove-tab': handleTabRemoval(); break;
             case 'toggle-zen-mode': toggleSidebarExpansion(); break;

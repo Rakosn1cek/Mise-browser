@@ -245,7 +245,7 @@
                             <section class="settings-section">
                                 <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--border); padding-bottom: 8px;">
                                     <h2 style="border-bottom: none; padding-bottom: 0; margin-bottom: 0;">Help & Shortcuts Reference</h2>
-                                    <span style="font-family: monospace; font-size: 12px; color: var(--accent);">Mise Browser v0.7.2</span>
+                                    <span id="MiseVersionBadge" style="font-family: monospace; font-size: 12px; color: var(--accent);">Mise Browser</span>
                                 </div>
                                 <p style="font-size: 12px; color: var(--accent); margin: 6px 0 14px 0;">All keyboard shortcuts can be customised in <code style="color: var(--accent);">~/.config/mise-browser/keybinds.json</code></p>
                 
@@ -338,6 +338,18 @@
                     </div>
 
                     <div id="DashboardTreeContainer"></div>
+                </div>
+            </div>
+
+            <div id="DownloadShelf" class="download-shelf" style="display: none;">
+                <div class="download-shelf-header">
+                    <i class="fa-solid fa-arrow-down download-shelf-header-icon"></i>
+                    <span class="download-shelf-title">Downloads</span>
+                </div>
+                <div id="DownloadShelfItems" class="download-shelf-items"></div>
+                <div class="download-shelf-actions">
+                    <button id="ClearDownloadsBtn" class="download-shelf-icon-btn" title="Clear Completed Downloads"><i class="fa-solid fa-broom"></i></button>
+                    <button id="CloseDownloadsBtn" class="download-shelf-icon-btn" title="Close Downloads Shelf (Ctrl+Shift+D)"><i class="fa-solid fa-xmark"></i></button>
                 </div>
             </div>
         </div>

@@ -27,6 +27,7 @@ All keyboard shortcuts in Mise Browser are fully customisable via `~/.config/mis
 | **Ctrl + N** | `toggle-notes` | Opens the Markdown quick-notes overlay |
 | **Ctrl + Shift + B** | `toggle-bookmarks` | Opens the Bookmarks and Quickmarks overlay |
 | **Ctrl + Shift + H** | `toggle-history` | Opens the Actionable History overlay |
+| **Ctrl + Shift + D** | `toggle-downloads` | Toggles the native download shelf |
 
 ### Web Interaction & Power Tools
 

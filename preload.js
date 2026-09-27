@@ -34,6 +34,26 @@ contextBridge.exposeInMainWorld('miseAPI', {
     saveKeybinds: (binds) => ipcRenderer.invoke('save-keybinds', binds),
     getActionMetadata: () => ipcRenderer.invoke('get-action-metadata'),
     reloadKeybinds: () => ipcRenderer.invoke('reload-keybinds'),
-    getWorkspacePartition: (name) => ipcRenderer.invoke('get-workspace-partition', name)
+    getWorkspacePartition: (name) => ipcRenderer.invoke('get-workspace-partition', name),
+    onDownloadStarted: (callback) => {
+        const handler = (event, data) => callback(data);
+        ipcRenderer.on('download-started', handler);
+        return () => ipcRenderer.removeListener('download-started', handler);
+    },
+    onDownloadProgress: (callback) => {
+        const handler = (event, data) => callback(data);
+        ipcRenderer.on('download-progress', handler);
+        return () => ipcRenderer.removeListener('download-progress', handler);
+    },
+    onDownloadDone: (callback) => {
+        const handler = (event, data) => callback(data);
+        ipcRenderer.on('download-done', handler);
+        return () => ipcRenderer.removeListener('download-done', handler);
+    },
+    cancelDownload: (id) => ipcRenderer.invoke('cancel-download', id),
+    openDownload: (filePath) => ipcRenderer.invoke('open-download', filePath),
+    revealDownload: (filePath) => ipcRenderer.invoke('reveal-download', filePath),
+    getActiveDownloads: () => ipcRenderer.invoke('get-active-downloads'),
+    getAppVersion: () => ipcRenderer.invoke('get-app-version')
 });
 

@@ -2,7 +2,7 @@
     --bg-main: #1a1b26;
     --bg-sidebar: #16161e;
     --text: #c0caf5;
-    --accent: #2ac3de;
+    --accent: #2EEEFF;
     --border: #24283b;
     --selected: #364a85;
 }
@@ -11,7 +11,7 @@ body.light-mode {
     --bg-main: #e5e5e5;       /* Soft, dimmed grey canvas instead of blinding white */
     --bg-sidebar: #d4d4d4;    /* Muted contrast grey for sidebar panel */
     --text: #000000;          /* Dark charcoal for readable text */
-    --accent: #2563eb;        /* Soft blue accent */
+    --accent: #2EEEFF;        /* Soft blue accent */
     --border: #bebebe;        /* Muted border divider */
     --selected: #99c2ff;      /* Highlight block for selected tab */
 }
@@ -1735,3 +1735,230 @@ body.zen-mode #right-content {
     color: #565f89;
     opacity: 0.7;
 }
+
+/* Native Download Shelf & Item Cards */
+#DownloadShelf {
+    height: 52px;
+    min-height: 52px;
+    max-height: 52px;
+    background-color: var(--bg-sidebar);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    gap: 12px;
+    z-index: 100;
+    flex-shrink: 0;
+    box-sizing: border-box;
+}
+
+.download-shelf-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text);
+    font-size: 12px;
+    font-weight: 600;
+    opacity: 0.85;
+    white-space: nowrap;
+    user-select: none;
+}
+
+.download-shelf-header-icon {
+    color: var(--accent);
+    font-size: 13px;
+}
+
+.download-shelf-items {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    overflow-x: auto;
+    overflow-y: hidden;
+    height: 100%;
+    padding: 4px 0;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+}
+
+.download-shelf-items::-webkit-scrollbar {
+    height: 4px;
+}
+
+.download-shelf-items::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 2px;
+}
+
+.download-shelf-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.download-shelf-icon-btn {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text);
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    opacity: 0.75;
+    transition: background-color 0.15s ease, opacity 0.15s ease, border-color 0.15s ease;
+}
+
+.download-shelf-icon-btn:hover {
+    opacity: 1;
+    background-color: var(--selected);
+    border-color: var(--border);
+}
+
+/* Individual Download Card */
+.download-card {
+    height: 38px;
+    min-width: 250px;
+    max-width: 310px;
+    background-color: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    padding: 3px 8px;
+    gap: 8px;
+    flex-shrink: 0;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+body.light-mode .download-card {
+    background-color: rgba(0, 0, 0, 0.04);
+}
+
+.download-card:hover {
+    border-color: var(--accent);
+}
+
+.download-card.completed {
+    cursor: pointer;
+}
+
+.download-card.completed:hover {
+    background-color: rgba(255, 255, 255, 0.07);
+}
+
+body.light-mode .download-card.completed:hover {
+    background-color: rgba(0, 0, 0, 0.07);
+}
+
+.download-card.cancelled {
+    opacity: 0.6;
+}
+
+.download-card.interrupted {
+    border-color: #f7768e;
+}
+
+.download-card-icon {
+    font-size: 15px;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    flex-shrink: 0;
+}
+
+.download-card-content {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 1px;
+}
+
+.download-card-title {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+}
+
+.download-card-meta {
+    display: flex;
+    align-items: center;
+    font-size: 10.5px;
+    color: var(--text);
+    opacity: 0.75;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+}
+
+.download-card-progress-track {
+    width: 100%;
+    height: 2px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 1px;
+    overflow: hidden;
+    margin-top: 2px;
+}
+
+body.light-mode .download-card-progress-track {
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.download-card-progress-bar {
+    height: 100%;
+    background-color: var(--accent);
+    transition: width 0.25s ease;
+}
+
+.download-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+}
+
+.download-action-btn {
+    background: transparent;
+    border: none;
+    color: var(--text);
+    width: 22px;
+    height: 22px;
+    border-radius: 3px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    opacity: 0.7;
+    transition: opacity 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+}
+
+.download-action-btn:hover {
+    opacity: 1;
+    background-color: rgba(255, 255, 255, 0.12);
+}
+
+body.light-mode .download-action-btn:hover {
+    background-color: rgba(0, 0, 0, 0.08);
+}
+
+.download-action-btn.cancel-btn:hover {
+    color: #f7768e;
+}
+

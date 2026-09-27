@@ -34,3 +34,4 @@ The Command Palette gives you rapid, fuzzy-searchable access to all Mise operati
 | **Mute/Unmute Active Tab** | Toggles audio output on the currently active tab. |
 | **Reset Tab Zoom Level** | Resets page zoom on the active tab back to 100%. |
 | **Toggle Active Webview DevTools** | Opens or closes the Chromium DevTools inspection window. |
+| **Toggle Downloads Shelf [Ctrl+Shift+D]** | Toggles the native download shelf status bar. |
