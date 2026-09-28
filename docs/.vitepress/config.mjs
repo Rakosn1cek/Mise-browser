@@ -13,6 +13,7 @@ export default defineConfig({
     nav: [
       { text: 'Guide', link: '/guide/getting-started' },
       { text: 'Features', link: '/guide/navigation' },
+      { text: 'Policies', link: '/guide/privacy-policy' },
       { text: 'Reference', link: '/reference/keybinds' },
       { text: 'GitHub', link: 'https://github.com/Rakosn1cek/Mise-browser' }
     ],
@@ -33,6 +34,13 @@ export default defineConfig({
           { text: 'Privacy & Trusted Sites', link: '/guide/privacy-and-shields' },
           { text: 'Notes, Bookmarks & Quickmarks', link: '/guide/notes-and-bookmarks' },
           { text: 'Terminal Security & Oversight', link: '/guide/terminal-oversight' }
+        ]
+      },
+      {
+        text: 'Policies & Security',
+        items: [
+          { text: 'Privacy Policy', link: '/guide/privacy-policy' },
+          { text: 'Security Policy', link: '/guide/security-policy' }
         ]
       },
       {
