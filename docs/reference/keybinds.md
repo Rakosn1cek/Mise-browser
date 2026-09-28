@@ -18,7 +18,9 @@ All keyboard shortcuts in Mise Browser are fully customisable via `~/.config/mis
 | **Ctrl + Shift + W** | `toggle-dashboard` | Opens the Workspace Dashboard tree overlay |
 | **Ctrl + S** | `toggle-find` | Find in page / quick save active workspace |
 | **Ctrl + R** | `reload-active-tab` | Reloads the active tab |
-| **Ctrl + M** | `focus-sidebar` | Moves focus to the vertical tab sidebar |
+| **Ctrl + M** | `focus-sidebar` | Moves focus to the vertical tab sidebar (cycles between tabs and navigation buttons) |
+| **Ctrl + Shift + N** | `focus-nav-buttons` | Moves focus directly to navigation action buttons |
+| **Ctrl + Tab** | `focus-nav-buttons` | Secondary shortcut to focus navigation action buttons |
 | **Ctrl + B** | `focus-webview` | Moves focus directly into the active web page |
 | **Ctrl + Shift + Z** | `toggle-zen-mode` | Toggles sidebar expansion or pin mode |
 | **Ctrl + P** | `toggle-palette` | Opens the Command Palette |

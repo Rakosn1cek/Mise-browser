@@ -1,6 +1,6 @@
 {
   "name": "mise-browser",
-  "version": "0.8.0",
+  "version": "0.8.2",
   "description": "Mise Browser - Electron Edition",
   "main": "main.js",
   "license": "GPL-3.0-or-later",

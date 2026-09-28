@@ -319,7 +319,8 @@ export function renderWorkspaceUI(targetTabToFocus = null) {
         const cachedFavicon = state.tabFavicons[currentWS]?.[idx] || null;
 
         const li = document.createElement('li');
-        li.setAttribute('tabindex', '0');
+        const isInitiallySelected = (idx === (targetTabToFocus !== null ? targetTabToFocus : 0));
+        li.setAttribute('tabindex', isInitiallySelected ? '0' : '-1');
         li.className = 'tab-item';
         li.title = `${cachedTitle}\n${url}`;
         if (isSleeping) li.classList.add('tab-sleeping');
@@ -446,8 +447,13 @@ export function switchTabFocus(targetIdx) {
     }
 
     tabItems.forEach((item, idx) => {
-        if (idx === targetIdx) item.classList.add('selected');
-        else item.classList.remove('selected');
+        if (idx === targetIdx) {
+            item.classList.add('selected');
+            item.setAttribute('tabindex', '0');
+        } else {
+            item.classList.remove('selected');
+            item.setAttribute('tabindex', '-1');
+        }
     });
 
     if (!state.activeViewsCache[currentWS]?.[targetIdx] || state.tabSleepStates[currentWS]?.[targetIdx]) {
@@ -773,18 +779,33 @@ export function wakeTab(currentWS, idx) {
     const targetUrl = sleepRecord?.url || urls[idx];
     const scrollX = sleepRecord?.scrollX || 0;
     const scrollY = sleepRecord?.scrollY || 0;
+    const savedSessionStorage = sleepRecord?.sessionStorage || null;
 
     const container = document.getElementById('webview-container');
     const webview = createWebView(targetUrl, currentWS, idx);
 
-    if (scrollX > 0 || scrollY > 0) {
-        const restoreScroll = () => {
-            webview.executeJavaScript(`window.scrollTo(${scrollX}, ${scrollY});`, false).catch(() => {});
-            setTimeout(() => {
+    if (savedSessionStorage || scrollX > 0 || scrollY > 0) {
+        const restoreState = () => {
+            if (savedSessionStorage) {
+                webview.executeJavaScript(`(function() {
+                    try {
+                        const data = JSON.parse(${JSON.stringify(savedSessionStorage)});
+                        for (const k in data) {
+                            if (!window.sessionStorage.getItem(k)) {
+                                window.sessionStorage.setItem(k, data[k]);
+                            }
+                        }
+                    } catch (e) {}
+                })()`, false).catch(() => {});
+            }
+            if (scrollX > 0 || scrollY > 0) {
                 webview.executeJavaScript(`window.scrollTo(${scrollX}, ${scrollY});`, false).catch(() => {});
-            }, 300);
+                setTimeout(() => {
+                    webview.executeJavaScript(`window.scrollTo(${scrollX}, ${scrollY});`, false).catch(() => {});
+                }, 300);
+            }
         };
-        webview.addEventListener('dom-ready', restoreScroll, { once: true });
+        webview.addEventListener('dom-ready', restoreState, { once: true });
     }
 
     if (!state.activeViewsCache[currentWS]) state.activeViewsCache[currentWS] = [];
@@ -848,6 +869,7 @@ export async function hibernateTab(currentWS, idx) {
     let scrollY = 0;
     let finalUrl = urls[idx];
     let finalTitle = state.activeTitlesCache[currentWS]?.[idx] || 'Tab';
+    let savedSessionStorage = null;
 
     if (webview) {
         try {
@@ -855,6 +877,24 @@ export async function hibernateTab(currentWS, idx) {
             if (Array.isArray(scrollPos)) {
                 scrollX = scrollPos[0] || 0;
                 scrollY = scrollPos[1] || 0;
+            }
+        } catch (err) {}
+
+        try {
+            const rawSession = await webview.executeJavaScript(`(function() {
+                try {
+                    const data = {};
+                    for (let i = 0; i < window.sessionStorage.length; i++) {
+                        const key = window.sessionStorage.key(i);
+                        data[key] = window.sessionStorage.getItem(key);
+                    }
+                    return JSON.stringify(data);
+                } catch (e) {
+                    return null;
+                }
+            })()`);
+            if (rawSession && rawSession !== '{}') {
+                savedSessionStorage = rawSession;
             }
         } catch (err) {}
 
@@ -873,6 +913,12 @@ export async function hibernateTab(currentWS, idx) {
         } catch (err) {}
 
         try {
+            if (window.miseAPI && typeof window.miseAPI.flushSessionStore === 'function') {
+                await window.miseAPI.flushSessionStore({ workspace: currentWS });
+            }
+        } catch (err) {}
+
+        try {
             webview.remove();
         } catch (err) {}
         state.activeViewsCache[currentWS][idx] = null;
@@ -884,6 +930,7 @@ export async function hibernateTab(currentWS, idx) {
         title: finalTitle,
         scrollX,
         scrollY,
+        sessionStorage: savedSessionStorage,
         hibernatedAt: Date.now()
     };
 

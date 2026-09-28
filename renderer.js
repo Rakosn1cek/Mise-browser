@@ -269,9 +269,31 @@ function setupEventListeners() {
                 break;
             }
             case 'focus-sidebar': {
-                const selectedTab = document.querySelector('#TabList li.selected');
-                if (selectedTab) selectedTab.focus();
-                else { const firstTab = document.querySelector('#TabList li'); if (firstTab) firstTab.focus(); }
+                const activeEl = document.activeElement;
+                const isInsideTabList = activeEl && (activeEl.closest('#TabList') || activeEl.id === 'TabList');
+                const isInsideNavAction = activeEl && activeEl.closest('.nav-action-layout');
+                const isInsideBottomLayout = activeEl && activeEl.closest('.bottom-theme-layout');
+
+                if (isInsideTabList) {
+                    const backBtn = document.getElementById('back-btn') || document.getElementById('toggle-nav-btn');
+                    if (backBtn) backBtn.focus();
+                } else if (isInsideNavAction || isInsideBottomLayout) {
+                    const selectedTab = document.querySelector('#TabList li.selected') || document.querySelector('#TabList li');
+                    if (selectedTab) selectedTab.focus();
+                } else {
+                    const selectedTab = document.querySelector('#TabList li.selected') || document.querySelector('#TabList li');
+                    if (selectedTab) {
+                        selectedTab.focus();
+                    } else {
+                        const navBtn = document.getElementById('back-btn') || document.getElementById('toggle-nav-btn');
+                        if (navBtn) navBtn.focus();
+                    }
+                }
+                break;
+            }
+            case 'focus-nav-buttons': {
+                const backBtn = document.getElementById('back-btn') || document.getElementById('toggle-nav-btn');
+                if (backBtn) backBtn.focus();
                 break;
             }
             case 'focus-webview': focusActiveWebview(); break;
@@ -320,12 +342,17 @@ function setupEventListeners() {
                 document.getElementById(topNavIds[prevIdx]).focus();
             } else if (e.key === 'ArrowDown' || (e.key === 'Tab' && !e.shiftKey)) {
                 e.preventDefault();
-                const selectedTab = document.querySelector('#TabList li.selected');
+                const selectedTab = document.querySelector('#TabList li.selected') || document.querySelector('#TabList li');
                 if (selectedTab) selectedTab.focus();
-                else {
-                    const firstTab = document.querySelector('#TabList li');
-                    if (firstTab) firstTab.focus();
-                }
+            } else if (e.key === 'ArrowUp' || (e.key === 'Tab' && e.shiftKey)) {
+                e.preventDefault();
+                const notiBtn = document.getElementById('noti-toggle-btn') || document.getElementById('pin-sidebar-btn');
+                if (notiBtn) notiBtn.focus();
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                const sidebar = document.getElementById('Sidebar');
+                if (sidebar) sidebar.classList.remove('expanded');
+                focusActiveWebview();
             }
         });
     });
@@ -346,14 +373,22 @@ function setupEventListeners() {
                 if (prevBtn) prevBtn.focus();
             } else if (e.key === 'ArrowUp' || (e.key === 'Tab' && e.shiftKey && idx === 0)) {
                 e.preventDefault();
-                const tabItems = Array.from(document.querySelectorAll('#TabList li'));
-                if (tabItems.length > 0) {
-                    tabItems[tabItems.length - 1].focus();
+                const selectedTab = document.querySelector('#TabList li.selected') || document.querySelector('#TabList li');
+                if (selectedTab) {
+                    selectedTab.focus();
+                } else {
+                    const backBtn = document.getElementById('back-btn');
+                    if (backBtn) backBtn.focus();
                 }
             } else if (e.key === 'Tab' && !e.shiftKey && idx === bottomButtons.length - 1) {
                 e.preventDefault();
                 const backBtn = document.getElementById('back-btn');
                 if (backBtn) backBtn.focus();
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                const sidebar = document.getElementById('Sidebar');
+                if (sidebar) sidebar.classList.remove('expanded');
+                focusActiveWebview();
             }
         });
     });
@@ -368,6 +403,19 @@ function setupEventListeners() {
             focusActiveWebview();
             return;
         }
+
+        if (e.key === 'Tab') {
+            e.preventDefault();
+            if (e.shiftKey) {
+                const backBtn = document.getElementById('back-btn') || document.getElementById('toggle-nav-btn');
+                if (backBtn) backBtn.focus();
+            } else {
+                const pinBtn = document.getElementById('pin-sidebar-btn');
+                if (pinBtn) pinBtn.focus();
+            }
+            return;
+        }
+
         const tabItems = Array.from(document.querySelectorAll('#TabList li'));
         const activeListItem = document.querySelector('#TabList li.selected');
         let currentIdx = tabItems.indexOf(activeListItem);
@@ -378,6 +426,9 @@ function setupEventListeners() {
                 currentIdx++;
                 switchTabFocus(currentIdx);
                 document.querySelectorAll('#TabList li')[currentIdx].focus();
+            } else {
+                const pinBtn = document.getElementById('pin-sidebar-btn');
+                if (pinBtn) pinBtn.focus();
             }
         } else if (e.key === 'ArrowUp') {
             e.preventDefault();
@@ -385,7 +436,17 @@ function setupEventListeners() {
                 currentIdx--;
                 switchTabFocus(currentIdx);
                 document.querySelectorAll('#TabList li')[currentIdx].focus();
+            } else {
+                const backBtn = document.getElementById('back-btn') || document.getElementById('toggle-nav-btn');
+                if (backBtn) backBtn.focus();
             }
+        } else if (e.key === 'ArrowLeft') {
+            e.preventDefault();
+            const backBtn = document.getElementById('back-btn') || document.getElementById('toggle-nav-btn');
+            if (backBtn) backBtn.focus();
+        } else if (e.key === 'ArrowRight') {
+            e.preventDefault();
+            focusActiveWebview();
         }
     });
 

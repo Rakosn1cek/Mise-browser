@@ -19,6 +19,10 @@ export const commandRegistry = {
     "Toggle Zen Mode (Hide Sidebar)": () => window.toggleZenMode && window.toggleZenMode(),
     "Toggle Sidebar (Expand/Collapse) [Ctrl+Shift+Z]": () => window.toggleSidebarExpansion && window.toggleSidebarExpansion(),
     "Toggle Auto-Collapse Sidebar (Pin/Unpin)": () => window.toggleSidebarPin && window.toggleSidebarPin(),
+    "Focus Navigation Buttons [Ctrl+Shift+N]": () => {
+        const btn = document.getElementById('back-btn') || document.getElementById('toggle-nav-btn');
+        if (btn) btn.focus();
+    },
     "Toggle Mise Settings (Menu Bar) [F1]": () => window.miseAPI && typeof window.miseAPI.toggleMenuBar === 'function' && window.miseAPI.toggleMenuBar(),
     "Open Preferences": () => togglePreferencesView(),
     "Toggle Actionable History": () => window.toggleHistoryOverlay && window.toggleHistoryOverlay(),

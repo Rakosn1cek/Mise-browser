@@ -646,6 +646,19 @@ ipcMain.handle('get-app-version', () => {
 });
 
 // IPC HANDLERS
+ipcMain.handle('flush-session-store', async (event, context) => {
+    const targetSession = getSessionForContext(context);
+    try {
+        if (targetSession && targetSession.cookies) {
+            await targetSession.cookies.flushStore();
+            return true;
+        }
+    } catch (err) {
+        return false;
+    }
+    return false;
+});
+
 ipcMain.handle('clear-active-cache', async (event, context) => {
     const targetSession = getSessionForContext(context);
     try {
@@ -784,8 +797,7 @@ ipcMain.handle('purge-history', async () => {
 });
 
 ipcMain.on('toggle-menu-bar', () => {
-    const isVisible = mainWindow.isMenuBarVisible();
-    mainWindow.setMenuBarVisibility(!isVisible);
+    openSettingsMenu();
 });
 
 ipcMain.handle('get-keybinds', async () => {
@@ -902,12 +914,102 @@ function initializeMemoryWatcher() {
     }, 15000);
 }
 
+function buildSettingsSubmenu(cfg) {
+    return [
+        {
+            label: 'Disable GPU Hardware Acceleration',
+            type: 'checkbox',
+            checked: cfg.disable_gpu,
+            click: (menuItem) => {
+                cfg.disable_gpu = menuItem.checked;
+                saveBrowserConfig(cfg);
+            }
+        },
+        {
+            label: 'Enable Background Throttling',
+            type: 'checkbox',
+            checked: cfg.background_throttling,
+            click: (menuItem) => {
+                cfg.background_throttling = menuItem.checked;
+                saveBrowserConfig(cfg);
+            }
+        },
+        { type: 'separator' },
+        {
+            label: 'Renderer Process Limit',
+            submenu: [1, 2, 3, 4, 5].map(num => ({
+                label: `Limit to ${num} process${num === 1 ? '' : 'es'}`,
+                type: 'radio',
+                checked: cfg.process_limit === num,
+                click: () => {
+                    cfg.process_limit = num;
+                    saveBrowserConfig(cfg);
+                }
+            }))
+        },
+        { type: 'separator' },
+        {
+            label: 'Tab Hibernation (Sleep Timeout)',
+            submenu: [
+                { minutes: 5, label: '5 minutes' },
+                { minutes: 15, label: '15 minutes (Default)' },
+                { minutes: 30, label: '30 minutes' },
+                { minutes: 60, label: '1 hour' },
+                { minutes: 0, label: 'Never (Disabled)' }
+            ].map(opt => ({
+                label: opt.label,
+                type: 'radio',
+                checked: (cfg.tab_sleep_timeout_minutes ?? 15) === opt.minutes,
+                click: () => {
+                    cfg.tab_sleep_timeout_minutes = opt.minutes;
+                    if (!fs.existsSync(CONFIG_DIR)) fs.mkdirSync(CONFIG_DIR, { recursive: true });
+                    fs.writeFileSync(CONFIG_PATH, JSON.stringify(cfg, null, 4), 'utf-8');
+                }
+            }))
+        },
+        { type: 'separator' },
+        {
+            label: 'Auto-Collapse Sidebar (36px Strip)',
+            type: 'checkbox',
+            checked: cfg.sidebar_auto_collapse !== false,
+            click: (menuItem) => {
+                cfg.sidebar_auto_collapse = menuItem.checked;
+                if (!fs.existsSync(CONFIG_DIR)) fs.mkdirSync(CONFIG_DIR, { recursive: true });
+                fs.writeFileSync(CONFIG_PATH, JSON.stringify(cfg, null, 4), 'utf-8');
+                if (mainWindow && !mainWindow.isDestroyed()) {
+                    mainWindow.webContents.send('master-shortcut', 'toggle-sidebar-collapse-mode', menuItem.checked);
+                }
+            }
+        },
+        { type: 'separator' },
+        {
+            label: 'Open Full Preferences Overlay',
+            accelerator: 'Ctrl+H',
+            click: () => {
+                if (mainWindow && !mainWindow.isDestroyed()) {
+                    mainWindow.webContents.send('master-shortcut', 'toggle-help');
+                }
+            }
+        },
+        {
+            label: 'Restart Browser Now',
+            click: () => { app.relaunch(); app.exit(0); }
+        }
+    ];
+}
+
+function openSettingsMenu() {
+    if (!mainWindow || mainWindow.isDestroyed()) return;
+    const cfg = loadBrowserConfig();
+    const menu = Menu.buildFromTemplate(buildSettingsSubmenu(cfg));
+    menu.popup({ window: mainWindow, x: 14, y: 14 });
+}
+
 function handleAppAction(action, sourceWebContents) {
     if (!mainWindow || mainWindow.isDestroyed()) return;
 
     if (action === 'toggle-menu-bar') {
-        const isVisible = mainWindow.isMenuBarVisible();
-        mainWindow.setMenuBarVisibility(!isVisible);
+        openSettingsMenu();
         return;
     }
 
@@ -945,94 +1047,12 @@ function createWindow() {
     });
     
     const cfg = loadBrowserConfig();
-    const menuTemplate = [
+    const systemMenu = Menu.buildFromTemplate([
         {
             label: 'Mise Settings',
-            submenu: [
-                {
-                    label: 'Disable GPU Hardware Acceleration',
-                    type: 'checkbox',
-                    checked: cfg.disable_gpu,
-                    click: (menuItem) => {
-                        cfg.disable_gpu = menuItem.checked;
-                        saveBrowserConfig(cfg);
-                    }
-                },
-                {
-                    label: 'Enable Background Throttling',
-                    type: 'checkbox',
-                    checked: cfg.background_throttling,
-                    click: (menuItem) => {
-                        cfg.background_throttling = menuItem.checked;
-                        saveBrowserConfig(cfg);
-                    }
-                },
-                { type: 'separator' },
-                {
-                    label: 'Renderer Process Limit',
-                    submenu: [1, 2, 3, 4, 5].map(num => ({
-                        label: `Limit to ${num} process${num === 1 ? '' : 'es'}`,
-                        type: 'radio',
-                        checked: cfg.process_limit === num,
-                        click: () => {
-                            cfg.process_limit = num;
-                            saveBrowserConfig(cfg);
-                        }
-                    }))
-                },
-                { type: 'separator' },
-                {
-                    label: 'Tab Hibernation (Sleep Timeout)',
-                    submenu: [
-                        { minutes: 5, label: '5 minutes' },
-                        { minutes: 15, label: '15 minutes (Default)' },
-                        { minutes: 30, label: '30 minutes' },
-                        { minutes: 60, label: '1 hour' },
-                        { minutes: 0, label: 'Never (Disabled)' }
-                    ].map(opt => ({
-                        label: opt.label,
-                        type: 'radio',
-                        checked: (cfg.tab_sleep_timeout_minutes ?? 15) === opt.minutes,
-                        click: () => {
-                            cfg.tab_sleep_timeout_minutes = opt.minutes;
-                            if (!fs.existsSync(CONFIG_DIR)) fs.mkdirSync(CONFIG_DIR, { recursive: true });
-                            fs.writeFileSync(CONFIG_PATH, JSON.stringify(cfg, null, 4), 'utf-8');
-                        }
-                    }))
-                },
-                { type: 'separator' },
-                {
-                    label: 'Auto-Collapse Sidebar (36px Strip)',
-                    type: 'checkbox',
-                    checked: cfg.sidebar_auto_collapse !== false,
-                    click: (menuItem) => {
-                        cfg.sidebar_auto_collapse = menuItem.checked;
-                        if (!fs.existsSync(CONFIG_DIR)) fs.mkdirSync(CONFIG_DIR, { recursive: true });
-                        fs.writeFileSync(CONFIG_PATH, JSON.stringify(cfg, null, 4), 'utf-8');
-                        if (mainWindow && !mainWindow.isDestroyed()) {
-                            mainWindow.webContents.send('master-shortcut', 'toggle-sidebar-collapse-mode', menuItem.checked);
-                        }
-                    }
-                },
-                { type: 'separator' },
-                {
-                    label: 'Open Full Preferences Overlay',
-                    accelerator: 'Ctrl+H',
-                    click: () => {
-                        if (mainWindow && !mainWindow.isDestroyed()) {
-                            mainWindow.webContents.send('master-shortcut', 'toggle-help');
-                        }
-                    }
-                },
-                {
-                    label: 'Restart Browser Now',
-                    click: () => { app.relaunch(); app.exit(0); }
-                }
-            ]
+            submenu: buildSettingsSubmenu(cfg)
         }
-    ];
-
-    const systemMenu = Menu.buildFromTemplate(menuTemplate);
+    ]);
     mainWindow.setMenu(systemMenu);
     mainWindow.setMenuBarVisibility(false);
     

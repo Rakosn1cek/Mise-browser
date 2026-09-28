@@ -26,6 +26,7 @@ The Command Palette gives you rapid, fuzzy-searchable access to all Mise operati
 | **Toggle Bookmarks Manager** | Opens the bookmarks and quickmarks management overlay. |
 | **Toggle Quick Notes** | Opens the Markdown scratchpad overlay. |
 | **Toggle Zen Mode (Hide Sidebar)** | Hides or restores the vertical tab sidebar. |
+| **Focus Navigation Buttons [Ctrl+Shift+N]** | Focuses the sidebar navigation action buttons (Back, Forward, New Tab, Menu). |
 | **Toggle Mise Settings (Menu Bar) [F1]** | Displays or hides the native application menu bar. |
 | **Open Preferences** | Opens the full Preferences overlay for engine, privacy, and theme settings. |
 | **Toggle Actionable History** | Opens the history search and purge overlay. |
