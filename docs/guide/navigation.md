@@ -77,3 +77,16 @@ Mise maintains clean separation between sidebar navigation and active web page i
 * **Workspace Badges**: The top of the strip displays a compact letter or number badge for the current workspace (such as `W1` or `P`). Clicking the workspace badge opens the Workspace Dashboard (**Ctrl + Shift + W**).
 * **Favicons & Indicators**: Each tab renders its website favicon with smart local and remote caching. Sleeping tabs display a subtle moon indicator, while tabs playing audio render a green audio badge.
 
+***
+
+## Dual Split View (1x2 Side by Side and Stacked)
+
+For comparing documentation, pull requests, or research sources without tiling window manager complexity, Mise includes a built-in dual split view:
+
+* **Instant Comparison**: Press **Ctrl + \\** or **Ctrl + Alt + S** (or click the column icon in the sidebar) to split the viewport into two 50% columns side by side.
+* **Orientation Toggle**: Right-click the split icon button or execute **Cycle Split View Orientation** in the Command Palette to switch between side by side (vertical columns) and stacked (horizontal rows).
+* **Focus Switching**: Press **Ctrl + Alt + O** or **Ctrl + Alt + Tab** to switch keyboard focus between Pane 1 and Pane 2. The active pane displays an accent focus ring, and its matching sidebar tab is highlighted with a numbered badge (1 or 2).
+* **Pane Swapping**: Press **Ctrl + Alt + X** to swap the positions of the two open split panes instantly.
+* **Tab Assignment**: Clicking any tab in the sidebar while in split mode routes that page into whichever pane currently holds active focus.
+* **Hibernation Exemption**: Both visible split panes are automatically protected from background tab sleep while displayed on screen.
+

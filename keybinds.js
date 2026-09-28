@@ -28,7 +28,10 @@ const DEFAULT_KEYBINDS = {
     'toggle-bookmarks': 'Ctrl+Shift+B',
     'toggle-global-media': ['Ctrl+Shift+0', 'F10'],
     'toggle-history': 'Ctrl+Shift+H',
-    'toggle-downloads': 'Ctrl+Shift+D'
+    'toggle-downloads': 'Ctrl+Shift+D',
+    'toggle-split': ['Ctrl+\\', 'Ctrl+Alt+S'],
+    'switch-split-focus': ['Ctrl+Alt+O', 'Ctrl+Alt+Tab'],
+    'swap-split-panes': 'Ctrl+Alt+X'
 };
 
 const ACTION_METADATA = {
@@ -55,7 +58,10 @@ const ACTION_METADATA = {
     'toggle-bookmarks': { label: 'Open Bookmarks and Quickmarks', category: 'Navigation & Workspaces' },
     'toggle-global-media': { label: 'Play/Pause Media Playback Globally', category: 'Web Interaction' },
     'toggle-history': { label: 'Toggle Actionable History', category: 'Navigation & Workspaces' },
-    'toggle-downloads': { label: 'Toggle Downloads Shelf', category: 'Navigation & Workspaces' }
+    'toggle-downloads': { label: 'Toggle Downloads Shelf', category: 'Navigation & Workspaces' },
+    'toggle-split': { label: 'Toggle Dual-Split View (Side-by-Side)', category: 'Navigation & Workspaces' },
+    'switch-split-focus': { label: 'Switch Split Pane Focus (Pane 1 / Pane 2)', category: 'Navigation & Workspaces' },
+    'swap-split-panes': { label: 'Swap Split Panes (Left / Right)', category: 'Navigation & Workspaces' }
 };
 
 let activeKeybinds = { ...DEFAULT_KEYBINDS };

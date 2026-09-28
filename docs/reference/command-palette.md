@@ -36,3 +36,9 @@ The Command Palette gives you rapid, fuzzy-searchable access to all Mise operati
 | **Reset Tab Zoom Level** | Resets page zoom on the active tab back to 100%. |
 | **Toggle Active Webview DevTools** | Opens or closes the Chromium DevTools inspection window. |
 | **Toggle Downloads Shelf [Ctrl+Shift+D]** | Toggles the native download shelf status bar. |
+| **Toggle Dual-Split View (Side-by-Side) [Ctrl+\\ / Ctrl+Alt+S]** | Toggles 1x2 vertical dual split view for comparing two tabs. |
+| **Toggle Dual-Split View (Stacked)** | Toggles 1x2 horizontal stacked dual split view. |
+| **Cycle Split View Orientation** | Cycles layout between side by side, stacked, and single pane. |
+| **Switch Split Pane Focus [Ctrl+Alt+O]** | Moves active focus between pane 1 and pane 2. |
+| **Swap Split Panes [Ctrl+Alt+X]** | Swaps left and right (or top and bottom) split pane contents. |
+| **Close Split View** | Exits split mode and focuses the current active pane full screen. |

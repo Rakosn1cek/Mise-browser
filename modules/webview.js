@@ -1,5 +1,6 @@
 import { state } from './state.js';
 import { getActiveWebview, focusActiveWebview, getWorkspacePartition, isDarkMode } from './utils.js';
+import { isSplitActive, applySplitLayout, handleSplitTabSelection, handleTabRemovalInSplit, getSplitState } from './splitView.js';
 
 export function applyCSSThemeToView() {
     // Intentionally no-op to preserve native website themes
@@ -169,6 +170,19 @@ export function createWebView(url, currentWS, idx) {
                 webview.executeJavaScript(safeExecutionWrapper, false).catch(() => {});
             }
         } catch (err) {}
+    });
+
+    webview.addEventListener('focus', () => {
+        if (isSplitActive(currentWS)) {
+            const split = getSplitState(currentWS);
+            if (idx === split.primaryIdx && split.activePane !== 'primary') {
+                split.activePane = 'primary';
+                applySplitLayout();
+            } else if (idx === split.secondaryIdx && split.activePane !== 'secondary') {
+                split.activePane = 'secondary';
+                applySplitLayout();
+            }
+        }
     });
     
     return webview;
@@ -428,8 +442,12 @@ export function renderWorkspaceUI(targetTabToFocus = null) {
     });
 
     if (!state.dashboardActive) {
-        const focusIdx = targetTabToFocus !== null ? targetTabToFocus : 0;
-        switchTabFocus(focusIdx);
+        if (isSplitActive(currentWS)) {
+            applySplitLayout();
+        } else {
+            const focusIdx = targetTabToFocus !== null ? targetTabToFocus : 0;
+            switchTabFocus(focusIdx);
+        }
     }
 }
 
@@ -439,6 +457,12 @@ export function switchTabFocus(targetIdx) {
 
     if (targetIdx >= tabItems.length) {
         targetIdx = Math.max(0, tabItems.length - 1);
+    }
+
+    if (isSplitActive(currentWS)) {
+        if (handleSplitTabSelection(targetIdx)) {
+            return;
+        }
     }
 
     tabItems.forEach((item, idx) => {
@@ -625,6 +649,7 @@ export function handleTabRemoval() {
     if (tabs.length === 0) return;
 
     tabs.splice(currentIdx, 1);
+    handleTabRemovalInSplit(currentIdx);
     if (state.activeViewsCache[currentWS] && state.activeViewsCache[currentWS][currentIdx]) {
         state.activeViewsCache[currentWS][currentIdx].remove();
         state.activeViewsCache[currentWS].splice(currentIdx, 1);
@@ -943,12 +968,15 @@ export async function hibernateInactiveTabs() {
     const tabItems = document.querySelectorAll('#TabList li');
     const activeLi = document.querySelector('#TabList li.selected');
     const activeIdx = activeLi ? Array.from(tabItems).indexOf(activeLi) : -1;
+    const splitActive = isSplitActive(currentWS);
+    const split = getSplitState(currentWS);
 
     for (const wsName of Object.keys(state.sessionState.workspaces || {})) {
         const urls = state.sessionState.workspaces[wsName] || [];
         for (let i = 0; i < urls.length; i++) {
-            if (wsName === currentWS && i === activeIdx && !state.dashboardActive) {
-                continue;
+            if (wsName === currentWS && !state.dashboardActive) {
+                if (i === activeIdx) continue;
+                if (splitActive && (i === split.primaryIdx || i === split.secondaryIdx)) continue;
             }
             if (state.tabSleepStates[wsName] && state.tabSleepStates[wsName][i]) {
                 continue;
@@ -989,12 +1017,15 @@ export function initializeTabSleepManager() {
             const tabItems = document.querySelectorAll('#TabList li');
             const activeLi = document.querySelector('#TabList li.selected');
             const activeIdx = activeLi ? Array.from(tabItems).indexOf(activeLi) : -1;
+            const splitActive = isSplitActive(currentWS);
+            const split = getSplitState(currentWS);
 
             for (const wsName of Object.keys(state.sessionState.workspaces || {})) {
                 const urls = state.sessionState.workspaces[wsName] || [];
                 for (let i = 0; i < urls.length; i++) {
-                    if (wsName === currentWS && i === activeIdx && !state.dashboardActive) {
-                        continue;
+                    if (wsName === currentWS && !state.dashboardActive) {
+                        if (i === activeIdx) continue;
+                        if (splitActive && (i === split.primaryIdx || i === split.secondaryIdx)) continue;
                     }
                     if (state.tabSleepStates[wsName] && state.tabSleepStates[wsName][i]) {
                         continue;

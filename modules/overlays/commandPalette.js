@@ -46,7 +46,13 @@ export const commandRegistry = {
         if (activeWv) activeWv.setZoomLevel(0);
     },
     "Toggle Active Webview DevTools": () => window.toggleActiveDevTools && window.toggleActiveDevTools(),
-    "Toggle Downloads Shelf [Ctrl+Shift+D]": () => window.toggleDownloadShelf && window.toggleDownloadShelf()
+    "Toggle Downloads Shelf [Ctrl+Shift+D]": () => window.toggleDownloadShelf && window.toggleDownloadShelf(),
+    "Toggle Dual-Split View (Side-by-Side) [Ctrl+\\ / Ctrl+Alt+S]": () => window.toggleSplitView && window.toggleSplitView('vertical'),
+    "Toggle Dual-Split View (Stacked)": () => window.toggleSplitView && window.toggleSplitView('horizontal'),
+    "Cycle Split View Orientation": () => window.cycleSplitOrientation && window.cycleSplitOrientation(),
+    "Switch Split Pane Focus [Ctrl+Alt+O]": () => window.switchSplitFocus && window.switchSplitFocus(),
+    "Swap Split Panes [Ctrl+Alt+X]": () => window.swapSplitPanes && window.swapSplitPanes(),
+    "Close Split View": () => window.closeSplitView && window.closeSplitView()
 };
 
 let preferencesActive = false;

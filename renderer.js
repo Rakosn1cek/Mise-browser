@@ -85,6 +85,15 @@ import {
 import { openTransientShareModal } from './modules/overlays/shareModal.js';
 import { initSearchEnginePreference } from './modules/overlays/searchEngine.js';
 import { initDownloadShelf, toggleDownloadShelf } from './modules/downloads.js';
+import { 
+    toggleSplitView, 
+    cycleSplitOrientation, 
+    switchSplitFocus, 
+    swapSplitPanes, 
+    closeSplitView, 
+    isSplitActive, 
+    applySplitLayout 
+} from './modules/splitView.js';
 
 // Attach functions needed across module boundaries to window
 window.toggleDashboardView = toggleDashboardView;
@@ -109,6 +118,13 @@ window.toggleActiveDevTools = toggleActiveDevTools;
 window.toggleCommandPaletteView = toggleCommandPaletteView;
 window.buildDashboardTree = buildDashboardTree;
 window.toggleGlobalMediaPlayback = toggleGlobalMediaPlayback;
+window.toggleSplitView = toggleSplitView;
+window.cycleSplitOrientation = cycleSplitOrientation;
+window.switchSplitFocus = switchSplitFocus;
+window.swapSplitPanes = swapSplitPanes;
+window.closeSplitView = closeSplitView;
+window.isSplitActive = isSplitActive;
+window.applySplitLayout = applySplitLayout;
 
 let findActive = false;
 
@@ -213,6 +229,11 @@ async function initializeBrowser() {
 function setupEventListeners() {
     document.getElementById('theme-toggle-btn').addEventListener('click', toggleWebviewTheme);
     document.getElementById('toggle-nav-btn').addEventListener('click', displayAddressOverlay);
+    document.getElementById('split-toggle-btn')?.addEventListener('click', () => toggleSplitView());
+    document.getElementById('split-toggle-btn')?.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        cycleSplitOrientation();
+    });
     document.getElementById('back-btn').addEventListener('click', navigateFrameBack);
     document.getElementById('forward-btn').addEventListener('click', navigateFrameForward);
     document.getElementById('menu-btn').addEventListener('click', toggleDashboardView);
@@ -276,6 +297,10 @@ function setupEventListeners() {
             case 'jump-quickmark': promptQuickmark('jump'); break;
             case 'add-bookmark': addCurrentPageToBookmarks(); break;
             case 'toggle-global-media': toggleGlobalMediaPlayback(); break;
+            case 'toggle-split': toggleSplitView(); break;
+            case 'switch-split-focus': switchSplitFocus(); break;
+            case 'swap-split-panes': swapSplitPanes(); break;
+            case 'close-split': closeSplitView(); break;
             case 'delete-bookmark-entry': {
                 if (state.bookmarksActive && state.filteredBookmarksCache[state.bookmarkSelectionIdx]) {
                     deleteBookmark(state.filteredBookmarksCache[state.bookmarkSelectionIdx].url);
