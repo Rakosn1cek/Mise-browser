@@ -40,7 +40,8 @@ export default defineConfig({
         text: 'Policies & Security',
         items: [
           { text: 'Privacy Policy', link: '/guide/privacy-policy' },
-          { text: 'Security Policy', link: '/guide/security-policy' }
+          { text: 'Security Policy', link: '/guide/security-policy' },
+          { text: 'AI Policy', link: '/guide/ai-policy' }
         ]
       },
       {

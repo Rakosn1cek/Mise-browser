@@ -71,6 +71,14 @@ The air-gapped terminal handshake works alongside the standalone `oversight` uti
 
 ***
 
+## Project Policies
+
+* [Privacy Policy](PRIVACY.md) (Zero telemetry, container isolation, and local data ownership)
+* [Security Policy](SECURITY.md) (Process sandboxing, threat model, and responsible disclosure)
+* [AI Policy](AI_POLICY.md) (Human architecture governance and zero runtime AI integration)
+
+***
+
 ## Licence
 
 This project is licensed under the terms of the GNU General Public Licence v3.0 (or any later version). See the [LICENSE](LICENSE) file for details.
