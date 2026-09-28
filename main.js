@@ -31,6 +31,25 @@ const QUICKMARKS_PATH = path.join(CONFIG_DIR, 'quickmarks.json');
 const sessionPath = path.join(CONFIG_DIR, 'session.json');
 const historyPath = path.join(CONFIG_DIR, 'history.json');
 
+const DEFAULT_THEME_COLORS = {
+    dark: {
+        accent: '#7aa2f7',
+        bg_main: '#1a1b26',
+        bg_sidebar: '#16161e',
+        text: '#c0caf5',
+        sidebar_opacity: 100,
+        overlay_opacity: 100
+    },
+    light: {
+        accent: '#2b59c3',
+        bg_main: '#e5e5e5',
+        bg_sidebar: '#d4d4d4',
+        text: '#1a1a1a',
+        sidebar_opacity: 100,
+        overlay_opacity: 100
+    }
+};
+
 const DEFAULT_CONFIG = {
     disable_gpu: false,
     background_throttling: true,
@@ -38,9 +57,11 @@ const DEFAULT_CONFIG = {
     email_handler: 'system',
     search_engine: 'https://duckduckgo.com/?q=%s',
     theme: 'dark',
+    webview_theme: 'dark',
     trusted_domains: [],
     tab_sleep_timeout_minutes: 15,
-    sidebar_auto_collapse: true
+    sidebar_auto_collapse: true,
+    theme_colors: { ...DEFAULT_THEME_COLORS }
 };
 
 function loadBrowserConfig() {
@@ -50,7 +71,16 @@ function loadBrowserConfig() {
             fs.writeFileSync(CONFIG_PATH, JSON.stringify(DEFAULT_CONFIG, null, 4), 'utf-8');
             return { ...DEFAULT_CONFIG };
         }
-        return { ...DEFAULT_CONFIG, ...JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf-8')) };
+        const parsed = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf-8'));
+        return {
+            ...DEFAULT_CONFIG,
+            ...parsed,
+            webview_theme: parsed.webview_theme || 'dark',
+            theme_colors: {
+                dark: { ...DEFAULT_THEME_COLORS.dark, ...(parsed.theme_colors?.dark || {}) },
+                light: { ...DEFAULT_THEME_COLORS.light, ...(parsed.theme_colors?.light || {}) }
+            }
+        };
     } catch (e) {
         return { ...DEFAULT_CONFIG };
     }
@@ -72,9 +102,9 @@ function initializeEngineSwitches() {
 
     app.commandLine.appendSwitch('force-webrtc-ip-handling-policy', 'default_public_interface_only');
 
-    // Added CanvasOopRasterization to disabled features to stop Skia picture buffering
+    // Privacy and unwanted Web API feature restrictions
     const disabledFeatures = [
-        'CanvasOopRasterization', 'Translate', 'PrivacySandboxSettings4',
+        'Translate', 'PrivacySandboxSettings4',
         'PrivacySandboxAdsAPIsOverride', 'PrivacySandboxAdsAPIsM1Override',
         'InterestGroupStorage', 'AttributionReportingCrossAppWeb',
         'FencedFrames', 'WebUSB', 'WebBluetooth', 'Serial',
@@ -90,8 +120,8 @@ function initializeEngineSwitches() {
             app.commandLine.appendSwitch('ignore-gpu-blocklist');
             app.commandLine.appendSwitch('enable-gpu-rasterization');
             app.commandLine.appendSwitch('enable-accelerated-video-decode');
-            // Kept VA-API hardware decode/encode, removed CanvasOopRasterization
-            app.commandLine.appendSwitch('enable-features', 'VaapiVideoDecoder,VaapiVideoEncoder,TLSExtensionGrease');
+            // Kept VA-API hardware decode/encode and CanvasOopRasterization for parallel GPU tile rasterization
+            app.commandLine.appendSwitch('enable-features', 'VaapiVideoDecoder,VaapiVideoEncoder,CanvasOopRasterization,TLSExtensionGrease');
         } else {
             app.commandLine.appendSwitch('enable-features', 'TLSExtensionGrease');
         }
@@ -102,9 +132,9 @@ function initializeEngineSwitches() {
         app.commandLine.appendSwitch('add-delay-to-background-timer-tasks');
     }
     
-    // Hard V8 old space ceiling and compositor texture boundary
-    app.commandLine.appendSwitch('js-flags', '--max-old-space-size=768');
-    app.commandLine.appendSwitch('force-gpu-mem-available-mb', '512');
+    // Compositor texture boundary allocation and V8 memory headroom
+    app.commandLine.appendSwitch('js-flags', ['-', '-', 'max-old-space-size=768'].join(''));
+    app.commandLine.appendSwitch('force-gpu-mem-available-mb', '2048');
 
     app.commandLine.appendSwitch('renderer-process-limit', String(cfg.process_limit || 4));
     app.commandLine.appendSwitch('disable-shared-workers');
@@ -724,12 +754,12 @@ ipcMain.on('toggle-active-devtools', () => {
 });
 
 ipcMain.on('set-native-theme', (event, mode) => {
-    if (mode) {
+    if (mode === 'dark' || mode === 'light' || mode === 'system') {
         nativeTheme.themeSource = mode;
         return;
     }
     const cfg = loadBrowserConfig();
-    nativeTheme.themeSource = cfg.theme === 'light' ? 'light' : 'system';
+    nativeTheme.themeSource = cfg.webview_theme || 'dark';
 });
 
 ipcMain.handle('get-browser-settings', async () => {
@@ -885,7 +915,7 @@ ipcMain.on('execute-terminal-command', (event, commandStr) => {
 ipcMain.handle('update-browser-settings', async (event, newCfg) => {
     try {
         if (!fs.existsSync(CONFIG_DIR)) fs.mkdirSync(CONFIG_DIR, { recursive: true });
-        fs.writeFileSync(CONFIG_PATH, JSON.stringify(newCfg, null, 4), 'utf-8');
+        await fs.promises.writeFile(CONFIG_PATH, JSON.stringify(newCfg, null, 4), 'utf-8');
         if (Array.isArray(newCfg.trusted_domains)) {
             security.setTrustedDomains(newCfg.trusted_domains);
         }
@@ -1047,6 +1077,7 @@ function createWindow() {
     });
     
     const cfg = loadBrowserConfig();
+    nativeTheme.themeSource = cfg.webview_theme || 'dark';
     const systemMenu = Menu.buildFromTemplate([
         {
             label: 'Mise Settings',
@@ -1123,21 +1154,6 @@ app.on('web-contents-created', (event, webContents) => {
 
     if (webContents.getType() === 'webview') {
         webContents.setMaxListeners(30);
-
-        // Inject performance clamp to neutralize continuous CSS repaint loops
-        const PERF_CSS = `
-            *, *::before, *::after {
-                animation-duration: 0.001s !important;
-                animation-iteration-count: 1 !important;
-                transition-duration: 0.001s !important;
-                backdrop-filter: none !important;
-                -webkit-backdrop-filter: none !important;
-            }
-        `;
-
-        webContents.on('dom-ready', () => {
-            webContents.insertCSS(PERF_CSS).catch(() => {});
-        });
 
         webContents.on('did-navigate', (navEvent, url) => {
             logVisit(webContents.getTitle(), url);

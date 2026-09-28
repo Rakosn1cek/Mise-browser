@@ -1,16 +1,12 @@
 import { state } from './state.js';
-import { getActiveWebview, focusActiveWebview, getWorkspacePartition } from './utils.js';
+import { getActiveWebview, focusActiveWebview, getWorkspacePartition, isDarkMode } from './utils.js';
 
-export function applyCSSThemeToView(webview) {
-    if (webview && typeof webview.executeJavaScript === 'function') {
-        const theme = state.isDarkMode ? 'dark' : 'light';
-        webview.executeJavaScript(`document.documentElement.setAttribute('data-theme', '${theme}');`, false).catch(() => {});
-    }
+export function applyCSSThemeToView() {
+    // Intentionally no-op to preserve native website themes
 }
 
 export function createWebView(url, currentWS, idx) {
     const webview = document.createElement('webview');
-    webview.style.backgroundColor = '#ffffff';
     webview.setAttribute('preload', window.miseAPI.getWebviewPreloadPath());
     webview.setAttribute('allowpopups', '');
     
@@ -158,7 +154,6 @@ export function createWebView(url, currentWS, idx) {
     });
 
     webview.addEventListener('dom-ready', async () => {
-        applyCSSThemeToView(webview);
         webview.style.opacity = '1';
 
         const targetLi = document.querySelectorAll('#TabList li')[idx];
@@ -482,8 +477,6 @@ export function switchTabFocus(targetIdx) {
                 currentWSViews[targetIdx].focus();
             }
         }, 50);
-        
-        try { applyCSSThemeToView(currentWSViews[targetIdx]); } catch (err) {}
     }
 }
 

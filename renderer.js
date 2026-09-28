@@ -7,6 +7,10 @@ import {
     getActiveWebview, 
     focusActiveWebview 
 } from './modules/utils.js';
+import { 
+    applyThemeVisuals, 
+    syncVisualSettingsInputs 
+} from './modules/theme.js';
 
 import { 
     renderWorkspaceUI, 
@@ -94,6 +98,8 @@ window.toggleSidebarExpansion = toggleSidebarExpansion;
 window.toggleSidebarPin = toggleSidebarPin;
 window.applySidebarMode = applySidebarMode;
 window.toggleInterfaceTheme = toggleInterfaceTheme;
+window.toggleWebviewTheme = toggleWebviewTheme;
+window.applyThemeVisuals = applyThemeVisuals;
 window.togglePreferencesView = togglePreferencesView;
 window.toggleHistoryOverlay = toggleHistoryOverlay;
 window.handlePrivateBrowsingStateShift = handlePrivateBrowsingStateShift;
@@ -142,10 +148,12 @@ async function initializeBrowser() {
     // Load persisted theme and sidebar preferences from configuration
     let savedTheme = 'dark';
     let sidebarAutoCollapse = true;
+    let initialCfg = null;
     if (window.miseAPI && typeof window.miseAPI.getBrowserSettings === 'function') {
         try {
             const cfg = await window.miseAPI.getBrowserSettings();
             if (cfg) {
+                initialCfg = cfg;
                 if (cfg.theme) savedTheme = cfg.theme;
                 if (typeof cfg.sidebar_auto_collapse === 'boolean') {
                     sidebarAutoCollapse = cfg.sidebar_auto_collapse;
@@ -157,22 +165,28 @@ async function initializeBrowser() {
     applySidebarMode(sidebarAutoCollapse);
 
     const body = document.body;
-    const button = document.getElementById('theme-toggle-btn');
 
     if (savedTheme === 'light') {
         body.classList.remove('dark-mode');
         body.classList.add('light-mode');
-        if (button) button.innerHTML = '<i class="fa-solid fa-sun"></i>';
-        if (window.miseAPI && typeof window.miseAPI.setNativeTheme === 'function') {
-            window.miseAPI.setNativeTheme('light');
-        }
     } else {
         body.classList.remove('light-mode');
         body.classList.add('dark-mode');
-        if (button) button.innerHTML = '<i class="fa-solid fa-moon"></i>';
-        if (window.miseAPI && typeof window.miseAPI.setNativeTheme === 'function') {
-            window.miseAPI.setNativeTheme('dark');
-        }
+    }
+
+    applyThemeVisuals(initialCfg, savedTheme);
+
+    currentWebviewTheme = initialCfg?.webview_theme || 'dark';
+    updateWebviewThemeButtonUI(currentWebviewTheme);
+
+    const container = document.getElementById('webview-container');
+    if (container) {
+        container.classList.remove('theme-light', 'theme-dark');
+        container.classList.add(currentWebviewTheme === 'light' ? 'theme-light' : 'theme-dark');
+    }
+
+    if (window.miseAPI && typeof window.miseAPI.setNativeTheme === 'function') {
+        window.miseAPI.setNativeTheme(currentWebviewTheme);
     }
 
     setupEventListeners();
@@ -197,7 +211,7 @@ async function initializeBrowser() {
 }
 
 function setupEventListeners() {
-    document.getElementById('theme-toggle-btn').addEventListener('click', toggleInterfaceTheme);
+    document.getElementById('theme-toggle-btn').addEventListener('click', toggleWebviewTheme);
     document.getElementById('toggle-nav-btn').addEventListener('click', displayAddressOverlay);
     document.getElementById('back-btn').addEventListener('click', navigateFrameBack);
     document.getElementById('forward-btn').addEventListener('click', navigateFrameForward);
@@ -608,49 +622,88 @@ function triggerLinkHints() {
     }
 }
   
-async function toggleInterfaceTheme() {
-    const body = document.body;
+let currentWebviewTheme = 'dark';
+
+function updateWebviewThemeButtonUI(theme) {
     const button = document.getElementById('theme-toggle-btn');
+    if (!button) return;
+    if (theme === 'light') {
+        button.innerHTML = '<i class="fa-solid fa-sun"></i>';
+        button.title = 'Toggle Website Dark/Light Theme (Website Light active)';
+    } else {
+        button.innerHTML = '<i class="fa-solid fa-moon"></i>';
+        button.title = 'Toggle Website Dark/Light Theme (Website Dark active)';
+    }
+}
+
+let webviewThemeSaveTimer = null;
+
+function toggleWebviewTheme() {
+    currentWebviewTheme = (currentWebviewTheme === 'light') ? 'dark' : 'light';
+    updateWebviewThemeButtonUI(currentWebviewTheme);
+
+    const container = document.getElementById('webview-container');
+    if (container) {
+        container.classList.remove('theme-light', 'theme-dark');
+        container.classList.add(currentWebviewTheme === 'light' ? 'theme-light' : 'theme-dark');
+    }
+
+    const activeView = getActiveWebview();
+    if (activeView) {
+        activeView.style.opacity = '0.75';
+        setTimeout(() => {
+            activeView.style.opacity = '1';
+        }, 140);
+    }
+
+    if (window.miseAPI && typeof window.miseAPI.setNativeTheme === 'function') {
+        window.miseAPI.setNativeTheme(currentWebviewTheme);
+    }
+
+    if (webviewThemeSaveTimer) clearTimeout(webviewThemeSaveTimer);
+    webviewThemeSaveTimer = setTimeout(() => {
+        if (window.miseAPI && typeof window.miseAPI.getBrowserSettings === 'function') {
+            window.miseAPI.getBrowserSettings().then((cfg) => {
+                const currentCfg = cfg || {};
+                currentCfg.webview_theme = currentWebviewTheme;
+                return window.miseAPI.updateBrowserSettings(currentCfg);
+            }).catch(() => {});
+        }
+    }, 400);
+}
+
+function toggleInterfaceTheme() {
+    const body = document.body;
     const isDark = body.classList.contains('dark-mode');
-    let newTheme = 'dark';
+    const newTheme = isDark ? 'light' : 'dark';
     
-    if (isDark) {
+    // Instantly swap UI classes on body
+    if (newTheme === 'light') {
         body.classList.remove('dark-mode');
         body.classList.add('light-mode');
-        button.innerHTML = '<i class="fa-solid fa-sun"></i>';
-        newTheme = 'light';
-        if (window.miseAPI && typeof window.miseAPI.setNativeTheme === 'function') {
-            window.miseAPI.setNativeTheme('light');
-        }
     } else {
         body.classList.remove('light-mode');
         body.classList.add('dark-mode');
-        button.innerHTML = '<i class="fa-solid fa-moon"></i>';
-        newTheme = 'dark';
-        if (window.miseAPI && typeof window.miseAPI.setNativeTheme === 'function') {
-            window.miseAPI.setNativeTheme('dark');
-        }
     }
     
-    if (window.miseAPI && typeof window.miseAPI.updateBrowserSettings === 'function') {
-        try {
-            const cfg = await window.miseAPI.getBrowserSettings();
-            cfg.theme = newTheme;
-            await window.miseAPI.updateBrowserSettings(cfg);
-        } catch (err) {}
-    }
-    
-    const allWebviews = document.getElementById('webview-container').querySelectorAll('webview');
-    allWebviews.forEach((webview) => {
-        applyCSSThemeToView(webview);
-    });
-}
+    // Synchronously apply visual theme variables and sync inputs with zero latency
+    applyThemeVisuals(null, newTheme);
+    syncVisualSettingsInputs(null);
 
-function enforceActiveGlobalThemeMode() {
-    const allWebviews = document.getElementById('webview-container').querySelectorAll('webview');
-    allWebviews.forEach((webview) => {
-        try { applyCSSThemeToView(webview); } catch (err) {}
-    });
+    // Keep Preferences checkbox switch in sync if open
+    const themeToggle = document.getElementById('setting-theme-toggle');
+    if (themeToggle) {
+        themeToggle.checked = (newTheme === 'dark');
+    }
+    
+    // Persist setting to disk asynchronously in the background without blocking the UI
+    if (window.miseAPI && typeof window.miseAPI.getBrowserSettings === 'function') {
+        window.miseAPI.getBrowserSettings().then((cfg) => {
+            const currentCfg = cfg || {};
+            currentCfg.theme = newTheme;
+            return window.miseAPI.updateBrowserSettings(currentCfg);
+        }).catch(() => {});
+    }
 }
 
 document.getElementById('noti-toggle-btn').addEventListener('click', async () => {

@@ -28,7 +28,7 @@
 
             <div class="bottom-theme-layout">
                 <button id="pin-sidebar-btn" class="nav-icon-button" title="Pin / Auto-Collapse Sidebar (Ctrl+Shift+Z)"><i class="fa-solid fa-thumbtack"></i></button>
-                <button id="theme-toggle-btn" class="nav-icon-button" title="Toggle Light/Dark Mode"><i class="fa-solid fa-moon"></i></button>
+                <button id="theme-toggle-btn" class="nav-icon-button" title="Toggle Website Dark/Light Theme"><i class="fa-solid fa-moon"></i></button>
                 <button id="noti-toggle-btn" class="nav-icon-button" title="Toggle Web Notifications"><i class="fa-regular fa-bell"></i></button>
             </div>
         </div>
@@ -182,24 +182,113 @@
 								</div>
 				                              
                                 <div style="display: flex; justify-content: flex-end; margin-top: 10px;">
-                                    <button id="setting-save-config-btn" class="settings-action-btn" style="background-color: var(--accent); color: #000; font-weight: bold; padding: 8px 16px;">
+                                    <button id="setting-save-config-btn" class="settings-action-btn" style="background-color: var(--accent); color: var(--bg-main); font-weight: bold; padding: 8px 16px; border-radius: 4px; border: none; cursor: pointer;">
                                         Save & Restart Engine
                                     </button>
                                 </div>
                             </section>
                 
-                            <!-- Appearance Section -->
+                            <!-- Appearance & Visual Theme Section -->
                             <section class="settings-section">
-                                <h2>Appearance</h2>
+                                <h2>Appearance & Visual Theme</h2>
                                 <div class="setting-item">
                                     <div class="setting-info">
-                                        <span class="setting-label">Dark Theme Layout</span>
-                                        <span class="setting-desc">Toggle between Tokyo Night dark theme and high-contrast light theme.</span>
+                                        <span class="setting-label">Theme Mode</span>
+                                        <span class="setting-desc">Toggle between Tokyo Night dark theme and clean light theme.</span>
                                     </div>
                                     <label class="toggle-switch">
                                         <input type="checkbox" id="setting-theme-toggle">
                                         <span class="toggle-slider"></span>
                                     </label>
+                                </div>
+
+                                <!-- Accent Colour Customisation -->
+                                <div class="setting-item visual-setting-item">
+                                    <div class="setting-info">
+                                        <span class="setting-label">Accent Colour</span>
+                                        <span class="setting-desc">Primary highlight colour for active tabs, buttons, borders, and indicators.</span>
+                                        <div class="preset-swatches" id="accent-preset-swatches">
+                                            <button type="button" class="swatch-btn" data-color="#7aa2f7" style="background:#7aa2f7" title="Tokyo Blue"></button>
+                                            <button type="button" class="swatch-btn" data-color="#7dcfff" style="background:#7dcfff" title="Marine Cyan"></button>
+                                            <button type="button" class="swatch-btn" data-color="#2ac3de" style="background:#2ac3de" title="Teal Mist"></button>
+                                            <button type="button" class="swatch-btn" data-color="#bb9af7" style="background:#bb9af7" title="Amethyst Purple"></button>
+                                            <button type="button" class="swatch-btn" data-color="#9ece6a" style="background:#9ece6a" title="Emerald Green"></button>
+                                            <button type="button" class="swatch-btn" data-color="#ff9e64" style="background:#ff9e64" title="Amber Orange"></button>
+                                            <button type="button" class="swatch-btn" data-color="#f7768e" style="background:#f7768e" title="Coral Rose"></button>
+                                            <button type="button" class="swatch-btn" data-color="#2b59c3" style="background:#2b59c3" title="Royal Sapphire"></button>
+                                            <button type="button" class="swatch-btn" data-color="#2eeeff" style="background:#2eeeff" title="Electric Cyan"></button>
+                                        </div>
+                                    </div>
+                                    <div class="color-picker-group">
+                                        <input type="color" id="setting-accent-color-picker" class="theme-color-input" value="#7aa2f7">
+                                        <input type="text" id="setting-accent-color-text" class="theme-color-text" value="#7aa2f7" maxlength="7" spellcheck="false">
+                                    </div>
+                                </div>
+
+                                <!-- Sidebar Background Colour -->
+                                <div class="setting-item visual-setting-item">
+                                    <div class="setting-info">
+                                        <span class="setting-label">Sidebar Background</span>
+                                        <span class="setting-desc">Background shade for the vertical navigation tab bar.</span>
+                                    </div>
+                                    <div class="color-picker-group">
+                                        <input type="color" id="setting-bg-sidebar-picker" class="theme-color-input" value="#16161e">
+                                        <input type="text" id="setting-bg-sidebar-text" class="theme-color-text" value="#16161e" maxlength="7" spellcheck="false">
+                                    </div>
+                                </div>
+
+                                <!-- Main Canvas Background Colour -->
+                                <div class="setting-item visual-setting-item">
+                                    <div class="setting-info">
+                                        <span class="setting-label">Main Canvas Background</span>
+                                        <span class="setting-desc">Base background tone for overlays, frames, and background spaces.</span>
+                                    </div>
+                                    <div class="color-picker-group">
+                                        <input type="color" id="setting-bg-main-picker" class="theme-color-input" value="#1a1b26">
+                                        <input type="text" id="setting-bg-main-text" class="theme-color-text" value="#1a1b26" maxlength="7" spellcheck="false">
+                                    </div>
+                                </div>
+
+                                <!-- Text / Foreground Colour -->
+                                <div class="setting-item visual-setting-item">
+                                    <div class="setting-info">
+                                        <span class="setting-label">Text & Icon Foreground</span>
+                                        <span class="setting-desc">Primary typography and iconography colour across browser chrome.</span>
+                                    </div>
+                                    <div class="color-picker-group">
+                                        <input type="color" id="setting-text-color-picker" class="theme-color-input" value="#c0caf5">
+                                        <input type="text" id="setting-text-color-text" class="theme-color-text" value="#c0caf5" maxlength="7" spellcheck="false">
+                                    </div>
+                                </div>
+
+                                <!-- Sidebar Opacity / Translucency Slider -->
+                                <div class="setting-item">
+                                    <div class="setting-info">
+                                        <span class="setting-label">Sidebar Opacity (Translucency)</span>
+                                        <span class="setting-desc">Adjust sidebar background opacity with backdrop blur glass effect.</span>
+                                    </div>
+                                    <div class="slider-group">
+                                        <input type="range" id="setting-sidebar-opacity-slider" min="40" max="100" value="100" class="theme-slider">
+                                        <span id="setting-sidebar-opacity-val" class="slider-val-badge">100%</span>
+                                    </div>
+                                </div>
+
+                                <!-- Overlays Opacity Slider -->
+                                <div class="setting-item">
+                                    <div class="setting-info">
+                                        <span class="setting-label">Overlay & Modal Opacity</span>
+                                        <span class="setting-desc">Opacity for Command Palette, Quick Notes, and Preferences overlays.</span>
+                                    </div>
+                                    <div class="slider-group">
+                                        <input type="range" id="setting-overlay-opacity-slider" min="50" max="100" value="100" class="theme-slider">
+                                        <span id="setting-overlay-opacity-val" class="slider-val-badge">100%</span>
+                                    </div>
+                                </div>
+
+                                <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px;">
+                                    <button id="setting-reset-theme-btn" class="settings-action-btn" style="background-color: transparent; border: 1px solid var(--border); color: var(--text); padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+                                        Reset Colours to Default
+                                    </button>
                                 </div>
                             </section>
                 

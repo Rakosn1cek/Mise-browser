@@ -2,6 +2,7 @@ import { state } from '../state.js';
 import { focusActiveWebview, isTargetScript, isDarkMode } from '../utils.js';
 import { renderWorkspaceUI, switchTabFocus, spawnTabWithUrl, spawnNewBlankTab, handleTabRemoval, hibernateInactiveTabs, wakeAllTabsInWorkspace } from '../webview.js';
 import { toggleBookmarksOverlay } from './bookmarks.js';
+import { syncVisualSettingsInputs, setupVisualSettingsListeners } from '../theme.js';
 
 function returnFocusToWebview() {
     window.miseAllowWebviewFocus = true;
@@ -83,6 +84,8 @@ export async function syncPreferencesUI() {
     const privateToggle = document.getElementById('setting-private-toggle');
     if (privateToggle) privateToggle.checked = !!state.globalPrivateModeActive;
 
+    syncVisualSettingsInputs(cfg);
+
     if (window.miseAPI && typeof window.miseAPI.getKeybinds === 'function') {
         try {
             const keybinds = await window.miseAPI.getKeybinds();
@@ -134,6 +137,8 @@ export function setupPreferencesListeners() {
             if (window.toggleInterfaceTheme) window.toggleInterfaceTheme();
         };
     }
+
+    setupVisualSettingsListeners();
 
     const saveBtn = document.getElementById('setting-save-config-btn');
     if (saveBtn) {

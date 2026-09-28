@@ -22,6 +22,25 @@ Controls hardware switches, process limits, privacy whitelists, and search prefe
     "email_handler": "system",
     "search_engine": "https://duckduckgo.com/?q=%s",
     "theme": "dark",
+    "webview_theme": "dark",
+    "theme_colors": {
+        "dark": {
+            "accent": "#7aa2f7",
+            "bg_main": "#1a1b26",
+            "bg_sidebar": "#16161e",
+            "text": "#c0caf5",
+            "sidebar_opacity": 100,
+            "overlay_opacity": 100
+        },
+        "light": {
+            "accent": "#2b59c3",
+            "bg_main": "#e5e5e5",
+            "bg_sidebar": "#d4d4d4",
+            "text": "#1a1a1a",
+            "sidebar_opacity": 100,
+            "overlay_opacity": 100
+        }
+    },
     "trusted_domains": [
         "x.com",
         "amazon.co.uk",
@@ -41,6 +60,14 @@ Controls hardware switches, process limits, privacy whitelists, and search prefe
 - **`email_handler`**: Choose between `system` (OS default `mailto:`) or webmail providers (Gmail, Zoho, Outlook, Fastmail, ProtonMail).
 - **`search_engine`**: Fallback search provider URL when non-URL queries are entered without an alias.
 - **`theme`**: Interface theme preference (`dark` for Tokyo Night or `light`).
+- **`webview_theme`**: Website native theme preference (`dark` or `light`), toggled via the sidebar theme button.
+- **`theme_colors`**: Custom visual colour palette and opacity settings per theme mode:
+  - **`accent`**: Primary highlight colour for active tabs, borders, and controls (defaults to `#7aa2f7` in dark, `#2b59c3` in light).
+  - **`bg_main`**: Base window and modal canvas background colour.
+  - **`bg_sidebar`**: Vertical sidebar background colour.
+  - **`text`**: Primary text and icon foreground colour.
+  - **`sidebar_opacity`**: Sidebar background translucency percentage (40% to 100%) with backdrop blur glass effect.
+  - **`overlay_opacity`**: Modal and overlay translucency percentage (50% to 100%) for Command Palette, Notes, and Preferences.
 - **`trusted_domains`**: Array of domains exempted from tracker blocking and fingerprint spoofing.
 
 ---

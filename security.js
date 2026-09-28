@@ -142,7 +142,11 @@ async function applyTrustedDomainExceptions() {
 }
 
 function setTrustedDomains(domains) {
-    trustedDomains = Array.isArray(domains) ? domains.filter(Boolean) : [];
+    const clean = Array.isArray(domains) ? domains.filter(Boolean) : [];
+    if (trustedDomains.length === clean.length && trustedDomains.every((d, i) => d === clean[i])) {
+        return;
+    }
+    trustedDomains = clean;
     applyTrustedDomainExceptions();
 }
 
