@@ -170,6 +170,8 @@ export function createWebView(url, currentWS, idx) {
                 webview.executeJavaScript(safeExecutionWrapper, false).catch(() => {});
             }
         } catch (err) {}
+
+        injectMatchingUserContent(webview).catch(() => {});
     });
 
     webview.addEventListener('focus', () => {
@@ -216,6 +218,81 @@ export function updateTabShieldStatus(tabLi, url, trustedDomains = []) {
     } else {
         icon.className = 'fa-solid fa-shield-halved shield-on';
         shieldBtn.title = 'Shields Active (Full Protection)';
+    }
+}
+
+export async function injectMatchingUserContent(webview) {
+    if (!webview || typeof webview.getURL !== 'function') return;
+    const currentUrl = webview.getURL();
+    if (!currentUrl || currentUrl.startsWith('about:') || currentUrl.startsWith('devtools:')) return;
+    if (!window.miseAPI || typeof window.miseAPI.getUserContentForUrl !== 'function') return;
+
+    try {
+        const content = await window.miseAPI.getUserContentForUrl(currentUrl);
+        if (!content) return;
+
+        if (!webview.__miseInjectedCSSKeys) webview.__miseInjectedCSSKeys = [];
+        if (typeof webview.removeInsertedCSS === 'function' && webview.__miseInjectedCSSKeys.length > 0) {
+            for (const key of webview.__miseInjectedCSSKeys) {
+                try { await webview.removeInsertedCSS(key); } catch (e) {}
+            }
+            webview.__miseInjectedCSSKeys = [];
+        }
+
+        if (Array.isArray(content.styles)) {
+            for (const item of content.styles) {
+                if (item.css && typeof webview.insertCSS === 'function') {
+                    try {
+                        const key = await webview.insertCSS(item.css);
+                        if (key) webview.__miseInjectedCSSKeys.push(key);
+                    } catch (e) {}
+                }
+            }
+        }
+
+        if (Array.isArray(content.scripts)) {
+            for (const item of content.scripts) {
+                if (item.code && typeof webview.executeJavaScript === 'function') {
+                    const scriptWrapper = `(function() {\n  try {\n${item.code}\n  } catch (err) {\n    console.error("[Mise UserScript: ${item.name || 'script'}]", err);\n  }\n})();`;
+                    webview.executeJavaScript(scriptWrapper, false).catch(() => {});
+                }
+            }
+        }
+    } catch (err) {}
+}
+
+export async function reapplyActiveUserStyles() {
+    const currentWS = state.sessionState.current_workspace;
+    const views = state.activeViewsCache[currentWS] || [];
+    for (const wv of views) {
+        if (!wv || typeof wv.getURL !== 'function' || typeof wv.insertCSS !== 'function') continue;
+        const currentUrl = wv.getURL();
+        if (!currentUrl || currentUrl.startsWith('about:') || currentUrl.startsWith('devtools:')) continue;
+        if (!window.miseAPI || typeof window.miseAPI.getUserContentForUrl !== 'function') continue;
+
+        try {
+            const content = await window.miseAPI.getUserContentForUrl(currentUrl);
+            if (!content) continue;
+
+            if (!wv.__miseInjectedCSSKeys) wv.__miseInjectedCSSKeys = [];
+            if (typeof wv.removeInsertedCSS === 'function' && wv.__miseInjectedCSSKeys.length > 0) {
+                for (const key of wv.__miseInjectedCSSKeys) {
+                    try { await wv.removeInsertedCSS(key); } catch (e) {}
+                }
+                wv.__miseInjectedCSSKeys = [];
+            }
+
+            if (Array.isArray(content.styles)) {
+                for (const item of content.styles) {
+                    if (item.css) {
+                        try {
+                            const key = await wv.insertCSS(item.css);
+                            if (key) wv.__miseInjectedCSSKeys.push(key);
+                        } catch (e) {}
+                    }
+                }
+            }
+        } catch (err) {}
     }
 }
 

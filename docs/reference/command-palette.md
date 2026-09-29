@@ -42,3 +42,6 @@ The Command Palette gives you rapid, fuzzy-searchable access to all Mise operati
 | **Switch Split Pane Focus [Ctrl+Alt+O]** | Moves active focus between pane 1 and pane 2. |
 | **Swap Split Panes [Ctrl+Alt+X]** | Swaps left and right (or top and bottom) split pane contents. |
 | **Close Split View** | Exits split mode and focuses the current active pane full screen. |
+| **Open User Scripts Directory (~/.config/mise-browser/scripts)** | Opens the local directory containing user scripts in the default file manager. |
+| **Open User Styles Directory (~/.config/mise-browser/styles)** | Opens the local directory containing user styles in the default file manager. |
+| **Reload User Scripts and Styles** | Manually re-reads and parses all scripts and styles from disk immediately. |

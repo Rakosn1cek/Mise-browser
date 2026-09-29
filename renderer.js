@@ -25,7 +25,8 @@ import {
     initializeTabSleepManager,
     hibernateInactiveTabs,
     wakeTab,
-    wakeAllTabsInWorkspace
+    wakeAllTabsInWorkspace,
+    reapplyActiveUserStyles
 } from './modules/webview.js';
 
 import { 
@@ -125,6 +126,7 @@ window.swapSplitPanes = swapSplitPanes;
 window.closeSplitView = closeSplitView;
 window.isSplitActive = isSplitActive;
 window.applySplitLayout = applySplitLayout;
+window.reapplyActiveUserStyles = reapplyActiveUserStyles;
 
 let findActive = false;
 
@@ -242,6 +244,14 @@ function setupEventListeners() {
     document.getElementById('WelcomeBookmarksBtn')?.addEventListener('click', toggleBookmarksOverlay);
     document.getElementById('WelcomePaletteBtn')?.addEventListener('click', toggleCommandPaletteView);
     document.getElementById('WelcomeNotesBtn')?.addEventListener('click', toggleNotesOverlay);
+
+    if (window.miseAPI && typeof window.miseAPI.onUserContentUpdated === 'function') {
+        window.miseAPI.onUserContentUpdated((kind) => {
+            if (kind === 'styles' || kind === 'all') {
+                reapplyActiveUserStyles();
+            }
+        });
+    }
     
     document.getElementById('add-ws-btn').addEventListener('click', showWorkspaceInputDialog);
     document.getElementById('submit-ws-btn').addEventListener('click', processWorkspaceCreation);

@@ -55,6 +55,16 @@ contextBridge.exposeInMainWorld('miseAPI', {
     openDownload: (filePath) => ipcRenderer.invoke('open-download', filePath),
     revealDownload: (filePath) => ipcRenderer.invoke('reveal-download', filePath),
     getActiveDownloads: () => ipcRenderer.invoke('get-active-downloads'),
-    getAppVersion: () => ipcRenderer.invoke('get-app-version')
+    getAppVersion: () => ipcRenderer.invoke('get-app-version'),
+    getUserContentForUrl: (url) => ipcRenderer.invoke('get-user-content-for-url', url),
+    reloadUserContent: () => ipcRenderer.invoke('reload-user-content'),
+    openUserScriptsDir: () => ipcRenderer.invoke('open-user-scripts-dir'),
+    openUserStylesDir: () => ipcRenderer.invoke('open-user-styles-dir'),
+    getUserContentSummary: () => ipcRenderer.invoke('get-user-content-summary'),
+    onUserContentUpdated: (callback) => {
+        const handler = (event, kind) => callback(kind);
+        ipcRenderer.on('user-content-updated', handler);
+        return () => ipcRenderer.removeListener('user-content-updated', handler);
+    }
 });
 

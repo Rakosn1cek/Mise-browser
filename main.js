@@ -21,6 +21,7 @@ if (app.userAgentFallback) {
 // Require the security config module to isolate filtering and hardening rules
 const security = require('./security');
 const keybinds = require('./keybinds');
+const userContent = require('./userContent');
 
 // NATIVE CONFIG UTILITIES
 const CONFIG_DIR = path.join(app.getPath('home'), '.config', 'mise-browser');
@@ -108,9 +109,12 @@ function initializeEngineSwitches() {
         'PrivacySandboxAdsAPIsOverride', 'PrivacySandboxAdsAPIsM1Override',
         'InterestGroupStorage', 'AttributionReportingCrossAppWeb',
         'FencedFrames', 'WebUSB', 'WebBluetooth', 'Serial',
-        'GenericSensor', 'WebOTP', 'Vulkan'
+        'GenericSensor', 'WebOTP', 'Vulkan',
+        'VulkanFromANGLE', 'DefaultANGLEVulkan',
+        'WebGPU', 'SkiaGraphite'
     ];
     app.commandLine.appendSwitch('disable-features', disabledFeatures.join(','));
+    app.commandLine.appendSwitch('disable-vulkan-surface');
 
     if (cfg.disable_gpu) {
         app.commandLine.appendSwitch('disable-gpu');
@@ -120,6 +124,7 @@ function initializeEngineSwitches() {
             app.commandLine.appendSwitch('ignore-gpu-blocklist');
             app.commandLine.appendSwitch('enable-gpu-rasterization');
             app.commandLine.appendSwitch('enable-accelerated-video-decode');
+            app.commandLine.appendSwitch('use-angle', 'gl');
             // Kept VA-API hardware decode/encode and CanvasOopRasterization for parallel GPU tile rasterization
             app.commandLine.appendSwitch('enable-features', 'VaapiVideoDecoder,VaapiVideoEncoder,CanvasOopRasterization,TLSExtensionGrease');
         } else {
@@ -141,7 +146,7 @@ function initializeEngineSwitches() {
     app.commandLine.appendSwitch('disable-smooth-scrolling');
     app.commandLine.appendSwitch('enable-strict-mixed-content-checking');
     app.commandLine.appendSwitch('disable-battery-saver');
-    app.commandLine.appendSwitch('log-level', '2');
+    app.commandLine.appendSwitch('log-level', '3');
     app.commandLine.appendSwitch('disable-speech-api');
 }
 
@@ -1013,6 +1018,22 @@ function buildSettingsSubmenu(cfg) {
         },
         { type: 'separator' },
         {
+            label: 'Open User Scripts Directory',
+            click: () => {
+                const sDir = path.join(CONFIG_DIR, 'scripts');
+                if (!fs.existsSync(sDir)) fs.mkdirSync(sDir, { recursive: true });
+                shell.openPath(sDir);
+            }
+        },
+        {
+            label: 'Open User Styles Directory',
+            click: () => {
+                const stDir = path.join(CONFIG_DIR, 'styles');
+                if (!fs.existsSync(stDir)) fs.mkdirSync(stDir, { recursive: true });
+                shell.openPath(stDir);
+            }
+        },
+        {
             label: 'Open Full Preferences Overlay',
             accelerator: 'Ctrl+H',
             click: () => {
@@ -1121,6 +1142,8 @@ function createWindow() {
     ipcMain.on('is-trusted-domain', (event, hostname) => {
         event.returnValue = security.isTrustedDomain(hostname);
     });
+
+    userContent.initializeUserContent(CONFIG_DIR, mainWindow);
 
     mainWindow.webContents.on('will-attach-webview', (event, webPreferences, params) => {
         security.hardenWebviewPreferences(webPreferences);

@@ -52,7 +52,10 @@ export const commandRegistry = {
     "Cycle Split View Orientation": () => window.cycleSplitOrientation && window.cycleSplitOrientation(),
     "Switch Split Pane Focus [Ctrl+Alt+O]": () => window.switchSplitFocus && window.switchSplitFocus(),
     "Swap Split Panes [Ctrl+Alt+X]": () => window.swapSplitPanes && window.swapSplitPanes(),
-    "Close Split View": () => window.closeSplitView && window.closeSplitView()
+    "Close Split View": () => window.closeSplitView && window.closeSplitView(),
+    "Open User Scripts Directory (~/.config/mise-browser/scripts)": () => window.miseAPI && window.miseAPI.openUserScriptsDir && window.miseAPI.openUserScriptsDir(),
+    "Open User Styles Directory (~/.config/mise-browser/styles)": () => window.miseAPI && window.miseAPI.openUserStylesDir && window.miseAPI.openUserStylesDir(),
+    "Reload User Scripts and Styles": () => window.miseAPI && window.miseAPI.reloadUserContent && window.miseAPI.reloadUserContent()
 };
 
 let preferencesActive = false;

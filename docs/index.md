@@ -35,6 +35,9 @@ features:
   - icon: 🔒
     title: Air-Gapped Terminal Oversight
     details: Suspicious script extensions and web commands trigger an air-gapped terminal handshake, copying vetted commands to clipboard rather than executing blindly.
+  - icon: 🧩
+    title: User Scripts & Styles
+    details: Native injection of local .user.js and .user.css files without extension runtime bloat. Automatic inotify watching and live hot-reloading for custom web tweaks.
   - icon: 📝
     title: Built-in Power Tools
     details: Integrated Markdown quick-notes, instant bookmarks and quickmarks, actionable history overlay, and a fuzzy-searchable Command Palette.

@@ -19,6 +19,7 @@ Mise leverages the Chromium rendering engine wrapped inside a streamlined Electr
 * **Mouse-Free Navigation**: Complete keyboard control via Link Hints, floating address bar with search aliases, and customisable shortcuts in `keybinds.json`.
 * **Air-Gapped Terminal Handshake**: High-risk script execution and raw web commands trigger an air-gapped terminal protocol, safely copying vetted commands to your clipboard and opening an empty terminal emulator.
 * **Native Privacy & Trusted Sites**: Built-in request interception blocks trackers, telemetry, and advertisements without heavy third-party extensions, while allowing selective whitelisting for trusted banking and shopping services.
+* **Local User Scripts & Styles**: Lightweight native injection of `.user.js` and `.user.css` files directly from `~/.config/mise-browser/` with inotify watching and live CSS hot-reloading, avoiding the heavy memory overhead of full WebExtensions.
 * **Power Tools**: Integrated Markdown notes, bookmarks, quickmarks, actionable history overlay, and a Command Palette.
 
 ***
@@ -59,6 +60,7 @@ Comprehensive user guides and configuration references are hosted on our GitHub 
 * [Mouse-Free Navigation & Link Hints](https://rakosn1cek.github.io/Mise-browser/guide/navigation)
 * [Workspaces & Multi-Account Containers](https://rakosn1cek.github.io/Mise-browser/guide/workspaces-and-containers)
 * [True Tab Hibernation Guide](https://rakosn1cek.github.io/Mise-browser/guide/tab-hibernation)
+* [Local User Scripts & Styles Guide](https://rakosn1cek.github.io/Mise-browser/guide/user-scripts-and-styles)
 * [Terminal Security & Oversight Scanner](https://rakosn1cek.github.io/Mise-browser/guide/terminal-oversight)
 * [Keyboard Shortcuts Reference](https://rakosn1cek.github.io/Mise-browser/reference/keybinds)
 * [Configuration Files Reference](https://rakosn1cek.github.io/Mise-browser/reference/configuration)
