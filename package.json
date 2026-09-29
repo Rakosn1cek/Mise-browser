@@ -1,6 +1,6 @@
 {
   "name": "mise-browser",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "description": "Mise Browser - Electron Edition",
   "main": "main.js",
   "license": "GPL-3.0-or-later",
@@ -12,7 +12,7 @@
     "install-desktop": "mkdir -p ~/.local/share/applications ~/.local/share/icons/hicolor/{48x48,128x128,256x256}/apps && cp mise.desktop ~/.local/share/applications/ && cp assets/icons/Mise-logo48.png ~/.local/share/icons/hicolor/48x48/apps/mise.png && cp assets/icons/Mise-logo128.png ~/.local/share/icons/hicolor/128x128/apps/mise.png && cp assets/icons/Mise-logo256.png ~/.local/share/icons/hicolor/256x256/apps/mise.png && update-desktop-database ~/.local/share/applications && gtk-update-icon-cache -f -t ~/.local/share/icons/hicolor"
   },
   "allowScripts": {
-    "electron@31.7.7": true
+    "electron@44.4.5": true
   },
   "devDependencies": {
     "electron": "^44.4.5",

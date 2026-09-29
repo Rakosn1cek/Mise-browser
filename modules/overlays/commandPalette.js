@@ -102,14 +102,15 @@ export async function syncPreferencesUI() {
                     if (binding) {
                         const keySpan = row.querySelector('.shortcut-key');
                         if (keySpan) {
-                            const formatted = Array.isArray(binding)
-                                ? binding.map(b => b.replace(/\+/g, ' + ')).join(' / ')
-                                : binding.replace(/\+/g, ' + ');
-                            if (action === 'set-quickmark' || action === 'jump-quickmark') {
-                                keySpan.textContent = `${formatted} [key]`;
-                            } else {
-                                keySpan.textContent = formatted;
-                            }
+                            const list = Array.isArray(binding) ? binding : [binding];
+                            const badges = list.map(b => {
+                                let text = b.replace(/\+/g, ' + ');
+                                if (action === 'set-quickmark' || action === 'jump-quickmark') {
+                                    text += ' [key]';
+                                }
+                                return `<kbd class="shortcut-badge">${text}</kbd>`;
+                            });
+                            keySpan.innerHTML = badges.join('<span class="shortcut-sep">/</span>');
                         }
                     }
                 });
