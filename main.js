@@ -138,8 +138,8 @@ function initializeEngineSwitches() {
     }
     
     // Compositor texture boundary allocation and V8 memory headroom
-    app.commandLine.appendSwitch('js-flags', ['-', '-', 'max-old-space-size=768'].join(''));
-    app.commandLine.appendSwitch('force-gpu-mem-available-mb', '2048');
+    app.commandLine.appendSwitch('js-flags', ['-', '-', 'max-old-space-size=256 ', '-', '-', 'expose-gc'].join(''));
+    app.commandLine.appendSwitch('force-gpu-mem-available-mb', '384');
 
     app.commandLine.appendSwitch('renderer-process-limit', String(cfg.process_limit || 4));
     app.commandLine.appendSwitch('disable-shared-workers');
@@ -936,7 +936,8 @@ function initializeMemoryWatcher() {
         const metrics = app.getAppMetrics();
         let shouldHibernate = false;
         metrics.forEach(metric => {
-            if (metric.type === 'Renderer' && metric.memory.residentSet > 200 * 1024 * 1024) {
+            // Electron returns residentSet in KiB; 200 * 1024 KiB = 200 MB
+            if (metric.type === 'Renderer' && metric.memory.residentSet > 200 * 1024) {
                 const wc = webContents.fromId(metric.webContentsId);
                 if (wc && !wc.isFocused()) {
                     shouldHibernate = true;
@@ -945,9 +946,22 @@ function initializeMemoryWatcher() {
         });
         if (shouldHibernate) {
             mainWindow.webContents.send('master-shortcut', 'hibernate-inactive-tabs');
+            if (typeof global.gc === 'function') {
+                setTimeout(() => { try { global.gc(); } catch (e) {} }, 1000);
+            }
         }
     }, 15000);
 }
+
+ipcMain.handle('compact-memory', () => {
+    if (typeof global.gc === 'function') {
+        try {
+            global.gc();
+            return true;
+        } catch (e) {}
+    }
+    return false;
+});
 
 function buildSettingsSubmenu(cfg) {
     return [
@@ -1112,18 +1126,15 @@ function createWindow() {
     configureAndHardenSession(session.defaultSession);
     configureAndHardenSession(session.fromPartition('MisePrivateProfile'));
 
-    // Pre-configure all workspace container partitions from stored session
+    // Configure active workspace partition; other partitions configure lazily on demand
     try {
         if (fs.existsSync(sessionPath)) {
             const initialSession = JSON.parse(fs.readFileSync(sessionPath, 'utf8'));
-            if (initialSession && initialSession.workspaces) {
-                Object.keys(initialSession.workspaces).forEach(wsName => {
-                    configureAndHardenSession(session.fromPartition(getWorkspacePartition(wsName)));
-                });
-            }
+            const activeWs = (initialSession && initialSession.current_workspace) || 'default';
+            configureAndHardenSession(session.fromPartition(getWorkspacePartition(activeWs)));
         }
     } catch (err) {
-        console.error('Failed to initialise workspace sessions:', err);
+        console.error('Failed to initialise active workspace session:', err);
     }
 
     security.setTrustedDomains(loadBrowserConfig().trusted_domains || []);
@@ -1136,7 +1147,11 @@ function createWindow() {
                 isRendererReady = true;
                 flushPendingUrls();
             }
-        }, 600);
+            // Trigger idle heap sweep to release startup deserialisation buffers
+            if (typeof global.gc === 'function') {
+                try { global.gc(); } catch (e) {}
+            }
+        }, 1200);
     });
 
     ipcMain.on('is-trusted-domain', (event, hostname) => {

@@ -61,6 +61,7 @@ contextBridge.exposeInMainWorld('miseAPI', {
     openUserScriptsDir: () => ipcRenderer.invoke('open-user-scripts-dir'),
     openUserStylesDir: () => ipcRenderer.invoke('open-user-styles-dir'),
     getUserContentSummary: () => ipcRenderer.invoke('get-user-content-summary'),
+    compactMemory: () => ipcRenderer.invoke('compact-memory'),
     onUserContentUpdated: (callback) => {
         const handler = (event, kind) => callback(kind);
         ipcRenderer.on('user-content-updated', handler);

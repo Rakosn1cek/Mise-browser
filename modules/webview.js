@@ -1064,6 +1064,10 @@ export async function hibernateInactiveTabs() {
             await hibernateTab(wsName, i);
         }
     }
+
+    if (window.miseAPI && typeof window.miseAPI.compactMemory === 'function') {
+        window.miseAPI.compactMemory().catch(() => {});
+    }
 }
 
 export function wakeAllTabsInWorkspace(wsName) {
