@@ -18,7 +18,7 @@ As artificial intelligence tools become prevalent across modern software enginee
 
 Mise Browser is not the product of unvetted code generation, nor was this project "vibe-coded over a weekend". 
 
-* **Sole Architect & Maintainer:** Lukas G. (Rakosn1cek) is the sole architect, designer, and decision-maker behind Mise Browser. Every architectural subsystem, including true DOM tab hibernation, multi-account container partitioning, memory management thresholds, and air-gapped terminal oversight, is engineered with deliberate human intent.
+* **Sole Architect & Maintainer:** Lukas G. (Rakosn1cek) is the sole architect, designer, and decision-maker behind Mise Browser. Every architectural subsystem, including true DOM tab hibernation, multi-account container partitioning, memory management thresholds, and clipboard-mediated terminal oversight, is engineered with deliberate human intent.
 * **Problem-Driven Engineering:** The browser was built to solve specific technical problems: running efficiently on fanless and resource-constrained hardware without mouse reliance, eliminating background process bloat, and preventing tracker cross-contamination.
 * **Full Human Ownership:** No design decision, architectural paradigm, or structural refactoring is outsourced to an automated agent. All technical direction originates with and is governed by human engineering.
 

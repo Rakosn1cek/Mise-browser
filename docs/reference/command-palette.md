@@ -20,7 +20,7 @@ The Command Centre gives you rapid, searchable access to all Mise operations, in
 
 1. **Left Column (Command List)**: A compact, categorised list of operations featuring icons, action titles, category tags, and active keybinding badges.
 2. **Right Column (Feature Inspector)**: A static preview panel detailing the selected or hovered command, displaying its assigned shortcut, action identifier, operational architecture, workflow recommendations, and a direct execution trigger.
-3. **Air-Gapped Terminal Fallback**: If an entered search does not match any internal command, pressing Enter or executing the fallback securely passes the instruction to your external terminal using the oversight protocol.
+3. **Clipboard-Mediated Terminal Fallback**: If an entered search does not match any internal command, pressing Enter or executing the fallback securely passes the instruction to your external terminal using the oversight protocol.
 
 ---
 

@@ -10,32 +10,40 @@ Many developer documentation sites and tutorials feature one-click terminal comm
 
 ***
 
-## How Oversight Protects You
+## How the Clipboard-Mediated Handshake Works
 
 When you select a script or run command within Mise:
 
-1. **Script Extension Inspection**:
-   Mise's parsing algorithm scans commands for executable script extensions:
+1. **Script Extension & Risk Inspection**:
+   Mise's internal parser identifies commands containing executable script extensions or high-risk system prefixes:
    ```text
    .sh, .bash, .zsh, .ksh, .fish, .py, .rb, .pl, .lua, .c, .rs, .go, .js, .ts
+   sudo, curl, wget, raw web URLs
    ```
 
-2. **Clipboard-Mediated Handshake**:
-   - Rather than executing the script directly in a background shell or passing it uninspected to a terminal child process, Mise applies the **Oversight** security protocol.
-   - The verified command is placed safely onto your system clipboard.
-   - Mise spawns a fresh, unmanaged, empty terminal instance.
+2. **Decoupled Clipboard Staging**:
+   - Rather than executing the script directly in a background shell process or passing it blindly to a child process, Mise stages the command onto your system clipboard.
+   - If risky patterns are detected, Mise prefixes the staged clipboard text with `oversight` to trigger the external scanner if present.
+   - Mise then spawns a fresh, unmanaged, empty terminal instance.
 
-3. **Manual Verification**:
+3. **Manual Execution**:
    - Because the terminal opens empty, no code executes automatically.
-   - You can review the clipboard content in your editor or terminal prompt before pressing Enter.
+   - You must deliberately paste the clipboard contents into your terminal prompt and press Enter.
 
 ***
 
-## Standalone Oversight Utility
+## Standalone Oversight Utility (Optional)
 
-The security scanner and pager used in this workflow is a standalone utility:
+The Command & Script security scanner and interactive pager used in this workflow is an independent external utility created by the same author:
 
 * Repository: [https://github.com/Rakosn1cek/oversight](https://github.com/Rakosn1cek/oversight)
+
+### Important: Optional Tool & User Responsibility
+
+Oversight is **strictly optional** and is **not bundled** into the Mise Browser application package:
+
+* **With Oversight Installed**: When you paste and execute a command prefixed with `oversight`, the tool intercepts the command, analyzes Shannon entropy for obfuscated payloads, checks for CVE vulnerabilities via the OSV.dev database, and renders an interactive TUI pager allowing line-by-line inspection before confirming execution.
+* **Without Oversight Installed (Running at Your Own Risk)**: If you choose not to install the standalone Oversight tool, any commands staged to the clipboard and executed in the terminal will run without safety checks, warnings, or heuristic auditing. You execute them entirely at your own risk.
 
 ### Installation & Integration
 
@@ -45,11 +53,7 @@ If you wish to enable active security scanning and paging:
    ```bash
    git clone https://github.com/Rakosn1cek/oversight.git
    ```
-2. Place the `oversight` executable within your system `PATH` (e.g. `~/.local/bin/` or `/usr/local/bin/`).
-
-When installed, commands prefixed with `oversight` (such as high-risk scripts, web URLs, or commands starting with `sudo`, `curl`, or `wget`) will run through the security scanner and pager prior to execution.
-
-If you choose not to install the standalone `oversight` utility, commands in the terminal will work as normal without any checks or warnings.
+2. Build and place the `oversight` executable within your system `PATH` (e.g. `~/.local/bin/` or `/usr/local/bin/`).
 
 ***
 

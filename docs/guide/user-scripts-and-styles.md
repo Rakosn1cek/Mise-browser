@@ -35,7 +35,7 @@ fanless Linux hardware:
 3. **Supply-Chain Security Risks**:
    Centralised extension stores suffer from a chronic security problem: popular
    extensions are regularly bought by data-collection companies and updated
-   silently with tracking code. Mise enforces a strictly air-gapped policy.
+   silently with tracking code. Mise enforces a strictly local-only policy.
    Only scripts and styles you explicitly save into your local config directory
    can ever execute.
 

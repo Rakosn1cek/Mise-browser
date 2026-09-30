@@ -32,7 +32,7 @@ Security, isolation, and upstream dependency freshness are foundational principl
 * **Engine Version Verification**: Active Mise, Electron, and Chromium runtime versions are visible directly within the Preferences overlay (`Ctrl + H`) and the Welcome view.
 * **Strict Process Sandboxing**: Webviews run with `contextIsolation: true`, `nodeIntegration: false`, and Chromium sandboxing enabled, guarded by a minimal IPC whitelist.
 * **Permissions Denied by Default**: Hardware access (camera, microphone, geolocation, and MIDI) is blocked by default.
-* **Local Data Ownership**: History and bookmarks reside in local SQLite databases under user-only permissions (`0600`) with zero cloud telemetry.
+* **Local Data Ownership & Zero Password Vault Targets**: Plaintext JSON configuration, notes, and history files are stored locally under user-only permissions (`0600`). Mise deliberately excludes built-in password managers, eliminating browser credential harvesting by infostealer malware. Session cookies are encrypted via host OS keyrings.
 * **Responsible Disclosure**: See our [Security Policy](SECURITY.md) for vulnerability disclosure guidelines via GitHub Security Advisories.
 
 ***
@@ -80,9 +80,14 @@ Comprehensive user guides and configuration references are hosted on our GitHub 
 
 ***
 
-## Standalone Security Scanner
+## Standalone Oversight Security Tool (Optional)
 
-The clipboard-mediated terminal handshake works alongside the standalone `oversight` utility. To enable active security scanning and paging for terminal commands, clone and install [Oversight](https://github.com/Rakosn1cek/oversight).
+Mise never executes shell commands directly or automatically in the background. When terminal operations are triggered, commands are copied to the system clipboard and an empty, unmanaged terminal emulator is spawned.
+
+Active command and script scanning is handled exclusively by [Oversight](https://github.com/Rakosn1cek/oversight), an independent external Rust-based terminal security intelligence scanner and interactive pager:
+
+* **With Oversight Installed**: High-risk scripts and commands are audited for malicious patterns, Shannon entropy obfuscation, and CVE vulnerabilities prior to execution.
+* **Without Oversight (Default)**: Oversight is completely optional and unbundled. Without it, commands copied to your clipboard are pasted and run entirely at your own risk without automated checks.
 
 ***
 
