@@ -94,7 +94,8 @@ import {
     swapSplitPanes, 
     closeSplitView, 
     isSplitActive, 
-    applySplitLayout 
+    applySplitLayout,
+    openUrlInSplit 
 } from './modules/splitView.js';
 
 // Attach functions needed across module boundaries to window
@@ -128,6 +129,7 @@ window.swapSplitPanes = swapSplitPanes;
 window.closeSplitView = closeSplitView;
 window.isSplitActive = isSplitActive;
 window.applySplitLayout = applySplitLayout;
+window.openUrlInSplit = openUrlInSplit;
 window.reapplyActiveUserStyles = reapplyActiveUserStyles;
 
 export function displayUpdateNotification(updateInfo) {
@@ -390,6 +392,7 @@ function setupEventListeners() {
         switch (action) {
             case 'spawn-tab': spawnNewBlankTab(); break;
             case 'spawn-tab-with-url': spawnTabWithUrl(args[0]); break;
+            case 'open-link-in-split': openUrlInSplit(args[0]); break;
             case 'open-transient-share': openTransientShareModal(args[0]); break;
             case 'toggle-address': displayAddressOverlay(); break;
             case 'toggle-dashboard': toggleDashboardView(); break;

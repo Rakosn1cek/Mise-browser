@@ -212,40 +212,62 @@ function flushPendingUrls() {
 extractUrlsFromArgs(process.argv).forEach(url => pendingUrls.push(url));
 
 
-function readHistory() {
-    try {
-        if (fs.existsSync(historyPath)) {
-            return JSON.parse(fs.readFileSync(historyPath, 'utf8'));
+let inMemoryHistory = null;
+let historyFlushTimer = null;
+
+function getHistoryCache() {
+    if (inMemoryHistory === null) {
+        try {
+            if (fs.existsSync(historyPath)) {
+                inMemoryHistory = JSON.parse(fs.readFileSync(historyPath, 'utf8'));
+            } else {
+                inMemoryHistory = [];
+            }
+        } catch (err) {
+            inMemoryHistory = [];
         }
-    } catch (err) {}
-    return [];
+    }
+    return inMemoryHistory;
 }
 
-function saveHistory(historyData) {
+function flushHistoryToDisk() {
+    if (historyFlushTimer) {
+        clearTimeout(historyFlushTimer);
+        historyFlushTimer = null;
+    }
+    if (inMemoryHistory === null) return;
     try {
         const dir = path.dirname(historyPath);
         if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-        fs.writeFileSync(historyPath, JSON.stringify(historyData, null, 4), 'utf8');
+        fs.writeFileSync(historyPath, JSON.stringify(inMemoryHistory, null, 4), 'utf8');
     } catch (err) {}
+}
+
+function scheduleHistoryFlush() {
+    if (historyFlushTimer) return;
+    historyFlushTimer = setTimeout(() => {
+        historyFlushTimer = null;
+        flushHistoryToDisk();
+    }, 4000);
 }
 
 function logVisit(title, url) {
     if (!url || url === 'about:blank' || url.startsWith('file://')) return;
 
-    let history = readHistory();
+    const history = getHistoryCache();
+    if (history.length > 0 && history[0].url === url) return;
+
     const newEntry = {
         title: title || url,
         url: url,
         timestamp: Date.now()
     };
 
-    if (history.length > 0 && history[0].url === url) return;
-
     history.unshift(newEntry);
     if (history.length > MAX_HISTORY_ITEMS) {
-        history = history.slice(0, MAX_HISTORY_ITEMS);
+        history.length = MAX_HISTORY_ITEMS;
     }
-    saveHistory(history);
+    scheduleHistoryFlush();
 }
 
 function sendSystemNotification(title, body) {
@@ -930,7 +952,7 @@ ipcMain.handle('save-session', async (event, sessionData) => {
 });
 
 ipcMain.handle('search-history', async (event, query) => {
-    const history = readHistory();
+    const history = getHistoryCache();
     if (!query || !query.trim()) return history;
 
     const lowerQuery = query.toLowerCase();
@@ -942,6 +964,11 @@ ipcMain.handle('search-history', async (event, query) => {
 
 ipcMain.handle('purge-history', async () => {
     try {
+        inMemoryHistory = [];
+        if (historyFlushTimer) {
+            clearTimeout(historyFlushTimer);
+            historyFlushTimer = null;
+        }
         if (fs.existsSync(historyPath)) {
             fs.writeFileSync(historyPath, JSON.stringify([], null, 4), 'utf8');
         }
@@ -1353,6 +1380,12 @@ app.on('web-contents-created', (event, webContents) => {
                 }
             };
 
+            const openLinkInSplit = (url) => {
+                if (mainWindow && mainWindow.webContents) {
+                    mainWindow.webContents.send('master-shortcut', 'open-link-in-split', url);
+                }
+            };
+
             const targetUrl = params.linkURL || params.srcURL || params.pageURL || webContents.getURL();
             const targetText = params.selectionText ? params.selectionText.trim() : webContents.getTitle();
             
@@ -1377,6 +1410,10 @@ app.on('web-contents-created', (event, webContents) => {
                 menu.append(new MenuItem({
                     label: 'Open Link in New Tab',
                     click: () => openLinkTab(params.linkURL)
+                }));
+                menu.append(new MenuItem({
+                    label: 'Open Link in Split View',
+                    click: () => openLinkInSplit(params.linkURL)
                 }));
                 menu.append(new MenuItem({
                     label: 'Copy Link Address',
@@ -1537,6 +1574,10 @@ if (gotSingleInstanceLock) {
             mainWindow.focus();
         }
         dispatchTabUrl(url);
+    });
+
+    app.on('before-quit', () => {
+        flushHistoryToDisk();
     });
 
     app.whenReady().then(() => {

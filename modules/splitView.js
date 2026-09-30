@@ -2,7 +2,7 @@
 // Dual-split view controller for side-by-side (1x2) or stacked comparison
 
 import { state } from './state.js';
-import { wakeTab } from './webview.js';
+import { wakeTab, renderWorkspaceUI } from './webview.js';
 
 export function getSplitState(wsName) {
     if (!wsName) wsName = state.sessionState.current_workspace;
@@ -313,4 +313,50 @@ export function handleTabRemovalInSplit(removedIdx) {
     }
 
     applySplitLayout();
+}
+
+export async function openUrlInSplit(url) {
+    if (!url) return;
+    const currentWS = state.sessionState.current_workspace;
+    if (!state.sessionState.workspaces[currentWS]) {
+        state.sessionState.workspaces[currentWS] = [];
+    }
+    const split = getSplitState(currentWS);
+
+    if (split.enabled) {
+        const targetIdx = (split.activePane === 'primary') ? split.secondaryIdx : split.primaryIdx;
+        state.sessionState.workspaces[currentWS][targetIdx] = url;
+        window.miseAPI.saveSession(state.sessionState);
+
+        const wv = state.activeViewsCache[currentWS]?.[targetIdx];
+        if (wv && typeof wv.setAttribute === 'function') {
+            wv.setAttribute('src', url);
+        } else {
+            wakeTab(currentWS, targetIdx);
+        }
+        applySplitLayout();
+        return;
+    }
+
+    const activeLi = document.querySelector('#TabList li.selected');
+    const activeIdx = activeLi ? Array.from(document.querySelectorAll('#TabList li')).indexOf(activeLi) : 0;
+
+    state.sessionState.workspaces[currentWS].push(url);
+    window.miseAPI.saveSession(state.sessionState);
+
+    const newTargetIdx = state.sessionState.workspaces[currentWS].length - 1;
+    if (!state.tabSleepStates[currentWS]) state.tabSleepStates[currentWS] = [];
+    state.tabSleepStates[currentWS][newTargetIdx] = null;
+    if (!state.tabActivityTimestamps[currentWS]) state.tabActivityTimestamps[currentWS] = [];
+    state.tabActivityTimestamps[currentWS][newTargetIdx] = Date.now();
+    if (!state.tabMediaAudible[currentWS]) state.tabMediaAudible[currentWS] = [];
+    state.tabMediaAudible[currentWS][newTargetIdx] = false;
+
+    split.enabled = true;
+    split.mode = split.mode || 'vertical';
+    split.primaryIdx = activeIdx;
+    split.secondaryIdx = newTargetIdx;
+    split.activePane = 'secondary';
+
+    renderWorkspaceUI(newTargetIdx);
 }
