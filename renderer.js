@@ -44,6 +44,7 @@ import {
 import { 
     commandRegistry, 
     toggleCommandPaletteView, 
+    closeCommandPalette,
     togglePreferencesView,
     filterPaletteCommands, 
     updatePaletteVisualSelection, 
@@ -117,6 +118,7 @@ window.executeSurgicalCookieWipe = executeSurgicalCookieWipe;
 window.executeGlobalCacheWipe = executeGlobalCacheWipe;
 window.toggleActiveDevTools = toggleActiveDevTools;
 window.toggleCommandPaletteView = toggleCommandPaletteView;
+window.closeCommandPalette = closeCommandPalette;
 window.buildDashboardTree = buildDashboardTree;
 window.toggleGlobalMediaPlayback = toggleGlobalMediaPlayback;
 window.toggleSplitView = toggleSplitView;

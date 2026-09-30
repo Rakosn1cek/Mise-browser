@@ -70,11 +70,54 @@
                     </div>
                 </div>
 
-                <!-- Floating Command Palette Window -->
-                <div id="CommandPaletteOverlay">
-                    <div class="palette-window">
-                        <input type="text" id="PaletteInput" placeholder="Search commands or type shell utility...">
-                        <ul id="PaletteList" tabindex="0"></ul>
+                <!-- Full-Page Command Centre Overlay -->
+                <div id="CommandPaletteOverlay" tabindex="0" style="display: none;">
+                    <div class="palette-page">
+                        <div class="palette-header">
+                            <div class="palette-header-top">
+                                <div class="palette-title-group">
+                                    <h1 class="palette-title">Command Centre</h1>
+                                    <span class="palette-subtitle">Actions, feature guide & keyboard shortcuts</span>
+                                </div>
+                                <button id="ClosePaletteBtn" class="nav-icon-button" title="Close Command Centre (Esc)">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+                            <div class="palette-input-wrapper">
+                                <i class="fa-solid fa-magnifying-glass palette-search-icon"></i>
+                                <input type="text" id="PaletteInput" placeholder="Search commands, shortcuts, or type shell utility..." autocomplete="off" spellcheck="false">
+                                <span id="PaletteMatchesCount" class="palette-matches-count"></span>
+                            </div>
+                            <div class="palette-category-filters" id="PaletteCategoryFilters">
+                                <button type="button" class="palette-filter-chip active" data-category="all">All</button>
+                                <button type="button" class="palette-filter-chip" data-category="Tabs & Navigation">Tabs & Navigation</button>
+                                <button type="button" class="palette-filter-chip" data-category="Split View">Split View</button>
+                                <button type="button" class="palette-filter-chip" data-category="Performance & Memory">Performance</button>
+                                <button type="button" class="palette-filter-chip" data-category="Tools & Notes">Tools & Notes</button>
+                                <button type="button" class="palette-filter-chip" data-category="User Scripts & Styles">Scripts & Styles</button>
+                                <button type="button" class="palette-filter-chip" data-category="Preferences & System">Preferences</button>
+                            </div>
+                        </div>
+
+                        <div class="palette-body">
+                            <div class="palette-list-column">
+                                <ul id="PaletteList" tabindex="0"></ul>
+                            </div>
+                            <div class="palette-inspector-column" id="PaletteInspector">
+                                <div class="palette-inspector-card" id="PaletteInspectorCard">
+                                    <!-- Dynamically populated based on selection or hover -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="palette-footer">
+                            <div class="palette-footer-shortcuts">
+                                <span class="palette-footer-hint"><kbd>↑</kbd><kbd>↓</kbd> Navigate</span>
+                                <span class="palette-footer-hint"><kbd>Enter</kbd> Select</span>
+                                <span class="palette-footer-hint"><kbd>Esc</kbd> Close</span>
+                            </div>
+                            <span class="palette-footer-tip">Air-gapped terminal fallback enabled</span>
+                        </div>
                     </div>
                 </div>
                 

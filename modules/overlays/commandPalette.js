@@ -1,7 +1,7 @@
 import { state } from '../state.js';
-import { focusActiveWebview, isTargetScript, isDarkMode } from '../utils.js';
+import { focusActiveWebview, getActiveWebview, isTargetScript, isDarkMode, escapeHtml } from '../utils.js';
 import { renderWorkspaceUI, switchTabFocus, spawnTabWithUrl, spawnNewBlankTab, handleTabRemoval, hibernateInactiveTabs, wakeAllTabsInWorkspace } from '../webview.js';
-import { toggleBookmarksOverlay } from './bookmarks.js';
+import { toggleBookmarksOverlay, promptQuickmark, addCurrentPageToBookmarks } from './bookmarks.js';
 import { syncVisualSettingsInputs, setupVisualSettingsListeners } from '../theme.js';
 
 function returnFocusToWebview() {
@@ -9,54 +9,577 @@ function returnFocusToWebview() {
     focusActiveWebview();
 }
 
-export const commandRegistry = {
-    "New DuckDuckGo Tab": () => spawnNewBlankTab(),
-    "Toggle Workspace Dashboard": () => window.toggleDashboardView && window.toggleDashboardView(),
-    "Toggle Floating Address Bar": () => window.displayAddressOverlay && window.displayAddressOverlay(),
-    "Toggle Link Hints Overlay": () => window.triggerLinkHints && window.triggerLinkHints(),
-    "Find In Page": () => window.toggleInPageSearch && window.toggleInPageSearch(),
-    "Toggle Bookmarks Manager": () => toggleBookmarksOverlay(),
-    "Toggle Quick Notes": () => window.toggleNotesOverlay && window.toggleNotesOverlay(),
-    "Toggle Zen Mode (Hide Sidebar)": () => window.toggleZenMode && window.toggleZenMode(),
-    "Toggle Sidebar (Expand/Collapse) [Ctrl+Shift+Z]": () => window.toggleSidebarExpansion && window.toggleSidebarExpansion(),
-    "Toggle Auto-Collapse Sidebar (Pin/Unpin)": () => window.toggleSidebarPin && window.toggleSidebarPin(),
-    "Focus Navigation Buttons [Ctrl+Shift+N]": () => {
-        const btn = document.getElementById('back-btn') || document.getElementById('toggle-nav-btn');
-        if (btn) btn.focus();
+export const COMMAND_DEFINITIONS = [
+    // Tabs & Navigation
+    {
+        id: 'spawn-tab',
+        title: 'New Blank Tab',
+        desc: 'Open a fresh DuckDuckGo tab in active workspace',
+        details: 'Creates an isolated Electron webview instance inside the current workspace, initialising with the default search engine whilst respecting your memory configuration.',
+        tip: 'Use Ctrl+T to spawn tabs rapidly without touching the mouse.',
+        category: 'Tabs & Navigation',
+        icon: 'fa-solid fa-plus',
+        actionId: 'spawn-tab',
+        shortcut: 'Ctrl+T',
+        keywords: ['tab', 'open', 'new', 'create', 'blank'],
+        action: () => spawnNewBlankTab()
     },
-    "Toggle Mise Settings (Menu Bar) [F1]": () => window.miseAPI && typeof window.miseAPI.toggleMenuBar === 'function' && window.miseAPI.toggleMenuBar(),
-    "Open Preferences": () => togglePreferencesView(),
-    "Toggle Actionable History": () => window.toggleHistoryOverlay && window.toggleHistoryOverlay(),
-    "Hibernate Inactive Tabs": () => hibernateInactiveTabs(),
-    "Wake All Tabs in Workspace": () => wakeAllTabsInWorkspace(state.sessionState.current_workspace),
-    "Mute/Unmute Active Tab": () => {
-        const currentWS = state.sessionState.current_workspace;
-        const activeListItem = document.querySelector('#TabList li.selected');
-        if (!activeListItem) return;
-        const currentIdx = Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem);
-        const activeWv = state.activeViewsCache[currentWS]?.[currentIdx];
-        if (activeWv) activeWv.setAudioMuted(!activeWv.isAudioMuted());
+    {
+        id: 'toggle-address',
+        title: 'Toggle Floating Address Bar',
+        desc: 'Open floating address bar for URL entry and search engine aliases',
+        details: 'Displays the modal address bar supporting direct URL routing, query auto-completion, and bang search engine aliases such as !w for Wikipedia.',
+        tip: 'Type ! to browse active search aliases or paste raw URLs to navigate instantly.',
+        category: 'Tabs & Navigation',
+        icon: 'fa-solid fa-compass',
+        actionId: 'toggle-address',
+        shortcut: 'Ctrl+L',
+        keywords: ['url', 'address', 'search', 'goto', 'navigate', 'location'],
+        action: () => window.displayAddressOverlay && window.displayAddressOverlay()
     },
-    "Reset Tab Zoom Level": () => {
-        const currentWS = state.sessionState.current_workspace;
-        const activeListItem = document.querySelector('#TabList li.selected');
-        if (!activeListItem) return;
-        const currentIdx = Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem);
-        const activeWv = state.activeViewsCache[currentWS]?.[currentIdx];
-        if (activeWv) activeWv.setZoomLevel(0);
+    {
+        id: 'toggle-dashboard',
+        title: 'Toggle Workspace Dashboard',
+        desc: 'Full-page tree view of all workspaces, tabs, and windows',
+        details: 'Renders an expansive visual hierarchy of every workspace, active tab, and sleeping webview across the session with bulk management controls.',
+        tip: 'Press Ctrl+Shift+W to audit and reorder your tabs across multi-window sessions.',
+        category: 'Tabs & Navigation',
+        icon: 'fa-solid fa-layer-group',
+        actionId: 'toggle-dashboard',
+        shortcut: 'Ctrl+Shift+W',
+        keywords: ['workspace', 'tree', 'tabs', 'all', 'overview', 'dashboard'],
+        action: () => window.toggleDashboardView && window.toggleDashboardView()
     },
-    "Toggle Active Webview DevTools": () => window.toggleActiveDevTools && window.toggleActiveDevTools(),
-    "Toggle Downloads Shelf [Ctrl+Shift+D]": () => window.toggleDownloadShelf && window.toggleDownloadShelf(),
-    "Toggle Dual-Split View (Side-by-Side) [Ctrl+\\ / Ctrl+Alt+S]": () => window.toggleSplitView && window.toggleSplitView('vertical'),
-    "Toggle Dual-Split View (Stacked)": () => window.toggleSplitView && window.toggleSplitView('horizontal'),
-    "Cycle Split View Orientation": () => window.cycleSplitOrientation && window.cycleSplitOrientation(),
-    "Switch Split Pane Focus [Ctrl+Alt+O]": () => window.switchSplitFocus && window.switchSplitFocus(),
-    "Swap Split Panes [Ctrl+Alt+X]": () => window.swapSplitPanes && window.swapSplitPanes(),
-    "Close Split View": () => window.closeSplitView && window.closeSplitView(),
-    "Open User Scripts Directory (~/.config/mise-browser/scripts)": () => window.miseAPI && window.miseAPI.openUserScriptsDir && window.miseAPI.openUserScriptsDir(),
-    "Open User Styles Directory (~/.config/mise-browser/styles)": () => window.miseAPI && window.miseAPI.openUserStylesDir && window.miseAPI.openUserStylesDir(),
-    "Reload User Scripts and Styles": () => window.miseAPI && window.miseAPI.reloadUserContent && window.miseAPI.reloadUserContent()
-};
+    {
+        id: 'toggle-history',
+        title: 'Toggle Actionable History',
+        desc: 'Search, filter by domain, or purge browsing history records',
+        details: 'Opens the searchable history ledger stored locally in SQLite, featuring domain-level filtering and surgical record purging.',
+        tip: 'Filter by specific domains to audit past navigation or clear privacy-sensitive sessions.',
+        category: 'Tabs & Navigation',
+        icon: 'fa-solid fa-clock-rotate-left',
+        actionId: 'toggle-history',
+        shortcut: 'Ctrl+Shift+H',
+        keywords: ['history', 'recent', 'visited', 'log', 'purge'],
+        action: () => window.toggleHistoryOverlay && window.toggleHistoryOverlay()
+    },
+    {
+        id: 'trigger-hints',
+        title: 'Toggle Link Hints Overlay',
+        desc: 'Display letter tags over clickable links for mouse-free browsing',
+        details: 'Injects lightweight letter tags over all actionable elements, hyperlinks, and inputs in the viewport to enable rapid keyboard-only navigation.',
+        tip: 'Press Ctrl+F, type the two-letter tag visible over any link, and follow it immediately.',
+        category: 'Tabs & Navigation',
+        icon: 'fa-solid fa-keyboard',
+        actionId: 'trigger-hints',
+        shortcut: 'Ctrl+F',
+        keywords: ['hints', 'click', 'links', 'letters', 'vim', 'keyboard'],
+        action: () => window.triggerLinkHints && window.triggerLinkHints()
+    },
+    {
+        id: 'toggle-find',
+        title: 'Find In Page',
+        desc: 'Search for text matches within the current active webpage',
+        details: 'Invokes the in-page search engine across the active webview frame, highlighting all occurrences with instant keyboard cycling.',
+        tip: 'Use Enter to jump forward and Shift+Enter to cycle backwards through matched terms.',
+        category: 'Tabs & Navigation',
+        icon: 'fa-solid fa-magnifying-glass',
+        actionId: 'toggle-find',
+        shortcut: 'Ctrl+S',
+        keywords: ['find', 'search', 'page', 'text', 'lookup'],
+        action: () => window.toggleInPageSearch && window.toggleInPageSearch()
+    },
+    {
+        id: 'reload-active-tab',
+        title: 'Reload Active Tab',
+        desc: 'Refresh the current webpage document and user assets',
+        details: 'Forces the active webview renderer to re-fetch the current URL whilst preserving your workspace tab state and session cache.',
+        tip: 'Press Ctrl+R to refresh hung web pages or verify live user script modifications.',
+        category: 'Tabs & Navigation',
+        icon: 'fa-solid fa-arrows-rotate',
+        actionId: 'reload-active-tab',
+        shortcut: 'Ctrl+R',
+        keywords: ['reload', 'refresh', 'page', 'update'],
+        action: () => {
+            const wv = getActiveWebview();
+            if (wv) wv.reload();
+        }
+    },
+    {
+        id: 'remove-tab',
+        title: 'Close Current Tab',
+        desc: 'Tear down active webview and focus the adjacent tab',
+        details: 'Safely disposes of the active webview frame, releasing allocated V8 heap memory and re-focusing the nearest remaining tab.',
+        tip: 'Use Ctrl+W or Ctrl+D to prune completed tasks from your workspace.',
+        category: 'Tabs & Navigation',
+        icon: 'fa-solid fa-xmark',
+        actionId: 'remove-tab',
+        shortcut: ['Ctrl+W', 'Ctrl+D'],
+        keywords: ['close', 'remove', 'delete', 'tab', 'exit'],
+        action: () => handleTabRemoval()
+    },
+    {
+        id: 'mute-tab',
+        title: 'Mute / Unmute Active Tab',
+        desc: 'Toggle audio output for the active tab without pausing media',
+        details: 'Instructs the underlying Chromium audio mixer to mute all web audio and video playback streams for the current webview instance.',
+        tip: 'Silence noisy background tabs without losing your playback position.',
+        category: 'Tabs & Navigation',
+        icon: 'fa-solid fa-volume-xmark',
+        keywords: ['audio', 'sound', 'mute', 'silence', 'volume'],
+        action: () => {
+            const currentWS = state.sessionState.current_workspace;
+            const activeListItem = document.querySelector('#TabList li.selected');
+            if (!activeListItem) return;
+            const currentIdx = Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem);
+            const activeWv = state.activeViewsCache[currentWS]?.[currentIdx];
+            if (activeWv) activeWv.setAudioMuted(!activeWv.isAudioMuted());
+        }
+    },
+    {
+        id: 'reset-zoom',
+        title: 'Reset Tab Zoom Level',
+        desc: 'Restore webpage zoom magnification back to 100% default',
+        details: 'Resets the webview viewport zoom factor to unity (0 level), clearing custom page scalings applied via trackpad or shortcuts.',
+        tip: 'Quickly recover standard layout proportions if a page was accidentally zoomed.',
+        category: 'Tabs & Navigation',
+        icon: 'fa-solid fa-magnifying-glass-arrows-rotate',
+        keywords: ['zoom', 'scale', 'magnify', 'size', '100%'],
+        action: () => {
+            const currentWS = state.sessionState.current_workspace;
+            const activeListItem = document.querySelector('#TabList li.selected');
+            if (!activeListItem) return;
+            const currentIdx = Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem);
+            const activeWv = state.activeViewsCache[currentWS]?.[currentIdx];
+            if (activeWv) activeWv.setZoomLevel(0);
+        }
+    },
+    {
+        id: 'focus-sidebar',
+        title: 'Focus Sidebar Tab List',
+        desc: 'Move keyboard focus directly into vertical tabs list',
+        details: 'Shifts keyboard focus to the vertical tab sidebar, enabling arrow-key navigation, tab selection, and workspace switching.',
+        tip: 'Use Ctrl+M followed by Up and Down arrows to browse tabs hands-free.',
+        category: 'Tabs & Navigation',
+        icon: 'fa-solid fa-bars',
+        actionId: 'focus-sidebar',
+        shortcut: 'Ctrl+M',
+        keywords: ['sidebar', 'tabs', 'focus', 'list'],
+        action: () => {
+            const selectedTab = document.querySelector('#TabList li.selected') || document.querySelector('#TabList li');
+            if (selectedTab) selectedTab.focus();
+        }
+    },
+    {
+        id: 'focus-nav-buttons',
+        title: 'Focus Navigation Buttons',
+        desc: 'Cycle focus across Back, Forward, Sidebar, Split, and Menu buttons',
+        details: 'Places keyboard focus onto the primary toolbar buttons, allowing navigation using left and right arrow keys.',
+        tip: 'Press Ctrl+Shift+N to jump straight to the Back and Forward navigation cluster.',
+        category: 'Tabs & Navigation',
+        icon: 'fa-solid fa-arrow-right-arrow-left',
+        actionId: 'focus-nav-buttons',
+        shortcut: ['Ctrl+Shift+N', 'Ctrl+Tab'],
+        keywords: ['buttons', 'back', 'forward', 'top', 'controls'],
+        action: () => {
+            const btn = document.getElementById('back-btn') || document.getElementById('toggle-nav-btn');
+            if (btn) btn.focus();
+        }
+    },
+    {
+        id: 'focus-webview',
+        title: 'Focus Active Webview',
+        desc: 'Return keyboard and input focus to the active webpage',
+        details: 'Transfers OS input focus directly back into the guest webpage document, allowing uninterrupted typing and interaction.',
+        tip: 'Press Ctrl+B at any time to return focus from chrome overlays into the page.',
+        category: 'Tabs & Navigation',
+        icon: 'fa-solid fa-window-restore',
+        actionId: 'focus-webview',
+        shortcut: 'Ctrl+B',
+        keywords: ['focus', 'webview', 'page', 'content'],
+        action: () => returnFocusToWebview()
+    },
+    {
+        id: 'toggle-sidebar-expansion',
+        title: 'Toggle Sidebar (Expand / Collapse)',
+        desc: 'Expand sidebar to show titles or collapse to thin icon strip',
+        details: 'Toggles the tab sidebar width between the full 220px expanded layout with titles and the compact 48px icon strip.',
+        tip: 'Collapse the sidebar when working on small displays or reading long articles.',
+        category: 'Tabs & Navigation',
+        icon: 'fa-solid fa-arrows-left-right',
+        actionId: 'toggle-zen-mode',
+        shortcut: 'Ctrl+Shift+Z',
+        keywords: ['sidebar', 'collapse', 'expand', 'width'],
+        action: () => window.toggleSidebarExpansion && window.toggleSidebarExpansion()
+    },
+    {
+        id: 'toggle-sidebar-pin',
+        title: 'Toggle Auto-Collapse Sidebar (Pin / Unpin)',
+        desc: 'Pin sidebar open or auto-shrink to 36px strip expanding on hover',
+        details: 'Configures auto-collapse behaviour: when unpinned, the sidebar shrinks to 36px and slides out smoothly when your cursor hovers nearby.',
+        tip: 'Unpin for an immersive browsing canvas that leaves controls within easy reach.',
+        category: 'Tabs & Navigation',
+        icon: 'fa-solid fa-thumbtack',
+        keywords: ['pin', 'lock', 'unpin', 'autohide', 'strip'],
+        action: () => window.toggleSidebarPin && window.toggleSidebarPin()
+    },
+    {
+        id: 'toggle-zen-mode',
+        title: 'Toggle Zen Mode (Hide Sidebar)',
+        desc: 'Maximise screen real estate by completely hiding the sidebar',
+        details: 'Hides all peripheral navigation chrome and sidebars, delivering an edge-to-edge reading viewport.',
+        tip: 'Pair Zen mode with Link Hints for distraction-free, mouse-free research.',
+        category: 'Tabs & Navigation',
+        icon: 'fa-solid fa-eye-slash',
+        keywords: ['zen', 'fullscreen', 'distraction', 'hide'],
+        action: () => window.toggleZenMode && window.toggleZenMode()
+    },
+
+    // Split View
+    {
+        id: 'toggle-split-vertical',
+        title: 'Toggle Dual-Split View (Side-by-Side)',
+        desc: 'Tile two webviews side by side in equal columns for multitasking',
+        details: 'Splits the active viewport into two concurrent columns, allowing side-by-side comparison, documentation reading, or multitasking.',
+        tip: 'Press Ctrl+\\ to toggle dual-pane layout instantly on widescreen displays.',
+        category: 'Split View',
+        icon: 'fa-solid fa-table-columns',
+        actionId: 'toggle-split',
+        shortcut: ['Ctrl+\\', 'Ctrl+Alt+S'],
+        keywords: ['split', 'dual', 'side', 'vertical', 'columns', 'multitask'],
+        action: () => window.toggleSplitView && window.toggleSplitView('vertical')
+    },
+    {
+        id: 'toggle-split-horizontal',
+        title: 'Toggle Dual-Split View (Stacked)',
+        desc: 'Tile two webviews stacked vertically in top and bottom rows',
+        details: 'Divides the viewport horizontally into stacked top and bottom panes, ideal for viewing reference materials above a web console.',
+        tip: 'Useful on vertical monitors or when referencing notes above an active page.',
+        category: 'Split View',
+        icon: 'fa-solid fa-table-rows',
+        keywords: ['split', 'horizontal', 'stacked', 'rows', 'top', 'bottom'],
+        action: () => window.toggleSplitView && window.toggleSplitView('horizontal')
+    },
+    {
+        id: 'cycle-split-orientation',
+        title: 'Cycle Split View Orientation',
+        desc: 'Switch active dual-split layout between side-by-side and stacked',
+        details: 'Toggles active multi-pane geometry between side-by-side columns and stacked rows without reloading either webview.',
+        tip: 'Adapt your workspace layout on the fly depending on webpage content.',
+        category: 'Split View',
+        icon: 'fa-solid fa-arrows-rotate',
+        keywords: ['split', 'rotate', 'cycle', 'layout', 'orientation'],
+        action: () => window.cycleSplitOrientation && window.cycleSplitOrientation()
+    },
+    {
+        id: 'switch-split-focus',
+        title: 'Switch Split Pane Focus',
+        desc: 'Move active keyboard and scroll focus to the opposite split pane',
+        details: 'Switches the active input target between primary and secondary split panes without needing cursor clicks.',
+        tip: 'Use Ctrl+Alt+O to cycle focus smoothly while typing or scrolling.',
+        category: 'Split View',
+        icon: 'fa-solid fa-arrows-split-up-and-left',
+        actionId: 'switch-split-focus',
+        shortcut: ['Ctrl+Alt+O', 'Ctrl+Alt+Tab'],
+        keywords: ['split', 'focus', 'pane', 'switch', 'alternate'],
+        action: () => window.switchSplitFocus && window.switchSplitFocus()
+    },
+    {
+        id: 'swap-split-panes',
+        title: 'Swap Split Panes',
+        desc: 'Exchange positions of the primary and secondary split panes',
+        details: 'Reverses the left/right or top/bottom layout ordering of the active dual panes whilst maintaining their states.',
+        tip: 'Press Ctrl+Alt+X to flip reading materials to your dominant side.',
+        category: 'Split View',
+        icon: 'fa-solid fa-right-left',
+        actionId: 'swap-split-panes',
+        shortcut: 'Ctrl+Alt+X',
+        keywords: ['split', 'swap', 'flip', 'reverse', 'exchange'],
+        action: () => window.swapSplitPanes && window.swapSplitPanes()
+    },
+    {
+        id: 'close-split-view',
+        title: 'Close Split View',
+        desc: 'Exit dual-split mode and return to standard single tab viewport',
+        details: 'Closes the secondary split pane container and restores the primary webview to the full single viewport.',
+        tip: 'Quickly return to single-task focus once your comparison work is finished.',
+        category: 'Split View',
+        icon: 'fa-solid fa-rectangle-xmark',
+        keywords: ['split', 'close', 'exit', 'single'],
+        action: () => window.closeSplitView && window.closeSplitView()
+    },
+
+    // Performance & Memory
+    {
+        id: 'hibernate-tabs',
+        title: 'Hibernate Inactive Tabs',
+        desc: 'Detach idle background tabs from DOM to free CPU and system RAM',
+        details: 'Detaches background webview renderers from the active DOM tree, suspending JavaScript execution and releasing system RAM while saving tab URLs.',
+        tip: 'Run this periodically during heavy research sessions to keep memory usage under 600 MB.',
+        category: 'Performance & Memory',
+        icon: 'fa-solid fa-bed',
+        keywords: ['ram', 'memory', 'sleep', 'hibernate', 'clean', 'suspend', 'free'],
+        action: () => hibernateInactiveTabs()
+    },
+    {
+        id: 'wake-all-tabs',
+        title: 'Wake All Tabs in Workspace',
+        desc: 'Reload and restore all hibernating tabs in active workspace',
+        details: 'Iterates through all sleeping tabs in the active workspace, reattaching them to the DOM and re-establishing renderer connections.',
+        tip: 'Use this when resuming work on a project after an extended idle period.',
+        category: 'Performance & Memory',
+        icon: 'fa-solid fa-bolt',
+        keywords: ['wake', 'reload', 'restore', 'tabs', 'all'],
+        action: () => wakeAllTabsInWorkspace(state.sessionState.current_workspace)
+    },
+
+    // Tools & Notes
+    {
+        id: 'toggle-notes',
+        title: 'Toggle Quick Notes',
+        desc: 'Open Markdown notes scratchpad saved to ~/.config/mise-browser/notes.md',
+        details: 'Opens an integrated Markdown scratchpad backed by an auto-saving plain text file in your user configuration directory.',
+        tip: 'Press Ctrl+N to jot thoughts or snippets without opening external text editors.',
+        category: 'Tools & Notes',
+        icon: 'fa-solid fa-note-sticky',
+        actionId: 'toggle-notes',
+        shortcut: 'Ctrl+N',
+        keywords: ['notes', 'scratchpad', 'markdown', 'memo', 'write'],
+        action: () => window.toggleNotesOverlay && window.toggleNotesOverlay()
+    },
+    {
+        id: 'toggle-bookmarks',
+        title: 'Bookmarks & Quickmarks Manager',
+        desc: 'Open bookmarks manager and single-key jump quickmarks',
+        details: 'Displays your saved bookmarks ledger and configured quickmarks with real-time filtering, editing, and deletion controls.',
+        tip: 'Press Ctrl+Shift+B to open, or use Ctrl+J followed by a single key to jump to marked sites.',
+        category: 'Tools & Notes',
+        icon: 'fa-solid fa-bookmark',
+        actionId: 'toggle-bookmarks',
+        shortcut: 'Ctrl+Shift+B',
+        keywords: ['bookmarks', 'quickmarks', 'saved', 'favorites'],
+        action: () => toggleBookmarksOverlay()
+    },
+    {
+        id: 'add-bookmark',
+        title: 'Bookmark Current Page',
+        desc: 'Save active webpage title and URL into bookmarks collection',
+        details: 'Captures the active tab title and canonical URL, storing it in ~/.config/mise-browser/bookmarks.json for instant recall.',
+        tip: 'Press Ctrl+Shift+A to bookmark important reference pages with one keypress.',
+        category: 'Tools & Notes',
+        icon: 'fa-solid fa-star',
+        actionId: 'add-bookmark',
+        shortcut: 'Ctrl+Shift+A',
+        keywords: ['bookmark', 'save', 'favorite', 'page', 'add'],
+        action: () => addCurrentPageToBookmarks()
+    },
+    {
+        id: 'set-quickmark',
+        title: 'Set Quickmark',
+        desc: 'Assign active webpage to a single alphanumeric shortcut key',
+        details: 'Associates the active URL with a single keyboard character (e.g. g for GitHub), enabling instant one-key navigation.',
+        tip: 'Press Ctrl+Shift+Q, then tap any letter or number key to create an instant jump target.',
+        category: 'Tools & Notes',
+        icon: 'fa-solid fa-bolt-lightning',
+        actionId: 'set-quickmark',
+        shortcut: 'Ctrl+Shift+Q',
+        keywords: ['quickmark', 'shortcut', 'letter', 'mark', 'set'],
+        action: () => promptQuickmark('set')
+    },
+    {
+        id: 'jump-quickmark',
+        title: 'Jump to Quickmark',
+        desc: 'Navigate instantly to a designated quickmark key',
+        details: 'Prompts for a quickmark identifier key and immediately routes the active webview to the associated URL.',
+        tip: 'Press Ctrl+J followed by your assigned character to jump without searching.',
+        category: 'Tools & Notes',
+        icon: 'fa-solid fa-location-arrow',
+        actionId: 'jump-quickmark',
+        shortcut: 'Ctrl+J',
+        keywords: ['quickmark', 'jump', 'go', 'navigate', 'key'],
+        action: () => promptQuickmark('jump')
+    },
+    {
+        id: 'toggle-downloads',
+        title: 'Toggle Downloads Shelf',
+        desc: 'Slide out bottom downloads drawer with speed and file links',
+        details: 'Opens the download shelf showing real-time progress bars, transfer rates, destination paths, and file opening actions.',
+        tip: 'Press Ctrl+Shift+D to track active downloads without switching workspaces.',
+        category: 'Tools & Notes',
+        icon: 'fa-solid fa-download',
+        actionId: 'toggle-downloads',
+        shortcut: 'Ctrl+Shift+D',
+        keywords: ['downloads', 'files', 'shelf', 'drawer'],
+        action: () => window.toggleDownloadShelf && window.toggleDownloadShelf()
+    },
+    {
+        id: 'toggle-devtools',
+        title: 'Toggle Active Webview DevTools',
+        desc: 'Inspect webpage DOM elements, console logs, and network traffic',
+        details: 'Opens Chrome Developer Tools docked or detached for the active webview guest frame to inspect elements and debug scripts.',
+        tip: 'Press F12 or Ctrl+Shift+I to audit network payloads and debug user scripts.',
+        category: 'Tools & Notes',
+        icon: 'fa-solid fa-bug',
+        actionId: 'toggle-devtools',
+        shortcut: ['Ctrl+Shift+I', 'F12'],
+        keywords: ['devtools', 'inspect', 'console', 'debug', 'elements'],
+        action: () => window.toggleActiveDevTools && window.toggleActiveDevTools()
+    },
+    {
+        id: 'toggle-global-media',
+        title: 'Toggle Global Media Playback',
+        desc: 'Play or pause audio and video streams across all workspaces',
+        details: 'Broadcasts a play/pause toggle signal to media elements across all active webviews, allowing background audio control.',
+        tip: 'Press Ctrl+Shift+0 or F10 to pause music or podcasts whilst focusing elsewhere.',
+        category: 'Tools & Notes',
+        icon: 'fa-solid fa-play',
+        actionId: 'toggle-global-media',
+        shortcut: ['Ctrl+Shift+0', 'F10'],
+        keywords: ['media', 'play', 'pause', 'music', 'video', 'stream'],
+        action: () => window.toggleGlobalMediaPlayback && window.toggleGlobalMediaPlayback()
+    },
+
+    // User Scripts & Styles
+    {
+        id: 'open-scripts-dir',
+        title: 'Open User Scripts Directory',
+        desc: 'Browse local ~/.config/mise-browser/scripts in file manager',
+        details: 'Launches your system file manager in the local user scripts directory where Tampermonkey-compatible scripts reside.',
+        tip: 'Drop .user.js files here to automate page behaviours and customise web applications.',
+        category: 'User Scripts & Styles',
+        icon: 'fa-solid fa-file-code',
+        keywords: ['scripts', 'userscript', 'tampermonkey', 'js', 'javascript', 'folder', 'directory'],
+        action: () => window.miseAPI && window.miseAPI.openUserScriptsDir && window.miseAPI.openUserScriptsDir()
+    },
+    {
+        id: 'open-styles-dir',
+        title: 'Open User Styles Directory',
+        desc: 'Browse local ~/.config/mise-browser/styles in file manager',
+        details: 'Opens the user styles directory in your file manager for injecting custom CSS stylesheets into matched domains.',
+        tip: 'Drop .user.css files here to create dark themes or tweak styling for any website.',
+        category: 'User Scripts & Styles',
+        icon: 'fa-solid fa-paintbrush',
+        keywords: ['styles', 'userstyle', 'stylish', 'css', 'folder', 'directory', 'theme'],
+        action: () => window.miseAPI && window.miseAPI.openUserStylesDir && window.miseAPI.openUserStylesDir()
+    },
+    {
+        id: 'reload-user-content',
+        title: 'Reload User Scripts and Styles',
+        desc: 'Hot-reload all custom user scripts and stylesheet injections',
+        details: 'Clears the in-memory script cache and re-scans the user directory, hot-reloading scripts and styles across active webviews.',
+        tip: 'Run this command immediately after saving CSS or JS changes to preview them live.',
+        category: 'User Scripts & Styles',
+        icon: 'fa-solid fa-rotate',
+        keywords: ['reload', 'refresh', 'inject', 'userscripts', 'userstyles'],
+        action: () => window.miseAPI && window.miseAPI.reloadUserContent && window.miseAPI.reloadUserContent()
+    },
+
+    // Preferences & System
+    {
+        id: 'open-preferences',
+        title: 'Open Preferences',
+        desc: 'Configure GPU switches, themes, spellcheck language, and email handler',
+        details: 'Opens the full-page configuration view controlling hardware acceleration, renderer process caps, background throttling, and appearance.',
+        tip: 'Press Ctrl+H to access deep browser tuning and custom keybinding tables.',
+        category: 'Preferences & System',
+        icon: 'fa-solid fa-sliders',
+        actionId: 'toggle-help',
+        shortcut: 'Ctrl+H',
+        keywords: ['preferences', 'settings', 'config', 'gpu', 'theme', 'options'],
+        action: () => togglePreferencesView()
+    },
+    {
+        id: 'toggle-private-mode',
+        title: 'Toggle Private Browsing Mode',
+        desc: 'Switch session partition to in-memory non-persistent storage',
+        details: 'Switches the session state to an isolated in-memory partition where cookies, cache, and history are discarded upon exit.',
+        tip: 'Press Ctrl+Shift+P for ephemeral research sessions that leave no trace on disk.',
+        category: 'Preferences & System',
+        icon: 'fa-solid fa-user-secret',
+        actionId: 'toggle-private-mode',
+        shortcut: 'Ctrl+Shift+P',
+        keywords: ['private', 'incognito', 'privacy', 'partition'],
+        action: () => {
+            const next = !state.globalPrivateModeActive;
+            state.globalPrivateModeActive = next;
+            if (window.handlePrivateBrowsingStateShift) window.handlePrivateBrowsingStateShift(next);
+        }
+    },
+    {
+        id: 'toggle-theme',
+        title: 'Toggle Colour Theme (Dark / Light)',
+        desc: 'Switch browser interface and webview styling between dark and light',
+        details: 'Swaps UI theme variables and inverts webview rendering shaders to match your preferred ambient lighting.',
+        tip: 'Quickly adapt screen contrast when working late or in brightly lit environments.',
+        category: 'Preferences & System',
+        icon: 'fa-solid fa-circle-half-stroke',
+        keywords: ['theme', 'dark', 'light', 'mode', 'colour', 'color'],
+        action: () => window.toggleInterfaceTheme && window.toggleInterfaceTheme()
+    },
+    {
+        id: 'toggle-menu-bar',
+        title: 'Toggle Application Menu Bar',
+        desc: 'Show or hide the native top application window menu bar',
+        details: 'Toggles visibility of the top native window menu bar containing Electron application controls and default accelerators.',
+        tip: 'Press F1 to reveal native menus when troubleshooting or accessing system shortcuts.',
+        category: 'Preferences & System',
+        icon: 'fa-solid fa-window-maximize',
+        actionId: 'toggle-menu-bar',
+        shortcut: 'F1',
+        keywords: ['menu', 'bar', 'top', 'native', 'window'],
+        action: () => window.miseAPI && typeof window.miseAPI.toggleMenuBar === 'function' && window.miseAPI.toggleMenuBar()
+    }
+];
+
+export const commandRegistry = {};
+COMMAND_DEFINITIONS.forEach(cmd => {
+    commandRegistry[cmd.title] = cmd.action;
+    commandRegistry[cmd.id] = cmd.action;
+});
+
+let dynamicKeybinds = {};
+
+async function loadDynamicKeybinds() {
+    if (window.miseAPI && typeof window.miseAPI.getKeybinds === 'function') {
+        try {
+            dynamicKeybinds = (await window.miseAPI.getKeybinds()) || {};
+        } catch (e) {}
+    }
+}
+
+function getCommandShortcut(cmd) {
+    if (cmd.actionId && dynamicKeybinds[cmd.actionId]) {
+        return dynamicKeybinds[cmd.actionId];
+    }
+    return cmd.shortcut || '';
+}
+
+function formatShortcutBadges(shortcut) {
+    if (!shortcut) return '';
+    const list = Array.isArray(shortcut) ? shortcut : [shortcut];
+    return list.map(b => {
+        const text = String(b).replace(/\+/g, ' + ');
+        return `<kbd class="shortcut-badge">${escapeHtml(text)}</kbd>`;
+    }).join('<span class="shortcut-sep">/</span>');
+}
+
+function recordRecentCommand(cmdId) {
+    if (!cmdId) return;
+    try {
+        const stored = JSON.parse(localStorage.getItem('mise_recent_commands') || '[]');
+        const updated = [cmdId, ...stored.filter(id => id !== cmdId)].slice(0, 4);
+        localStorage.setItem('mise_recent_commands', JSON.stringify(updated));
+    } catch (e) {}
+}
+
+function getRecentCommands() {
+    try {
+        const stored = JSON.parse(localStorage.getItem('mise_recent_commands') || '[]');
+        return stored.map(id => COMMAND_DEFINITIONS.find(c => c.id === id)).filter(Boolean);
+    } catch (e) {
+        return [];
+    }
+}
 
 let preferencesActive = false;
 
@@ -273,7 +796,7 @@ export function setupPreferencesListeners() {
                 await window.miseAPI.updateBrowserSettings(mergedCfg);
 
                 if (note) {
-                    note.textContent = 'Saved — applied immediately, no restart needed.';
+                    note.textContent = 'Saved: applied immediately, no restart needed.';
                     note.classList.add('visible');
                     setTimeout(() => note.classList.remove('visible'), 2500);
                 }
@@ -305,76 +828,331 @@ export async function togglePreferencesView() {
     }
 }
 
-export function toggleCommandPaletteView() {
+let activeCategoryFilter = 'all';
+
+export function closeCommandPalette() {
+    if (!state.paletteActive) return;
+    state.paletteActive = false;
+    const overlay = document.getElementById('CommandPaletteOverlay');
+    if (overlay) overlay.style.display = 'none';
+    returnFocusToWebview();
+}
+
+export async function openCommandPalette() {
     const overlay = document.getElementById('CommandPaletteOverlay');
     const input = document.getElementById('PaletteInput');
-    
-    state.paletteActive = !state.paletteActive;
+    if (!overlay || !input) return;
+
+    if (preferencesActive) togglePreferencesView();
+    if (state.dashboardActive) {
+        state.dashboardActive = false;
+        const dash = document.getElementById('DashboardOverlay');
+        if (dash) dash.style.display = 'none';
+    }
+    await loadDynamicKeybinds();
+
+    activeCategoryFilter = 'all';
+    const filterContainer = document.getElementById('PaletteCategoryFilters');
+    if (filterContainer) {
+        filterContainer.querySelectorAll('.palette-filter-chip').forEach(chip => {
+            chip.classList.toggle('active', chip.dataset.category === 'all');
+        });
+    }
+
+    state.paletteActive = true;
+    overlay.style.display = 'flex';
+    input.value = '';
+    filterPaletteCommands('');
+    input.focus();
+}
+
+export async function toggleCommandPaletteView() {
     if (state.paletteActive) {
-        if (preferencesActive) togglePreferencesView();
-        if (state.dashboardActive) {
-            state.dashboardActive = false;
-            document.getElementById('DashboardOverlay').style.display = 'none';
-        }
-        overlay.style.display = 'flex';
-        input.value = '';
-        filterPaletteCommands('');
-        input.focus();
+        closeCommandPalette();
     } else {
-        overlay.style.display = 'none';
-        returnFocusToWebview();
+        await openCommandPalette();
+    }
+}
+
+export function renderPaletteInspector(cmd) {
+    const card = document.getElementById('PaletteInspectorCard');
+    if (!card) return;
+
+    if (!cmd) {
+        card.innerHTML = `
+            <div class="palette-inspector-empty">
+                <i class="fa-solid fa-magnifying-glass" style="font-size: 32px; opacity: 0.35;"></i>
+                <p>Select or hover over a command to view detailed feature documentation, usage guidelines, and keyboard shortcuts.</p>
+            </div>
+        `;
+        return;
+    }
+
+    if (cmd.id === 'terminal-fallback') {
+        card.innerHTML = `
+            <div class="palette-inspector-hero">
+                <div class="palette-inspector-icon">
+                    <i class="fa-solid fa-terminal"></i>
+                </div>
+                <div class="palette-inspector-heading">
+                    <h2 class="palette-inspector-title">Terminal Oversight</h2>
+                    <span class="palette-inspector-badge">Air-Gapped Shell</span>
+                </div>
+            </div>
+
+            <div class="palette-inspector-section">
+                <span class="palette-inspector-label">Command</span>
+                <p class="palette-inspector-text">${escapeHtml(cmd.title)}</p>
+            </div>
+
+            <div class="palette-inspector-section">
+                <span class="palette-inspector-label">Architecture</span>
+                <p class="palette-inspector-text">${escapeHtml(cmd.details || cmd.desc)}</p>
+            </div>
+
+            <div class="palette-inspector-section">
+                <span class="palette-inspector-label">Workflow Tip</span>
+                <div class="palette-inspector-tip">${escapeHtml(cmd.tip || 'Press Enter to execute in external terminal.')}</div>
+            </div>
+
+            <button type="button" class="palette-inspector-execute-btn" id="PaletteInspectorExecuteBtn">
+                <i class="fa-solid fa-play"></i>
+                <span>Execute Terminal Command</span>
+            </button>
+        `;
+    } else {
+        const shortcut = getCommandShortcut(cmd);
+        const shortcutHtml = formatShortcutBadges(shortcut);
+        const categoryName = cmd.category || cmd.displayCategory || 'General';
+
+        card.innerHTML = `
+            <div class="palette-inspector-hero">
+                <div class="palette-inspector-icon">
+                    <i class="${cmd.icon}"></i>
+                </div>
+                <div class="palette-inspector-heading">
+                    <h2 class="palette-inspector-title">${escapeHtml(cmd.title)}</h2>
+                    <span class="palette-inspector-badge">${escapeHtml(categoryName)}</span>
+                </div>
+            </div>
+
+            <div class="palette-inspector-section">
+                <span class="palette-inspector-label">Keyboard Shortcut</span>
+                <div class="palette-inspector-shortcut-row">
+                    <div class="palette-inspector-keys">${shortcutHtml || '<span style="opacity: 0.5; font-size: 11px;">No shortcut assigned</span>'}</div>
+                    ${cmd.actionId ? `<span class="palette-inspector-key-action">${escapeHtml(cmd.actionId)}</span>` : ''}
+                </div>
+            </div>
+
+            <div class="palette-inspector-section">
+                <span class="palette-inspector-label">Feature Overview</span>
+                <p class="palette-inspector-text">${escapeHtml(cmd.details || cmd.desc || 'No additional details available.')}</p>
+            </div>
+
+            ${cmd.tip ? `
+            <div class="palette-inspector-section">
+                <span class="palette-inspector-label">Workflow Tip</span>
+                <div class="palette-inspector-tip">${escapeHtml(cmd.tip)}</div>
+            </div>
+            ` : ''}
+
+            <button type="button" class="palette-inspector-execute-btn" id="PaletteInspectorExecuteBtn">
+                <i class="fa-solid fa-play"></i>
+                <span>Execute Action</span>
+            </button>
+        `;
+    }
+
+    const execBtn = document.getElementById('PaletteInspectorExecuteBtn');
+    if (execBtn) {
+        execBtn.onclick = (e) => {
+            e.preventDefault();
+            executePaletteSelection(document.getElementById('PaletteInput')?.value.trim() || '');
+        };
     }
 }
 
 export function filterPaletteCommands(filterText) {
-    const search = filterText.toLowerCase();
-    state.paletteMatches = Object.keys(commandRegistry).filter(cmd => cmd.toLowerCase().includes(search));
-    
+    const search = String(filterText || '').toLowerCase().trim();
     const listContainer = document.getElementById('PaletteList');
+    const countBadge = document.getElementById('PaletteMatchesCount');
+    if (!listContainer) return;
+    
     listContainer.innerHTML = '';
     
-    state.paletteMatches.forEach((cmd, idx) => {
+    const candidateCommands = (activeCategoryFilter === 'all')
+        ? COMMAND_DEFINITIONS
+        : COMMAND_DEFINITIONS.filter(cmd => cmd.category === activeCategoryFilter);
+
+    let matches = [];
+    if (!search) {
+        if (activeCategoryFilter === 'all') {
+            const recent = getRecentCommands();
+            if (recent.length > 0) {
+                recent.forEach(cmd => {
+                    matches.push({ ...cmd, displayCategory: 'Recently Used' });
+                });
+            }
+        }
+        candidateCommands.forEach(cmd => {
+            matches.push({ ...cmd, displayCategory: cmd.category });
+        });
+    } else {
+        candidateCommands.forEach(cmd => {
+            const matchTitle = cmd.title.toLowerCase().includes(search);
+            const matchDesc = cmd.desc.toLowerCase().includes(search);
+            const matchDetails = (cmd.details || '').toLowerCase().includes(search);
+            const matchCategory = cmd.category.toLowerCase().includes(search);
+            const matchKeywords = Array.isArray(cmd.keywords) && cmd.keywords.some(k => k.toLowerCase().includes(search));
+            const sc = getCommandShortcut(cmd);
+            const matchShortcut = Array.isArray(sc)
+                ? sc.some(s => s.toLowerCase().includes(search))
+                : (typeof sc === 'string' && sc.toLowerCase().includes(search));
+
+            if (matchTitle || matchDesc || matchDetails || matchCategory || matchKeywords || matchShortcut) {
+                matches.push({ ...cmd, displayCategory: cmd.category });
+            }
+        });
+        
+        if (matches.length === 0 && search) {
+            matches.push({
+                id: 'terminal-fallback',
+                title: `Run in terminal: "${filterText}"`,
+                desc: 'Pass command to air-gapped terminal protocol on Enter',
+                details: 'Executes this input string in your external desktop terminal via the isolated oversight security protocol.',
+                tip: 'Press Enter or click Execute to copy and invoke the terminal command.',
+                displayCategory: 'Terminal Oversight',
+                category: 'Terminal',
+                icon: 'fa-solid fa-terminal',
+                shortcut: 'Enter',
+                action: () => {
+                    executeTerminalFallback(filterText);
+                }
+            });
+        }
+    }
+    
+    state.paletteMatches = matches;
+    if (countBadge) {
+        if (!search) {
+            countBadge.textContent = `${matches.length} commands`;
+        } else {
+            countBadge.textContent = `${matches.length} ${matches.length === 1 ? 'match' : 'matches'}`;
+        }
+    }
+    
+    if (matches.length === 0) {
+        renderPaletteInspector(null);
+        return;
+    }
+
+    let currentCategory = '';
+    let itemIndex = 0;
+    
+    matches.forEach((cmd) => {
+        if (cmd.displayCategory !== currentCategory) {
+            currentCategory = cmd.displayCategory;
+            const header = document.createElement('li');
+            header.className = 'palette-category-header';
+            header.textContent = currentCategory;
+            listContainer.appendChild(header);
+        }
+        
         const li = document.createElement('li');
         li.className = 'palette-item';
-        li.textContent = cmd;
+        li.dataset.idx = String(itemIndex);
+        
+        const shortcut = getCommandShortcut(cmd);
+        const shortcutHtml = formatShortcutBadges(shortcut);
+        
+        li.innerHTML = `
+            <div class="palette-item-icon">
+                <i class="${cmd.icon}"></i>
+            </div>
+            <span class="palette-item-title">${escapeHtml(cmd.title)}</span>
+            <div class="palette-item-meta">
+                <span class="palette-item-category">${escapeHtml(cmd.category || cmd.displayCategory)}</span>
+                <span class="palette-item-shortcut">${shortcutHtml}</span>
+            </div>
+        `;
+        
+        const capturedIdx = itemIndex;
+        li.addEventListener('mouseenter', () => {
+            state.paletteSelectionIdx = capturedIdx;
+            updatePaletteVisualSelection(false);
+        });
         li.addEventListener('click', () => {
-            state.paletteSelectionIdx = idx; 
+            state.paletteSelectionIdx = capturedIdx;
             executePaletteSelection(document.getElementById('PaletteInput').value.trim());
         });
+        
         listContainer.appendChild(li);
+        itemIndex++;
     });
     
     state.paletteSelectionIdx = 0;
-    updatePaletteVisualSelection();
+    updatePaletteVisualSelection(true);
 }
 
-export function updatePaletteVisualSelection() {
-    const items = document.querySelectorAll('#PaletteList li');
+export function updatePaletteVisualSelection(scrollIntoView = true) {
+    const items = document.querySelectorAll('#PaletteList .palette-item');
     items.forEach((item, idx) => {
         if (idx === state.paletteSelectionIdx) {
             item.classList.add('selected');
-            item.scrollIntoView({ block: 'nearest' });
+            if (scrollIntoView) {
+                item.scrollIntoView({ block: 'nearest' });
+            }
         } else {
             item.classList.remove('selected');
         }
     });
+
+    const activeCmd = state.paletteMatches[state.paletteSelectionIdx];
+    renderPaletteInspector(activeCmd);
 }
 
 export function handlePaletteInputNavigation(e) {
+    const total = state.paletteMatches.length;
     if (e.key === 'Escape') {
         e.preventDefault();
-        toggleCommandPaletteView();
+        e.stopPropagation();
+        closeCommandPalette();
+        return;
     } else if (e.key === 'ArrowDown') {
         e.preventDefault();
-        if (state.paletteMatches.length > 0) {
-            state.paletteSelectionIdx = (state.paletteSelectionIdx + 1) % state.paletteMatches.length;
-            updatePaletteVisualSelection();
+        if (total > 0) {
+            state.paletteSelectionIdx = (state.paletteSelectionIdx + 1) % total;
+            updatePaletteVisualSelection(true);
         }
     } else if (e.key === 'ArrowUp') {
         e.preventDefault();
-        if (state.paletteMatches.length > 0) {
-            state.paletteSelectionIdx = (state.paletteSelectionIdx - 1 + state.paletteMatches.length) % state.paletteMatches.length;
-            updatePaletteVisualSelection();
+        if (total > 0) {
+            state.paletteSelectionIdx = (state.paletteSelectionIdx - 1 + total) % total;
+            updatePaletteVisualSelection(true);
+        }
+    } else if (e.key === 'PageDown') {
+        e.preventDefault();
+        if (total > 0) {
+            state.paletteSelectionIdx = Math.min(total - 1, state.paletteSelectionIdx + 5);
+            updatePaletteVisualSelection(true);
+        }
+    } else if (e.key === 'PageUp') {
+        e.preventDefault();
+        if (total > 0) {
+            state.paletteSelectionIdx = Math.max(0, state.paletteSelectionIdx - 5);
+            updatePaletteVisualSelection(true);
+        }
+    } else if (e.key === 'Home') {
+        e.preventDefault();
+        if (total > 0) {
+            state.paletteSelectionIdx = 0;
+            updatePaletteVisualSelection(true);
+        }
+    } else if (e.key === 'End') {
+        e.preventDefault();
+        if (total > 0) {
+            state.paletteSelectionIdx = total - 1;
+            updatePaletteVisualSelection(true);
         }
     } else if (e.key === 'Enter') {
         e.preventDefault();
@@ -382,23 +1160,8 @@ export function handlePaletteInputNavigation(e) {
     }
 }
 
-export function executePaletteSelection(rawInputText) {
-    const targetCommand = state.paletteMatches[state.paletteSelectionIdx];
-    
-    state.paletteActive = false;
-    document.getElementById('CommandPaletteOverlay').style.display = 'none';
-
-    if (targetCommand && commandRegistry[targetCommand]) {
-        commandRegistry[targetCommand]();
-        returnFocusToWebview();
-        return;
-    }
-
-    if (!rawInputText) {
-        returnFocusToWebview();
-        return;
-    }
-
+function executeTerminalFallback(rawInputText) {
+    if (!rawInputText) return;
     let finalCommandToCopy = rawInputText;
     const lowerInput = rawInputText.toLowerCase();
     const isRawWebUrl = lowerInput.startsWith('http://') || lowerInput.startsWith('https://');
@@ -408,12 +1171,91 @@ export function executePaletteSelection(rawInputText) {
         finalCommandToCopy = `oversight ${rawInputText}`;
     }
 
-    window.miseAPI.executeTerminalCommand(finalCommandToCopy);
+    if (window.miseAPI && typeof window.miseAPI.executeTerminalCommand === 'function') {
+        window.miseAPI.executeTerminalCommand(finalCommandToCopy);
+    }
+}
+
+export function executePaletteSelection(rawInputText) {
+    const targetCommand = state.paletteMatches[state.paletteSelectionIdx];
+    
+    closeCommandPalette();
+
+    if (targetCommand) {
+        if (targetCommand.id !== 'terminal-fallback') {
+            recordRecentCommand(targetCommand.id);
+        }
+        if (typeof targetCommand.action === 'function') {
+            targetCommand.action();
+            returnFocusToWebview();
+            return;
+        }
+        if (typeof targetCommand === 'string' && commandRegistry[targetCommand]) {
+            commandRegistry[targetCommand]();
+            returnFocusToWebview();
+            return;
+        }
+    }
+
+    if (rawInputText) {
+        executeTerminalFallback(rawInputText);
+    }
     returnFocusToWebview();
 }
 
+export function setupCommandPaletteOverlayListeners() {
+    const overlay = document.getElementById('CommandPaletteOverlay');
+    if (overlay) {
+        overlay.addEventListener('mousedown', (e) => {
+            if (e.target === overlay) {
+                closeCommandPalette();
+            }
+        });
+        overlay.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                e.stopPropagation();
+                closeCommandPalette();
+            }
+        });
+    }
+
+    const closeBtn = document.getElementById('ClosePaletteBtn');
+    if (closeBtn) {
+        closeBtn.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            closeCommandPalette();
+        };
+    }
+
+    const filterContainer = document.getElementById('PaletteCategoryFilters');
+    if (filterContainer) {
+        filterContainer.addEventListener('click', (e) => {
+            const chip = e.target.closest('.palette-filter-chip');
+            if (!chip) return;
+            activeCategoryFilter = chip.dataset.category || 'all';
+            filterContainer.querySelectorAll('.palette-filter-chip').forEach(c => {
+                c.classList.toggle('active', c === chip);
+            });
+            const input = document.getElementById('PaletteInput');
+            filterPaletteCommands(input ? input.value : '');
+            if (input) input.focus();
+        });
+    }
+
+    const listContainer = document.getElementById('PaletteList');
+    if (listContainer) {
+        listContainer.addEventListener('keydown', handlePaletteInputNavigation);
+    }
+}
+
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', setupPreferencesListeners);
+    document.addEventListener('DOMContentLoaded', () => {
+        setupPreferencesListeners();
+        setupCommandPaletteOverlayListeners();
+    });
 } else {
     setupPreferencesListeners();
+    setupCommandPaletteOverlayListeners();
 }

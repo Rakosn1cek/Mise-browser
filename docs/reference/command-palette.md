@@ -1,47 +1,96 @@
-# Command Palette Reference
+# Command Centre & Palette Reference
 
-The Command Palette gives you rapid, fuzzy-searchable access to all Mise operations from a single input overlay.
+The Command Centre gives you rapid, searchable access to all Mise operations, internal features, and keyboard shortcuts from a full-page educational overlay.
 
 ---
 
-## Opening the Command Palette
+## Accessing the Command Centre
 
 - Press **Ctrl + P** from anywhere in Mise.
-- Start typing to filter commands dynamically.
-- Use the **Up** and **Down** arrow keys to highlight an action.
-- Press **Enter** to execute the highlighted command.
-- Press **Escape** to dismiss the palette.
+- Type to fuzzy-search commands, shortcuts, and keywords dynamically.
+- Click category filter chips (**All**, **Tabs & Navigation**, **Split View**, **Performance**, **Tools & Notes**, **Scripts & Styles**, **Preferences**) to filter actions instantly.
+- Use **Up** and **Down** arrow keys (or hover with your cursor) to inspect any command.
+- View the right-hand **Feature Inspector** card for in-depth architecture descriptions, default and customized keybindings, and workflow tips.
+- Press **Enter** or click **Execute Action** to run the selected action.
+- Press **Escape** or click the close button to dismiss the overlay and return focus to your webpage.
 
 ---
 
-## Registered Commands
+## Two-Column Interface Layout
 
-| Command Title | Description |
-| :--- | :--- |
-| **New DuckDuckGo Tab** | Opens a fresh tab set to the default search provider. |
-| **Toggle Workspace Dashboard** | Opens the workspace tree overlay to manage workspaces and tabs. |
-| **Toggle Floating Address Bar** | Opens the floating address bar for URL entry or autocomplete search. |
-| **Toggle Link Hints Overlay** | Overlays two-letter click hints onto the active web page. |
-| **Find In Page** | Activates the in-page text search overlay. |
-| **Toggle Bookmarks Manager** | Opens the bookmarks and quickmarks management overlay. |
-| **Toggle Quick Notes** | Opens the Markdown scratchpad overlay. |
-| **Toggle Zen Mode (Hide Sidebar)** | Hides or restores the vertical tab sidebar. |
-| **Focus Navigation Buttons [Ctrl+Shift+N]** | Focuses the sidebar navigation action buttons (Back, Forward, New Tab, Menu). |
-| **Toggle Mise Settings (Menu Bar) [F1]** | Displays or hides the native application menu bar. |
-| **Open Preferences** | Opens the full Preferences overlay for engine, privacy, and theme settings. |
-| **Toggle Actionable History** | Opens the history search and purge overlay. |
-| **Hibernate Inactive Tabs** | Detaches all idle background tabs across all workspaces to immediately reclaim memory. |
-| **Wake All Tabs in Workspace** | Re-instantiates all sleeping tabs in the active workspace. |
-| **Mute/Unmute Active Tab** | Toggles audio output on the currently active tab. |
-| **Reset Tab Zoom Level** | Resets page zoom on the active tab back to 100%. |
-| **Toggle Active Webview DevTools** | Opens or closes the Chromium DevTools inspection window. |
-| **Toggle Downloads Shelf [Ctrl+Shift+D]** | Toggles the native download shelf status bar. |
-| **Toggle Dual-Split View (Side-by-Side) [Ctrl+\\ / Ctrl+Alt+S]** | Toggles 1x2 vertical dual split view for comparing two tabs. |
-| **Toggle Dual-Split View (Stacked)** | Toggles 1x2 horizontal stacked dual split view. |
-| **Cycle Split View Orientation** | Cycles layout between side by side, stacked, and single pane. |
-| **Switch Split Pane Focus [Ctrl+Alt+O]** | Moves active focus between pane 1 and pane 2. |
-| **Swap Split Panes [Ctrl+Alt+X]** | Swaps left and right (or top and bottom) split pane contents. |
-| **Close Split View** | Exits split mode and focuses the current active pane full screen. |
-| **Open User Scripts Directory (~/.config/mise-browser/scripts)** | Opens the local directory containing user scripts in the default file manager. |
-| **Open User Styles Directory (~/.config/mise-browser/styles)** | Opens the local directory containing user styles in the default file manager. |
-| **Reload User Scripts and Styles** | Manually re-reads and parses all scripts and styles from disk immediately. |
+1. **Left Column (Command List)**: A compact, categorised list of operations featuring icons, action titles, category tags, and active keybinding badges.
+2. **Right Column (Feature Inspector)**: A static preview panel detailing the selected or hovered command, displaying its assigned shortcut, action identifier, operational architecture, workflow recommendations, and a direct execution trigger.
+3. **Air-Gapped Terminal Fallback**: If an entered search does not match any internal command, pressing Enter or executing the fallback securely passes the instruction to your external terminal using the oversight protocol.
+
+---
+
+## Categorised Command Directory
+
+### Tabs & Navigation
+
+| Command Title | Shortcut | Action ID | Description |
+| :--- | :--- | :--- | :--- |
+| **New Blank Tab** | `Ctrl+T` | `spawn-tab` | Creates an isolated webview in the current workspace. |
+| **Toggle Floating Address Bar** | `Ctrl+L` | `toggle-address` | Modal address bar with query completion and bang search engine aliases. |
+| **Toggle Workspace Dashboard** | `Ctrl+Shift+W` | `toggle-dashboard` | Full-page hierarchical tree of all workspaces, tabs, and windows. |
+| **Toggle Actionable History** | `Ctrl+Shift+H` | `toggle-history` | Local SQLite history ledger with domain-level filtering and record purging. |
+| **Toggle Link Hints Overlay** | `Ctrl+F` | `trigger-hints` | Letter tags overlaid on clickable webpage links for keyboard browsing. |
+| **Find In Page** | `Ctrl+S` | `toggle-find` | In-page text search overlay across active webview content. |
+| **Reload Active Tab** | `Ctrl+R` | `reload-active-tab` | Refreshes current webview document while preserving session state. |
+| **Close Current Tab** | `Ctrl+W` / `Ctrl+D` | `remove-tab` | Disposes of active webview and reclaims allocated V8 heap memory. |
+| **Mute / Unmute Active Tab** | — | — | Toggles Chromium audio output for the active tab without pausing playback. |
+| **Reset Tab Zoom Level** | — | — | Restores webview zoom factor back to 100% default. |
+| **Focus Sidebar Tab List** | `Ctrl+M` | `focus-sidebar` | Moves keyboard focus directly into the vertical tab list. |
+| **Focus Navigation Buttons** | `Ctrl+Shift+N` | `focus-nav-buttons` | Cycles keyboard focus across toolbar navigation controls. |
+| **Focus Active Webview** | `Ctrl+B` | `focus-webview` | Returns keyboard and typing focus directly to the guest webpage. |
+| **Toggle Sidebar (Expand / Collapse)** | `Ctrl+Shift+Z` | `toggle-zen-mode` | Alternates sidebar between 220px expanded width and 48px icon strip. |
+| **Toggle Auto-Collapse Sidebar** | — | — | Pins sidebar open or enables auto-shrink to 36px strip with hover expansion. |
+| **Toggle Zen Mode (Hide Sidebar)** | — | — | Completely hides peripheral sidebar chrome for edge-to-edge reading. |
+
+### Split View
+
+| Command Title | Shortcut | Action ID | Description |
+| :--- | :--- | :--- | :--- |
+| **Toggle Dual-Split View (Side-by-Side)** | `Ctrl+\` / `Ctrl+Alt+S` | `toggle-split` | Tiles two webviews side by side in equal columns for multitasking. |
+| **Toggle Dual-Split View (Stacked)** | — | — | Tiles two webviews stacked vertically in top and bottom rows. |
+| **Cycle Split View Orientation** | — | — | Cycles layout geometry between vertical side-by-side and horizontal stacked. |
+| **Switch Split Pane Focus** | `Ctrl+Alt+O` | `switch-split-focus` | Moves active input and scroll focus to the opposite split pane. |
+| **Swap Split Panes** | `Ctrl+Alt+X` | `swap-split-panes` | Reverses positions of primary and secondary split panes. |
+| **Close Split View** | — | — | Exits dual-split mode and restores primary webview to full viewport. |
+
+### Performance & Memory
+
+| Command Title | Shortcut | Action ID | Description |
+| :--- | :--- | :--- | :--- |
+| **Hibernate Inactive Tabs** | — | — | Detaches background webviews from DOM to free CPU cycles and RAM. |
+| **Wake All Tabs in Workspace** | — | — | Restores and reconnects all sleeping tabs in the active workspace. |
+
+### Tools & Notes
+
+| Command Title | Shortcut | Action ID | Description |
+| :--- | :--- | :--- | :--- |
+| **Toggle Quick Notes** | `Ctrl+N` | `toggle-notes` | Markdown scratchpad saved locally to `~/.config/mise-browser/notes.md`. |
+| **Bookmarks & Quickmarks Manager** | `Ctrl+Shift+B` | `toggle-bookmarks` | Ledger manager for saved bookmarks and single-key quickmarks. |
+| **Bookmark Current Page** | `Ctrl+Shift+A` | `add-bookmark` | Saves current webpage title and URL into bookmarks collection. |
+| **Set Quickmark** | `Ctrl+Shift+Q` | `set-quickmark` | Binds active webpage to an instant single-key navigation shortcut. |
+| **Jump to Quickmark** | `Ctrl+J` | `jump-quickmark` | Prompts for assigned quickmark character to navigate immediately. |
+| **Toggle Downloads Shelf** | `Ctrl+Shift+D` | `toggle-downloads` | Bottom drawer showing transfer speed, progress bars, and file links. |
+| **Toggle Active Webview DevTools** | `F12` / `Ctrl+Shift+I` | `toggle-devtools` | Chromium developer tools for inspecting DOM, network, and console. |
+| **Toggle Global Media Playback** | `Ctrl+Shift+0` / `F10` | `toggle-global-media` | Global play and pause toggle across all active media streams. |
+
+### User Scripts & Styles
+
+| Command Title | Shortcut | Action ID | Description |
+| :--- | :--- | :--- | :--- |
+| **Open User Scripts Directory** | — | — | Opens `~/.config/mise-browser/scripts` in default system file manager. |
+| **Open User Styles Directory** | — | — | Opens `~/.config/mise-browser/styles` in default system file manager. |
+| **Reload User Scripts and Styles** | — | — | Hot-reloads custom scripts and stylesheets across active webviews. |
+
+### Preferences & System
+
+| Command Title | Shortcut | Action ID | Description |
+| :--- | :--- | :--- | :--- |
+| **Open Preferences** | `Ctrl+H` | `toggle-help` | Full-page settings view for GPU switches, memory caps, and themes. |
+| **Toggle Private Browsing Mode** | `Ctrl+Shift+P` | `toggle-private-mode` | Switches session to in-memory non-persistent partition. |
+| **Toggle Colour Theme (Dark / Light)** | — | — | Swaps UI styling and webview shader inversion between dark and light. |
+| **Toggle Application Menu Bar** | `F1` | `toggle-menu-bar` | Shows or hides the native top window menu bar. |
