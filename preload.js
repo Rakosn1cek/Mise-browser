@@ -62,6 +62,13 @@ contextBridge.exposeInMainWorld('miseAPI', {
     openUserStylesDir: () => ipcRenderer.invoke('open-user-styles-dir'),
     getUserContentSummary: () => ipcRenderer.invoke('get-user-content-summary'),
     compactMemory: () => ipcRenderer.invoke('compact-memory'),
+    checkForUpdates: (manual) => ipcRenderer.invoke('check-for-updates', manual),
+    openExternal: (url) => ipcRenderer.invoke('open-external', url),
+    onUpdateAvailable: (callback) => {
+        const handler = (event, info) => callback(info);
+        ipcRenderer.on('update-available', handler);
+        return () => ipcRenderer.removeListener('update-available', handler);
+    },
     onUserContentUpdated: (callback) => {
         const handler = (event, kind) => callback(kind);
         ipcRenderer.on('user-content-updated', handler);

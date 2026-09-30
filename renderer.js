@@ -130,6 +130,84 @@ window.isSplitActive = isSplitActive;
 window.applySplitLayout = applySplitLayout;
 window.reapplyActiveUserStyles = reapplyActiveUserStyles;
 
+export function displayUpdateNotification(updateInfo) {
+    if (!updateInfo || !updateInfo.updateAvailable) return;
+    
+    // Update notification banner in Preferences modal
+    const banner = document.getElementById('UpdateNotificationBanner');
+    const textEl = document.getElementById('UpdateNotificationText');
+    const actionBtn = document.getElementById('UpdateActionBtn');
+    
+    if (banner && textEl) {
+        textEl.textContent = `A newer release (${updateInfo.latestVersion}) is available. You are running v${updateInfo.currentVersion}.`;
+        banner.style.display = 'flex';
+        if (actionBtn) {
+            actionBtn.style.display = 'inline-block';
+            actionBtn.onclick = () => {
+                if (window.miseAPI && typeof window.miseAPI.openExternal === 'function') {
+                    window.miseAPI.openExternal(updateInfo.releaseUrl);
+                }
+            };
+        }
+    }
+
+    // Sidebar update icon indicator
+    const sidebarIndicator = document.getElementById('update-indicator-btn');
+    if (sidebarIndicator) {
+        sidebarIndicator.style.display = 'inline-flex';
+        sidebarIndicator.title = `Mise ${updateInfo.latestVersion} available. Click to review release.`;
+        sidebarIndicator.onclick = () => {
+            if (typeof window.togglePreferencesView === 'function') {
+                window.togglePreferencesView();
+            }
+        };
+    }
+}
+
+export async function triggerUpdateCheck(manual = false) {
+    const checkBtn = document.getElementById('CheckForUpdatesBtn');
+    if (checkBtn) {
+        checkBtn.disabled = true;
+        checkBtn.textContent = 'Checking...';
+    }
+
+    try {
+        if (window.miseAPI && typeof window.miseAPI.checkForUpdates === 'function') {
+            const result = await window.miseAPI.checkForUpdates(manual);
+            if (result && result.updateAvailable) {
+                displayUpdateNotification(result);
+                if (checkBtn) checkBtn.textContent = 'Update Available';
+            } else {
+                if (checkBtn) checkBtn.textContent = 'Up to Date';
+                if (manual) {
+                    const banner = document.getElementById('UpdateNotificationBanner');
+                    const textEl = document.getElementById('UpdateNotificationText');
+                    const actionBtn = document.getElementById('UpdateActionBtn');
+                    if (banner && textEl) {
+                        textEl.textContent = `Mise v${result?.currentVersion || ''} is currently up to date.`;
+                        banner.style.display = 'flex';
+                        if (actionBtn) actionBtn.style.display = 'none';
+                        setTimeout(() => {
+                            if (!result?.updateAvailable) banner.style.display = 'none';
+                        }, 5000);
+                    }
+                }
+            }
+        }
+    } catch (err) {
+        if (checkBtn) checkBtn.textContent = 'Check Failed';
+    } finally {
+        setTimeout(() => {
+            if (checkBtn) {
+                checkBtn.disabled = false;
+                checkBtn.textContent = 'Check for Updates';
+            }
+        }, 3000);
+    }
+}
+
+window.checkForUpdates = triggerUpdateCheck;
+
 let findActive = false;
 
 async function initializeBrowser() {
@@ -237,6 +315,16 @@ async function initializeBrowser() {
             }
         }).catch(() => {});
     }
+
+    if (window.miseAPI && typeof window.miseAPI.onUpdateAvailable === 'function') {
+        window.miseAPI.onUpdateAvailable((info) => {
+            displayUpdateNotification(info);
+        });
+    }
+
+    document.getElementById('CheckForUpdatesBtn')?.addEventListener('click', () => {
+        triggerUpdateCheck(true);
+    });
 
     if (window.miseAPI && typeof window.miseAPI.signalRendererReady === 'function') {
         window.miseAPI.signalRendererReady();

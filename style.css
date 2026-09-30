@@ -236,6 +236,21 @@ body.sidebar-pinned .nav-action-layout {
     border-color: var(--accent);
 }
 
+#update-indicator-btn {
+    color: var(--accent);
+    border-color: var(--accent);
+    animation: updatePulse 2.5s infinite ease-in-out;
+}
+
+@keyframes updatePulse {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(122, 162, 247, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 0 4px rgba(122, 162, 247, 0);
+    }
+}
+
 #TabList {
     list-style: none;
     flex-grow: 1;

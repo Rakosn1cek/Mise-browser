@@ -528,6 +528,17 @@ export const COMMAND_DEFINITIONS = [
         shortcut: 'F1',
         keywords: ['menu', 'bar', 'top', 'native', 'window'],
         action: () => window.miseAPI && typeof window.miseAPI.toggleMenuBar === 'function' && window.miseAPI.toggleMenuBar()
+    },
+    {
+        id: 'check-for-updates',
+        title: 'Check for Updates',
+        desc: 'Check GitHub Releases for newer Mise versions and release notes',
+        details: 'Queries the GitHub release ledger to check if a newer Mise version is available, providing direct links to release notes and binary packages.',
+        tip: 'Mise tracks upstream Electron and Chromium security releases twice weekly.',
+        category: 'Preferences & System',
+        icon: 'fa-solid fa-arrows-rotate',
+        keywords: ['update', 'upgrade', 'version', 'release', 'github', 'check'],
+        action: () => window.checkForUpdates && window.checkForUpdates(true)
     }
 ];
 
