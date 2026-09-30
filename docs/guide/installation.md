@@ -1,45 +1,97 @@
 # Installation & Setup
 
-Mise is designed to be lightweight, modular, and easy to run from source on Linux systems.
+Mise is designed to be lightweight, modular, and easy to run across Linux, macOS, and Windows. You can download pre-built self-contained binaries directly from GitHub Releases or run from source.
 
 ---
 
-## Prerequisites
+## Pre-Built Executables
 
-Before setting up Mise, ensure your system has `Node.js` (v18 or newer) and `npm` installed.
+Official releases and cryptographic checksums are published for every tagged version on our [GitHub Releases page](https://github.com/Rakosn1cek/Mise-browser/releases).
+
+### Linux (Distro-Agnostic AppImage)
+
+The AppImage runs out of the box on Ubuntu, Debian, Fedora, Arch Linux, openSUSE, and any standard modern Linux distribution without package managers or root privileges.
+
+1. Download the latest `Mise-<version>-x86_64.AppImage`.
+2. Make the file executable:
+   ```bash
+   chmod +x Mise-*.AppImage
+   ```
+3. Run the AppImage directly:
+   ```bash
+   ./Mise-*.AppImage
+   ```
+
+To integrate with desktop menus, you can also place the AppImage in your `~/Applications/` directory or use utilities such as `AppImageLauncher`.
+
+### macOS (DMG & Zip)
+
+1. Download the appropriate image for your Mac architecture:
+   - Apple Silicon (M1 / M2 / M3 / M4): `Mise-<version>-arm64.dmg`
+   - Intel processors: `Mise-<version>-x64.dmg`
+2. Open the `.dmg` file and drag **Mise Browser** into your **Applications** folder.
+3. **First-Launch Note**: Because independent open-source projects do not carry paid enterprise code-signing certificates, macOS Gatekeeper may present an unverified developer dialog. Right-click **Mise Browser** in Finder and select **Open**, or run the following command in Terminal:
+   ```bash
+   xattr -cr "/Applications/Mise Browser.app"
+   ```
+
+### Windows (Portable & Setup Installer)
+
+1. Download either release artefact:
+   - **Portable**: `Mise-<version>-portable.exe` (run directly from any folder, zero installation).
+   - **Setup Installer**: `Mise-Setup-<version>.exe` (installs to `%LOCALAPPDATA%` with a Start Menu entry).
+2. **First-Launch Note**: Windows SmartScreen may present a *"Windows protected your PC"* banner on freshly released binaries. Click **More info** followed by **Run anyway**.
+
+---
+
+## Verifying Checksums
+
+Every release includes a published `SHA256SUMS.txt` file containing cryptographic hashes for all released packages.
+
+To verify download authenticity:
+
+```bash
+sha256sum -c SHA256SUMS.txt
+```
+
+Verify that your downloaded file outputs `OK`.
+
+---
+
+## Running from Source
+
+If you prefer building and executing directly from source on Linux:
+
+### Prerequisites
+
+Ensure your system has `Node.js` (v20 or newer) and `npm` installed.
 
 On Arch Linux:
 ```bash
 sudo pacman -S nodejs npm
 ```
 
-Ensure you have a terminal emulator installed for the air-gapped terminal features (such as `kitty`, `alacritty`, `foot`, `st`, or `xterm`).
+Ensure you have a terminal emulator installed for the clipboard-mediated terminal features (such as `kitty`, `alacritty`, `foot`, `st`, or `xterm`).
 
----
-
-## Setup from Source
+### Setup & Launch
 
 1. Clone the repository and navigate into the project directory:
+   ```bash
+   git clone https://github.com/Rakosn1cek/Mise-browser.git
+   cd Mise-browser
+   ```
 
-```bash
-git clone https://github.com/Rakosn1cek/MiseBrowser.git
-cd MiseBrowser
-```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
 
-2. Install runtime and build dependencies:
-
-```bash
-npm install
-```
-
-3. Start Mise Browser:
-
-```bash
-npm start
-```
+3. Launch Mise Browser:
+   ```bash
+   npm start
+   ```
 
 Alternatively, you can run the provided launcher script:
-
 ```bash
 chmod +x launch.sh
 ./launch.sh
@@ -47,15 +99,15 @@ chmod +x launch.sh
 
 ---
 
-## Desktop Environment Integration
+## Desktop Environment Integration (Source Installs)
 
-To integrate Mise directly into your desktop application launcher (such as Rofi, Wofi, or your desktop menu) and install high-resolution icons:
+To integrate a source install directly into your desktop application launcher (such as Rofi, Wofi, or your desktop application menu) and deploy icons:
 
 ```bash
 npm run install-desktop
 ```
 
-This installs `mise.desktop` into `~/.local/share/applications/` and deploys icons at 48x48, 128x128, and 256x256 resolutions to `~/.local/share/icons/hicolor/`.
+This installs `mise.desktop` into `~/.local/share/applications/` and deploys icons across 48x48, 128x128, and 256x256 resolutions to `~/.local/share/icons/hicolor/`.
 
 ---
 

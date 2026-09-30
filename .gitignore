@@ -24,3 +24,6 @@ electron-dev.skill
 # VitePress build and cache
 docs/.vitepress/dist/
 docs/.vitepress/cache/
+
+# Build and distribution outputs
+dist/

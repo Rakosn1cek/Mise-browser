@@ -141,8 +141,8 @@ function initializeEngineSwitches() {
     }
     
     // Compositor texture boundary allocation and V8 memory headroom
-    app.commandLine.appendSwitch('js-flags', ['-', '-', 'max-old-space-size=256 ', '-', '-', 'expose-gc'].join(''));
-    app.commandLine.appendSwitch('force-gpu-mem-available-mb', '384');
+    app.commandLine.appendSwitch('js-flags', ['-', '-', 'max-old-space-size=512 ', '-', '-', 'expose-gc'].join(''));
+    app.commandLine.appendSwitch('force-gpu-mem-available-mb', '1024');
 
     app.commandLine.appendSwitch('renderer-process-limit', String(cfg.process_limit || 4));
     app.commandLine.appendSwitch('disable-shared-workers');

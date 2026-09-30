@@ -9,13 +9,83 @@
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs",
-    "install-desktop": "mkdir -p ~/.local/share/applications ~/.local/share/icons/hicolor/{48x48,128x128,256x256}/apps && cp mise.desktop ~/.local/share/applications/ && cp assets/icons/Mise-logo48.png ~/.local/share/icons/hicolor/48x48/apps/mise.png && cp assets/icons/Mise-logo128.png ~/.local/share/icons/hicolor/128x128/apps/mise.png && cp assets/icons/Mise-logo256.png ~/.local/share/icons/hicolor/256x256/apps/mise.png && update-desktop-database ~/.local/share/applications && gtk-update-icon-cache -f -t ~/.local/share/icons/hicolor"
+    "install-desktop": "mkdir -p ~/.local/share/applications ~/.local/share/icons/hicolor/{48x48,128x128,256x256}/apps && cp mise.desktop ~/.local/share/applications/ && cp assets/icons/Mise-logo48.png ~/.local/share/icons/hicolor/48x48/apps/mise.png && cp assets/icons/Mise-logo128.png ~/.local/share/icons/hicolor/128x128/apps/mise.png && cp assets/icons/Mise-logo256.png ~/.local/share/icons/hicolor/256x256/apps/mise.png && update-desktop-database ~/.local/share/applications && gtk-update-icon-cache -f -t ~/.local/share/icons/hicolor",
+    "dist": "electron-builder",
+    "dist:linux": "electron-builder --linux",
+    "dist:dir": "electron-builder --dir"
+  },
+  "build": {
+    "appId": "io.github.rakosn1cek.mise-browser",
+    "productName": "Mise Browser",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "webview-preload.js",
+      "hinter.js",
+      "security.js",
+      "keybinds.js",
+      "userContent.js",
+      "index.html",
+      "style.css",
+      "renderer.js",
+      "modules/**/*",
+      "assets/**/*",
+      "package.json"
+    ],
+    "linux": {
+      "target": [
+        "AppImage",
+        "tar.gz"
+      ],
+      "category": "Network;WebBrowser",
+      "icon": "build/icon.png"
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "category": "public.app-category.productivity",
+      "icon": "build/icon.png",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false
+    },
+    "win": {
+      "target": [
+        "portable",
+        "nsis"
+      ],
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
   },
   "allowScripts": {
     "electron@44.4.5": true
   },
   "devDependencies": {
     "electron": "^44.4.5",
+    "electron-builder": "^26.15.3",
     "vitepress": "^1.6.4"
   },
   "dependencies": {
