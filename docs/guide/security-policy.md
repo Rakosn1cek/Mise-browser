@@ -6,12 +6,13 @@ Mise Browser treats security as a core architectural foundation. This document o
 
 ## Supported Versions
 
-Security updates and critical patches are actively maintained for the following versions:
+Security updates and critical patches are actively maintained for the latest stable release. Because Mise Browser operates on a continuous release cycle without legacy long-term support branches, security fixes are not backported to older releases.
 
 | Version | Supported | Notes |
 | :--- | :--- | :--- |
-| **0.8.x** | Yes | Current stable release line |
-| **< 0.8.0** | No | Please upgrade to the latest release |
+| **Latest stable release** | Yes | Actively maintained with security and bug fixes |
+| **Development (`main` branch)** | Best effort | Evaluated and resolved in upcoming releases |
+| **Prior releases** | No | Unsupported; please upgrade to the latest release |
 
 ---
 

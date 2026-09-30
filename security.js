@@ -45,8 +45,32 @@ function buildExceptionFilters(domains) {
     return filters;
 }
 
-function hardenSession(targetSession) {
-    targetSession.setSpellCheckerLanguages(['en-GB']);
+function applySpellcheckerLanguage(targetSession, languageCode) {
+    if (!targetSession) return;
+    try {
+        const lang = String(languageCode || '').trim();
+        if (!lang || lang === 'disabled' || lang === 'none') {
+            if (typeof targetSession.setSpellCheckerEnabled === 'function') {
+                targetSession.setSpellCheckerEnabled(false);
+            }
+            if (typeof targetSession.setSpellCheckerLanguages === 'function') {
+                targetSession.setSpellCheckerLanguages([]);
+            }
+        } else {
+            if (typeof targetSession.setSpellCheckerEnabled === 'function') {
+                targetSession.setSpellCheckerEnabled(true);
+            }
+            if (typeof targetSession.setSpellCheckerLanguages === 'function') {
+                targetSession.setSpellCheckerLanguages([lang]);
+            }
+        }
+    } catch (err) {
+        console.error('Failed to configure spellchecker language:', err);
+    }
+}
+
+function hardenSession(targetSession, spellLang = 'en-GB') {
+    applySpellcheckerLanguage(targetSession, spellLang);
     initialiseAdblocker(targetSession);
 
     const cleanUserAgent = (ua) => {
@@ -229,5 +253,6 @@ module.exports = {
     hardenSession,
     hardenWebviewPreferences,
     setTrustedDomains,
-    isTrustedDomain
+    isTrustedDomain,
+    applySpellcheckerLanguage
 };

@@ -57,6 +57,7 @@ const DEFAULT_CONFIG = {
     process_limit: 4,
     email_handler: 'system',
     search_engine: 'https://duckduckgo.com/?q=%s',
+    spellchecker_language: 'en-GB',
     theme: 'dark',
     webview_theme: 'dark',
     trusted_domains: [],
@@ -76,6 +77,7 @@ function loadBrowserConfig() {
         return {
             ...DEFAULT_CONFIG,
             ...parsed,
+            spellchecker_language: parsed.spellchecker_language || 'en-GB',
             webview_theme: parsed.webview_theme || 'dark',
             theme_colors: {
                 dark: { ...DEFAULT_THEME_COLORS.dark, ...(parsed.theme_colors?.dark || {}) },
@@ -92,7 +94,8 @@ keybinds.initializeKeybinds(CONFIG_DIR);
 
 function saveBrowserConfig(cfg) {
     try {
-        fs.writeFileSync(CONFIG_PATH, JSON.stringify(cfg, null, 4), 'utf-8');
+        const merged = { ...loadBrowserConfig(), ...cfg };
+        fs.writeFileSync(CONFIG_PATH, JSON.stringify(merged, null, 4), 'utf-8');
         app.relaunch();
         app.exit(0);
     } catch (e) {}
@@ -281,6 +284,7 @@ function getSessionForContext(context) {
 }
 
 const configuredSessions = new WeakSet();
+const activeSessions = new Set();
 const activeDownloads = new Map();
 const recentDownloads = [];
 const MAX_RECENT_DOWNLOADS = 20;
@@ -475,11 +479,20 @@ function configureDownloads(targetSession) {
     });
 }
 
+function applySpellcheckerToAllSessions(lang) {
+    for (const sess of activeSessions) {
+        security.applySpellcheckerLanguage(sess, lang);
+    }
+}
+
 function configureAndHardenSession(targetSession) {
-    if (!targetSession || configuredSessions.has(targetSession)) return;
+    if (!targetSession) return;
+    activeSessions.add(targetSession);
+    if (configuredSessions.has(targetSession)) return;
     configuredSessions.add(targetSession);
 
-    security.hardenSession(targetSession);
+    const cfg = loadBrowserConfig();
+    security.hardenSession(targetSession, cfg.spellchecker_language || 'en-GB');
     configureSessionPermissions(targetSession);
     configureDownloads(targetSession);
 }
@@ -920,9 +933,14 @@ ipcMain.on('execute-terminal-command', (event, commandStr) => {
 ipcMain.handle('update-browser-settings', async (event, newCfg) => {
     try {
         if (!fs.existsSync(CONFIG_DIR)) fs.mkdirSync(CONFIG_DIR, { recursive: true });
-        await fs.promises.writeFile(CONFIG_PATH, JSON.stringify(newCfg, null, 4), 'utf-8');
-        if (Array.isArray(newCfg.trusted_domains)) {
-            security.setTrustedDomains(newCfg.trusted_domains);
+        const existing = loadBrowserConfig();
+        const merged = { ...existing, ...newCfg };
+        await fs.promises.writeFile(CONFIG_PATH, JSON.stringify(merged, null, 4), 'utf-8');
+        if (Array.isArray(merged.trusted_domains)) {
+            security.setTrustedDomains(merged.trusted_domains);
+        }
+        if (merged.spellchecker_language !== undefined) {
+            applySpellcheckerToAllSessions(merged.spellchecker_language);
         }
         return true;
     } catch (e) {

@@ -63,8 +63,9 @@ let preferencesActive = false;
 export async function syncPreferencesUI() {
     if (!window.miseAPI || typeof window.miseAPI.getBrowserSettings !== 'function') return;
 
+    let cfg = null;
     try {
-        const cfg = await window.miseAPI.getBrowserSettings();
+        cfg = await window.miseAPI.getBrowserSettings();
         if (cfg) {
             const gpuToggle = document.getElementById('setting-gpu-toggle');
             const throttleToggle = document.getElementById('setting-throttling-toggle');
@@ -72,6 +73,7 @@ export async function syncPreferencesUI() {
             const emailSelect = document.getElementById('setting-email-handler');
             const sleepSelect = document.getElementById('setting-sleep-timeout');
             const sidebarToggle = document.getElementById('setting-sidebar-collapse-toggle');
+            const spellSelect = document.getElementById('setting-spellchecker-language');
 
             if (gpuToggle) gpuToggle.checked = !cfg.disable_gpu;
             if (throttleToggle) throttleToggle.checked = !!cfg.background_throttling;
@@ -79,6 +81,7 @@ export async function syncPreferencesUI() {
             if (emailSelect) emailSelect.value = cfg.email_handler || 'system';
             if (sleepSelect) sleepSelect.value = String(cfg.tab_sleep_timeout_minutes ?? 15);
             if (sidebarToggle) sidebarToggle.checked = cfg.sidebar_auto_collapse !== false;
+            if (spellSelect) spellSelect.value = cfg.spellchecker_language || 'en-GB';
 
             const trustedDomainsField = document.getElementById('setting-trusted-domains');
             if (trustedDomainsField) {
@@ -159,6 +162,7 @@ export function setupPreferencesListeners() {
             const emailSelect = document.getElementById('setting-email-handler');
             const sleepSelect = document.getElementById('setting-sleep-timeout');
             const sidebarToggle = document.getElementById('setting-sidebar-collapse-toggle');
+            const spellSelect = document.getElementById('setting-spellchecker-language');
 
             const newCfg = {
                 disable_gpu: gpuToggle ? !gpuToggle.checked : false,
@@ -166,7 +170,8 @@ export function setupPreferencesListeners() {
                 process_limit: processSelect ? parseInt(processSelect.value, 10) : 3,
                 tab_sleep_timeout_minutes: sleepSelect ? parseInt(sleepSelect.value, 10) : 15,
                 sidebar_auto_collapse: sidebarToggle ? sidebarToggle.checked : true,
-                email_handler: emailSelect ? emailSelect.value : 'system'
+                email_handler: emailSelect ? emailSelect.value : 'system',
+                spellchecker_language: spellSelect ? spellSelect.value : 'en-GB'
             };
 
             if (window.miseAPI && typeof window.miseAPI.saveBrowserSettings === 'function') {
@@ -205,6 +210,30 @@ export function setupPreferencesListeners() {
             if (window.miseAPI && typeof window.miseAPI.getBrowserSettings === 'function') {
                 const cfg = (await window.miseAPI.getBrowserSettings()) || {};
                 cfg.tab_sleep_timeout_minutes = timeoutMinutes;
+                await window.miseAPI.updateBrowserSettings(cfg);
+            }
+        };
+    }
+
+    const liveSpellSelect = document.getElementById('setting-spellchecker-language');
+    if (liveSpellSelect) {
+        liveSpellSelect.onchange = async () => {
+            const lang = liveSpellSelect.value;
+            if (window.miseAPI && typeof window.miseAPI.getBrowserSettings === 'function') {
+                const cfg = (await window.miseAPI.getBrowserSettings()) || {};
+                cfg.spellchecker_language = lang;
+                await window.miseAPI.updateBrowserSettings(cfg);
+            }
+        };
+    }
+
+    const liveEmailSelect = document.getElementById('setting-email-handler');
+    if (liveEmailSelect) {
+        liveEmailSelect.onchange = async () => {
+            const handler = liveEmailSelect.value;
+            if (window.miseAPI && typeof window.miseAPI.getBrowserSettings === 'function') {
+                const cfg = (await window.miseAPI.getBrowserSettings()) || {};
+                cfg.email_handler = handler;
                 await window.miseAPI.updateBrowserSettings(cfg);
             }
         };

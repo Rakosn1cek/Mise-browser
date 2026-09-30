@@ -21,6 +21,7 @@ Controls hardware switches, process limits, privacy whitelists, and search prefe
     "sidebar_auto_collapse": true,
     "email_handler": "system",
     "search_engine": "https://duckduckgo.com/?q=%s",
+    "spellchecker_language": "en-GB",
     "theme": "dark",
     "webview_theme": "dark",
     "theme_colors": {
@@ -59,6 +60,7 @@ Controls hardware switches, process limits, privacy whitelists, and search prefe
 - **`sidebar_auto_collapse`**: When `true`, collapses the vertical sidebar into a 36px icon strip, expanding smoothly on hover or via shortcut.
 - **`email_handler`**: Choose between `system` (OS default `mailto:`) or webmail providers (Gmail, Zoho, Outlook, Fastmail, ProtonMail).
 - **`search_engine`**: Fallback search provider URL when non-URL queries are entered without an alias.
+- **`spellchecker_language`**: Dictionary language used for input spellchecking (e.g. `en-GB`, `en-US`, `en-CA`, `en-AU`, `cs`, `de`, `fr`, `es`, `it`, `pt`, `nl`, `pl`, or `disabled`).
 - **`theme`**: Interface theme preference (`dark` for Tokyo Night or `light`).
 - **`webview_theme`**: Website native theme preference (`dark` or `light`), toggled via the sidebar theme button.
 - **`theme_colors`**: Custom visual colour palette and opacity settings per theme mode:

@@ -375,7 +375,7 @@ function setupEventListeners() {
         pinSidebarBtn.onclick = () => toggleSidebarPin();
     }
 
-    const topNavIds = ['back-btn', 'forward-btn', 'toggle-nav-btn', 'menu-btn'];
+    const topNavIds = ['back-btn', 'forward-btn', 'toggle-nav-btn', 'split-toggle-btn', 'menu-btn'];
     topNavIds.forEach((id, idx) => {
         const btn = document.getElementById(id);
         if (!btn) return;
