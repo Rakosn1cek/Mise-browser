@@ -1,16 +1,18 @@
 # Security Policy
 
-Mise Browser treats security as a core architectural foundation. This document outlines our supported versions, security architecture, and procedures for reporting vulnerabilities.
+Mise Browser treats security as a core architectural foundation. This document outlines our supported versions, release cadence, security architecture, and procedures for reporting vulnerabilities.
 
 ---
 
-## 1. Supported Versions
+## 1. Supported Versions & Update Cadence
 
 Security updates and critical patches are actively maintained for the latest stable release. Because Mise Browser operates on a continuous release cycle without legacy long-term support branches, security fixes are not backported to older releases.
 
+Mise tracks upstream Electron and Chromium releases and audits dependencies twice weekly. Upstream Electron and Chromium security patches are evaluated, integrated, and released as soon as they become available. Each release announcement and tagged milestone explicitly lists its corresponding Electron and Chromium runtime versions.
+
 | Version | Supported | Notes |
 | :--- | :--- | :--- |
-| **Latest stable release** | Yes | Actively maintained with security and bug fixes |
+| **Latest stable release** | Yes | Actively maintained with upstream security updates and bug fixes |
 | **Development (`main` branch)** | Best effort | Evaluated and resolved in upcoming releases |
 | **Prior releases** | No | Unsupported; please upgrade to the latest release |
 
@@ -45,9 +47,9 @@ Mise Browser is designed with multiple defence-in-depth layers:
 * Each workspace operates inside a dedicated, isolated Chromium session partition (`persist:mise_ws_<workspace>`).
 * Partitions prevent cross-site and cross-workspace cookie leakage, keeping personal, work, and banking sessions completely segregated.
 
-### C. Air-Gapped Terminal Oversight
-* Web pages attempting to trigger terminal commands or scripts encounter an air-gapped handshake.
-* Rather than spawning shell processes automatically, Mise sanitises and copies commands to your system clipboard for deliberate inspection before execution.
+### C. Clipboard-Mediated Terminal Oversight
+* Web pages or scripts attempting to trigger shell commands encounter a clipboard-mediated oversight boundary.
+* Rather than spawning external shell processes automatically, Mise sanitises and stages vetted commands onto your system clipboard for deliberate user review and execution in an external terminal.
 
 ### D. Permission Sandboxing
 * Sensitive hardware capabilities (microphone, camera, geolocation, and MIDI) are denied by default.
@@ -57,8 +59,9 @@ Mise Browser is designed with multiple defence-in-depth layers:
 * Network requests are intercepted in-process via Ghostery's blocking engine before departing the local machine.
 * Known malicious hosts, tracking scripts, and cryptominers are dropped at the network interceptor layer.
 
-### F. Session & Cookie Sanitisation
-* Session cookies and local storage tokens are flushed to encrypted disk stores prior to tab hibernation or workspace switching.
+### F. Session & Data Storage
+* Session cookies and partition states are flushed to disk via Electron's cookie store prior to tab hibernation or workspace switching.
+* Browsing history and bookmarks reside in local SQLite databases under standard user-only filesystem permissions (`0600`), without remote cloud synchronisation or telemetry transmission.
 * Surgical cookie clearing allows wiping tracking tokens for specific domains without invalidating sessions in unrelated tabs.
 
 ---

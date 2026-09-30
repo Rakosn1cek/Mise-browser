@@ -690,7 +690,12 @@ ipcMain.handle('get-active-downloads', () => {
 });
 
 ipcMain.handle('get-app-version', () => {
-    return app.getVersion();
+    return {
+        version: app.getVersion(),
+        electron: process.versions.electron,
+        chrome: process.versions.chrome,
+        node: process.versions.node
+    };
 });
 
 // IPC HANDLERS

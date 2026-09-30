@@ -219,9 +219,22 @@ async function initializeBrowser() {
     initDownloadShelf();
 
     if (window.miseAPI && typeof window.miseAPI.getAppVersion === 'function') {
-        window.miseAPI.getAppVersion().then((version) => {
+        window.miseAPI.getAppVersion().then((info) => {
             const badge = document.getElementById('MiseVersionBadge');
-            if (badge && version) badge.textContent = `Mise Browser v${version}`;
+            const welcomeBadge = document.getElementById('WelcomeRuntimeVersions');
+
+            const appVer = typeof info === 'object' ? info.version : info;
+            const electronVer = typeof info === 'object' ? info.electron : '';
+            const chromeVer = typeof info === 'object' ? info.chrome : '';
+
+            if (appVer) {
+                let text = `Mise v${appVer}`;
+                if (electronVer && chromeVer) {
+                    text += ` · Electron ${electronVer} · Chromium ${chromeVer}`;
+                }
+                if (badge) badge.textContent = text;
+                if (welcomeBadge) welcomeBadge.textContent = text;
+            }
         }).catch(() => {});
     }
 

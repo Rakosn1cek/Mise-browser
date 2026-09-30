@@ -4,7 +4,7 @@ layout: home
 hero:
   name: Mise Browser
   text: Keyboard-First, Isolated Web Browser
-  tagline: Engineered for fanless Linux systems. True tab hibernation, Firefox-style container partitions, air-gapped terminal execution, and zero mouse dependency.
+  tagline: Engineered for fanless Linux systems. True tab hibernation, container partitions, clipboard-mediated terminal oversight, and zero mouse dependency.
   image:
     src: /logo.png
     alt: Mise Browser Logo
@@ -33,12 +33,12 @@ features:
     title: Privacy & Trusted Sites
     details: Built-in request filtering blocks trackers, telemetry, and ads natively. Easily whitelist trusted banking and shopping sites to bypass fraud detection blocks.
   - icon: 🔒
-    title: Air-Gapped Terminal Oversight
-    details: Suspicious script extensions and web commands trigger an air-gapped terminal handshake, copying vetted commands to clipboard rather than executing blindly.
+    title: Clipboard-Mediated Terminal Oversight
+    details: Suspicious script extensions and web commands trigger a clipboard-mediated security handshake, copying vetted commands to clipboard rather than executing blindly.
   - icon: 🧩
     title: User Scripts & Styles
     details: Native injection of local .user.js and .user.css files without extension runtime bloat. Automatic inotify watching and live hot-reloading for custom web tweaks.
   - icon: 📝
     title: Built-in Power Tools
-    details: Integrated Markdown quick-notes, instant bookmarks and quickmarks, actionable history overlay, and a fuzzy-searchable Command Palette.
+    details: Integrated Markdown quick-notes, instant bookmarks and quickmarks, actionable history overlay, and a full-page Command Centre.
 ---

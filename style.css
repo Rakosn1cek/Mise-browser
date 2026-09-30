@@ -2279,6 +2279,20 @@ body.zen-mode #right-content {
     opacity: 0.9;
 }
 
+.welcome-versions {
+    margin-top: 24px;
+    font-size: 11px;
+    font-family: monospace;
+    color: var(--accent);
+    opacity: 0.85;
+    background-color: var(--bg-main);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 6px 14px;
+    display: inline-block;
+    user-select: text;
+}
+
 .shield-off {
     color: #565f89;
     opacity: 0.7;

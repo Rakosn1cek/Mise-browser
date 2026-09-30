@@ -1,6 +1,6 @@
 # Terminal Security & Oversight
 
-Mise includes an air-gapped terminal handshake designed to protect users from malicious web scripts, hidden pastejacking commands, and unverified remote code execution.
+Mise includes a clipboard-mediated terminal handshake designed to protect users from malicious web scripts, hidden pastejacking commands, and unverified remote code execution.
 
 ***
 
@@ -20,7 +20,7 @@ When you select a script or run command within Mise:
    .sh, .bash, .zsh, .ksh, .fish, .py, .rb, .pl, .lua, .c, .rs, .go, .js, .ts
    ```
 
-2. **Air-Gapped Handshake**:
+2. **Clipboard-Mediated Handshake**:
    - Rather than executing the script directly in a background shell or passing it uninspected to a terminal child process, Mise applies the **Oversight** security protocol.
    - The verified command is placed safely onto your system clipboard.
    - Mise spawns a fresh, unmanaged, empty terminal instance.
