@@ -16,3 +16,29 @@
   --vp-c-text-2: #9aa5ce;
   --vp-c-text-3: #565f89;
 }
+
+/* Feature card interactivity */
+.VPFeature {
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  border: 1px solid var(--vp-c-border);
+}
+
+.VPFeature:hover {
+  transform: translateY(-2px);
+  border-color: var(--vp-c-brand-1);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+/* Home hero title gradient */
+.VPHero .name {
+  background: linear-gradient(135deg, #7aa2f7 0%, #bb9af7 50%, #7dcfff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Polished tables on documentation pages */
+.vp-doc table {
+  display: table;
+  width: 100%;
+}
+

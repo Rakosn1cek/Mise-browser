@@ -4,7 +4,7 @@ layout: home
 hero:
   name: Mise Browser
   text: Keyboard-First, Isolated Web Browser
-  tagline: Engineered for fanless Linux systems. True tab hibernation, container partitions, clipboard-mediated terminal oversight, and zero mouse dependency.
+  tagline: Engineered for fanless Linux and focused workflows. True tab hibernation, side-by-side dual split view, isolated multi-account containers, and zero mouse dependency.
   image:
     src: /logo.png
     alt: Mise Browser Logo
@@ -12,6 +12,9 @@ hero:
     - theme: brand
       text: Get Started
       link: /guide/getting-started
+    - theme: alt
+      text: Download Release
+      link: /guide/installation
     - theme: alt
       text: Keyboard Shortcuts
       link: /reference/keybinds
@@ -22,23 +25,91 @@ hero:
 features:
   - icon: 🌙
     title: True Tab Hibernation
-    details: Idle background tabs detach entirely from memory across all workspaces, freeing RAM and CPU on low-power hardware. Live scroll offsets and URLs are restored upon selection.
+    details: Inactive background tabs detach entirely from memory across all workspaces. Live scroll positions and navigation history restore smoothly upon selection.
+  - icon: 🪟
+    title: Dual-Split View
+    details: Browse two pages side-by-side with customisable partition ratios. Swap panes, open links directly into split view, or toggle seamlessly via keyboard shortcuts.
   - icon: 📦
     title: Multi-Account Containers
-    details: Each workspace runs in its own isolated Electron persistent partition. Log into multiple Google, AWS, or GitHub accounts simultaneously with zero cookie cross-contamination.
+    details: Every workspace runs inside an isolated persistent Chromium partition. Run multiple corporate and personal logins simultaneously with zero cookie cross-contamination.
   - icon: ⌨️
     title: Mouse-Free Navigation
-    details: Link hints overlay, floating address bar with search engine aliases, and customisable keyboard bindings in keybinds.json for complete keyboard control.
+    details: Full Vim-inspired link hints (f), quickmark speed-dial (go), floating omnibar, and granular shortcut remapping in keybinds.json.
   - icon: 🛡️
-    title: Privacy & Trusted Sites
-    details: Built-in request filtering blocks trackers, telemetry, and ads natively. Easily whitelist trusted banking and shopping sites to bypass fraud detection blocks.
+    title: Native Privacy Shields
+    details: Built-in Ghostery request filtering stops trackers, cryptominers, and analytics at the network layer. Trusted domains bypass fingerprint farbling on banking portals.
   - icon: 🔒
-    title: Clipboard-Mediated Terminal Oversight
-    details: Suspicious script extensions and web commands trigger a clipboard-mediated security handshake, copying vetted commands to clipboard rather than executing blindly.
+    title: Clipboard-Mediated Oversight
+    details: Web commands and script executions stage safely onto your system clipboard. External terminal scanning tools like Oversight can inspect actions before execution.
   - icon: 🧩
-    title: User Scripts & Styles
-    details: Native injection of local .user.js and .user.css files without extension runtime bloat. Automatic inotify watching and live hot-reloading for custom web tweaks.
+    title: User Scripts & Styles Engine
+    details: Native injection of local .user.js and .user.css files without extension overhead. Automatic file watching and live hot-reloading keep workflows fluid.
   - icon: 📝
-    title: Built-in Power Tools
-    details: Integrated Markdown quick-notes, instant bookmarks and quickmarks, actionable history overlay, and a full-page Command Centre.
+    title: Markdown Scratchpad & Tools
+    details: Instant Markdown quick notes (Alt + N), actionable history overlay (Ctrl + Shift + H), and structured bookmarks built right into the interface.
+  - icon: 🚀
+    title: Distro-Agnostic & Zero Telemetry
+    details: Distro-agnostic AppImage, Deb, RPM, and Arch packaging. Zero telemetry, zero usage tracking, and anonymous GitHub release notifications for effortless updates.
 ---
+
+## Why Mise Browser?
+
+Most modern web browsers consume gigabytes of memory, leak telemetry continuously, and expect a pointing device for every interaction. **Mise** takes a fundamentally different path: it treats web navigation as a keyboard-centric, distraction-free environment designed to respect both your hardware and your privacy.
+
+::: tip ARCHITECTURAL PILLARS
+* **Memory Conservation:** Idle tabs detach from DOM memory. Twenty tabs take the RAM footprint of two.
+* **Complete Isolation:** Separate workspace containers keep cookies, caches, and logins entirely segregated.
+* **Transparent Storage:** Configuration, notes, history, and keybinds live in human-readable files under `~/.config/mise-browser/`.
+* **Zero Cloud Dependence:** No remote telemetry, no forced account sync, and zero phone-home profiling.
+:::
+
+---
+
+## Fast-Track Navigation
+
+Keep your hands on the home row. Every major workflow is reachable via concise, mnemonic keybindings:
+
+| Shortcut | Command | Action |
+| :--- | :--- | :--- |
+| `f` | Link Hints | Highlight all clickable page links with two-letter tags |
+| `Alt + S` | Dual Split | Toggle side-by-side split screen view |
+| `Alt + \` | Swap Panes | Swap active page and split page positions |
+| `Ctrl + 1` to `9` | Workspace Jump | Switch between isolated multi-account containers |
+| `Ctrl + L` / `o` | Omnibar | Open floating address bar with search engine aliases |
+| `Ctrl + Shift + H` | History Overlay | Search, reopen, or purge visited history records |
+| `Alt + N` | Scratchpad | Open Markdown quick-notes scratchpad |
+| `Ctrl + Shift + P` | Private Window | Open zero-trace volatile browsing container |
+| `F1` / `Ctrl + H` | Preferences | Adjust hardware flags, sleep timeouts, and site shields |
+
+---
+
+## Quick Start on Linux
+
+Download the self-contained Linux AppImage from GitHub Releases and run directly on any distribution:
+
+```bash
+# Make executable and launch
+chmod +x Mise-*-x86_64.AppImage
+./Mise-*-x86_64.AppImage
+```
+
+You can also compile directly from source:
+
+```bash
+# Clone and run from source
+git clone https://github.com/Rakosn1cek/Mise-browser.git
+cd Mise-browser
+npm install
+npm start
+```
+
+---
+
+## Built with Modern Open-Source Foundations
+
+Mise combines the battle-tested rendering speed of Chromium and Electron with custom modular subsystems written in vanilla JavaScript:
+
+* **Ghostery Network Engine:** Local request filtering without third-party extension overhead.
+* **safeStorage Encryption:** Linux `libsecret`, macOS Keychain, and Windows DPAPI hardware-backed encryption for persistent cookies.
+* **inotify Live Reloading:** Instant injection and live reloading of local `.user.js` and `.user.css` user customisations.
+* **Debounced Persistence:** Asynchronous disk flushing to prevent main-process stutter on single-page web applications.

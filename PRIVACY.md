@@ -1,19 +1,19 @@
 # Privacy Policy
 
-**Effective Date:** 28 September 2026  
+**Effective Date:** 30 September 2026  
 **Applies To:** Mise Browser (Electron Edition)
 
 Mise Browser is engineered around a core tenet: **your browser belongs to you, and your browsing data stays on your machine.**
 
 ---
 
-## 1. Zero Telemetry & Zero Data Collection
+## 1. Zero Telemetry & Zero Profiling
 
 Mise Browser **does not collect, transmit, sell, or monitor any personal data or usage metrics**:
 
 * **No Analytics:** There are no tracking libraries, telemetry beacons, or metric collectors built into Mise.
 * **No Remote Crash Reports:** The browser does not transmit crash traces, memory dumps, or error logs to any remote server.
-* **No Background Phone-Home:** The application binary makes zero outgoing network connections on launch, idle, or shutdown.
+* **No Profiling or Phone-Home:** The application binary never phones home to track user identity, IP history, or usage statistics. To keep you informed of critical security patches, Mise performs an anonymous HTTPS query directly to the public GitHub Releases API (`api.github.com`) once every 24 hours. This query transmits zero personal identifiers, browsing data, search tokens, or system fingerprints.
 * **No Search Query Interception:** Queries entered into the address bar or command palette are routed exclusively to the search provider you choose (defaulting to DuckDuckGo).
 
 ---
@@ -24,13 +24,17 @@ All data created during your browsing sessions is stored strictly on your local 
 
 | File | Purpose | Storage Format |
 | :--- | :--- | :--- |
-| `browser_config.json` | Hardware settings, sleep timeout, and trusted domains | Plaintext JSON |
-| `session.json` | Workspaces, active tab URLs, titles, and hibernate scroll offsets | Plaintext JSON |
+| `config.json` | Hardware settings, sleep timeout, trusted domains, split view ratio | Plaintext JSON |
+| `session.json` | Workspaces, active tab URLs, titles, hibernate scroll offsets, split view state | Plaintext JSON |
 | `history.json` | Browsing history with page titles and visit timestamps | Plaintext JSON |
 | `bookmarks.json` | Saved bookmarks and custom folder trees | Plaintext JSON |
 | `quickmarks.json` | Single-key speed-dial navigation mappings | Plaintext JSON |
 | `notes.md` | Built-in Markdown scratchpad notes | Plaintext Markdown |
 | `keybinds.json` | Customised keyboard shortcut mappings | Plaintext JSON |
+| `user.css` | Optional user stylesheet overrides | Plaintext CSS |
+| `user.js` | Optional user script automation scripts | Plaintext JavaScript |
+
+Persistent Chromium session data, cookies, and local storage caches reside in workspace partition folders (`Partitions/mise_ws_<workspace>/`). Cookies and tokens written by Chromium are encrypted at rest via Electron `safeStorage`, bound directly to your host operating system credential keyring (`libsecret` / GNOME Keyring / KWallet on Linux, Keychain on macOS, DPAPI on Windows).
 
 You can inspect, back up, or erase any of these files directly using standard Linux file utilities at any time.
 
@@ -60,14 +64,23 @@ Pressing **Ctrl + Shift + P** activates Private Browsing Mode:
 
 Mise actively protects your privacy against third-party web trackers:
 
-* **In-Process Request Blocking:** Network requests are filtered locally using Ghostery's block engine to neutralize marketing trackers, ads, and telemetry scripts before packets leave your machine.
+* **In-Process Request Blocking:** Network requests are filtered locally using Ghostery's block engine to neutralise marketing trackers, ads, and telemetry scripts before packets leave your machine.
 * **Fingerprint Farbling:** Injects subtle, domain-bound mathematical noise into Canvas, WebGL, and Audio API outputs to disrupt passive browser fingerprinting.
 * **Identity Standardisation:** Strips internal Electron and Mise identifiers from user-agent headers and Client Hints, presenting a standardised Linux Chromium profile.
 * **Trusted Domains Bypass:** Explicitly whitelisted domains (e.g. banking portals and payment checkouts) bypass fingerprint farbling to prevent fraud-detection false positives.
 
 ---
 
-## 6. Policy on Future Diagnostics and Error Reporting
+## 6. Credential & Password Management
+
+Mise Browser intentionally excludes built-in password saving, autofill prompts, and credential vaults:
+
+* **Elimination of Malware Targets:** Browser-bundled password vaults represent the primary target for infostealers and credential extraction malware. By omitting internal password storage entirely, Mise removes this high-value vulnerability surface.
+* **User Autonomy & External Tools:** Users retain full discretion to employ their preferred dedicated password managers (such as Pass, KeePassXC, Bitwarden, or system keychains) outside the browser's execution perimeter.
+
+---
+
+## 7. Policy on Future Diagnostics and Error Reporting
 
 Should diagnostic or crash-reporting mechanisms be added in future versions of Mise, they will adhere strictly to the following guarantees:
 
@@ -79,7 +92,7 @@ Should diagnostic or crash-reporting mechanisms be added in future versions of M
 
 ---
 
-## 7. Data Deletion and User Rights
+## 8. Data Deletion and User Rights
 
 You maintain complete ownership of your data:
 
@@ -89,7 +102,7 @@ You maintain complete ownership of your data:
 
 ---
 
-## 8. Open Source Verification
+## 9. Open Source Verification
 
 Mise Browser is open source under the GNU General Public Licence v3.0. You are encouraged to inspect, audit, and build the source code directly from GitHub:
 
