@@ -286,18 +286,55 @@ if (!isTrustedSite) {
     }
 }
 
+// Element classification helper for Insert mode
+function isEditableElement(el) {
+    if (!el) return false;
+    const tag = (el.tagName || '').toUpperCase();
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
+        const type = (el.type || '').toLowerCase();
+        if (['button', 'submit', 'reset', 'checkbox', 'radio', 'image'].includes(type)) {
+            return false;
+        }
+        return true;
+    }
+    if (el.isContentEditable || el.contentEditable === 'true') {
+        return true;
+    }
+    const role = (el.getAttribute && el.getAttribute('role') || '').toLowerCase();
+    if (role === 'textbox' || role === 'searchbox' || role === 'combobox') {
+        return true;
+    }
+    if (typeof el.closest === 'function') {
+        const parentEditable = el.closest('[contenteditable="true"], input, textarea');
+        if (parentEditable) return true;
+    }
+    return false;
+}
+
+// Modal state variables
+let isPassthroughMode = false;
+let isExplicitInsert = false;
+let lastGTime = 0;
+
+// Host passthrough mode synchronisation
+ipcRenderer.on('set-passthrough-mode', (_event, enabled) => {
+    isPassthroughMode = !!enabled;
+});
+
 // Guest input focus tracking for Insert mode indicator
 document.addEventListener('focusin', (e) => {
-    const t = e.target;
-    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) {
+    if (isEditableElement(e.target)) {
         try { ipcRenderer.sendToHost('guest-input-focus', true); } catch (err) {}
     }
 }, true);
 
 document.addEventListener('focusout', (e) => {
-    const t = e.target;
-    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) {
-        try { ipcRenderer.sendToHost('guest-input-focus', false); } catch (err) {}
+    if (isEditableElement(e.target)) {
+        setTimeout(() => {
+            if (!isEditableElement(document.activeElement) && !isExplicitInsert) {
+                try { ipcRenderer.sendToHost('guest-input-focus', false); } catch (err) {}
+            }
+        }, 10);
     }
 }, true);
 
@@ -320,3 +357,204 @@ try {
         document.addEventListener('DOMContentLoaded', attachHintObserver);
     }
 } catch (err) {}
+
+// Scroll target detection
+function getScrollTarget() {
+    const active = document.activeElement;
+    if (active && active !== document.body && active !== document.documentElement) {
+        const style = window.getComputedStyle(active);
+        if (/(auto|scroll)/.test(style.overflow + style.overflowY)) {
+            return active;
+        }
+    }
+    return document.scrollingElement || document.documentElement || document.body || window;
+}
+
+function scrollPageBy(dx, dy) {
+    const target = getScrollTarget();
+    if (target && typeof target.scrollBy === 'function') {
+        target.scrollBy({ left: dx, top: dy, behavior: 'smooth' });
+    } else {
+        window.scrollBy({ left: dx, top: dy, behavior: 'smooth' });
+    }
+}
+
+function scrollPageTo(x, y) {
+    const target = getScrollTarget();
+    if (target && typeof target.scrollTo === 'function') {
+        target.scrollTo({ left: x, top: y, behavior: 'smooth' });
+    } else {
+        window.scrollTo({ left: x, top: y, behavior: 'smooth' });
+    }
+}
+
+// Modal navigation engine keydown listener
+window.addEventListener('keydown', (e) => {
+    // Passthrough toggle chord: Shift + Escape
+    if (e.shiftKey && e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        isPassthroughMode = !isPassthroughMode;
+        try { ipcRenderer.sendToHost('guest-passthrough-state', isPassthroughMode); } catch (err) {}
+        return;
+    }
+
+    // In passthrough mode, let all keystrokes pass directly to guest application
+    if (isPassthroughMode) {
+        return;
+    }
+
+    const activeEl = document.activeElement;
+    const inEditable = isEditableElement(activeEl);
+
+    // Escape key exits input fields and explicit insert mode
+    if (e.key === 'Escape') {
+        if (inEditable && activeEl && typeof activeEl.blur === 'function') {
+            activeEl.blur();
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        if (isExplicitInsert) {
+            isExplicitInsert = false;
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        try { ipcRenderer.sendToHost('guest-input-focus', false); } catch (err) {}
+        return;
+    }
+
+    // In editable elements or explicit insert mode, allow normal typing
+    if (inEditable || isExplicitInsert) {
+        return;
+    }
+
+    // Modifiers check: pass through standard chords to host keybinds
+    if (e.ctrlKey || e.altKey || e.metaKey) {
+        return;
+    }
+
+    // Pass through if link hints overlay is actively consuming keystrokes
+    if (document.getElementById('mise-hint-layer')) {
+        return;
+    }
+
+    const key = e.key;
+
+    // Smooth page scrolling
+    if (key === 'j') {
+        e.preventDefault();
+        scrollPageBy(0, 80);
+        return;
+    }
+    if (key === 'k') {
+        e.preventDefault();
+        scrollPageBy(0, -80);
+        return;
+    }
+    if (key === 'd') {
+        e.preventDefault();
+        scrollPageBy(0, Math.floor(window.innerHeight * 0.5));
+        return;
+    }
+    if (key === 'u') {
+        e.preventDefault();
+        scrollPageBy(0, -Math.floor(window.innerHeight * 0.5));
+        return;
+    }
+    if (key === 'h') {
+        e.preventDefault();
+        scrollPageBy(-80, 0);
+        return;
+    }
+    if (key === 'l') {
+        e.preventDefault();
+        scrollPageBy(80, 0);
+        return;
+    }
+    if (key === 'g') {
+        e.preventDefault();
+        const now = Date.now();
+        if (now - lastGTime < 500) {
+            scrollPageTo(0, 0);
+            lastGTime = 0;
+        } else {
+            lastGTime = now;
+        }
+        return;
+    }
+    if (key === 'G') {
+        e.preventDefault();
+        const target = getScrollTarget();
+        const maxY = Math.max(
+            document.body ? document.body.scrollHeight : 0,
+            document.documentElement ? document.documentElement.scrollHeight : 0,
+            target ? (target.scrollHeight || 0) : 0
+        );
+        scrollPageTo(0, maxY);
+        return;
+    }
+
+    // Explicit insert mode entry
+    if (key === 'i') {
+        e.preventDefault();
+        isExplicitInsert = true;
+        try { ipcRenderer.sendToHost('guest-input-focus', true); } catch (err) {}
+        return;
+    }
+
+    // Browser navigation and actions dispatched to host
+    switch (key) {
+        case 't':
+            e.preventDefault();
+            try { ipcRenderer.sendToHost('normal-mode-action', 'spawn-tab'); } catch (err) {}
+            break;
+        case 'x':
+            e.preventDefault();
+            try { ipcRenderer.sendToHost('normal-mode-action', 'remove-tab'); } catch (err) {}
+            break;
+        case 'o':
+            e.preventDefault();
+            try { ipcRenderer.sendToHost('normal-mode-action', 'toggle-address'); } catch (err) {}
+            break;
+        case 'r':
+            e.preventDefault();
+            try { ipcRenderer.sendToHost('normal-mode-action', 'reload-tab'); } catch (err) {}
+            break;
+        case 'R':
+            e.preventDefault();
+            try { ipcRenderer.sendToHost('normal-mode-action', 'force-reload-tab'); } catch (err) {}
+            break;
+        case 'H':
+            e.preventDefault();
+            try { ipcRenderer.sendToHost('normal-mode-action', 'history-back'); } catch (err) {}
+            break;
+        case 'L':
+            e.preventDefault();
+            try { ipcRenderer.sendToHost('normal-mode-action', 'history-forward'); } catch (err) {}
+            break;
+        case '/':
+            e.preventDefault();
+            try { ipcRenderer.sendToHost('normal-mode-action', 'toggle-find'); } catch (err) {}
+            break;
+        case 'f':
+            e.preventDefault();
+            try { ipcRenderer.sendToHost('normal-mode-action', 'trigger-hints'); } catch (err) {}
+            break;
+        case 'w':
+            e.preventDefault();
+            try { ipcRenderer.sendToHost('normal-mode-action', 'toggle-dashboard'); } catch (err) {}
+            break;
+        case 's':
+            e.preventDefault();
+            try { ipcRenderer.sendToHost('normal-mode-action', 'focus-sidebar'); } catch (err) {}
+            break;
+        case 'y':
+            e.preventDefault();
+            try {
+                const currentUrl = window.location.href;
+                navigator.clipboard.writeText(currentUrl).catch(() => {});
+                ipcRenderer.sendToHost('normal-mode-action', 'yank-url', currentUrl);
+            } catch (err) {}
+            break;
+    }
+}, true);

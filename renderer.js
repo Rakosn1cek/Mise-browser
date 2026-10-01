@@ -102,7 +102,9 @@ import {
     initStatusBar, 
     toggleStatusBar, 
     updateStatusBarFromActiveView, 
-    recalculateMode 
+    recalculateMode,
+    togglePassthroughMode,
+    setTargetUrl
 } from './modules/statusBar.js';
 
 // Attach functions needed across module boundaries to window
@@ -113,6 +115,7 @@ window.toggleInPageSearch = toggleInPageSearch;
 window.toggleNotesOverlay = toggleNotesOverlay;
 window.toggleDownloadShelf = toggleDownloadShelf;
 window.toggleStatusBar = toggleStatusBar;
+window.togglePassthroughMode = togglePassthroughMode;
 window.recalculateStatusMode = recalculateMode;
 window.updateStatusBarFromActiveView = updateStatusBarFromActiveView;
 window.toggleZenMode = toggleZenMode;
@@ -144,6 +147,30 @@ window.reapplyActiveUserStyles = reapplyActiveUserStyles;
 window.toggleBookmarksOverlay = toggleBookmarksOverlay;
 window.promptQuickmark = promptQuickmark;
 window.addCurrentPageToBookmarks = addCurrentPageToBookmarks;
+window.focusSidebar = focusSidebar;
+
+export function focusSidebar() {
+    const activeEl = document.activeElement;
+    const isInsideTabList = activeEl && (activeEl.closest('#TabList') || activeEl.id === 'TabList');
+    const isInsideNavAction = activeEl && activeEl.closest('.nav-action-layout');
+    const isInsideBottomLayout = activeEl && activeEl.closest('.bottom-theme-layout');
+
+    if (isInsideTabList) {
+        const backBtn = document.getElementById('back-btn') || document.getElementById('toggle-nav-btn');
+        if (backBtn) backBtn.focus();
+    } else if (isInsideNavAction || isInsideBottomLayout) {
+        const selectedTab = document.querySelector('#TabList li.selected') || document.querySelector('#TabList li');
+        if (selectedTab) selectedTab.focus();
+    } else {
+        const selectedTab = document.querySelector('#TabList li.selected') || document.querySelector('#TabList li');
+        if (selectedTab) {
+            selectedTab.focus();
+        } else {
+            const navBtn = document.getElementById('back-btn') || document.getElementById('toggle-nav-btn');
+            if (navBtn) navBtn.focus();
+        }
+    }
+}
 
 export function displayUpdateNotification(updateInfo) {
     if (!updateInfo || !updateInfo.updateAvailable) return;
@@ -450,26 +477,7 @@ function setupEventListeners() {
                 break;
             }
             case 'focus-sidebar': {
-                const activeEl = document.activeElement;
-                const isInsideTabList = activeEl && (activeEl.closest('#TabList') || activeEl.id === 'TabList');
-                const isInsideNavAction = activeEl && activeEl.closest('.nav-action-layout');
-                const isInsideBottomLayout = activeEl && activeEl.closest('.bottom-theme-layout');
-
-                if (isInsideTabList) {
-                    const backBtn = document.getElementById('back-btn') || document.getElementById('toggle-nav-btn');
-                    if (backBtn) backBtn.focus();
-                } else if (isInsideNavAction || isInsideBottomLayout) {
-                    const selectedTab = document.querySelector('#TabList li.selected') || document.querySelector('#TabList li');
-                    if (selectedTab) selectedTab.focus();
-                } else {
-                    const selectedTab = document.querySelector('#TabList li.selected') || document.querySelector('#TabList li');
-                    if (selectedTab) {
-                        selectedTab.focus();
-                    } else {
-                        const navBtn = document.getElementById('back-btn') || document.getElementById('toggle-nav-btn');
-                        if (navBtn) navBtn.focus();
-                    }
-                }
+                focusSidebar();
                 break;
             }
             case 'focus-nav-buttons': {
@@ -603,7 +611,7 @@ function setupEventListeners() {
         const activeListItem = document.querySelector('#TabList li.selected');
         let currentIdx = tabItems.indexOf(activeListItem);
 
-        if (e.key === 'ArrowDown') {
+        if (e.key === 'ArrowDown' || e.key === 'j') {
             e.preventDefault();
             if (currentIdx < tabItems.length - 1) {
                 currentIdx++;
@@ -613,7 +621,7 @@ function setupEventListeners() {
                 const pinBtn = document.getElementById('pin-sidebar-btn');
                 if (pinBtn) pinBtn.focus();
             }
-        } else if (e.key === 'ArrowUp') {
+        } else if (e.key === 'ArrowUp' || e.key === 'k') {
             e.preventDefault();
             if (currentIdx > 0) {
                 currentIdx--;
@@ -623,13 +631,41 @@ function setupEventListeners() {
                 const backBtn = document.getElementById('back-btn') || document.getElementById('toggle-nav-btn');
                 if (backBtn) backBtn.focus();
             }
-        } else if (e.key === 'ArrowLeft') {
+        } else if (e.key === 'ArrowLeft' || e.key === 'h') {
             e.preventDefault();
             const backBtn = document.getElementById('back-btn') || document.getElementById('toggle-nav-btn');
             if (backBtn) backBtn.focus();
-        } else if (e.key === 'ArrowRight') {
+        } else if (e.key === 'ArrowRight' || e.key === 'l' || e.key === 'i') {
             e.preventDefault();
             focusActiveWebview();
+        } else if (e.key === 't') {
+            e.preventDefault();
+            spawnNewBlankTab();
+        } else if (e.key === 'x') {
+            e.preventDefault();
+            handleTabRemoval();
+        } else if (e.key === 'o') {
+            e.preventDefault();
+            displayAddressOverlay();
+        } else if (e.key === 'w') {
+            e.preventDefault();
+            toggleDashboardView();
+        } else if (e.key === 'y') {
+            e.preventDefault();
+            const currentWS = state.sessionState.current_workspace;
+            const urls = state.sessionState.workspaces[currentWS] || [];
+            const activeUrl = urls[currentIdx] || '';
+            if (activeUrl) {
+                navigator.clipboard.writeText(activeUrl).catch(() => {});
+                setTargetUrl(`Yanked URL to clipboard: ${activeUrl}`, 2500);
+            }
+        }
+    });
+
+    window.addEventListener('keydown', (e) => {
+        if (e.shiftKey && e.key === 'Escape') {
+            e.preventDefault();
+            togglePassthroughMode();
         }
     });
 

@@ -2751,6 +2751,17 @@ body.light-mode .download-action-btn:hover {
     background: rgba(224, 175, 104, 0.3);
 }
 
+.status-badge-mode.mode-passthrough {
+    background: rgba(255, 158, 100, 0.2);
+    color: #ff9e64;
+    border: 1px solid rgba(255, 158, 100, 0.4);
+    cursor: pointer;
+}
+
+.status-badge-mode.mode-passthrough:hover {
+    background: rgba(255, 158, 100, 0.3);
+}
+
 .status-badge-mode.mode-split {
     background: rgba(187, 154, 247, 0.2);
     color: #bb9af7;
@@ -2827,6 +2838,17 @@ body.light-mode .status-badge-mode.mode-hints {
     background: rgba(230, 81, 0, 0.15);
     color: #e65100;
     border-color: rgba(230, 81, 0, 0.35);
+}
+
+body.light-mode .status-badge-mode.mode-passthrough {
+    background: rgba(239, 108, 0, 0.15);
+    color: #ef6c00;
+    border-color: rgba(239, 108, 0, 0.35);
+    cursor: pointer;
+}
+
+body.light-mode .status-badge-mode.mode-passthrough:hover {
+    background: rgba(239, 108, 0, 0.25);
 }
 
 body.light-mode .status-badge-mode.mode-split {

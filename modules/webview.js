@@ -6,7 +6,8 @@ import {
     updateSecurityStatus, 
     updateStatusBarFromActiveView, 
     handleGuestInputFocus, 
-    handleGuestHintsState 
+    handleGuestHintsState,
+    handleGuestPassthroughState
 } from './statusBar.js';
 
 export function applyCSSThemeToView() {
@@ -216,6 +217,12 @@ export function createWebView(url, currentWS, idx) {
             handleGuestInputFocus(!!e.args[0], currentWS, idx);
         } else if (e.channel === 'guest-hints-state') {
             handleGuestHintsState(!!e.args[0], currentWS, idx);
+        } else if (e.channel === 'guest-passthrough-state') {
+            handleGuestPassthroughState(!!e.args[0], currentWS, idx);
+        } else if (e.channel === 'normal-mode-action') {
+            const action = e.args[0];
+            const extra = e.args[1];
+            handleNormalModeAction(action, extra, webview, currentWS, idx);
         }
     });
 
@@ -233,6 +240,71 @@ export function createWebView(url, currentWS, idx) {
     });
     
     return webview;
+}
+
+export function handleNormalModeAction(action, extra, webview, currentWS, idx) {
+    switch (action) {
+        case 'spawn-tab':
+            spawnNewBlankTab();
+            break;
+        case 'remove-tab':
+            handleTabRemoval();
+            break;
+        case 'toggle-address':
+            if (typeof window.displayAddressOverlay === 'function') {
+                window.displayAddressOverlay();
+            }
+            break;
+        case 'reload-tab':
+            if (webview && typeof webview.reload === 'function') {
+                webview.reload();
+            }
+            break;
+        case 'force-reload-tab':
+            if (webview && typeof webview.reloadIgnoringCache === 'function') {
+                webview.reloadIgnoringCache();
+            }
+            break;
+        case 'history-back':
+            navigateFrameBack();
+            break;
+        case 'history-forward':
+            navigateFrameForward();
+            break;
+        case 'toggle-find':
+            if (typeof window.toggleInPageSearch === 'function') {
+                window.toggleInPageSearch();
+            }
+            break;
+        case 'trigger-hints':
+            if (typeof window.triggerLinkHints === 'function') {
+                window.triggerLinkHints();
+            }
+            break;
+        case 'toggle-dashboard':
+            if (typeof window.toggleDashboardView === 'function') {
+                window.toggleDashboardView();
+            }
+            break;
+        case 'focus-sidebar':
+            if (typeof window.focusSidebar === 'function') {
+                window.focusSidebar();
+            } else {
+                const selectedTab = document.querySelector('#TabList li.selected') || document.querySelector('#TabList li');
+                if (selectedTab) selectedTab.focus();
+            }
+            break;
+        case 'yank-url': {
+            const urlToYank = extra || (webview && typeof webview.getURL === 'function' ? webview.getURL() : '') || (state.sessionState.workspaces[currentWS]?.[idx]);
+            if (urlToYank) {
+                if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+                    navigator.clipboard.writeText(urlToYank).catch(() => {});
+                }
+                setTargetUrl(`Yanked URL to clipboard: ${urlToYank}`, 2500);
+            }
+            break;
+        }
+    }
 }
 
 function extractHostname(url) {

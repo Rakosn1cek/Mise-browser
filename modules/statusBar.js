@@ -15,6 +15,8 @@ let isStatusBarEnabled = true;
 let isGuestInputFocused = false;
 let isHostInputFocused = false;
 let isHintsModeActive = false;
+let isPassthroughModeActive = false;
+let targetUrlClearTimer = null;
 let currentMode = 'NORMAL';
 
 export function initStatusBar() {
@@ -35,11 +37,15 @@ export function initStatusBar() {
         });
     }
 
-    // Attach click handler on mode badge to cancel hints if active
+    // Attach click handler on mode badge to cancel hints or toggle passthrough if active
     if (modeBadgeEl) {
         modeBadgeEl.addEventListener('click', () => {
             if (isHintsModeActive && typeof window.triggerLinkHints === 'function') {
                 window.triggerLinkHints();
+            } else if (isPassthroughModeActive) {
+                togglePassthroughMode(false);
+            } else if (currentMode === 'NORMAL') {
+                togglePassthroughMode(true);
             }
         });
     }
@@ -65,7 +71,12 @@ export function initStatusBar() {
     updateStatusBarFromActiveView();
 }
 
-export function setTargetUrl(url) {
+export function setTargetUrl(url, timeoutMs = 0) {
+    if (targetUrlClearTimer) {
+        clearTimeout(targetUrlClearTimer);
+        targetUrlClearTimer = null;
+    }
+
     if (!targetUrlEl) targetUrlEl = document.getElementById('StatusBarUrl');
     if (!targetUrlEl) return;
 
@@ -77,6 +88,16 @@ export function setTargetUrl(url) {
 
     targetUrlEl.textContent = url;
     targetUrlEl.title = url;
+
+    if (timeoutMs > 0) {
+        targetUrlClearTimer = setTimeout(() => {
+            if (targetUrlEl && targetUrlEl.textContent === url) {
+                targetUrlEl.textContent = '';
+                targetUrlEl.title = '';
+            }
+            targetUrlClearTimer = null;
+        }, timeoutMs);
+    }
 }
 
 export function updateSecurityStatus(url) {
@@ -153,7 +174,9 @@ export function recalculateMode() {
     const currentWS = state.sessionState.current_workspace;
     let nextMode = 'NORMAL';
 
-    if (isHintsModeActive) {
+    if (isPassthroughModeActive) {
+        nextMode = 'PASSTHROUGH';
+    } else if (isHintsModeActive) {
         nextMode = 'HINTS';
     } else if (isHostInputFocused || isGuestInputFocused) {
         nextMode = 'INSERT';
@@ -164,6 +187,52 @@ export function recalculateMode() {
     }
 
     setMode(nextMode);
+}
+
+export function togglePassthroughMode(force) {
+    if (typeof force === 'boolean') {
+        isPassthroughModeActive = force;
+    } else {
+        isPassthroughModeActive = !isPassthroughModeActive;
+    }
+    recalculateMode();
+
+    const currentWS = state.sessionState.current_workspace;
+    const activeListItem = document.querySelector('#TabList li.selected');
+    const currentIdx = activeListItem ? Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem) : 0;
+    const activeWv = state.activeViewsCache[currentWS]?.[currentIdx];
+    if (activeWv && typeof activeWv.send === 'function') {
+        try {
+            activeWv.send('set-passthrough-mode', isPassthroughModeActive);
+        } catch (err) {}
+    }
+
+    if (isPassthroughModeActive) {
+        setTargetUrl('PASSTHROUGH mode enabled (Shift+Escape to return)', 2500);
+    } else {
+        setTargetUrl('NORMAL mode restored', 1500);
+    }
+    return isPassthroughModeActive;
+}
+
+export function handleGuestPassthroughState(isActive, wsName, tabIdx) {
+    const currentWS = state.sessionState.current_workspace;
+    const activeListItem = document.querySelector('#TabList li.selected');
+    const currentIdx = activeListItem ? Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem) : 0;
+
+    if (wsName === currentWS && tabIdx === currentIdx) {
+        isPassthroughModeActive = !!isActive;
+        recalculateMode();
+        if (isPassthroughModeActive) {
+            setTargetUrl('PASSTHROUGH mode enabled (Shift+Escape to return)', 2500);
+        } else {
+            setTargetUrl('NORMAL mode restored', 1500);
+        }
+    }
+}
+
+export function isPassthroughActive() {
+    return isPassthroughModeActive;
 }
 
 export function handleGuestInputFocus(isFocused, wsName, tabIdx) {
@@ -193,9 +262,10 @@ export function updateStatusBarFromActiveView() {
     const isPrivate = !!state.globalPrivateModeActive;
     updatePartitionBadge(currentWS, isPrivate);
 
-    // Reset guest input focus on tab or workspace switch
+    // Reset guest input focus and passthrough state on tab or workspace switch
     isGuestInputFocused = false;
     isHintsModeActive = false;
+    isPassthroughModeActive = false;
     recalculateMode();
 
     const activeListItem = document.querySelector('#TabList li.selected');

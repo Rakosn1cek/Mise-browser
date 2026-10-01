@@ -56,7 +56,7 @@ To dedicate maximum horizontal screen real estate to web content, Mise features 
 
 * **Compact 36px Strip**: In its default collapsed state, the sidebar shrinks to a 36px icon bar displaying only your workspace badge and crisp tab favicons.
 * **Smooth Flyout on Hover**: Moving your mouse pointer over the 36px strip smoothly expands the sidebar to 260px as an overlay flyout with drop shadow. Because this expands as an overlay, the active webview never resizes, preventing GPU lag and page reflows on fanless hardware.
-* **Shortcut Expansion**: Press **Ctrl + Shift + Z** to toggle sidebar expansion, or press **Ctrl + M** to focus the sidebar and expand it immediately for arrow-key navigation. Pressing **Escape** or **Ctrl + B** collapses the sidebar smoothly back to the 36px strip.
+* **Shortcut Expansion**: Press **Ctrl + Shift + Z** to toggle sidebar expansion, or press **Ctrl + S** to focus the sidebar and expand it immediately for arrow-key navigation. Pressing **Escape** or **Ctrl + W** collapses the sidebar smoothly back to the 36px strip.
 * **Pinning**: Click the pin icon button at the bottom of the sidebar, toggle **Auto-Collapse Sidebar** in Preferences (**Ctrl + H**), or run **Pin / Unpin Sidebar** in the Command Palette to pin the sidebar permanently open at 260px.
 
 ***
@@ -65,10 +65,47 @@ To dedicate maximum horizontal screen real estate to web content, Mise features 
 
 Mise maintains clean separation between sidebar navigation and active web page interaction:
 
-- **Ctrl + M**: Shifts keyboard focus to the vertical tab sidebar, smoothly expanding it. Use the **Up** and **Down** arrow keys to cycle through open tabs, and press **Enter** to switch to the highlighted tab.
-- **Ctrl + B**: Shifts keyboard focus directly into the active webview, automatically collapsing the sidebar back to the 36px strip.
-- **Ctrl + W** or **Ctrl + D**: Closes the currently active tab.
+- **Ctrl + S**: Shifts keyboard focus to the vertical tab sidebar, smoothly expanding it. Use the **Up** and **Down** arrow keys (or `j` / `k`) to cycle through open tabs, and press **Enter** to switch to the highlighted tab.
+- **Ctrl + W**: Shifts keyboard focus directly into the active webview, automatically collapsing the sidebar back to the 36px strip.
+- **Ctrl + X**: Closes the currently active tab.
 - **Ctrl + R**: Reloads the active tab.
+
+***
+
+## Modal Navigation Engine
+
+Mise Browser provides a Vim-inspired modal navigation engine that frees you from chorded modifiers during routine web browsing. The engine distinguishes between three primary operational states:
+
+1. **NORMAL Mode**: The default state. Home-row keys control page scrolling and browser actions without requiring Ctrl or Alt chords.
+2. **INSERT Mode**: Automatically entered whenever you click or focus a text input, search box, or content-editable field (or press `i` explicitly). Keystrokes pass directly into the field. Pressing **Escape** blurs the field and immediately returns to **NORMAL** mode.
+3. **PASSTHROUGH Mode**: Designed for rich web applications like Google Docs, sheets, design suites, and cloud terminals. In passthrough mode, all keystrokes pass directly to the guest web application without browser interception. Toggle passthrough mode at any time using **Shift + Escape** or by clicking the mode badge in the status bar.
+
+### NORMAL Mode Keymap
+
+| Key | Action | Description |
+| :--- | :--- | :--- |
+| `j` | Scroll Down | Smooth scroll down by 80px |
+| `k` | Scroll Up | Smooth scroll up by 80px |
+| `d` | Half Page Down | Smooth scroll down by half the viewport height |
+| `u` | Half Page Up | Smooth scroll up by half the viewport height |
+| `h` | Scroll Left | Smooth scroll left by 80px |
+| `l` | Scroll Right | Smooth scroll right by 80px |
+| `gg` | Jump to Top | Smooth scroll to top of page |
+| `G` | Jump to Bottom | Smooth scroll to bottom of page |
+| `t` | New Tab | Opens a new tab with default search engine |
+| `x` | Close Tab | Closes the current active tab |
+| `o` | Address Bar | Opens floating address overlay for navigation |
+| `r` | Reload | Reloads active tab |
+| `R` | Force Reload | Reloads active tab ignoring cache |
+| `H` | History Back | Navigates back in page history |
+| `L` | History Forward | Navigates forward in page history |
+| `/` | Find in Page | Opens the in-page search bar |
+| `f` | Link Hints | Injects two-letter hint tags over clickable links |
+| `w` | Dashboard | Opens the Workspace Dashboard tree |
+| `s` | Focus Sidebar | Moves focus to vertical sidebar tab list |
+| `y` | Yank URL | Copies current URL to clipboard with status bar feedback |
+| `i` | Insert Mode | Explicitly enters INSERT mode |
+| `Shift + Escape` | Passthrough Mode | Toggles PASSTHROUGH mode on or off |
 
 ***
 

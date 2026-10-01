@@ -51,6 +51,33 @@ All keyboard shortcuts in Mise Browser are fully customisable via `~/.config/mis
 
 ---
 
+## Modal Navigation (NORMAL Mode)
+
+When viewing web content without an active text field or prompt, Mise operates in **NORMAL Mode**, allowing Vim-style single-key navigation without modifier chords:
+
+| Key | Description |
+| :--- | :--- |
+| `j` / `k` | Smooth scroll down / up (80px) |
+| `d` / `u` | Half-page smooth scroll down / up |
+| `h` / `l` | Smooth scroll left / right (80px) |
+| `gg` | Jump to top of page |
+| `G` | Jump to bottom of page |
+| `t` | Open new tab |
+| `x` | Close current tab |
+| `o` | Open floating address bar |
+| `r` / `R` | Reload / Force reload current tab |
+| `H` / `L` | History back / History forward |
+| `/` | In-page text search |
+| `f` | Trigger Link Hints overlay |
+| `w` | Open Workspace Dashboard |
+| `s` | Focus sidebar tab list |
+| `y` | Copy current page URL to clipboard |
+| `i` | Enter INSERT mode |
+| `Escape` | Blur active input field and return to NORMAL mode |
+| `Shift + Escape` | Toggle PASSTHROUGH mode (sends raw keys to web applications) |
+
+---
+
 ## Customising Shortcuts (`keybinds.json`)
 
 Keybindings are decoupled from source code and managed by `keybinds.js`. You can customise any shortcut by editing:
