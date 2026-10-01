@@ -101,6 +101,7 @@ import {
 import { 
     initDarkReader, 
     toggleDarkReader, 
+    toggleDarkReaderForCurrentDomain,
     isDarkReaderGloballyEnabled, 
     applyDarkReaderToWebview 
 } from './modules/darkReader.js';
@@ -109,6 +110,7 @@ import {
 window.toggleDashboardView = toggleDashboardView;
 window.displayAddressOverlay = displayAddressOverlay;
 window.toggleDarkReader = toggleDarkReader;
+window.toggleDarkReaderForCurrentDomain = toggleDarkReaderForCurrentDomain;
 window.triggerLinkHints = triggerLinkHints;
 window.toggleInPageSearch = toggleInPageSearch;
 window.toggleNotesOverlay = toggleNotesOverlay;
@@ -427,6 +429,7 @@ function setupEventListeners() {
             case 'swap-split-panes': swapSplitPanes(); break;
             case 'close-split': closeSplitView(); break;
             case 'toggle-dark-reader': toggleDarkReader(); break;
+            case 'toggle-dark-reader-domain': toggleDarkReaderForCurrentDomain(); break;
             case 'delete-bookmark-entry': {
                 if (state.bookmarksActive && state.filteredBookmarksCache[state.bookmarkSelectionIdx]) {
                     deleteBookmark(state.filteredBookmarksCache[state.bookmarkSelectionIdx].url);

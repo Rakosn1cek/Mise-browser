@@ -89,6 +89,7 @@ export const CHECK_PAGE_LUMINANCE_SCRIPT = `
 `;
 
 let darkReaderGlobalEnabled = false;
+let darkReaderDisabledDomains = [];
 
 export function isDarkReaderGloballyEnabled() {
     return darkReaderGlobalEnabled;
@@ -99,15 +100,62 @@ export function setDarkReaderGloballyEnabled(val) {
     if (state) state.darkReaderEnabled = darkReaderGlobalEnabled;
 }
 
-export function updateDarkReaderButtonUI(enabled) {
+export function getDarkReaderDisabledDomains() {
+    return [...darkReaderDisabledDomains];
+}
+
+export function setDarkReaderDisabledDomains(list) {
+    if (Array.isArray(list)) {
+        darkReaderDisabledDomains = list.map(d => String(d).trim().toLowerCase()).filter(Boolean);
+    }
+}
+
+export function getDomainFromUrl(urlOrHostname) {
+    if (!urlOrHostname) return '';
+    try {
+        if (urlOrHostname.includes('://')) {
+            return new URL(urlOrHostname).hostname.toLowerCase();
+        }
+        return urlOrHostname.toLowerCase().trim();
+    } catch (e) {
+        return urlOrHostname.toLowerCase().trim();
+    }
+}
+
+export function isDomainDisabledForDarkReader(urlOrHostname) {
+    const host = getDomainFromUrl(urlOrHostname);
+    if (!host) return false;
+    return darkReaderDisabledDomains.some(d => {
+        const clean = d.toLowerCase().trim();
+        return clean && (host === clean || host.endsWith('.' + clean));
+    });
+}
+
+export function updateDarkReaderButtonUI(enabled, currentUrl = null) {
     const btn = document.getElementById('dark-reader-btn');
     if (!btn) return;
-    if (enabled) {
-        btn.classList.add('active');
-        btn.title = 'Toggle Dark Reader (Active - Alt+Shift+D)';
-    } else {
+
+    if (!currentUrl) {
+        const activeView = getActiveWebview();
+        if (activeView && typeof activeView.getURL === 'function') {
+            currentUrl = activeView.getURL();
+        }
+    }
+
+    const isSiteDisabled = currentUrl ? isDomainDisabledForDarkReader(currentUrl) : false;
+
+    if (isSiteDisabled) {
         btn.classList.remove('active');
-        btn.title = 'Toggle Dark Reader (Inactive - Alt+Shift+D)';
+        btn.classList.add('domain-disabled');
+        const host = getDomainFromUrl(currentUrl);
+        btn.title = `Dark Reader disabled on ${host} (Right-click or Alt+Shift+E to re-enable)`;
+    } else if (enabled) {
+        btn.classList.remove('domain-disabled');
+        btn.classList.add('active');
+        btn.title = 'Toggle Dark Reader (Active: Alt+Shift+D | Right-click or Alt+Shift+E to exclude domain)';
+    } else {
+        btn.classList.remove('active', 'domain-disabled');
+        btn.title = 'Toggle Dark Reader (Inactive: Alt+Shift+D)';
     }
 }
 
@@ -115,6 +163,11 @@ export function syncDarkReaderSettingsUI() {
     const toggle = document.getElementById('setting-dark-reader-toggle');
     if (toggle) {
         toggle.checked = darkReaderGlobalEnabled;
+    }
+
+    const textarea = document.getElementById('setting-dark-reader-disabled-domains');
+    if (textarea) {
+        textarea.value = darkReaderDisabledDomains.join('\n');
     }
 }
 
@@ -133,6 +186,11 @@ export async function applyDarkReaderToWebview(webview, force = false) {
     if (!webview || typeof webview.getURL !== 'function' || typeof webview.insertCSS !== 'function') return;
     const url = webview.getURL();
     if (!url || url.startsWith('about:') || url.startsWith('devtools:')) return;
+
+    if (!force && isDomainDisabledForDarkReader(url)) {
+        await removeDarkReaderFromWebview(webview);
+        return;
+    }
 
     const enabled = force || darkReaderGlobalEnabled;
     if (!enabled) {
@@ -200,12 +258,78 @@ export async function toggleDarkReader(forceValue = null) {
     }
 }
 
+export async function toggleDarkReaderForCurrentDomain() {
+    const activeView = getActiveWebview();
+    if (!activeView || typeof activeView.getURL !== 'function') return null;
+    const url = activeView.getURL();
+    if (!url || url.startsWith('about:') || url.startsWith('devtools:')) return null;
+
+    const host = getDomainFromUrl(url);
+    if (!host) return null;
+
+    const idx = darkReaderDisabledDomains.findIndex(d => {
+        const clean = d.toLowerCase().trim();
+        return host === clean || host.endsWith('.' + clean);
+    });
+
+    let isNowDisabled = false;
+    if (idx >= 0) {
+        darkReaderDisabledDomains.splice(idx, 1);
+        isNowDisabled = false;
+    } else {
+        darkReaderDisabledDomains.push(host);
+        isNowDisabled = true;
+    }
+
+    if (window.miseAPI && typeof window.miseAPI.updateBrowserSettings === 'function') {
+        try {
+            const cfg = (await window.miseAPI.getBrowserSettings()) || {};
+            cfg.dark_reader_disabled_domains = [...darkReaderDisabledDomains];
+            await window.miseAPI.updateBrowserSettings(cfg);
+        } catch (e) {}
+    }
+
+    updateDarkReaderButtonUI(darkReaderGlobalEnabled, url);
+    syncDarkReaderSettingsUI();
+
+    if (isNowDisabled) {
+        await removeDarkReaderFromWebview(activeView);
+    } else {
+        await applyDarkReaderToWebview(activeView);
+    }
+
+    return { host, isNowDisabled };
+}
+
+export async function saveDarkReaderDisabledDomains(domainsList) {
+    setDarkReaderDisabledDomains(domainsList);
+
+    if (window.miseAPI && typeof window.miseAPI.updateBrowserSettings === 'function') {
+        try {
+            const cfg = (await window.miseAPI.getBrowserSettings()) || {};
+            cfg.dark_reader_disabled_domains = [...darkReaderDisabledDomains];
+            await window.miseAPI.updateBrowserSettings(cfg);
+        } catch (e) {}
+    }
+
+    syncDarkReaderSettingsUI();
+    updateDarkReaderButtonUI(darkReaderGlobalEnabled);
+
+    const activeView = getActiveWebview();
+    if (activeView) {
+        await applyDarkReaderToWebview(activeView);
+    }
+}
+
 export async function initDarkReader() {
     if (window.miseAPI && typeof window.miseAPI.getBrowserSettings === 'function') {
         try {
             const cfg = await window.miseAPI.getBrowserSettings();
             if (cfg && cfg.dark_reader !== undefined) {
                 setDarkReaderGloballyEnabled(cfg.dark_reader);
+            }
+            if (cfg && Array.isArray(cfg.dark_reader_disabled_domains)) {
+                setDarkReaderDisabledDomains(cfg.dark_reader_disabled_domains);
             }
         } catch (e) {}
     }
@@ -218,12 +342,38 @@ export async function initDarkReader() {
         btn.addEventListener('click', () => {
             toggleDarkReader();
         });
+        btn.addEventListener('contextmenu', async (e) => {
+            e.preventDefault();
+            await toggleDarkReaderForCurrentDomain();
+        });
     }
 
     const toggle = document.getElementById('setting-dark-reader-toggle');
     if (toggle) {
         toggle.addEventListener('change', (e) => {
             toggleDarkReader(e.target.checked);
+        });
+    }
+
+    const saveExcludedBtn = document.getElementById('setting-save-dark-reader-domains-btn');
+    if (saveExcludedBtn) {
+        saveExcludedBtn.addEventListener('click', async () => {
+            const textarea = document.getElementById('setting-dark-reader-disabled-domains');
+            const note = document.getElementById('setting-dark-reader-domains-note');
+            if (!textarea) return;
+
+            const domains = textarea.value
+                .split(/[\n,]/)
+                .map(d => d.trim().toLowerCase())
+                .filter(Boolean);
+
+            await saveDarkReaderDisabledDomains(domains);
+
+            if (note) {
+                note.textContent = 'Saved: excluded sites updated immediately.';
+                note.classList.add('visible');
+                setTimeout(() => note.classList.remove('visible'), 2500);
+            }
         });
     }
 }

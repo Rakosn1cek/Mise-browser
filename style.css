@@ -414,6 +414,12 @@ body.sidebar-auto-collapse #Sidebar:not(:hover):not(.expanded):not(:focus-within
     background: var(--selected);
 }
 
+#dark-reader-btn.domain-disabled {
+    color: #f7768e;
+    border-color: #f7768e;
+    opacity: 0.75;
+}
+
 #right-content {
     flex-grow: 1;
     position: relative;

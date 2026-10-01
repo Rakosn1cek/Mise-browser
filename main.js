@@ -62,6 +62,7 @@ const DEFAULT_CONFIG = {
     theme: 'dark',
     webview_theme: 'dark',
     dark_reader: false,
+    dark_reader_disabled_domains: [],
     trusted_domains: [],
     tab_sleep_timeout_minutes: 15,
     sidebar_auto_collapse: true,
@@ -82,6 +83,7 @@ function loadBrowserConfig() {
             spellchecker_language: parsed.spellchecker_language || 'en-GB',
             webview_theme: parsed.webview_theme || 'dark',
             dark_reader: parsed.dark_reader ?? false,
+            dark_reader_disabled_domains: Array.isArray(parsed.dark_reader_disabled_domains) ? parsed.dark_reader_disabled_domains : [],
             theme_colors: {
                 dark: { ...DEFAULT_THEME_COLORS.dark, ...(parsed.theme_colors?.dark || {}) },
                 light: { ...DEFAULT_THEME_COLORS.light, ...(parsed.theme_colors?.light || {}) }
@@ -1198,6 +1200,15 @@ function buildSettingsSubmenu(cfg) {
                 }
             }
         },
+        {
+            label: 'Toggle Dark Reader for Current Domain',
+            accelerator: 'Alt+Shift+E',
+            click: () => {
+                if (mainWindow && !mainWindow.isDestroyed()) {
+                    mainWindow.webContents.send('master-shortcut', 'toggle-dark-reader-domain');
+                }
+            }
+        },
         { type: 'separator' },
         {
             label: 'Open User Scripts Directory',
@@ -1537,6 +1548,17 @@ app.on('web-contents-created', (event, webContents) => {
             menu.append(new MenuItem({
                 label: 'Share...',
                 submenu: shareSubmenu
+            }));
+
+            menu.append(new MenuItem({ type: 'separator' }));
+            menu.append(new MenuItem({
+                label: 'Toggle Dark Reader on this site',
+                accelerator: 'Alt+Shift+E',
+                click: () => {
+                    if (mainWindow && mainWindow.webContents) {
+                        mainWindow.webContents.send('master-shortcut', 'toggle-dark-reader-domain');
+                    }
+                }
             }));
         
             if (menu.items.length <= 2) {

@@ -283,6 +283,18 @@
                                     </label>
                                 </div>
 
+                                <div class="setting-item setting-item-stacked">
+                                    <div class="setting-info">
+                                        <span class="setting-label">Dark Reader Excluded Sites</span>
+                                        <span class="setting-desc">Domains listed here will never be inverted by Dark Reader. One domain per line, e.g. <code>aur.archlinux.org</code> (subdomains are covered automatically). Right-clicking the Dark Reader icon also toggles the active domain.</span>
+                                    </div>
+                                    <textarea id="setting-dark-reader-disabled-domains" class="settings-textarea" rows="3" placeholder="aur.archlinux.org&#10;example.com"></textarea>
+                                    <div style="display: flex; justify-content: flex-end; align-items: center; gap: 10px;">
+                                        <span id="setting-dark-reader-domains-note" class="settings-save-note"></span>
+                                        <button id="setting-save-dark-reader-domains-btn" class="settings-action-btn">Save Excluded Sites</button>
+                                    </div>
+                                </div>
+
                                 <!-- Accent Colour Customisation -->
                                 <div class="setting-item visual-setting-item">
                                     <div class="setting-info">

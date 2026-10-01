@@ -47,6 +47,7 @@ All keyboard shortcuts in Mise Browser are fully customisable via `~/.config/mis
 | **Ctrl + Shift + 0** | `toggle-global-media` | Plays or pauses media playback globally |
 | **F10** | `toggle-global-media` | Secondary global media play/pause binding |
 | **Alt + Shift + D** | `toggle-dark-reader` | Toggles Dark Reader universal smart dark mode |
+| **Alt + Shift + E** | `toggle-dark-reader-domain` | Toggles Dark Reader exclusion for the current domain |
 | **Ctrl + Shift + I** | `toggle-devtools` | Opens Chromium DevTools in a dedicated window |
 | **F12** | `toggle-devtools` | Secondary shortcut for DevTools |
 

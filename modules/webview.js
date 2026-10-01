@@ -1,7 +1,7 @@
 import { state } from './state.js';
 import { getActiveWebview, focusActiveWebview, getWorkspacePartition, isDarkMode } from './utils.js';
 import { isSplitActive, applySplitLayout, handleSplitTabSelection, handleTabRemovalInSplit, getSplitState } from './splitView.js';
-import { applyDarkReaderToWebview } from './darkReader.js';
+import { applyDarkReaderToWebview, updateDarkReaderButtonUI, isDarkReaderGloballyEnabled } from './darkReader.js';
 
 export function applyCSSThemeToView() {
     // Intentionally no-op to preserve native website themes
@@ -75,6 +75,10 @@ export function createWebView(url, currentWS, idx) {
             updateTabShieldStatus(targetLi, e.url, cfg.trusted_domains || []);
         }
         applyDarkReaderToWebview(webview).catch(() => {});
+        const activeWv = getActiveWebview();
+        if (webview === activeWv) {
+            updateDarkReaderButtonUI(isDarkReaderGloballyEnabled(), e.url);
+        }
     });
 
     webview.addEventListener('did-navigate-in-page', async (e) => {
@@ -570,6 +574,7 @@ export function switchTabFocus(targetIdx) {
         if (!state.tabActivityTimestamps[currentWS]) state.tabActivityTimestamps[currentWS] = [];
         state.tabActivityTimestamps[currentWS][targetIdx] = Date.now();
         applyDarkReaderToWebview(currentWSViews[targetIdx]).catch(() => {});
+        updateDarkReaderButtonUI(isDarkReaderGloballyEnabled(), currentWSViews[targetIdx]?.getURL?.());
 
         setTimeout(() => {
             const currentFocused = document.activeElement;
