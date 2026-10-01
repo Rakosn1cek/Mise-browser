@@ -74,6 +74,7 @@ Keep your hands on the home row. Every major workflow is reachable via concise, 
 | `f` | Link Hints | Highlight all clickable page links with two-letter tags |
 | `Alt + S` | Dual Split | Toggle side-by-side split screen view |
 | `Alt + \` | Swap Panes | Swap active page and split page positions |
+| `Alt + Shift + D` | Dark Reader | Toggle universal smart dark mode |
 | `Ctrl + 1` to `9` | Workspace Jump | Switch between isolated multi-account containers |
 | `Ctrl + L` / `o` | Omnibar | Open floating address bar with search engine aliases |
 | `Ctrl + Shift + H` | History Overlay | Search, reopen, or purge visited history records |

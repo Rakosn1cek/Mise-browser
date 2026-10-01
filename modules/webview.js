@@ -1,6 +1,7 @@
 import { state } from './state.js';
 import { getActiveWebview, focusActiveWebview, getWorkspacePartition, isDarkMode } from './utils.js';
 import { isSplitActive, applySplitLayout, handleSplitTabSelection, handleTabRemovalInSplit, getSplitState } from './splitView.js';
+import { applyDarkReaderToWebview } from './darkReader.js';
 
 export function applyCSSThemeToView() {
     // Intentionally no-op to preserve native website themes
@@ -73,6 +74,7 @@ export function createWebView(url, currentWS, idx) {
             const cfg = (await window.miseAPI.getBrowserSettings()) || {};
             updateTabShieldStatus(targetLi, e.url, cfg.trusted_domains || []);
         }
+        applyDarkReaderToWebview(webview).catch(() => {});
     });
 
     webview.addEventListener('did-navigate-in-page', async (e) => {
@@ -172,6 +174,7 @@ export function createWebView(url, currentWS, idx) {
         } catch (err) {}
 
         injectMatchingUserContent(webview).catch(() => {});
+        applyDarkReaderToWebview(webview).catch(() => {});
     });
 
     webview.addEventListener('focus', () => {
@@ -566,6 +569,7 @@ export function switchTabFocus(targetIdx) {
         
         if (!state.tabActivityTimestamps[currentWS]) state.tabActivityTimestamps[currentWS] = [];
         state.tabActivityTimestamps[currentWS][targetIdx] = Date.now();
+        applyDarkReaderToWebview(currentWSViews[targetIdx]).catch(() => {});
 
         setTimeout(() => {
             const currentFocused = document.activeElement;

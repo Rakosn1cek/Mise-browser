@@ -408,6 +408,12 @@ body.sidebar-auto-collapse #Sidebar:not(:hover):not(.expanded):not(:focus-within
     background: var(--selected);
 }
 
+#dark-reader-btn.active {
+    color: var(--accent);
+    border-color: var(--accent);
+    background: var(--selected);
+}
+
 #right-content {
     flex-grow: 1;
     position: relative;

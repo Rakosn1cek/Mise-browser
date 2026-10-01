@@ -517,6 +517,19 @@ export const COMMAND_DEFINITIONS = [
         action: () => window.toggleInterfaceTheme && window.toggleInterfaceTheme()
     },
     {
+        id: 'toggle-dark-reader',
+        title: 'Toggle Dark Reader (Universal Dark Mode)',
+        desc: 'Invert light websites into comfortable dark mode whilst preserving media',
+        details: 'Applies GPU-accelerated smart dark styling to websites that lack native dark themes, automatically preserving images, videos, and already-dark layouts.',
+        tip: 'Press Alt+Shift+D to toggle Dark Reader on and off at any time.',
+        category: 'Preferences & System',
+        icon: 'fa-solid fa-moon',
+        actionId: 'toggle-dark-reader',
+        shortcut: 'Alt+Shift+D',
+        keywords: ['dark', 'reader', 'night', 'theme', 'invert', 'contrast'],
+        action: () => window.toggleDarkReader && window.toggleDarkReader()
+    },
+    {
         id: 'toggle-menu-bar',
         title: 'Toggle Application Menu Bar',
         desc: 'Show or hide the native top application window menu bar',

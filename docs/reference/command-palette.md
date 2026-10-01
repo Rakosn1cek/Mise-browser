@@ -93,4 +93,5 @@ The Command Centre gives you rapid, searchable access to all Mise operations, in
 | **Open Preferences** | `Ctrl+H` | `toggle-help` | Full-page settings view for GPU switches, memory caps, and themes. |
 | **Toggle Private Browsing Mode** | `Ctrl+Shift+P` | `toggle-private-mode` | Switches session to in-memory non-persistent partition. |
 | **Toggle Colour Theme (Dark / Light)** | — | — | Swaps UI styling and webview shader inversion between dark and light. |
+| **Toggle Dark Reader (Universal Dark Mode)** | `Alt+Shift+D` | `toggle-dark-reader` | Applies GPU-accelerated smart dark styling to websites lacking native dark mode. |
 | **Toggle Application Menu Bar** | `F1` | `toggle-menu-bar` | Shows or hides the native top window menu bar. |

@@ -61,6 +61,7 @@ const DEFAULT_CONFIG = {
     spellchecker_language: 'en-GB',
     theme: 'dark',
     webview_theme: 'dark',
+    dark_reader: false,
     trusted_domains: [],
     tab_sleep_timeout_minutes: 15,
     sidebar_auto_collapse: true,
@@ -80,6 +81,7 @@ function loadBrowserConfig() {
             ...parsed,
             spellchecker_language: parsed.spellchecker_language || 'en-GB',
             webview_theme: parsed.webview_theme || 'dark',
+            dark_reader: parsed.dark_reader ?? false,
             theme_colors: {
                 dark: { ...DEFAULT_THEME_COLORS.dark, ...(parsed.theme_colors?.dark || {}) },
                 light: { ...DEFAULT_THEME_COLORS.light, ...(parsed.theme_colors?.light || {}) }
@@ -1179,6 +1181,20 @@ function buildSettingsSubmenu(cfg) {
                 fs.writeFileSync(CONFIG_PATH, JSON.stringify(cfg, null, 4), 'utf-8');
                 if (mainWindow && !mainWindow.isDestroyed()) {
                     mainWindow.webContents.send('master-shortcut', 'toggle-sidebar-collapse-mode', menuItem.checked);
+                }
+            }
+        },
+        {
+            label: 'Universal Dark Reader',
+            type: 'checkbox',
+            checked: !!cfg.dark_reader,
+            accelerator: 'Alt+Shift+D',
+            click: (menuItem) => {
+                cfg.dark_reader = menuItem.checked;
+                if (!fs.existsSync(CONFIG_DIR)) fs.mkdirSync(CONFIG_DIR, { recursive: true });
+                fs.writeFileSync(CONFIG_PATH, JSON.stringify(cfg, null, 4), 'utf-8');
+                if (mainWindow && !mainWindow.isDestroyed()) {
+                    mainWindow.webContents.send('master-shortcut', 'toggle-dark-reader', menuItem.checked);
                 }
             }
         },

@@ -98,9 +98,17 @@ import {
     openUrlInSplit 
 } from './modules/splitView.js';
 
+import { 
+    initDarkReader, 
+    toggleDarkReader, 
+    isDarkReaderGloballyEnabled, 
+    applyDarkReaderToWebview 
+} from './modules/darkReader.js';
+
 // Attach functions needed across module boundaries to window
 window.toggleDashboardView = toggleDashboardView;
 window.displayAddressOverlay = displayAddressOverlay;
+window.toggleDarkReader = toggleDarkReader;
 window.triggerLinkHints = triggerLinkHints;
 window.toggleInPageSearch = toggleInPageSearch;
 window.toggleNotesOverlay = toggleNotesOverlay;
@@ -297,6 +305,7 @@ async function initializeBrowser() {
     setupBookmarkOverlayListeners();
     initSearchEnginePreference();
     initDownloadShelf();
+    initDarkReader();
 
     if (window.miseAPI && typeof window.miseAPI.getAppVersion === 'function') {
         window.miseAPI.getAppVersion().then((info) => {
@@ -417,6 +426,7 @@ function setupEventListeners() {
             case 'switch-split-focus': switchSplitFocus(); break;
             case 'swap-split-panes': swapSplitPanes(); break;
             case 'close-split': closeSplitView(); break;
+            case 'toggle-dark-reader': toggleDarkReader(); break;
             case 'delete-bookmark-entry': {
                 if (state.bookmarksActive && state.filteredBookmarksCache[state.bookmarkSelectionIdx]) {
                     deleteBookmark(state.filteredBookmarksCache[state.bookmarkSelectionIdx].url);
@@ -512,7 +522,7 @@ function setupEventListeners() {
         });
     });
 
-    const bottomButtons = ['pin-sidebar-btn', 'theme-toggle-btn', 'noti-toggle-btn'];
+    const bottomButtons = ['pin-sidebar-btn', 'dark-reader-btn', 'theme-toggle-btn', 'noti-toggle-btn'];
     bottomButtons.forEach((id, idx) => {
         const btn = document.getElementById(id);
         if (!btn) return;
