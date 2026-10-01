@@ -13,15 +13,14 @@ All keyboard shortcuts in Mise Browser are fully customisable via `~/.config/mis
 | **F1** | `toggle-menu-bar` | Toggles the Mise Settings and Menu Bar |
 | **Ctrl + T** | `spawn-tab` | Opens a new blank tab (defaults to configured search engine) |
 | **Ctrl + L** | `toggle-address` | Opens the floating address bar overlay |
-| **Ctrl + W** | `remove-tab` | Closes the currently active tab or selected dashboard node |
-| **Ctrl + D** | `remove-tab` | Secondary binding to close the current tab |
+| **Ctrl + X** | `remove-tab` | Closes the currently active tab or selected dashboard node |
 | **Ctrl + Shift + W** | `toggle-dashboard` | Opens the Workspace Dashboard tree overlay |
-| **Ctrl + S** | `toggle-find` | Find in page / quick save active workspace |
+| **Ctrl + Shift + F** | `toggle-find` | In-page text search overlay across active webview content |
 | **Ctrl + R** | `reload-active-tab` | Reloads the active tab |
-| **Ctrl + M** | `focus-sidebar` | Moves focus to the vertical tab sidebar (cycles between tabs and navigation buttons) |
+| **Ctrl + S** | `focus-sidebar` | Moves focus to the vertical tab sidebar (cycles between tabs and navigation buttons) |
 | **Ctrl + Shift + N** | `focus-nav-buttons` | Moves focus directly to navigation action buttons |
 | **Ctrl + Tab** | `focus-nav-buttons` | Secondary shortcut to focus navigation action buttons |
-| **Ctrl + B** | `focus-webview` | Moves focus directly into the active web page |
+| **Ctrl + W** | `focus-webview` | Moves focus directly into the active web page |
 | **Ctrl + Shift + Z** | `toggle-zen-mode` | Toggles sidebar expansion or pin mode |
 | **Ctrl + P** | `toggle-palette` | Opens the Command Palette |
 | **Ctrl + Shift + P** | `toggle-private-mode`| Toggles volatile in-memory private browsing mode |

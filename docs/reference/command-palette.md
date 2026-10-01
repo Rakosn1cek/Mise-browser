@@ -35,14 +35,14 @@ The Command Centre gives you rapid, searchable access to all Mise operations, in
 | **Toggle Workspace Dashboard** | `Ctrl+Shift+W` | `toggle-dashboard` | Full-page hierarchical tree of all workspaces, tabs, and windows. |
 | **Toggle Actionable History** | `Ctrl+Shift+H` | `toggle-history` | Local history ledger with domain-level filtering and record purging. |
 | **Toggle Link Hints Overlay** | `Ctrl+F` | `trigger-hints` | Letter tags overlaid on clickable webpage links for keyboard browsing. |
-| **Find In Page** | `Ctrl+S` | `toggle-find` | In-page text search overlay across active webview content. |
+| **Find In Page** | `Ctrl+Shift+F` | `toggle-find` | In-page text search overlay across active webview content. |
 | **Reload Active Tab** | `Ctrl+R` | `reload-active-tab` | Refreshes current webview document while preserving session state. |
-| **Close Current Tab** | `Ctrl+W` / `Ctrl+D` | `remove-tab` | Disposes of active webview and reclaims allocated V8 heap memory. |
+| **Close Current Tab** | `Ctrl+X` | `remove-tab` | Disposes of active webview and reclaims allocated V8 heap memory. |
 | **Mute / Unmute Active Tab** | — | — | Toggles Chromium audio output for the active tab without pausing playback. |
 | **Reset Tab Zoom Level** | — | — | Restores webview zoom factor back to 100% default. |
-| **Focus Sidebar Tab List** | `Ctrl+M` | `focus-sidebar` | Moves keyboard focus directly into the vertical tab list. |
+| **Focus Sidebar Tab List** | `Ctrl+S` | `focus-sidebar` | Moves keyboard focus directly into the vertical tab list. |
 | **Focus Navigation Buttons** | `Ctrl+Shift+N` | `focus-nav-buttons` | Cycles keyboard focus across toolbar navigation controls. |
-| **Focus Active Webview** | `Ctrl+B` | `focus-webview` | Returns keyboard and typing focus directly to the guest webpage. |
+| **Focus Active Webview** | `Ctrl+W` | `focus-webview` | Returns keyboard and typing focus directly to the guest webpage. |
 | **Toggle Sidebar (Expand / Collapse)** | `Ctrl+Shift+Z` | `toggle-zen-mode` | Alternates sidebar between 220px expanded width and 48px icon strip. |
 | **Toggle Status & Mode Bar** | `Ctrl+/` | `toggle-status-bar` | 22px footer status bar displaying modal state, target URL, and TLS encryption. |
 | **Toggle Auto-Collapse Sidebar** | — | — | Pins sidebar open or enables auto-shrink to 36px strip with hover expansion. |
