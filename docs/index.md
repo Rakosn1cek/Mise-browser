@@ -26,7 +26,7 @@ features:
   - icon: 🌙
     title: True Tab Hibernation
     details: Inactive background tabs detach entirely from memory across all workspaces. Live scroll positions and navigation history restore smoothly upon selection.
-  - icon: 🪟
+  - icon:  
     title: Dual-Split View
     details: Browse two pages side-by-side with customisable partition ratios. Swap panes, open links directly into split view, or toggle seamlessly via keyboard shortcuts.
   - icon: 📦
@@ -47,7 +47,7 @@ features:
   - icon: 📝
     title: Markdown Scratchpad & Tools
     details: Instant Markdown quick notes (Alt + N), actionable history overlay (Ctrl + Shift + H), and structured bookmarks built right into the interface.
-  - icon: 🚀
+  - icon:  
     title: Distro-Agnostic & Zero Telemetry
     details: Distro-agnostic AppImage, Deb, RPM, and Arch packaging. Zero telemetry, zero usage tracking, and anonymous GitHub release notifications for effortless updates.
 ---
