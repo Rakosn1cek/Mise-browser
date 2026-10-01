@@ -98,6 +98,13 @@ import {
     openUrlInSplit 
 } from './modules/splitView.js';
 
+import { 
+    initStatusBar, 
+    toggleStatusBar, 
+    updateStatusBarFromActiveView, 
+    recalculateMode 
+} from './modules/statusBar.js';
+
 // Attach functions needed across module boundaries to window
 window.toggleDashboardView = toggleDashboardView;
 window.displayAddressOverlay = displayAddressOverlay;
@@ -105,6 +112,9 @@ window.triggerLinkHints = triggerLinkHints;
 window.toggleInPageSearch = toggleInPageSearch;
 window.toggleNotesOverlay = toggleNotesOverlay;
 window.toggleDownloadShelf = toggleDownloadShelf;
+window.toggleStatusBar = toggleStatusBar;
+window.recalculateStatusMode = recalculateMode;
+window.updateStatusBarFromActiveView = updateStatusBarFromActiveView;
 window.toggleZenMode = toggleZenMode;
 window.toggleSidebarExpansion = toggleSidebarExpansion;
 window.toggleSidebarPin = toggleSidebarPin;
@@ -300,6 +310,15 @@ async function initializeBrowser() {
     setupBookmarkOverlayListeners();
     initSearchEnginePreference();
     initDownloadShelf();
+    initStatusBar();
+
+    if (window.miseAPI && typeof window.miseAPI.getBrowserSettings === 'function') {
+        window.miseAPI.getBrowserSettings().then((cfg) => {
+            if (cfg && cfg.show_status_bar === false) {
+                toggleStatusBar(false);
+            }
+        }).catch(() => {});
+    }
 
     if (window.miseAPI && typeof window.miseAPI.getAppVersion === 'function') {
         window.miseAPI.getAppVersion().then((info) => {
@@ -463,6 +482,7 @@ function setupEventListeners() {
             case 'toggle-palette': toggleCommandPaletteView(); break;
             case 'toggle-help': togglePreferencesView(); break;
             case 'toggle-history': toggleHistoryOverlay(); break;
+            case 'toggle-status-bar': toggleStatusBar(); break;
             case 'go-back':
             case 'go-back-signal': navigateFrameBack(); break;
             case 'go-forward':

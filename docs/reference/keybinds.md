@@ -30,6 +30,7 @@ All keyboard shortcuts in Mise Browser are fully customisable via `~/.config/mis
 | **Ctrl + Shift + B** | `toggle-bookmarks` | Opens the Bookmarks and Quickmarks overlay |
 | **Ctrl + Shift + H** | `toggle-history` | Opens the Actionable History overlay |
 | **Ctrl + Shift + D** | `toggle-downloads` | Toggles the native download shelf |
+| **Ctrl + /** | `toggle-status-bar` | Toggles the bottom status and mode footer bar |
 | **Ctrl + \\** | `toggle-split` | Toggles dual split view (1x2 side by side comparison) |
 | **Ctrl + Alt + S** | `toggle-split` | Secondary shortcut to toggle dual split view |
 | **Ctrl + Alt + O** | `switch-split-focus` | Cycles keyboard focus between split pane 1 and pane 2 |

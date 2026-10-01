@@ -1,6 +1,13 @@
 import { state } from './state.js';
 import { getActiveWebview, focusActiveWebview, getWorkspacePartition, isDarkMode } from './utils.js';
 import { isSplitActive, applySplitLayout, handleSplitTabSelection, handleTabRemovalInSplit, getSplitState } from './splitView.js';
+import { 
+    setTargetUrl, 
+    updateSecurityStatus, 
+    updateStatusBarFromActiveView, 
+    handleGuestInputFocus, 
+    handleGuestHintsState 
+} from './statusBar.js';
 
 export function applyCSSThemeToView() {
     // Intentionally no-op to preserve native website themes
@@ -73,6 +80,13 @@ export function createWebView(url, currentWS, idx) {
             const cfg = (await window.miseAPI.getBrowserSettings()) || {};
             updateTabShieldStatus(targetLi, e.url, cfg.trusted_domains || []);
         }
+        if (state.sessionState.current_workspace === currentWS) {
+            const activeListItem = document.querySelector('#TabList li.selected');
+            const currentIdx = activeListItem ? Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem) : -1;
+            if (idx === currentIdx) {
+                updateSecurityStatus(e.url);
+            }
+        }
     });
 
     webview.addEventListener('did-navigate-in-page', async (e) => {
@@ -86,6 +100,13 @@ export function createWebView(url, currentWS, idx) {
         if (targetLi) {
             const cfg = (await window.miseAPI.getBrowserSettings()) || {};
             updateTabShieldStatus(targetLi, e.url, cfg.trusted_domains || []);
+        }
+        if (state.sessionState.current_workspace === currentWS) {
+            const activeListItem = document.querySelector('#TabList li.selected');
+            const currentIdx = activeListItem ? Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem) : -1;
+            if (idx === currentIdx) {
+                updateSecurityStatus(e.url);
+            }
         }
         webview.executeJavaScript(`
             (function() {
@@ -172,6 +193,30 @@ export function createWebView(url, currentWS, idx) {
         } catch (err) {}
 
         injectMatchingUserContent(webview).catch(() => {});
+
+        if (state.sessionState.current_workspace === currentWS) {
+            const activeListItem = document.querySelector('#TabList li.selected');
+            const currentIdx = activeListItem ? Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem) : -1;
+            if (idx === currentIdx) {
+                updateSecurityStatus(webview.getURL());
+            }
+        }
+    });
+
+    webview.addEventListener('update-target-url', (e) => {
+        const activeListItem = document.querySelector('#TabList li.selected');
+        const currentIdx = activeListItem ? Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem) : -1;
+        if (state.sessionState.current_workspace === currentWS && (idx === currentIdx || isSplitActive(currentWS))) {
+            setTargetUrl(e.url || '');
+        }
+    });
+
+    webview.addEventListener('ipc-message', (e) => {
+        if (e.channel === 'guest-input-focus') {
+            handleGuestInputFocus(!!e.args[0], currentWS, idx);
+        } else if (e.channel === 'guest-hints-state') {
+            handleGuestHintsState(!!e.args[0], currentWS, idx);
+        }
     });
 
     webview.addEventListener('focus', () => {
@@ -384,6 +429,7 @@ export function renderWorkspaceUI(targetTabToFocus = null) {
             const nameEl = document.getElementById('WelcomeWorkspaceName');
             if (nameEl) nameEl.textContent = currentWS;
         }
+        updateStatusBarFromActiveView();
         return;
     } else {
         if (welcomeEl) {
@@ -579,6 +625,8 @@ export function switchTabFocus(targetIdx) {
             }
         }, 50);
     }
+
+    updateStatusBarFromActiveView();
 }
 
 export async function spawnNewBlankTab() {

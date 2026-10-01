@@ -1,0 +1,238 @@
+// modules/statusBar.js
+// Status and mode bar controller for link target previews, connection security, container partition badges, and modal states
+
+import { state } from './state.js';
+import { getWorkspacePartition } from './utils.js';
+import { isSplitActive, getSplitState } from './splitView.js';
+
+let statusBarEl = null;
+let modeBadgeEl = null;
+let targetUrlEl = null;
+let securityBadgeEl = null;
+let partitionBadgeEl = null;
+
+let isStatusBarEnabled = true;
+let isGuestInputFocused = false;
+let isHostInputFocused = false;
+let isHintsModeActive = false;
+let currentMode = 'NORMAL';
+
+export function initStatusBar() {
+    statusBarEl = document.getElementById('StatusBar');
+    modeBadgeEl = document.getElementById('StatusBarMode');
+    targetUrlEl = document.getElementById('StatusBarUrl');
+    securityBadgeEl = document.getElementById('StatusBarSecurity');
+    partitionBadgeEl = document.getElementById('StatusBarPartition');
+
+    if (!statusBarEl) return;
+
+    // Attach click handler on partition badge to open Workspace Dashboard
+    if (partitionBadgeEl) {
+        partitionBadgeEl.addEventListener('click', () => {
+            if (typeof window.toggleDashboardView === 'function') {
+                window.toggleDashboardView();
+            }
+        });
+    }
+
+    // Attach click handler on mode badge to cancel hints if active
+    if (modeBadgeEl) {
+        modeBadgeEl.addEventListener('click', () => {
+            if (isHintsModeActive && typeof window.triggerLinkHints === 'function') {
+                window.triggerLinkHints();
+            }
+        });
+    }
+
+    // Host input focus tracking for Insert mode
+    window.addEventListener('focusin', (e) => {
+        const t = e.target;
+        if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) {
+            isHostInputFocused = true;
+            recalculateMode();
+        }
+    });
+
+    window.addEventListener('focusout', (e) => {
+        const t = e.target;
+        if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) {
+            isHostInputFocused = false;
+            recalculateMode();
+        }
+    });
+
+    // Initial state synchronisation
+    updateStatusBarFromActiveView();
+}
+
+export function setTargetUrl(url) {
+    if (!targetUrlEl) targetUrlEl = document.getElementById('StatusBarUrl');
+    if (!targetUrlEl) return;
+
+    if (!url) {
+        targetUrlEl.textContent = '';
+        targetUrlEl.title = '';
+        return;
+    }
+
+    targetUrlEl.textContent = url;
+    targetUrlEl.title = url;
+}
+
+export function updateSecurityStatus(url) {
+    if (!securityBadgeEl) securityBadgeEl = document.getElementById('StatusBarSecurity');
+    if (!securityBadgeEl) return;
+
+    if (!url || url === 'about:blank') {
+        securityBadgeEl.innerHTML = '<i class="fa-solid fa-circle-minus"></i><span class="status-badge-text">BLANK</span>';
+        securityBadgeEl.className = 'status-badge status-badge-security security-neutral';
+        securityBadgeEl.title = 'Empty page';
+        return;
+    }
+
+    try {
+        const parsed = new URL(url);
+        if (parsed.protocol === 'https:') {
+            securityBadgeEl.innerHTML = '<i class="fa-solid fa-lock"></i><span class="status-badge-text">HTTPS</span>';
+            securityBadgeEl.className = 'status-badge status-badge-security security-secure';
+            securityBadgeEl.title = `Secure connection (TLS) | Host: ${parsed.hostname}`;
+        } else if (parsed.protocol === 'http:') {
+            securityBadgeEl.innerHTML = '<i class="fa-solid fa-lock-open"></i><span class="status-badge-text">HTTP</span>';
+            securityBadgeEl.className = 'status-badge status-badge-security security-insecure';
+            securityBadgeEl.title = `Insecure connection (HTTP) | Host: ${parsed.hostname}`;
+        } else if (parsed.protocol === 'file:') {
+            securityBadgeEl.innerHTML = '<i class="fa-solid fa-file-code"></i><span class="status-badge-text">FILE</span>';
+            securityBadgeEl.className = 'status-badge status-badge-security security-local';
+            securityBadgeEl.title = `Local file: ${parsed.pathname}`;
+        } else {
+            const proto = parsed.protocol.replace(':', '').toUpperCase();
+            securityBadgeEl.innerHTML = `<i class="fa-solid fa-globe"></i><span class="status-badge-text">${proto}</span>`;
+            securityBadgeEl.className = 'status-badge status-badge-security security-neutral';
+            securityBadgeEl.title = `Protocol: ${parsed.protocol}`;
+        }
+    } catch {
+        securityBadgeEl.innerHTML = '<i class="fa-solid fa-globe"></i><span class="status-badge-text">WEB</span>';
+        securityBadgeEl.className = 'status-badge status-badge-security security-neutral';
+        securityBadgeEl.title = url;
+    }
+}
+
+export function updatePartitionBadge(workspaceName, isPrivate) {
+    if (!partitionBadgeEl) partitionBadgeEl = document.getElementById('StatusBarPartition');
+    if (!partitionBadgeEl) return;
+
+    if (isPrivate || state.globalPrivateModeActive) {
+        partitionBadgeEl.innerHTML = '<i class="fa-solid fa-user-secret"></i><span class="status-badge-text">Private Profile</span>';
+        partitionBadgeEl.className = 'status-badge status-badge-partition partition-private';
+        partitionBadgeEl.title = 'Partition: MisePrivateProfile (Click to manage workspaces)';
+        return;
+    }
+
+    const ws = workspaceName || state.sessionState.current_workspace || 'Workspace 1';
+    const partitionStr = getWorkspacePartition(ws);
+    partitionBadgeEl.innerHTML = `<i class="fa-solid fa-box-archive"></i><span class="status-badge-text">${ws}</span>`;
+    partitionBadgeEl.className = 'status-badge status-badge-partition partition-container';
+    partitionBadgeEl.title = `Container partition: ${partitionStr} (Click to manage workspaces)`;
+}
+
+export function setMode(modeName) {
+    currentMode = modeName || 'NORMAL';
+    if (!modeBadgeEl) modeBadgeEl = document.getElementById('StatusBarMode');
+    if (!modeBadgeEl) return;
+
+    modeBadgeEl.textContent = currentMode;
+    modeBadgeEl.className = `status-badge status-badge-mode mode-${currentMode.toLowerCase()}`;
+    modeBadgeEl.title = `Current browser mode: ${currentMode}`;
+}
+
+export function getMode() {
+    return currentMode;
+}
+
+export function recalculateMode() {
+    const currentWS = state.sessionState.current_workspace;
+    let nextMode = 'NORMAL';
+
+    if (isHintsModeActive) {
+        nextMode = 'HINTS';
+    } else if (isHostInputFocused || isGuestInputFocused) {
+        nextMode = 'INSERT';
+    } else if (isSplitActive(currentWS)) {
+        nextMode = 'SPLIT';
+    } else {
+        nextMode = 'NORMAL';
+    }
+
+    setMode(nextMode);
+}
+
+export function handleGuestInputFocus(isFocused, wsName, tabIdx) {
+    const currentWS = state.sessionState.current_workspace;
+    const activeListItem = document.querySelector('#TabList li.selected');
+    const currentIdx = activeListItem ? Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem) : 0;
+
+    if (wsName === currentWS && tabIdx === currentIdx) {
+        isGuestInputFocused = !!isFocused;
+        recalculateMode();
+    }
+}
+
+export function handleGuestHintsState(isActive, wsName, tabIdx) {
+    const currentWS = state.sessionState.current_workspace;
+    const activeListItem = document.querySelector('#TabList li.selected');
+    const currentIdx = activeListItem ? Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem) : 0;
+
+    if (wsName === currentWS && tabIdx === currentIdx) {
+        isHintsModeActive = !!isActive;
+        recalculateMode();
+    }
+}
+
+export function updateStatusBarFromActiveView() {
+    const currentWS = state.sessionState.current_workspace;
+    const isPrivate = !!state.globalPrivateModeActive;
+    updatePartitionBadge(currentWS, isPrivate);
+
+    // Reset guest input focus on tab or workspace switch
+    isGuestInputFocused = false;
+    isHintsModeActive = false;
+    recalculateMode();
+
+    const activeListItem = document.querySelector('#TabList li.selected');
+    const currentIdx = activeListItem ? Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem) : 0;
+    const urls = state.sessionState.workspaces[currentWS] || [];
+    const activeUrl = urls[currentIdx] || '';
+
+    updateSecurityStatus(activeUrl);
+    setTargetUrl('');
+}
+
+export function toggleStatusBar(force) {
+    if (!statusBarEl) statusBarEl = document.getElementById('StatusBar');
+    if (!statusBarEl) return;
+
+    if (typeof force === 'boolean') {
+        isStatusBarEnabled = force;
+    } else {
+        isStatusBarEnabled = !isStatusBarEnabled;
+    }
+
+    statusBarEl.style.display = isStatusBarEnabled ? 'flex' : 'none';
+
+    // Synchronise with settings if API available
+    if (window.miseAPI && typeof window.miseAPI.updateBrowserSettings === 'function') {
+        window.miseAPI.updateBrowserSettings({ show_status_bar: isStatusBarEnabled }).catch(() => {});
+    }
+
+    // Update preferences toggle checkbox if present
+    const toggleInput = document.getElementById('setting-status-bar-toggle');
+    if (toggleInput) {
+        toggleInput.checked = isStatusBarEnabled;
+    }
+
+    return isStatusBarEnabled;
+}
+
+export function isStatusBarVisible() {
+    return isStatusBarEnabled;
+}

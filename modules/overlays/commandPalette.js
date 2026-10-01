@@ -64,6 +64,19 @@ export const COMMAND_DEFINITIONS = [
         action: () => window.toggleHistoryOverlay && window.toggleHistoryOverlay()
     },
     {
+        id: 'toggle-status-bar',
+        title: 'Toggle Status & Mode Bar',
+        desc: 'Show or hide the bottom status bar displaying mode, target URL, and TLS state',
+        details: 'Toggles the 22px footer status bar across the bottom of the content area. Displays real-time link hover targets, TLS encryption state, active container partition, and modal state.',
+        tip: 'Press Ctrl+/ to toggle the status bar on or off at any time.',
+        category: 'Tabs & Navigation',
+        icon: 'fa-solid fa-window-minimize',
+        actionId: 'toggle-status-bar',
+        shortcut: 'Ctrl+/',
+        keywords: ['status', 'mode', 'bar', 'footer', 'url preview', 'toggle', 'bottom'],
+        action: () => window.toggleStatusBar && window.toggleStatusBar()
+    },
+    {
         id: 'trigger-hints',
         title: 'Toggle Link Hints Overlay',
         desc: 'Display letter tags over clickable links for mouse-free browsing',
@@ -617,6 +630,9 @@ export async function syncPreferencesUI() {
             if (sidebarToggle) sidebarToggle.checked = cfg.sidebar_auto_collapse !== false;
             if (spellSelect) spellSelect.value = cfg.spellchecker_language || 'en-GB';
 
+            const statusBarToggle = document.getElementById('setting-status-bar-toggle');
+            if (statusBarToggle) statusBarToggle.checked = cfg.show_status_bar !== false;
+
             const trustedDomainsField = document.getElementById('setting-trusted-domains');
             if (trustedDomainsField) {
                 trustedDomainsField.value = Array.isArray(cfg.trusted_domains) ? cfg.trusted_domains.join('\n') : '';
@@ -723,6 +739,15 @@ export function setupPreferencesListeners() {
                 const cfg = (await window.miseAPI.getBrowserSettings()) || {};
                 cfg.sidebar_auto_collapse = isAuto;
                 await window.miseAPI.updateBrowserSettings(cfg);
+            }
+        };
+    }
+
+    const statusBarToggle = document.getElementById('setting-status-bar-toggle');
+    if (statusBarToggle) {
+        statusBarToggle.onchange = () => {
+            if (typeof window.toggleStatusBar === 'function') {
+                window.toggleStatusBar(statusBarToggle.checked);
             }
         };
     }

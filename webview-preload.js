@@ -285,3 +285,38 @@ if (!isTrustedSite) {
         console.error('Failed to inject privacy spoofing script:', e);
     }
 }
+
+// Guest input focus tracking for Insert mode indicator
+document.addEventListener('focusin', (e) => {
+    const t = e.target;
+    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) {
+        try { ipcRenderer.sendToHost('guest-input-focus', true); } catch (err) {}
+    }
+}, true);
+
+document.addEventListener('focusout', (e) => {
+    const t = e.target;
+    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) {
+        try { ipcRenderer.sendToHost('guest-input-focus', false); } catch (err) {}
+    }
+}, true);
+
+// Guest hints tracking for Hints mode indicator
+try {
+    const notifyHintsState = () => {
+        const active = !!document.getElementById('mise-hint-layer');
+        try { ipcRenderer.sendToHost('guest-hints-state', active); } catch (err) {}
+    };
+
+    const attachHintObserver = () => {
+        if (!document.body) return;
+        const observer = new MutationObserver(notifyHintsState);
+        observer.observe(document.body, { childList: true });
+    };
+
+    if (document.body) {
+        attachHintObserver();
+    } else {
+        document.addEventListener('DOMContentLoaded', attachHintObserver);
+    }
+} catch (err) {}

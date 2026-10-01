@@ -44,6 +44,7 @@ The Command Centre gives you rapid, searchable access to all Mise operations, in
 | **Focus Navigation Buttons** | `Ctrl+Shift+N` | `focus-nav-buttons` | Cycles keyboard focus across toolbar navigation controls. |
 | **Focus Active Webview** | `Ctrl+B` | `focus-webview` | Returns keyboard and typing focus directly to the guest webpage. |
 | **Toggle Sidebar (Expand / Collapse)** | `Ctrl+Shift+Z` | `toggle-zen-mode` | Alternates sidebar between 220px expanded width and 48px icon strip. |
+| **Toggle Status & Mode Bar** | `Ctrl+/` | `toggle-status-bar` | 22px footer status bar displaying modal state, target URL, and TLS encryption. |
 | **Toggle Auto-Collapse Sidebar** | — | — | Pins sidebar open or enables auto-shrink to 36px strip with hover expansion. |
 | **Toggle Zen Mode (Hide Sidebar)** | — | — | Completely hides peripheral sidebar chrome for edge-to-edge reading. |
 

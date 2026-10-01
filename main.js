@@ -64,6 +64,7 @@ const DEFAULT_CONFIG = {
     trusted_domains: [],
     tab_sleep_timeout_minutes: 15,
     sidebar_auto_collapse: true,
+    show_status_bar: true,
     theme_colors: { ...DEFAULT_THEME_COLORS }
 };
 

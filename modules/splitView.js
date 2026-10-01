@@ -52,6 +52,9 @@ export function applySplitLayout() {
             if (existingBadge) existingBadge.remove();
         });
 
+        if (typeof window.recalculateStatusMode === 'function') {
+            window.recalculateStatusMode();
+        }
         return false;
     }
 
@@ -170,6 +173,10 @@ export function applySplitLayout() {
                 currentWSViews[activeIdx].focus();
             }
         }, 30);
+    }
+
+    if (typeof window.recalculateStatusMode === 'function') {
+        window.recalculateStatusMode();
     }
 
     return true;
