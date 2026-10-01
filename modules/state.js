@@ -23,7 +23,6 @@ export const state = {
     bookmarksActive: false,
     awaitingQuickmarkKey: false,
     quickmarkMode: null,
-    darkReaderEnabled: false,
 
     // Overlay Data Caches
     dashboardItems: [],

@@ -408,18 +408,6 @@ body.sidebar-auto-collapse #Sidebar:not(:hover):not(.expanded):not(:focus-within
     background: var(--selected);
 }
 
-#dark-reader-btn.active {
-    color: var(--accent);
-    border-color: var(--accent);
-    background: var(--selected);
-}
-
-#dark-reader-btn.domain-disabled {
-    color: #f7768e;
-    border-color: #f7768e;
-    opacity: 0.75;
-}
-
 #right-content {
     flex-grow: 1;
     position: relative;
@@ -1860,7 +1848,7 @@ body.zen-mode #right-content {
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     color: var(--text);
-    z-index: 500;
+    z-index: 2000;
     display: none;
     flex-direction: column;
     padding: 30px;

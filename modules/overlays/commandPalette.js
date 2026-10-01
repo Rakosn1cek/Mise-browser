@@ -517,32 +517,6 @@ export const COMMAND_DEFINITIONS = [
         action: () => window.toggleInterfaceTheme && window.toggleInterfaceTheme()
     },
     {
-        id: 'toggle-dark-reader',
-        title: 'Toggle Dark Reader (Universal Dark Mode)',
-        desc: 'Invert light websites into comfortable dark mode whilst preserving media',
-        details: 'Applies GPU-accelerated smart dark styling to websites that lack native dark themes, automatically preserving images, videos, and already-dark layouts.',
-        tip: 'Press Alt+Shift+D to toggle Dark Reader on and off at any time.',
-        category: 'Preferences & System',
-        icon: 'fa-solid fa-moon',
-        actionId: 'toggle-dark-reader',
-        shortcut: 'Alt+Shift+D',
-        keywords: ['dark', 'reader', 'night', 'theme', 'invert', 'contrast'],
-        action: () => window.toggleDarkReader && window.toggleDarkReader()
-    },
-    {
-        id: 'toggle-dark-reader-domain',
-        title: 'Toggle Dark Reader for Current Domain',
-        desc: 'Exclude or re-enable the active website from Dark Reader inversion',
-        details: 'Adds or removes the active website hostname from the Dark Reader excluded sites list, toggling dark mode on or off specifically for this site.',
-        tip: 'Press Alt+Shift+E or right-click the Dark Reader sidebar icon to toggle the current domain.',
-        category: 'Preferences & System',
-        icon: 'fa-solid fa-circle-minus',
-        actionId: 'toggle-dark-reader-domain',
-        shortcut: 'Alt+Shift+E',
-        keywords: ['dark', 'reader', 'domain', 'site', 'exclude', 'whitelist', 'override'],
-        action: () => window.toggleDarkReaderForCurrentDomain && window.toggleDarkReaderForCurrentDomain()
-    },
-    {
         id: 'toggle-menu-bar',
         title: 'Toggle Application Menu Bar',
         desc: 'Show or hide the native top application window menu bar',
@@ -646,16 +620,6 @@ export async function syncPreferencesUI() {
             const trustedDomainsField = document.getElementById('setting-trusted-domains');
             if (trustedDomainsField) {
                 trustedDomainsField.value = Array.isArray(cfg.trusted_domains) ? cfg.trusted_domains.join('\n') : '';
-            }
-
-            const darkReaderDisabledField = document.getElementById('setting-dark-reader-disabled-domains');
-            if (darkReaderDisabledField) {
-                darkReaderDisabledField.value = Array.isArray(cfg.dark_reader_disabled_domains) ? cfg.dark_reader_disabled_domains.join('\n') : '';
-            }
-
-            const darkReaderToggle = document.getElementById('setting-dark-reader-toggle');
-            if (darkReaderToggle) {
-                darkReaderToggle.checked = !!cfg.dark_reader;
             }
         }
     } catch (err) {}

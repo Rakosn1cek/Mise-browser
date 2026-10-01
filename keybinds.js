@@ -31,9 +31,7 @@ const DEFAULT_KEYBINDS = {
     'toggle-downloads': 'Ctrl+Shift+D',
     'toggle-split': ['Ctrl+\\', 'Ctrl+Alt+S'],
     'switch-split-focus': ['Ctrl+Alt+O', 'Ctrl+Alt+Tab'],
-    'swap-split-panes': 'Ctrl+Alt+X',
-    'toggle-dark-reader': 'Alt+Shift+D',
-    'toggle-dark-reader-domain': 'Alt+Shift+E'
+    'swap-split-panes': 'Ctrl+Alt+X'
 };
 
 const ACTION_METADATA = {
@@ -63,9 +61,7 @@ const ACTION_METADATA = {
     'toggle-downloads': { label: 'Toggle Downloads Shelf', category: 'Navigation & Workspaces' },
     'toggle-split': { label: 'Toggle Dual-Split View (Side-by-Side)', category: 'Navigation & Workspaces' },
     'switch-split-focus': { label: 'Switch Split Pane Focus (Pane 1 / Pane 2)', category: 'Navigation & Workspaces' },
-    'swap-split-panes': { label: 'Swap Split Panes (Left / Right)', category: 'Navigation & Workspaces' },
-    'toggle-dark-reader': { label: 'Toggle Dark Reader (Universal Dark Mode)', category: 'Web Interaction' },
-    'toggle-dark-reader-domain': { label: 'Toggle Dark Reader for Current Domain', category: 'Web Interaction' }
+    'swap-split-panes': { label: 'Swap Split Panes (Left / Right)', category: 'Navigation & Workspaces' }
 };
 
 let activeKeybinds = { ...DEFAULT_KEYBINDS };

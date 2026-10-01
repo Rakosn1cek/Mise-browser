@@ -17,6 +17,9 @@ export function toggleHistoryOverlay() {
         if (state.dashboardActive && typeof window.toggleDashboardView === 'function') {
             window.toggleDashboardView();
         }
+        if (state.bookmarksActive && typeof window.toggleBookmarksOverlay === 'function') {
+            window.toggleBookmarksOverlay();
+        }
 
         overlay.style.display = 'flex';
         input.value = '';

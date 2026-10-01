@@ -67,6 +67,9 @@ export function toggleNotesOverlay() {
         if (state.historyActive && typeof window.toggleHistoryOverlay === 'function') {
             window.toggleHistoryOverlay();
         }
+        if (state.bookmarksActive && typeof window.toggleBookmarksOverlay === 'function') {
+            window.toggleBookmarksOverlay();
+        }
 
         if (window.miseAPI && typeof window.miseAPI.readNotes === 'function') {
             window.miseAPI.readNotes().then((content) => {

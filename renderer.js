@@ -98,19 +98,9 @@ import {
     openUrlInSplit 
 } from './modules/splitView.js';
 
-import { 
-    initDarkReader, 
-    toggleDarkReader, 
-    toggleDarkReaderForCurrentDomain,
-    isDarkReaderGloballyEnabled, 
-    applyDarkReaderToWebview 
-} from './modules/darkReader.js';
-
 // Attach functions needed across module boundaries to window
 window.toggleDashboardView = toggleDashboardView;
 window.displayAddressOverlay = displayAddressOverlay;
-window.toggleDarkReader = toggleDarkReader;
-window.toggleDarkReaderForCurrentDomain = toggleDarkReaderForCurrentDomain;
 window.triggerLinkHints = triggerLinkHints;
 window.toggleInPageSearch = toggleInPageSearch;
 window.toggleNotesOverlay = toggleNotesOverlay;
@@ -141,6 +131,9 @@ window.isSplitActive = isSplitActive;
 window.applySplitLayout = applySplitLayout;
 window.openUrlInSplit = openUrlInSplit;
 window.reapplyActiveUserStyles = reapplyActiveUserStyles;
+window.toggleBookmarksOverlay = toggleBookmarksOverlay;
+window.promptQuickmark = promptQuickmark;
+window.addCurrentPageToBookmarks = addCurrentPageToBookmarks;
 
 export function displayUpdateNotification(updateInfo) {
     if (!updateInfo || !updateInfo.updateAvailable) return;
@@ -307,7 +300,6 @@ async function initializeBrowser() {
     setupBookmarkOverlayListeners();
     initSearchEnginePreference();
     initDownloadShelf();
-    initDarkReader();
 
     if (window.miseAPI && typeof window.miseAPI.getAppVersion === 'function') {
         window.miseAPI.getAppVersion().then((info) => {
@@ -428,11 +420,13 @@ function setupEventListeners() {
             case 'switch-split-focus': switchSplitFocus(); break;
             case 'swap-split-panes': swapSplitPanes(); break;
             case 'close-split': closeSplitView(); break;
-            case 'toggle-dark-reader': toggleDarkReader(); break;
-            case 'toggle-dark-reader-domain': toggleDarkReaderForCurrentDomain(); break;
             case 'delete-bookmark-entry': {
-                if (state.bookmarksActive && state.filteredBookmarksCache[state.bookmarkSelectionIdx]) {
-                    deleteBookmark(state.filteredBookmarksCache[state.bookmarkSelectionIdx].url);
+                if (state.bookmarksActive) {
+                    if (state.bookmarkActiveColumn === 'quickmarks' && state.filteredQuickmarksCache[state.quickmarkSelectionIdx]) {
+                        deleteQuickmark(state.filteredQuickmarksCache[state.quickmarkSelectionIdx].key);
+                    } else if (state.filteredBookmarksCache[state.bookmarkSelectionIdx]) {
+                        deleteBookmark(state.filteredBookmarksCache[state.bookmarkSelectionIdx].url);
+                    }
                 }
                 break;
             }
@@ -525,12 +519,13 @@ function setupEventListeners() {
         });
     });
 
-    const bottomButtons = ['pin-sidebar-btn', 'dark-reader-btn', 'theme-toggle-btn', 'noti-toggle-btn'];
+    const bottomButtons = ['pin-sidebar-btn', 'theme-toggle-btn', 'noti-toggle-btn'];
     bottomButtons.forEach((id, idx) => {
         const btn = document.getElementById(id);
         if (!btn) return;
 
         btn.addEventListener('keydown', (e) => {
+            if (state.dashboardActive || state.bookmarksActive || state.paletteActive || state.preferencesActive || state.historyActive || state.notesActive) return;
             if (e.key === 'ArrowRight' || (e.key === 'Tab' && !e.shiftKey && idx < bottomButtons.length - 1)) {
                 e.preventDefault();
                 const nextBtn = document.getElementById(bottomButtons[idx + 1]);
@@ -563,7 +558,7 @@ function setupEventListeners() {
 
     const tabListContainer = document.getElementById('TabList');
     tabListContainer.addEventListener('keydown', (e) => {
-        if (state.dashboardActive) return;
+        if (state.dashboardActive || state.bookmarksActive || state.paletteActive || state.preferencesActive || state.historyActive || state.notesActive) return;
         if (e.key === 'Escape') {
             e.preventDefault();
             const sidebar = document.getElementById('Sidebar');
@@ -681,10 +676,18 @@ function setupEventListeners() {
 
     document.getElementById('Sidebar').addEventListener('focusout', (e) => {
         if (e.relatedTarget && !document.getElementById('Sidebar').contains(e.relatedTarget)) {
-            if (state.dashboardActive || state.paletteActive || state.preferencesActive) return;
+            if (state.dashboardActive || state.paletteActive || state.preferencesActive || state.bookmarksActive || state.historyActive || state.notesActive) return;
             
-            if (e.relatedTarget.id === 'PaletteInput' || e.relatedTarget.id === 'PaletteList') return;
-            if (e.relatedTarget.id === 'PreferencesOverlay' || document.getElementById('PreferencesOverlay')?.contains(e.relatedTarget)) return;
+            const overlayIds = [
+                'PaletteInput', 'PaletteList', 'PreferencesOverlay',
+                'BookmarksOverlay', 'BookmarkSearchInput', 'HistoryOverlay',
+                'HistorySearchInput', 'NotesOverlay', 'NotesTextArea',
+                'DashboardOverlay', 'ShareModalOverlay', 'FindBarOverlay'
+            ];
+            for (const id of overlayIds) {
+                const el = document.getElementById(id);
+                if (el && (e.relatedTarget === el || el.contains(e.relatedTarget))) return;
+            }
 
             if (window.miseAllowWebviewFocus) {
                 window.miseAllowWebviewFocus = false;

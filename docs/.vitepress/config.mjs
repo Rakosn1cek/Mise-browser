@@ -31,7 +31,6 @@ export default defineConfig({
           { text: 'Mouse-Free Navigation', link: '/guide/navigation' },
           { text: 'Workspaces & Containers', link: '/guide/workspaces-and-containers' },
           { text: 'True Tab Hibernation', link: '/guide/tab-hibernation' },
-          { text: 'Universal Dark Reader', link: '/guide/dark-reader' },
           { text: 'Privacy & Trusted Sites', link: '/guide/privacy-and-shields' },
           { text: 'Notes, Bookmarks & Quickmarks', link: '/guide/notes-and-bookmarks' },
           { text: 'Terminal Security & Oversight', link: '/guide/terminal-oversight' },
