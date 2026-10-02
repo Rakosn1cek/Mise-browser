@@ -83,9 +83,10 @@ jobs:
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          name: Mise Browser ${{ github.ref_name }}
           files: release-assets/*
           generate_release_notes: true
-          draft: false
+          draft: true
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
