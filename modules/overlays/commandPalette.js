@@ -476,6 +476,17 @@ export const COMMAND_DEFINITIONS = [
         action: () => window.miseAPI && window.miseAPI.openUserStylesDir && window.miseAPI.openUserStylesDir()
     },
     {
+        id: 'open-script-storage-dir',
+        title: 'Open User Script Storage Directory',
+        desc: 'Browse local ~/.config/mise-browser/script-storage in file manager',
+        details: 'Opens the directory containing persistent JSON key-value stores used by GM_setValue and GM_getValue in user scripts.',
+        tip: 'Each script stores its isolated state as an individual JSON file here.',
+        category: 'User Scripts & Styles',
+        icon: 'fa-solid fa-database',
+        keywords: ['storage', 'gm', 'userscript', 'values', 'database', 'json', 'folder', 'directory'],
+        action: () => window.miseAPI && window.miseAPI.openUserScriptStorageDir && window.miseAPI.openUserScriptStorageDir()
+    },
+    {
         id: 'reload-user-content',
         title: 'Reload User Scripts and Styles',
         desc: 'Hot-reload all custom user scripts and stylesheet injections',

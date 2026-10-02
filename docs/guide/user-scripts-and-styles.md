@@ -59,13 +59,15 @@ users want while maintaining a near-zero idle resource footprint.
 User content files are placed inside their respective configuration folders:
 
 ```text
-~/.config/mise-browser/scripts/    # Local user scripts (*.user.js or *.js)
-~/.config/mise-browser/styles/     # Local user styles (*.user.css or *.css)
+~/.config/mise-browser/scripts/         # Local user scripts (*.user.js or *.js)
+~/.config/mise-browser/styles/          # Local user styles (*.user.css or *.css)
+~/.config/mise-browser/script-storage/  # Persistent JSON stores for GM_setValue
 ```
 
-Mise automatically creates both directories and populates template examples on startup. You can also open either folder directly from the Command Palette (**Ctrl + P**):
+Mise automatically creates these directories and populates template examples on startup. You can also open any folder directly from the Command Palette (**Ctrl + P**):
 * `Open User Scripts Directory (~/.config/mise-browser/scripts)`
 * `Open User Styles Directory (~/.config/mise-browser/styles)`
+* `Open User Script Storage Directory (~/.config/mise-browser/script-storage)`
 
 ---
 
@@ -76,8 +78,14 @@ Scripts support standard Greasemonkey/Tampermonkey metadata headers:
 ```javascript
 // ==UserScript==
 // @name         GitHub Minimalist
+// @version      1.0.0
+// @description  Streamline GitHub repository navigation
 // @match        https://github.com/*
 // @exclude      https://github.com/settings/*
+// @grant        GM_xmlhttpRequest
+// @grant        GM_setValue
+// @grant        GM_getValue
+// @run-at       document-end
 // ==/UserScript==
 
 (function() {
@@ -87,11 +95,73 @@ Scripts support standard Greasemonkey/Tampermonkey metadata headers:
 
 ### Supported Directives
 * `@name`: Identifies the script in browser diagnostics and console logs.
+* `@version`: Specifies the script version string.
+* `@description`: Summary of what the script does.
+* `@author`: Script author name or email.
 * `@match`: Specifies URL match patterns (e.g. `https://*.example.com/*` or `*://*/*`).
 * `@include`: Additional wildcard patterns or regular expressions.
 * `@exclude`: Patterns to skip execution on specific paths or subdomains.
+* `@grant`: Declares intended API permissions (e.g. `GM_xmlhttpRequest`, `GM_setValue`).
+* `@run-at`: Determines execution timing (`document-end`, `document-idle`).
 
 If no `@match` or `@include` is supplied, the script runs across all standard `http://` and `https://` websites.
+
+---
+
+## Supported Userscript APIs (`GM_*` and `GM.*`)
+
+Mise includes a lightweight, secure API shim for popular Greasemonkey and Tampermonkey scripts without needing an extension runtime:
+
+| API | Type | Description |
+| :--- | :--- | :--- |
+| `GM_xmlhttpRequest(details)` | Network | Cross-origin HTTP request proxied via main process, bypassing webpage CORS. |
+| `GM_getValue(key, default)` | Storage | Synchronously reads a stored value from the script's local JSON database. |
+| `GM_setValue(key, value)` | Storage | Updates in-memory store immediately and persists to disk in the background. |
+| `GM_deleteValue(key)` | Storage | Deletes a stored key from the script's JSON storage file. |
+| `GM_listValues()` | Storage | Returns an array of all keys stored for the current script. |
+| `GM_addStyle(css)` | DOM | Appends a `<style>` element containing custom CSS to the active document. |
+| `GM_registerMenuCommand(name, fn)` | UI | Registers an action callback. |
+| `GM_unregisterMenuCommand(id)` | UI | Unregisters a previously added menu action. |
+| `GM_setClipboard(text)` | Clipboard | Writes plain text to the system clipboard. |
+| `GM_log(...args)` | Debugging | Outputs formatted log entries with script name prefix to DevTools. |
+| `GM_openInTab(url)` | Window | Opens a target URL in a new window or tab. |
+| `GM_notification(text, title)` | System | Displays a desktop notification. |
+| `GM_info` | Metadata | Provides script metadata, version, and execution environment details. |
+| `unsafeWindow` | Window | Direct reference to the page window object. |
+| `GM.*` (GM4 Promise API) | Promises | Promise-based counterparts (`GM.xmlHttpRequest`, `GM.getValue`, etc.). |
+
+### Cross-Origin Requests (`GM_xmlhttpRequest`)
+
+Standard `fetch()` inside a webpage cannot access third-party endpoints because of browser CORS restrictions. Mise routes `GM_xmlhttpRequest` requests through the privileged main process:
+
+```javascript
+GM_xmlhttpRequest({
+    method: 'GET',
+    url: 'https://api.github.com/repos/rakosn1cek/mise-browser/releases/latest',
+    headers: {
+        'Accept': 'application/vnd.github.v3+json'
+    },
+    onload: function(response) {
+        const data = JSON.parse(response.responseText);
+        console.log('Latest Mise release:', data.tag_name);
+    },
+    onerror: function(err) {
+        console.error('Failed to query release info:', err);
+    }
+});
+```
+
+### Isolated Per-Script Storage
+
+Values saved with `GM_setValue` are stored in isolated JSON files under `~/.config/mise-browser/script-storage/`:
+
+```javascript
+// Check stored user preference with fallback default
+const viewMode = GM_getValue('view_mode', 'compact');
+
+// Save updated preference
+GM_setValue('view_mode', 'expanded');
+```
 
 ---
 

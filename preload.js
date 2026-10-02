@@ -60,6 +60,7 @@ contextBridge.exposeInMainWorld('miseAPI', {
     reloadUserContent: () => ipcRenderer.invoke('reload-user-content'),
     openUserScriptsDir: () => ipcRenderer.invoke('open-user-scripts-dir'),
     openUserStylesDir: () => ipcRenderer.invoke('open-user-styles-dir'),
+    openUserScriptStorageDir: () => ipcRenderer.invoke('open-user-script-storage-dir'),
     getUserContentSummary: () => ipcRenderer.invoke('get-user-content-summary'),
     compactMemory: () => ipcRenderer.invoke('compact-memory'),
     checkForUpdates: (manual) => ipcRenderer.invoke('check-for-updates', manual),

@@ -9,6 +9,7 @@ import {
     handleGuestHintsState,
     handleGuestPassthroughState
 } from './statusBar.js';
+import { buildUserScriptWrapper } from './userScriptShim.js';
 
 export function applyCSSThemeToView() {
     // Intentionally no-op to preserve native website themes
@@ -375,7 +376,7 @@ export async function injectMatchingUserContent(webview) {
         if (Array.isArray(content.scripts)) {
             for (const item of content.scripts) {
                 if (item.code && typeof webview.executeJavaScript === 'function') {
-                    const scriptWrapper = `(function() {\n  try {\n${item.code}\n  } catch (err) {\n    console.error("[Mise UserScript: ${item.name || 'script'}]", err);\n  }\n})();`;
+                    const scriptWrapper = buildUserScriptWrapper(item);
                     webview.executeJavaScript(scriptWrapper, false).catch(() => {});
                 }
             }

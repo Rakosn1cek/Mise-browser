@@ -6,11 +6,13 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-const { shell, ipcMain } = require('electron');
+const { shell, ipcMain, net } = require('electron');
+const crypto = require('crypto');
 
 const defaultBaseDir = path.join(os.homedir(), '.config', 'mise-browser');
 let scriptsDir = path.join(defaultBaseDir, 'scripts');
 let stylesDir = path.join(defaultBaseDir, 'styles');
+let storageDir = path.join(defaultBaseDir, 'script-storage');
 let cachedMainWindow = null;
 
 let loadedScripts = [];
@@ -20,6 +22,140 @@ let scriptsWatcher = null;
 let stylesWatcher = null;
 let debounceTimerScripts = null;
 let debounceTimerStyles = null;
+
+const scriptStorageCache = new Map();
+const activeTokens = new Map();
+
+function sanitizeScriptId(scriptId) {
+    return String(scriptId || 'default').replace(/[^a-zA-Z0-9._-]/g, '_');
+}
+
+function getScriptStoragePath(scriptId) {
+    const cleanId = sanitizeScriptId(scriptId);
+    return path.join(storageDir, `${cleanId}.json`);
+}
+
+function loadScriptStorage(scriptId) {
+    const cleanId = sanitizeScriptId(scriptId);
+    if (scriptStorageCache.has(cleanId)) {
+        return scriptStorageCache.get(cleanId);
+    }
+    const filePath = getScriptStoragePath(cleanId);
+    let data = {};
+    try {
+        if (fs.existsSync(filePath)) {
+            data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+        }
+    } catch (e) {
+        data = {};
+    }
+    scriptStorageCache.set(cleanId, data);
+    return data;
+}
+
+function saveScriptStorage(scriptId, store) {
+    const cleanId = sanitizeScriptId(scriptId);
+    scriptStorageCache.set(cleanId, store);
+    try {
+        if (!fs.existsSync(storageDir)) {
+            fs.mkdirSync(storageDir, { recursive: true });
+        }
+        const filePath = getScriptStoragePath(cleanId);
+        fs.writeFileSync(filePath, JSON.stringify(store, null, 2), 'utf8');
+    } catch (err) {
+        console.error(`Failed to save script storage for ${cleanId}:`, err);
+    }
+}
+
+function setScriptValue(scriptId, key, value) {
+    const store = loadScriptStorage(scriptId);
+    store[String(key)] = value;
+    saveScriptStorage(scriptId, store);
+}
+
+function deleteScriptValue(scriptId, key) {
+    const store = loadScriptStorage(scriptId);
+    delete store[String(key)];
+    saveScriptStorage(scriptId, store);
+}
+
+function generateScriptToken(scriptId) {
+    const token = crypto.randomUUID();
+    activeTokens.set(token, {
+        scriptId: sanitizeScriptId(scriptId),
+        createdAt: Date.now()
+    });
+    if (activeTokens.size > 5000) {
+        const now = Date.now();
+        for (const [tok, data] of activeTokens.entries()) {
+            if (now - data.createdAt > 24 * 60 * 60 * 1000) {
+                activeTokens.delete(tok);
+            }
+        }
+    }
+    return token;
+}
+
+async function executeGmXmlHttpRequest(details) {
+    if (!details || typeof details !== 'object' || !details.url) {
+        throw new Error('Valid URL is required for GM_xmlhttpRequest');
+    }
+
+    const url = details.url;
+    const method = (details.method || 'GET').toUpperCase();
+    const timeout = Number(details.timeout) || 30000;
+
+    const headers = Object.assign({}, details.headers || {});
+    if (!headers['User-Agent'] && !headers['user-agent']) {
+        headers['User-Agent'] = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36';
+    }
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeout);
+
+    const init = {
+        method,
+        headers,
+        signal: controller.signal,
+        redirect: 'follow'
+    };
+
+    if (details.data && method !== 'GET' && method !== 'HEAD') {
+        init.body = typeof details.data === 'object' ? JSON.stringify(details.data) : String(details.data);
+    }
+
+    try {
+        const fetchFn = (net && typeof net.fetch === 'function') ? net.fetch : globalThis.fetch;
+        const res = await fetchFn(url, init);
+        clearTimeout(timer);
+
+        const responseText = await res.text();
+        let responseHeaders = '';
+        if (res.headers && typeof res.headers.forEach === 'function') {
+            res.headers.forEach((val, key) => {
+                responseHeaders += `${key}: ${val}\r\n`;
+            });
+        }
+
+        return {
+            status: res.status,
+            statusText: res.statusText,
+            readyState: 4,
+            responseText,
+            responseHeaders,
+            finalUrl: res.url || url
+        };
+    } catch (err) {
+        clearTimeout(timer);
+        const isTimeout = err.name === 'AbortError' || err.code === 'ETIMEDOUT';
+        throw {
+            isTimeout,
+            message: err.message || 'Request failed',
+            status: isTimeout ? 0 : 0,
+            statusText: isTimeout ? 'Timeout' : 'Error'
+        };
+    }
+}
 
 function escapeRegex(str) {
     return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -70,9 +206,15 @@ function patternToRegex(pattern) {
 function parseUserScriptMetadata(content, filename) {
     const meta = {
         name: path.basename(filename, path.extname(filename)).replace(/\.user$/, ''),
+        version: '1.0',
+        description: '',
+        author: '',
+        namespace: '',
+        homepage: '',
         matches: [],
         includes: [],
         excludes: [],
+        grants: [],
         runAt: 'document-end',
         matchRegexes: [],
         includeRegexes: [],
@@ -91,12 +233,24 @@ function parseUserScriptMetadata(content, filename) {
 
                 if (directive === 'name') {
                     meta.name = value;
+                } else if (directive === 'version') {
+                    meta.version = value;
+                } else if (directive === 'description') {
+                    meta.description = value;
+                } else if (directive === 'author') {
+                    meta.author = value;
+                } else if (directive === 'namespace') {
+                    meta.namespace = value;
+                } else if (directive === 'homepage' || directive === 'homepageurl') {
+                    meta.homepage = value;
                 } else if (directive === 'match') {
                     meta.matches.push(value);
                 } else if (directive === 'include') {
                     meta.includes.push(value);
                 } else if (directive === 'exclude') {
                     meta.excludes.push(value);
+                } else if (directive === 'grant') {
+                    meta.grants.push(value);
                 } else if (directive === 'run-at' || directive === 'runat') {
                     meta.runAt = value.toLowerCase();
                 }
@@ -396,11 +550,16 @@ function getMatchingUserContent(targetUrl) {
     const matchingScripts = [];
     for (const item of loadedScripts) {
         if (urlMatchesRule(targetUrl, item.meta)) {
+            const scriptId = item.filename.replace(/\.js$/, '');
             matchingScripts.push({
                 name: item.name,
                 filename: item.filename,
+                scriptId: scriptId,
                 code: item.code,
-                runAt: item.meta.runAt
+                runAt: item.meta.runAt,
+                meta: item.meta,
+                storage: loadScriptStorage(scriptId),
+                token: generateScriptToken(scriptId)
             });
         }
     }
@@ -440,10 +599,12 @@ function getMatchingUserContent(targetUrl) {
 function initializeUserContent(configDir, mainWindow) {
     scriptsDir = path.join(configDir, 'scripts');
     stylesDir = path.join(configDir, 'styles');
+    storageDir = path.join(configDir, 'script-storage');
     cachedMainWindow = mainWindow;
 
     if (!fs.existsSync(scriptsDir)) fs.mkdirSync(scriptsDir, { recursive: true });
     if (!fs.existsSync(stylesDir)) fs.mkdirSync(stylesDir, { recursive: true });
+    if (!fs.existsSync(storageDir)) fs.mkdirSync(storageDir, { recursive: true });
 
     createTemplateFilesIfEmpty();
     reloadScripts();
@@ -471,6 +632,11 @@ function initializeUserContent(configDir, mainWindow) {
         return shell.openPath(stylesDir);
     });
 
+    ipcMain.handle('open-user-script-storage-dir', async () => {
+        if (!fs.existsSync(storageDir)) fs.mkdirSync(storageDir, { recursive: true });
+        return shell.openPath(storageDir);
+    });
+
     ipcMain.handle('get-user-content-summary', () => {
         return {
             scriptsCount: loadedScripts.length,
@@ -479,11 +645,63 @@ function initializeUserContent(configDir, mainWindow) {
             styles: loadedStyles.map(s => ({ name: s.name, filename: s.filename }))
         };
     });
+
+    ipcMain.handle('gm-xmlhttprequest', async (event, payload) => {
+        const { token, details } = payload || {};
+        if (!token || !activeTokens.has(token)) {
+            throw new Error('Unauthorized: Invalid or expired GM token');
+        }
+        return executeGmXmlHttpRequest(details);
+    });
+
+    ipcMain.handle('gm-storage-set', async (event, payload) => {
+        const { token, scriptId, key, value } = payload || {};
+        if (!token || !activeTokens.has(token)) {
+            throw new Error('Unauthorized: Invalid or expired GM token');
+        }
+        const tokenData = activeTokens.get(token);
+        if (!tokenData || tokenData.scriptId !== sanitizeScriptId(scriptId)) {
+            throw new Error('Unauthorized: Script ID mismatch');
+        }
+        setScriptValue(scriptId, key, value);
+        return true;
+    });
+
+    ipcMain.handle('gm-storage-delete', async (event, payload) => {
+        const { token, scriptId, key } = payload || {};
+        if (!token || !activeTokens.has(token)) {
+            throw new Error('Unauthorized: Invalid or expired GM token');
+        }
+        const tokenData = activeTokens.get(token);
+        if (!tokenData || tokenData.scriptId !== sanitizeScriptId(scriptId)) {
+            throw new Error('Unauthorized: Script ID mismatch');
+        }
+        deleteScriptValue(scriptId, key);
+        return true;
+    });
+
+    ipcMain.handle('gm-storage-get', async (event, payload) => {
+        const { token, scriptId } = payload || {};
+        if (!token || !activeTokens.has(token)) {
+            throw new Error('Unauthorized: Invalid or expired GM token');
+        }
+        const tokenData = activeTokens.get(token);
+        if (!tokenData || tokenData.scriptId !== sanitizeScriptId(scriptId)) {
+            throw new Error('Unauthorized: Script ID mismatch');
+        }
+        return loadScriptStorage(scriptId);
+    });
 }
 
 module.exports = {
     initializeUserContent,
     reloadScripts,
     reloadStyles,
-    getMatchingUserContent
+    getMatchingUserContent,
+    loadScriptStorage,
+    saveScriptStorage,
+    setScriptValue,
+    deleteScriptValue,
+    generateScriptToken,
+    executeGmXmlHttpRequest
 };

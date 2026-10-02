@@ -1,6 +1,18 @@
 // webview-preload.js
 
-const { ipcRenderer, webFrame } = require('electron');
+const { ipcRenderer, webFrame, contextBridge } = require('electron');
+
+// Expose minimal, secure GM bridge for userscript execution
+try {
+    if (contextBridge && typeof contextBridge.exposeInMainWorld === 'function') {
+        contextBridge.exposeInMainWorld('__miseGMBridge', {
+            request: (token, details) => ipcRenderer.invoke('gm-xmlhttprequest', { token, details }),
+            setStorageValue: (token, scriptId, key, value) => ipcRenderer.invoke('gm-storage-set', { token, scriptId, key, value }),
+            deleteStorageValue: (token, scriptId, key) => ipcRenderer.invoke('gm-storage-delete', { token, scriptId, key }),
+            getStorage: (token, scriptId) => ipcRenderer.invoke('gm-storage-get', { token, scriptId })
+        });
+    }
+} catch (err) {}
 
 // Ask the main process whether this site is on the user's trusted-domain
 // allowlist (banking, shopping, etc.). Trusted sites skip fingerprint
