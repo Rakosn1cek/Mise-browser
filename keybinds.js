@@ -9,7 +9,7 @@ const DEFAULT_KEYBINDS = {
     'spawn-tab': 'Ctrl+T',
     'toggle-address': 'Ctrl+L',
     'toggle-dashboard': 'Ctrl+Shift+W',
-    'reload-active-tab': 'Ctrl+R',
+    'reload-active-tab': ['Ctrl+R', 'F5'],
     'remove-tab': 'Ctrl+X',
     'focus-sidebar': 'Ctrl+S',
     'focus-nav-buttons': ['Ctrl+Shift+N', 'Ctrl+Tab'],
@@ -18,7 +18,7 @@ const DEFAULT_KEYBINDS = {
     'toggle-help': 'Ctrl+H',
     'toggle-private-mode': 'Ctrl+Shift+P',
     'toggle-palette': 'Ctrl+P',
-    'toggle-find': 'Ctrl+Shift+F',
+    'toggle-find': ['Ctrl+Shift+F', 'F3'],
     'toggle-devtools': ['Ctrl+Shift+I', 'F12'],
     'toggle-notes': 'Ctrl+N',
     'toggle-zen-mode': 'Ctrl+Shift+Z',
@@ -30,9 +30,9 @@ const DEFAULT_KEYBINDS = {
     'toggle-history': 'Ctrl+Shift+H',
     'toggle-downloads': 'Ctrl+Shift+D',
     'toggle-status-bar': 'Ctrl+/',
-    'toggle-split': ['Ctrl+\\', 'Ctrl+Alt+S'],
-    'switch-split-focus': ['Ctrl+Alt+O', 'Ctrl+Alt+Tab'],
-    'swap-split-panes': 'Ctrl+Alt+X',
+    'toggle-split': 'Ctrl+Shift+S',
+    'switch-split-focus': 'Ctrl+O',
+    'swap-split-panes': 'Ctrl+\\',
     'toggle-dark-reader': 'Ctrl+D'
 };
 
@@ -161,6 +161,37 @@ function compileKeymap(binds) {
     return map;
 }
 
+function mergeKeybinds(defaults, userBinds) {
+    const result = { ...defaults };
+    if (!userBinds || typeof userBinds !== 'object') return result;
+
+    for (const [action, defBinding] of Object.entries(defaults)) {
+        if (userBinds[action] !== undefined) {
+            const userVal = userBinds[action];
+            if (Array.isArray(defBinding)) {
+                if (Array.isArray(userVal)) {
+                    result[action] = userVal;
+                } else if (typeof userVal === 'string') {
+                    const defPrimary = defBinding[0];
+                    if (userVal === defPrimary) {
+                        result[action] = defBinding;
+                    } else {
+                        result[action] = [userVal, ...defBinding.slice(1)];
+                    }
+                }
+            } else {
+                result[action] = userVal;
+            }
+        }
+    }
+    for (const [action, userVal] of Object.entries(userBinds)) {
+        if (result[action] === undefined) {
+            result[action] = userVal;
+        }
+    }
+    return result;
+}
+
 function initializeKeybinds(configDir) {
     const keybindsPath = path.join(configDir, 'keybinds.json');
     try {
@@ -171,7 +202,7 @@ function initializeKeybinds(configDir) {
         } else {
             const raw = fs.readFileSync(keybindsPath, 'utf8');
             const parsed = JSON.parse(raw);
-            activeKeybinds = { ...DEFAULT_KEYBINDS, ...parsed };
+            activeKeybinds = mergeKeybinds(DEFAULT_KEYBINDS, parsed);
         }
     } catch (err) {
         console.error('Failed to initialise keybinds configuration, using defaults:', err);
@@ -184,7 +215,7 @@ function initializeKeybinds(configDir) {
 function saveKeybinds(configDir, newBinds) {
     const keybindsPath = path.join(configDir, 'keybinds.json');
     try {
-        activeKeybinds = { ...DEFAULT_KEYBINDS, ...newBinds };
+        activeKeybinds = mergeKeybinds(DEFAULT_KEYBINDS, newBinds);
         fs.writeFileSync(keybindsPath, JSON.stringify(activeKeybinds, null, 4), 'utf8');
         compiledKeymap = compileKeymap(activeKeybinds);
         return true;

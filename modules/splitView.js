@@ -37,7 +37,7 @@ export function applySplitLayout() {
         }
         if (splitBtn) {
             splitBtn.classList.remove('active');
-            splitBtn.title = 'Toggle Split View (Ctrl+\\ / Ctrl+Alt+S)';
+            splitBtn.title = 'Toggle Split View (Ctrl+Shift+S)';
         }
 
         currentWSViews.forEach((wv) => {
@@ -82,7 +82,7 @@ export function applySplitLayout() {
     if (splitBtn) {
         splitBtn.classList.add('active');
         const modeLabel = split.mode === 'vertical' ? 'Side-by-Side (1x2)' : 'Stacked (2x1)';
-        splitBtn.title = `Split View Active: ${modeLabel} (Click or Ctrl+\\ to toggle)`;
+        splitBtn.title = `Split View Active: ${modeLabel} (Click or Ctrl+Shift+S to toggle)`;
     }
 
     // Update webview styles and positioning

@@ -35,8 +35,8 @@ The Command Centre gives you rapid, searchable access to all Mise operations, in
 | **Toggle Workspace Dashboard** | `Ctrl+Shift+W` | `toggle-dashboard` | Full-page hierarchical tree of all workspaces, tabs, and windows. |
 | **Toggle Actionable History** | `Ctrl+Shift+H` | `toggle-history` | Local history ledger with domain-level filtering and record purging. |
 | **Toggle Link Hints Overlay** | `Ctrl+F` | `trigger-hints` | Letter tags overlaid on clickable webpage links for keyboard browsing. |
-| **Find In Page** | `Ctrl+Shift+F` | `toggle-find` | In-page text search overlay across active webview content. |
-| **Reload Active Tab** | `Ctrl+R` | `reload-active-tab` | Refreshes current webview document while preserving session state. |
+| **Find In Page** | `Ctrl+Shift+F` / `F3` | `toggle-find` | In-page text search overlay across active webview content. |
+| **Reload Active Tab** | `Ctrl+R` / `F5` | `reload-active-tab` | Refreshes current webview document while preserving session state. |
 | **Close Current Tab** | `Ctrl+X` | `remove-tab` | Disposes of active webview and reclaims allocated V8 heap memory. |
 | **Mute / Unmute Active Tab** | — | — | Toggles Chromium audio output for the active tab without pausing playback. |
 | **Reset Tab Zoom Level** | — | — | Restores webview zoom factor back to 100% default. |
@@ -52,11 +52,11 @@ The Command Centre gives you rapid, searchable access to all Mise operations, in
 
 | Command Title | Shortcut | Action ID | Description |
 | :--- | :--- | :--- | :--- |
-| **Toggle Dual-Split View (Side-by-Side)** | `Ctrl+\` / `Ctrl+Alt+S` | `toggle-split` | Tiles two webviews side by side in equal columns for multitasking. |
+| **Toggle Dual-Split View (Side-by-Side)** | `Ctrl+Shift+S` | `toggle-split` | Tiles two webviews side by side in equal columns for multitasking. |
 | **Toggle Dual-Split View (Stacked)** | — | — | Tiles two webviews stacked vertically in top and bottom rows. |
 | **Cycle Split View Orientation** | — | — | Cycles layout geometry between vertical side-by-side and horizontal stacked. |
-| **Switch Split Pane Focus** | `Ctrl+Alt+O` | `switch-split-focus` | Moves active input and scroll focus to the opposite split pane. |
-| **Swap Split Panes** | `Ctrl+Alt+X` | `swap-split-panes` | Reverses positions of primary and secondary split panes. |
+| **Switch Split Pane Focus** | `Ctrl+O` | `switch-split-focus` | Moves active input and scroll focus to the opposite split pane. |
+| **Swap Split Panes** | `Ctrl+\` | `swap-split-panes` | Reverses positions of primary and secondary split panes. |
 | **Close Split View** | — | — | Exits dual-split mode and restores primary webview to full viewport. |
 
 ### Performance & Memory

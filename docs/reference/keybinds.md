@@ -15,8 +15,8 @@ All keyboard shortcuts in Mise Browser are fully customisable via `~/.config/mis
 | **Ctrl + L** | `toggle-address` | Opens the floating address bar overlay |
 | **Ctrl + X** | `remove-tab` | Closes the currently active tab or selected dashboard node |
 | **Ctrl + Shift + W** | `toggle-dashboard` | Opens the Workspace Dashboard tree overlay |
-| **Ctrl + Shift + F** | `toggle-find` | In-page text search overlay across active webview content |
-| **Ctrl + R** | `reload-active-tab` | Reloads the active tab |
+| **Ctrl + Shift + F** / **F3** | `toggle-find` | In-page text search overlay across active webview content |
+| **Ctrl + R** / **F5** | `reload-active-tab` | Reloads the active tab |
 | **Ctrl + S** | `focus-sidebar` | Moves focus to the vertical tab sidebar (cycles between tabs and navigation buttons) |
 | **Ctrl + Shift + N** | `focus-nav-buttons` | Moves focus directly to navigation action buttons |
 | **Ctrl + Tab** | `focus-nav-buttons` | Secondary shortcut to focus navigation action buttons |
@@ -30,11 +30,9 @@ All keyboard shortcuts in Mise Browser are fully customisable via `~/.config/mis
 | **Ctrl + Shift + H** | `toggle-history` | Opens the Actionable History overlay |
 | **Ctrl + Shift + D** | `toggle-downloads` | Toggles the native download shelf |
 | **Ctrl + /** | `toggle-status-bar` | Toggles the bottom status and mode footer bar |
-| **Ctrl + \\** | `toggle-split` | Toggles dual split view (1x2 side by side comparison) |
-| **Ctrl + Alt + S** | `toggle-split` | Secondary shortcut to toggle dual split view |
-| **Ctrl + Alt + O** | `switch-split-focus` | Cycles keyboard focus between split pane 1 and pane 2 |
-| **Ctrl + Alt + Tab** | `switch-split-focus` | Secondary shortcut to switch active split pane focus |
-| **Ctrl + Alt + X** | `swap-split-panes` | Swaps the positions of pane 1 and pane 2 |
+| **Ctrl + Shift + S** | `toggle-split` | Toggles dual split view (1x2 side by side comparison) |
+| **Ctrl + O** | `switch-split-focus` | Cycles keyboard focus between split pane 1 and pane 2 |
+| **Ctrl + \\** | `swap-split-panes` | Swaps the positions of pane 1 and pane 2 |
 
 ### Web Interaction & Power Tools
 
