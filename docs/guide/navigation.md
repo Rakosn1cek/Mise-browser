@@ -23,8 +23,38 @@ Press **Ctrl + L** at any time to open the floating, high-contrast address overl
 
 - **Direct Navigation**: Type any full or partial URL and press **Enter**.
 - **Live Search Autocomplete**: As you type, Mise queries your browsing history and active bookmarks live. Use the **Up** and **Down** arrow keys to select a suggestion and press **Enter**.
+- **Direct Calculator**: Type any arithmetic expression (e.g. `240 * 1.2`, `15% of 200`, `sqrt(144)`) to compute the answer live in the dropdown. Press **Enter** to copy the answer to your clipboard, or press **Tab** to insert the result into the address bar and continue calculating.
+- **DuckDuckGo Bangs**: Type any DuckDuckGo bang (e.g. `!w Arch Linux`, `!gh MiseBrowser`, `!yt ambient`) to route directly to thousands of external search destinations.
 - **Workspace Switching**: Type `ws` followed by a workspace name (e.g. `ws work`) to switch workspaces instantly from the address bar.
 - Press **Escape** to hide the address bar and return focus directly to the active web page.
+
+---
+
+## DuckDuckGo Bang Redirection
+
+Mise supports over 13,500 DuckDuckGo bangs directly from the floating address bar. Bangs route queries directly to the target website:
+
+* `!w Arch Linux`: Redirects directly to the Arch Linux article on Wikipedia.
+* `!gh MiseBrowser`: Redirects directly to GitHub repository search.
+* `!yt lo-fi`: Redirects directly to YouTube video search.
+* `!a NetworkManager`: Redirects directly to the ArchWiki page.
+* `!so promises`: Redirects directly to Stack Overflow.
+
+Popular bangs display rich destination badges in the autocomplete dropdown. You can place the bang at the beginning or end of your query (e.g. `!w Arch Linux` or `Arch Linux !w`).
+
+---
+
+## Live Address Bar Calculator
+
+The address bar includes a built-in mathematical expression evaluator that runs completely locally without external network requests:
+
+* **Basic Arithmetic**: `240 * 1.2`, `(100 + 25) / 5`, `150 - 45`
+* **Powers & Roots**: `2^10`, `sqrt(144)`, `cbrt(27)`
+* **Percentages**: `15% of 200`, `25% * 80`
+* **Trigonometry & Logarithms**: `sin(0)`, `cos(pi)`, `log2(256)`, `log10(1000)`
+* **Constants**: `pi`, `e`
+
+Selecting the calculator result copies the computed value to your system clipboard and displays a status bar confirmation.
 
 ---
 

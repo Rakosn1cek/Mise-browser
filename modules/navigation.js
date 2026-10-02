@@ -2,6 +2,80 @@ import { state } from './state.js';
 import { escapeHtml, focusActiveWebview, getActiveWebview } from './utils.js';
 import { renderWorkspaceUI, switchTabFocus, spawnTabWithUrl, spawnNewBlankTab, handleTabRemoval, wakeTab } from './webview.js';
 import { formatSearchUrl } from './overlays/searchEngine.js';
+import { evaluateMathExpression } from './calculator.js';
+import { setTargetUrl } from './statusBar.js';
+
+export const POPULAR_BANGS = {
+    '!w': 'Wikipedia',
+    '!g': 'Google',
+    '!gh': 'GitHub',
+    '!yt': 'YouTube',
+    '!a': 'ArchWiki',
+    '!aw': 'ArchWiki',
+    '!aur': 'Arch User Repository',
+    '!r': 'Reddit',
+    '!so': 'Stack Overflow',
+    '!ddg': 'DuckDuckGo',
+    '!d': 'DuckDuckGo',
+    '!b': 'Brave Search',
+    '!k': 'Kagi',
+    '!sp': 'Startpage',
+    '!m': 'MDN Web Docs',
+    '!mdn': 'MDN Web Docs',
+    '!wikt': 'Wiktionary',
+    '!osm': 'OpenStreetMap',
+    '!npm': 'npm Registry',
+    '!p': 'Python Docs',
+    '!py': 'Python Docs',
+    '!rust': 'Rust Docs',
+    '!cpp': 'C++ Reference',
+    '!imdb': 'IMDb',
+    '!tr': 'Google Translate',
+    '!eb': 'eBay',
+    '!am': 'Amazon',
+    '!maps': 'Google Maps',
+    '!tw': 'Twitter / X',
+    '!x': 'Twitter / X',
+    '!v': 'Vimeo',
+    '!arch': 'Arch Linux Packages'
+};
+
+export function extractDdgBang(query) {
+    if (!query || typeof query !== 'string') return null;
+    const trimmed = query.trim();
+    const match = trimmed.match(/(?:^|\s)!([a-zA-Z0-9]+)(?:\s|$)/);
+    if (match) {
+        const bang = '!' + match[1].toLowerCase();
+        const cleanQuery = trimmed.replace(new RegExp('(?:^|\\s)!' + match[1] + '(?:\\s|$)', 'i'), ' ').trim();
+        return {
+            bang,
+            cleanQuery,
+            fullQuery: trimmed
+        };
+    }
+    return null;
+}
+
+function applyTargetUrl(targetUrl) {
+    const currentWS = state.sessionState.current_workspace;
+    const activeListItem = document.querySelector('#TabList li.selected');
+    if (!activeListItem) return;
+
+    const currentIdx = Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem);
+
+    state.sessionState.workspaces[currentWS][currentIdx] = targetUrl;
+    window.miseAPI.saveSession(state.sessionState);
+
+    if (state.activeViewsCache[currentWS] && state.activeViewsCache[currentWS][currentIdx]) {
+        state.activeViewsCache[currentWS][currentIdx].setAttribute('src', targetUrl);
+    } else {
+        wakeTab(currentWS, currentIdx);
+    }
+
+    hideSuggestions();
+    const addressBar = document.getElementById('WideAddressBar');
+    if (addressBar) addressBar.style.display = 'none';
+}
 
 export function displayAddressOverlay() {
     const addressBar = document.getElementById('WideAddressBar');
@@ -50,6 +124,31 @@ export async function handleNavigation(input) {
         return;
     }
 
+    // Direct arithmetic evaluation
+    const calcResult = evaluateMathExpression(trimmedInput);
+    if (calcResult !== null) {
+        if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+            navigator.clipboard.writeText(String(calcResult)).catch(() => {});
+        }
+        setTargetUrl(`Calculator: Copied ${calcResult} to clipboard`, 3500);
+        const addressBar = document.getElementById('WideAddressBar');
+        if (addressBar) {
+            addressBar.value = String(calcResult);
+            addressBar.style.display = 'none';
+        }
+        hideSuggestions();
+        focusActiveWebview();
+        return;
+    }
+
+    // DuckDuckGo bang redirection
+    const bangMatch = extractDdgBang(trimmedInput);
+    if (bangMatch) {
+        const targetUrl = `https://duckduckgo.com/?q=${encodeURIComponent(trimmedInput)}`;
+        applyTargetUrl(targetUrl);
+        return;
+    }
+
     const parts = trimmedInput.split(' ');
     const alias = parts[0].toLowerCase();
     const query = parts.slice(1).join(' ');
@@ -92,23 +191,7 @@ export async function handleNavigation(input) {
         }
     }
 
-    const currentWS = state.sessionState.current_workspace;
-    const activeListItem = document.querySelector('#TabList li.selected');
-    if (!activeListItem) return;
-
-    const currentIdx = Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem);
-
-    state.sessionState.workspaces[currentWS][currentIdx] = targetUrl;
-    window.miseAPI.saveSession(state.sessionState);
-
-    if (state.activeViewsCache[currentWS] && state.activeViewsCache[currentWS][currentIdx]) {
-        state.activeViewsCache[currentWS][currentIdx].setAttribute('src', targetUrl);
-    } else {
-        wakeTab(currentWS, currentIdx);
-    }
-
-    hideSuggestions();
-    document.getElementById('WideAddressBar').style.display = 'none';
+    applyTargetUrl(targetUrl);
 }
 
 export function setupAddressBarAutocomplete() {
@@ -135,6 +218,55 @@ export function setupAddressBarAutocomplete() {
         }
 
         const matches = [];
+
+        // 1. Calculator evaluation
+        const calcVal = evaluateMathExpression(query);
+        if (calcVal !== null) {
+            matches.push({
+                title: `= ${calcVal}`,
+                value: String(calcVal),
+                type: 'Calculator',
+                isCalc: true,
+                expr: query
+            });
+            matches.push({
+                title: `Search web for "${query}"`,
+                value: query,
+                type: 'Search',
+                forceSearch: true
+            });
+        }
+
+        // 2. DuckDuckGo Bang detection
+        const bangInfo = extractDdgBang(query);
+        if (bangInfo) {
+            const bangDesc = POPULAR_BANGS[bangInfo.bang];
+            let bangTitle = '';
+            if (bangDesc) {
+                bangTitle = bangInfo.cleanQuery 
+                    ? `${bangDesc}: ${bangInfo.cleanQuery} (${bangInfo.bang})`
+                    : `${bangDesc} (${bangInfo.bang})`;
+            } else {
+                bangTitle = `DuckDuckGo Bang: ${query}`;
+            }
+
+            matches.push({
+                title: bangTitle,
+                value: `https://duckduckgo.com/?q=${encodeURIComponent(query)}`,
+                type: 'Bang',
+                isBang: true
+            });
+        }
+
+        if (query.toLowerCase().startsWith('ws ')) {
+            const wsQuery = query.slice(3).toLowerCase();
+            const matchingWorkspaces = Object.keys(state.sessionState.workspaces)
+                .filter(ws => ws.toLowerCase().includes(wsQuery))
+                .map(ws => ({ title: `Switch to Workspace: ${ws}`, value: `ws:${ws}`, type: 'Workspace' }));
+
+            renderSuggestions(matchingWorkspaces);
+            return;
+        }
 
         Object.keys(state.sessionState.workspaces).forEach(wsName => {
             state.sessionState.workspaces[wsName].forEach((url, idx) => {
@@ -201,7 +333,16 @@ export function renderSuggestions(items) {
     items.forEach((item) => {
         const li = document.createElement('li');
         li.className = 'suggestion-item';
-        li.innerHTML = `<span>${escapeHtml(item.title)}</span><span class="suggestion-type">${item.type}</span>`;
+
+        let typeClass = 'suggestion-type';
+        if (item.type === 'Calculator') typeClass += ' calculator';
+        else if (item.type === 'Bang') typeClass += ' bang';
+
+        const titleHtml = item.type === 'Calculator'
+            ? `<strong>${escapeHtml(item.title)}</strong>`
+            : escapeHtml(item.title);
+
+        li.innerHTML = `<span>${titleHtml}</span><span class="${typeClass}">${escapeHtml(item.type)}</span>`;
         
         li.addEventListener('click', () => {
             selectSuggestion(item);
@@ -228,15 +369,51 @@ export function updateSuggestionHighlight() {
     });
 }
 
-export function selectSuggestion(item) {
+export async function selectSuggestion(item) {
+    if (!item) return;
+
     if (item.value.startsWith('ws:')) {
         const targetWs = item.value.split('ws:')[1];
         state.sessionState.current_workspace = targetWs;
         window.miseAPI.saveSession(state.sessionState);
         renderWorkspaceUI(0);
-    } else {
-        handleNavigation(item.value);
+        hideSuggestions();
+        const addressBar = document.getElementById('WideAddressBar');
+        if (addressBar) addressBar.style.display = 'none';
+        return;
     }
+
+    if (item.isCalc || item.type === 'Calculator') {
+        if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+            navigator.clipboard.writeText(String(item.value)).catch(() => {});
+        }
+        setTargetUrl(`Calculator: Copied ${item.value} to clipboard`, 3500);
+        const addressBar = document.getElementById('WideAddressBar');
+        if (addressBar) {
+            addressBar.value = String(item.value);
+            addressBar.style.display = 'none';
+        }
+        hideSuggestions();
+        focusActiveWebview();
+        return;
+    }
+
+    if (item.forceSearch) {
+        let searchTemplate = 'https://duckduckgo.com/?q=%s';
+        if (window.miseAPI && typeof window.miseAPI.getBrowserSettings === 'function') {
+            try {
+                const cfg = await window.miseAPI.getBrowserSettings();
+                if (cfg && cfg.search_engine) {
+                    searchTemplate = cfg.search_engine;
+                }
+            } catch (e) {}
+        }
+        const targetUrl = formatSearchUrl(item.value, searchTemplate);
+        applyTargetUrl(targetUrl);
+        return;
+    }
+
+    handleNavigation(item.value);
     hideSuggestions();
 }
 

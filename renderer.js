@@ -425,8 +425,13 @@ function setupEventListeners() {
     
     const addressBar = document.getElementById('WideAddressBar');
     addressBar.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') handleNavigation(addressBar.value.trim());
-        else if (e.key === 'Escape') {
+        if (e.key === 'Enter') {
+            if (state.addressSelectionIdx >= 0 && state.addressSuggestions[state.addressSelectionIdx]) {
+                selectSuggestion(state.addressSuggestions[state.addressSelectionIdx]);
+            } else {
+                handleNavigation(addressBar.value.trim());
+            }
+        } else if (e.key === 'Escape') {
             addressBar.style.display = 'none';
             hideSuggestions();
         }

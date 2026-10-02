@@ -1843,6 +1843,20 @@ body.zen-mode #right-content {
     flex-shrink: 0;
 }
 
+.suggestion-type.calculator {
+    color: #7aa2f7;
+    background: rgba(122, 162, 247, 0.15);
+    opacity: 1;
+    font-weight: 600;
+}
+
+.suggestion-type.bang {
+    color: #e0af68;
+    background: rgba(224, 175, 104, 0.15);
+    opacity: 1;
+    font-weight: 600;
+}
+
 /* Full Page Bookmarks & Quickmarks Overlay Setup */
 #BookmarksOverlay {
     position: absolute;
