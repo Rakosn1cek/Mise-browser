@@ -97,6 +97,11 @@ function hardenSession(targetSession, spellLang = 'en-GB') {
     applySpellcheckerLanguage(targetSession, spellLang);
     initialiseAdblocker(targetSession);
 
+    // Prevent WebRTC from probing non-default local interfaces
+    if (typeof targetSession.setWebRTCIPHandlingPolicy === 'function') {
+        targetSession.setWebRTCIPHandlingPolicy('default_public_interface_only');
+    }
+
     // Kept restricted permissions, but removed 'notifications' so our main toggle handles it
     const blockedPermissions = ['media', 'geolocation', 'midiSysex', 'audio', 'video'];
 
