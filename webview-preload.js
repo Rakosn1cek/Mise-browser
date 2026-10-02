@@ -5,7 +5,6 @@ const { ipcRenderer, webFrame } = require('electron');
 // Ask the main process whether this site is on the user's trusted-domain
 // allowlist (banking, shopping, etc.). Trusted sites skip fingerprint
 // spoofing so their fraud-detection checks see a consistent, real device
-// profile instead of randomized/noised values.
 let isTrustedSite = false;
 try {
     isTrustedSite = !!ipcRenderer.sendSync('is-trusted-domain', window.location.hostname);
@@ -14,6 +13,7 @@ try {
 }
 
 if (!isTrustedSite) {
+
     const codeToInject = `(function() {
         if (window.__miseFingerprintPatchesApplied) return;
         window.__miseFingerprintPatchesApplied = true;
@@ -63,14 +63,14 @@ if (!isTrustedSite) {
             }
         } catch (e) {}
 
-        // User Agent standardisation matching stable Chrome releases
+        // User Agent standardisation matching stable browser releases
         const cleanUserAgent = (navigator.userAgent || '')
-            .replace(/mise-browser\\/[0-9.]+\\s*/gi, '')
-            .replace(/Electron\\/[0-9.]+\\s*/gi, '')
-            .replace(/Chrome\\/[0-9.]+/i, 'Chrome/153.0.0.0')
+            .replace(new RegExp('mise-browser/[0-9.]+\\\\s*', 'gi'), '')
+            .replace(new RegExp('Electron/[0-9.]+\\\\s*', 'gi'), '')
+            .replace(new RegExp('Chrome/(\\\\d+)\\\\.[\\\\d.]+', 'i'), 'Chrome/$1.0.0.0')
             .trim();
         Object.defineProperty(navigator, 'userAgent', { get: () => cleanUserAgent, configurable: true });
-        Object.defineProperty(navigator, 'appVersion', { get: () => cleanUserAgent.replace(/^Mozilla\\//, ''), configurable: true });
+        Object.defineProperty(navigator, 'appVersion', { get: () => cleanUserAgent.replace(new RegExp('^Mozilla/'), ''), configurable: true });
 
         try {
             const origResolvedOptions = Intl.DateTimeFormat.prototype.resolvedOptions;
@@ -81,41 +81,35 @@ if (!isTrustedSite) {
             };
         } catch (e) {}
 
+        const chromeMatch = (navigator.userAgent || '').match(new RegExp('Chrome/(\\\\d+)\\\\.([\\\\d.]+)'));
+        const chromeMajor = chromeMatch ? chromeMatch[1] : '152';
+        const chromeFull = chromeMajor + '.0.0.0';
+
         if (navigator.userAgentData) {
             Object.defineProperty(navigator, 'userAgentData', {
                 get: function() {
                     return {
                         brands: [
-                            { brand: 'Chromium', version: '153' },
-                            { brand: 'Google Chrome', version: '153' },
-                            { brand: 'Not_A Brand', version: '24' }
+                            { brand: 'Chromium', version: chromeMajor },
+                            { brand: 'Google Chrome', version: chromeMajor },
+                            { brand: 'Not-A.Brand', version: '99' }
                         ],
                         mobile: false,
                         platform: 'Linux',
-                        getHighEntropyValues: function(hints) {
+                        getHighEntropyValues: function() {
                             return Promise.resolve({
                                 architecture: 'x86',
                                 bitness: '64',
                                 brands: [
-                                    { brand: 'Chromium', version: '153' },
-                                    { brand: 'Google Chrome', version: '153' }
+                                    { brand: 'Chromium', version: chromeMajor },
+                                    { brand: 'Google Chrome', version: chromeMajor }
                                 ],
                                 mobile: false,
                                 model: '',
                                 platform: 'Linux',
                                 platformVersion: '',
-                                uaFullVersion: '153.0.0.0'
+                                uaFullVersion: chromeFull
                             });
-                        },
-                        toJSON: function() {
-                            return {
-                                brands: [
-                                    { brand: 'Chromium', version: '153' },
-                                    { brand: 'Google Chrome', version: '153' }
-                                ],
-                                mobile: false,
-                                platform: 'Linux'
-                            };
                         }
                     };
                 }
@@ -127,8 +121,8 @@ if (!isTrustedSite) {
             if (!proto || !proto.getParameter) return;
             const origGetParam = proto.getParameter;
             proto.getParameter = function(param) {
-                if (param === 37445 || param === 0x9245) return 'Brave';
-                if (param === 37446 || param === 0x9246) return 'Brave';
+                if (param === 37445 || param === 0x9245) return 'Google Inc. (Intel)';
+                if (param === 37446 || param === 0x9246) return 'ANGLE (Intel, Mesa Intel(R) UHD Graphics 620 (KBL GT2), OpenGL 4.6)';
                 if (param === 7936 || param === 0x1F00) return 'WebKit';
                 if (param === 7937 || param === 0x1F01) return 'WebKit WebGL';
                 return origGetParam.apply(this, arguments);

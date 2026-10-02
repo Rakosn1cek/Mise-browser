@@ -10,15 +10,6 @@ if (!gotSingleInstanceLock) {
     app.quit();
 }
 
-// Sanitise default User Agent to remove application and Electron tokens, matching stable Chrome
-if (app.userAgentFallback) {
-    app.userAgentFallback = app.userAgentFallback
-        .replace(/mise-browser\/[0-9.]+\s*/gi, '')
-        .replace(/Electron\/[0-9.]+\s*/gi, '')
-        .replace(/Chrome\/[0-9.]+/i, 'Chrome/153.0.0.0')
-        .trim();
-}
-
 // Require the security config module to isolate filtering and hardening rules
 const security = require('./security');
 const keybinds = require('./keybinds');
@@ -61,7 +52,7 @@ const DEFAULT_CONFIG = {
     spellchecker_language: 'en-GB',
     theme: 'dark',
     webview_theme: 'dark',
-    trusted_domains: [],
+    trusted_domains: ['accounts.google.com'],
     tab_sleep_timeout_minutes: 15,
     sidebar_auto_collapse: true,
     show_status_bar: true,
@@ -113,8 +104,8 @@ function initializeEngineSwitches() {
         'Translate', 'PrivacySandboxSettings4',
         'PrivacySandboxAdsAPIsOverride', 'PrivacySandboxAdsAPIsM1Override',
         'InterestGroupStorage', 'AttributionReportingCrossAppWeb',
-        'FencedFrames', 'WebUSB', 'WebBluetooth', 'Serial',
-        'GenericSensor', 'WebOTP', 'Vulkan',
+        'WebUSB', 'WebBluetooth', 'Serial',
+        'GenericSensor', 'Vulkan',
         'VulkanFromANGLE', 'DefaultANGLEVulkan',
         'WebGPU', 'SkiaGraphite'
     ];
@@ -129,7 +120,6 @@ function initializeEngineSwitches() {
             app.commandLine.appendSwitch('ignore-gpu-blocklist');
             app.commandLine.appendSwitch('enable-gpu-rasterization');
             app.commandLine.appendSwitch('enable-accelerated-video-decode');
-            app.commandLine.appendSwitch('use-angle', 'gl');
             // Kept VA-API hardware decode/encode and CanvasOopRasterization for parallel GPU tile rasterization
             app.commandLine.appendSwitch('enable-features', 'VaapiVideoDecoder,VaapiVideoEncoder,CanvasOopRasterization,TLSExtensionGrease');
         } else {
@@ -143,11 +133,10 @@ function initializeEngineSwitches() {
     }
     
     // Compositor texture boundary allocation and V8 memory headroom
-    app.commandLine.appendSwitch('js-flags', ['-', '-', 'max-old-space-size=512 ', '-', '-', 'expose-gc'].join(''));
+    app.commandLine.appendSwitch('js-flags', ['-', '-', 'max-old-space-size=512'].join(''));
     app.commandLine.appendSwitch('force-gpu-mem-available-mb', '1024');
 
     app.commandLine.appendSwitch('renderer-process-limit', String(cfg.process_limit || 4));
-    app.commandLine.appendSwitch('disable-shared-workers');
     app.commandLine.appendSwitch('disable-smooth-scrolling');
     app.commandLine.appendSwitch('enable-strict-mixed-content-checking');
     app.commandLine.appendSwitch('disable-battery-saver');
@@ -1358,6 +1347,9 @@ app.on('web-contents-created', (event, webContents) => {
 
         webContents.on('did-navigate', (navEvent, url) => {
             logVisit(webContents.getTitle(), url);
+            if (url && url.includes('accounts.google.com') && url.includes('signin/rejected')) {
+                security.clearGoogleAuthCookies(webContents.session);
+            }
         });
 
         webContents.on('did-navigate-in-page', (navEvent, url) => {

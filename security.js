@@ -19,9 +19,29 @@ let appliedExceptionFilters = [];
 // Define a permanent location for the compiled adblocker cache file
 const CACHE_PATH = path.join(app.getPath('userData'), 'adblock_cache.bin');
 
+// Infrastructure domains required for Google authentication and bot detection
+const GOOGLE_AUTH_DOMAINS = [
+    'accounts.google.com',
+    'myaccount.google.com',
+    'google.com',
+    'google.co.uk',
+    'gstatic.com',
+    'googleapis.com',
+    'googleusercontent.com',
+    'gvt1.com',
+    'recaptcha.net',
+    'youtube.com'
+];
+
 function isTrustedDomain(hostname) {
     if (!hostname) return false;
-    const host = hostname.toLowerCase();
+    const host = String(hostname).toLowerCase().split(':')[0];
+
+    // Core authentication endpoints are always trusted to ensure uninterrupted account login
+    if (GOOGLE_AUTH_DOMAINS.some(gd => host === gd || host.endsWith('.' + gd))) {
+        return true;
+    }
+
     return trustedDomains.some(entry => {
         const domain = String(entry || '').toLowerCase().trim();
         if (!domain) return false;
@@ -29,19 +49,23 @@ function isTrustedDomain(hostname) {
     });
 }
 
-// In security.js:
-
 function buildExceptionFilters(domains) {
     const filters = [];
+    const allDomains = new Set();
+
     domains.forEach(entry => {
         const domain = String(entry || '').toLowerCase().trim();
-        if (!domain) return;
-        // Whitelist ALL sub-resources, scripts, beacons, and websocket frames
+        if (domain) allDomains.add(domain);
+    });
+
+    allDomains.forEach(domain => {
+        // Whitelist all sub-resources, scripts, beacons, and websocket frames
         filters.push(`@@||${domain}^$important`);
         filters.push(`@@||${domain}^`);
         // Disable cosmetic CSS/DOM element hiding
         filters.push(`${domain}#@#*`);
     });
+
     return filters;
 }
 
@@ -72,40 +96,6 @@ function applySpellcheckerLanguage(targetSession, languageCode) {
 function hardenSession(targetSession, spellLang = 'en-GB') {
     applySpellcheckerLanguage(targetSession, spellLang);
     initialiseAdblocker(targetSession);
-
-    const cleanUserAgent = (ua) => {
-        return (ua || '')
-            .replace(/mise-browser\/[0-9.]+\s*/gi, '')
-            .replace(/Electron\/[0-9.]+\s*/gi, '')
-            .replace(/Chrome\/[0-9.]+/i, 'Chrome/153.0.0.0')
-            .trim();
-    };
-
-    if (typeof targetSession.getUserAgent === 'function') {
-        const currentUa = targetSession.getUserAgent();
-        if (currentUa) {
-            targetSession.setUserAgent(cleanUserAgent(currentUa));
-        }
-    }
-
-    if (targetSession.webRequest && typeof targetSession.webRequest.onBeforeSendHeaders === 'function') {
-        targetSession.webRequest.onBeforeSendHeaders((details, callback) => {
-            const headers = details.requestHeaders;
-            if (headers) {
-                if (headers['User-Agent']) {
-                    headers['User-Agent'] = cleanUserAgent(headers['User-Agent']);
-                }
-                if (headers['sec-ch-ua']) {
-                    headers['sec-ch-ua'] = '"Chromium";v="153", "Google Chrome";v="153", "Not_A Brand";v="24"';
-                }
-                if (headers['sec-ch-ua-full-version-list']) {
-                    headers['sec-ch-ua-full-version-list'] = '"Chromium";v="153.0.0.0", "Google Chrome";v="153.0.0.0", "Not_A Brand";v="24.0.0.0"';
-                }
-                headers['Accept-Language'] = 'en-GB,en-US;q=0.9,en;q=0.8';
-            }
-            callback({ requestHeaders: headers });
-        });
-    }
 
     // Kept restricted permissions, but removed 'notifications' so our main toggle handles it
     const blockedPermissions = ['media', 'geolocation', 'midiSysex', 'audio', 'video'];
@@ -149,6 +139,51 @@ function hardenSession(targetSession, spellLang = 'en-GB') {
         return true;
     });
 
+    // Route Google authentication requests through the lightweight sign-in flow
+    if (targetSession.webRequest && typeof targetSession.webRequest.onBeforeRequest === 'function') {
+        targetSession.webRequest.onBeforeRequest({ urls: ['*://accounts.google.com/*'] }, (details, callback) => {
+            const url = details.url || '';
+            if (url.includes('flowName=GlifWebSignIn')) {
+                const redirectedUrl = url.replaceAll('flowName=GlifWebSignIn', 'flowName=WebLiteSignIn');
+                return callback({ redirectURL: redirectedUrl });
+            }
+            callback({});
+        });
+    }
+
+    const cleanUserAgent = (ua) => {
+        return (ua || '')
+            .replace(/mise-browser\/[0-9.]+\s*/gi, '')
+            .replace(/Electron\/[0-9.]+\s*/gi, '')
+            .replace(/Chrome\/(\d+)\.[\d.]+/i, 'Chrome/$1.0.0.0')
+            .trim();
+    };
+
+    if (targetSession.webRequest && typeof targetSession.webRequest.onBeforeSendHeaders === 'function') {
+        targetSession.webRequest.onBeforeSendHeaders((details, callback) => {
+            let hostname = '';
+            try { hostname = new URL(details.url).hostname; } catch (e) {}
+
+            // Keep unmodified headers on trusted authentication domains
+            if (isTrustedDomain(hostname)) {
+                return callback({ requestHeaders: details.requestHeaders });
+            }
+
+            const headers = details.requestHeaders;
+            if (headers) {
+                if (headers['User-Agent']) {
+                    headers['User-Agent'] = cleanUserAgent(headers['User-Agent']);
+                }
+                const chromeMatch = (headers['User-Agent'] || '').match(/Chrome\/(\d+)\.([\d.]+)/);
+                const chromeMajor = chromeMatch ? chromeMatch[1] : '152';
+
+                headers['sec-ch-ua'] = `"Chromium";v="${chromeMajor}", "Google Chrome";v="${chromeMajor}", "Not-A.Brand";v="99"`;
+                headers['sec-ch-ua-full-version-list'] = `"Chromium";v="${chromeMajor}.0.0.0", "Google Chrome";v="${chromeMajor}.0.0.0", "Not-A.Brand";v="99.0.0.0"`;
+                headers['Accept-Language'] = 'en-GB,en-US;q=0.9,en;q=0.8';
+            }
+            callback({ requestHeaders: headers });
+        });
+    }
 }
 
 async function applyTrustedDomainExceptions() {
@@ -227,10 +262,9 @@ async function initialiseAdblocker(targetSession) {
     try {
         if (ipcInitialized) {
             GHOSTERY_IPC_CHANNELS.forEach(channel => {
-                ipcMain.removeHandler(channel);
+                try { ipcMain.removeHandler(channel); } catch (e) {}
             });
         }
-
         blockerInstance.enableBlockingInSession(targetSession);
         ipcInitialized = true;
     } catch (err) {
@@ -249,10 +283,28 @@ function hardenWebviewPreferences(webPreferences) {
     webPreferences.enableRemoteModule = false;
 }
 
+async function clearGoogleAuthCookies(targetSession) {
+    if (!targetSession || !targetSession.cookies) return;
+    try {
+        const domains = ['google.com', 'accounts.google.com', 'mail.google.com'];
+        for (const dom of domains) {
+            const cookies = await targetSession.cookies.get({ domain: dom });
+            for (const c of cookies) {
+                if (c.name.startsWith('__Host-') || c.name === 'OTZ' || c.name === 'NID' || c.name.startsWith('__Secure-')) {
+                    const scheme = c.secure ? 'https://' : 'http://';
+                    const cookieUrl = scheme + c.domain.replace(/^\./, '') + c.path;
+                    await targetSession.cookies.remove(cookieUrl, c.name);
+                }
+            }
+        }
+    } catch (e) {}
+}
+
 module.exports = {
     hardenSession,
     hardenWebviewPreferences,
     setTrustedDomains,
     isTrustedDomain,
-    applySpellcheckerLanguage
+    applySpellcheckerLanguage,
+    clearGoogleAuthCookies
 };
