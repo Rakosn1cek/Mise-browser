@@ -447,7 +447,7 @@ window.addEventListener('keydown', (e) => {
     }
     if (key === 'd') {
         e.preventDefault();
-        scrollPageBy(0, Math.floor(window.innerHeight * 0.5));
+        try { ipcRenderer.sendToHost('normal-mode-action', 'toggle-dark-reader'); } catch (err) {}
         return;
     }
     if (key === 'u') {

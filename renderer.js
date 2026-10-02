@@ -107,7 +107,13 @@ import {
     setTargetUrl
 } from './modules/statusBar.js';
 
+import { 
+    toggleDarkReaderOnActiveTab, 
+    updateDarkReaderButtonUI 
+} from './modules/darkReader.js';
+
 // Attach functions needed across module boundaries to window
+window.toggleDarkReaderOnActiveTab = toggleDarkReaderOnActiveTab;
 window.toggleDashboardView = toggleDashboardView;
 window.displayAddressOverlay = displayAddressOverlay;
 window.triggerLinkHints = triggerLinkHints;
@@ -383,6 +389,7 @@ async function initializeBrowser() {
 }
 
 function setupEventListeners() {
+    document.getElementById('dark-reader-btn')?.addEventListener('click', toggleDarkReaderOnActiveTab);
     document.getElementById('theme-toggle-btn').addEventListener('click', toggleWebviewTheme);
     document.getElementById('toggle-nav-btn').addEventListener('click', displayAddressOverlay);
     document.getElementById('split-toggle-btn')?.addEventListener('click', () => toggleSplitView());
@@ -491,6 +498,7 @@ function setupEventListeners() {
             case 'toggle-help': togglePreferencesView(); break;
             case 'toggle-history': toggleHistoryOverlay(); break;
             case 'toggle-status-bar': toggleStatusBar(); break;
+            case 'toggle-dark-reader': toggleDarkReaderOnActiveTab(); break;
             case 'go-back':
             case 'go-back-signal': navigateFrameBack(); break;
             case 'go-forward':
@@ -547,7 +555,7 @@ function setupEventListeners() {
         });
     });
 
-    const bottomButtons = ['pin-sidebar-btn', 'theme-toggle-btn', 'noti-toggle-btn'];
+    const bottomButtons = ['pin-sidebar-btn', 'dark-reader-btn', 'theme-toggle-btn', 'noti-toggle-btn'];
     bottomButtons.forEach((id, idx) => {
         const btn = document.getElementById(id);
         if (!btn) return;

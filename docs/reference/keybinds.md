@@ -41,6 +41,7 @@ All keyboard shortcuts in Mise Browser are fully customisable via `~/.config/mis
 | Shortcut | Action | Description |
 | :--- | :--- | :--- |
 | **Ctrl + F** | `trigger-hints` | Toggles Link Hints overlay for mouse-free clicking |
+| **Ctrl + D** | `toggle-dark-reader` | Toggles Dark Reader high-contrast dark theme on active tab |
 | **Ctrl + Shift + Q [key]** | `set-quickmark` | Binds current page URL to any single key |
 | **Ctrl + J [key]** | `jump-quickmark` | Jumps instantly to the URL bound to that key |
 | **Ctrl + Shift + A** | `add-bookmark` | Saves the current tab into `bookmarks.json` |

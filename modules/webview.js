@@ -304,6 +304,11 @@ export function handleNormalModeAction(action, extra, webview, currentWS, idx) {
             }
             break;
         }
+        case 'toggle-dark-reader':
+            if (typeof window.toggleDarkReaderOnActiveTab === 'function') {
+                window.toggleDarkReaderOnActiveTab();
+            }
+            break;
     }
 }
 

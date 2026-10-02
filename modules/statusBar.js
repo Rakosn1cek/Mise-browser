@@ -4,6 +4,7 @@
 import { state } from './state.js';
 import { getWorkspacePartition } from './utils.js';
 import { isSplitActive, getSplitState } from './splitView.js';
+import { updateDarkReaderButtonUI, isWebviewDarkReaderActive } from './darkReader.js';
 
 let statusBarEl = null;
 let modeBadgeEl = null;
@@ -275,6 +276,9 @@ export function updateStatusBarFromActiveView() {
 
     updateSecurityStatus(activeUrl);
     setTargetUrl('');
+
+    const activeWv = state.activeViewsCache[currentWS]?.[currentIdx];
+    updateDarkReaderButtonUI(isWebviewDarkReaderActive(activeWv));
 }
 
 export function toggleStatusBar(force) {

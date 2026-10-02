@@ -519,6 +519,18 @@ export const COMMAND_DEFINITIONS = [
         }
     },
     {
+        id: 'toggle-dark-reader',
+        title: 'Toggle Dark Reader on Active Tab',
+        desc: 'Invert web page colours into high-contrast dark theme preserving media',
+        details: 'Applies zero-dependency GPU-accelerated dark styling to the active tab and split panes.',
+        tip: 'Press Ctrl+D or d in NORMAL mode to toggle Dark Reader instantly.',
+        category: 'Web Interaction',
+        icon: 'fa-solid fa-circle-half-stroke',
+        actionId: 'toggle-dark-reader',
+        keywords: ['dark', 'reader', 'mode', 'invert', 'contrast', 'night'],
+        action: () => window.toggleDarkReaderOnActiveTab && window.toggleDarkReaderOnActiveTab()
+    },
+    {
         id: 'toggle-theme',
         title: 'Toggle Colour Theme (Dark / Light)',
         desc: 'Switch browser interface and webview styling between dark and light',
