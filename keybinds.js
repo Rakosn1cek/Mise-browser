@@ -33,7 +33,8 @@ const DEFAULT_KEYBINDS = {
     'toggle-split': 'Ctrl+Shift+S',
     'switch-split-focus': 'Ctrl+O',
     'swap-split-panes': 'Ctrl+\\',
-    'toggle-dark-reader': 'Ctrl+D'
+    'toggle-dark-reader': 'Ctrl+D',
+    'toggle-reader-view': 'F9'
 };
 
 const ACTION_METADATA = {
@@ -65,7 +66,8 @@ const ACTION_METADATA = {
     'toggle-split': { label: 'Toggle Dual-Split View (Side-by-Side)', category: 'Navigation & Workspaces' },
     'switch-split-focus': { label: 'Switch Split Pane Focus (Pane 1 / Pane 2)', category: 'Navigation & Workspaces' },
     'swap-split-panes': { label: 'Swap Split Panes (Left / Right)', category: 'Navigation & Workspaces' },
-    'toggle-dark-reader': { label: 'Toggle Dark Reader on Active Tab', category: 'Web Interaction' }
+    'toggle-dark-reader': { label: 'Toggle Dark Reader on Active Tab', category: 'Web Interaction' },
+    'toggle-reader-view': { label: 'Toggle Reader View on Active Tab', category: 'Web Interaction' }
 };
 
 let activeKeybinds = { ...DEFAULT_KEYBINDS };

@@ -279,6 +279,19 @@ export function updateStatusBarFromActiveView() {
 
     const activeWv = state.activeViewsCache[currentWS]?.[currentIdx];
     updateDarkReaderButtonUI(isWebviewDarkReaderActive(activeWv));
+    updateReaderViewButtonUI(!!(activeWv && activeWv.__miseReaderActive));
+}
+
+export function updateReaderViewButtonUI(enabled) {
+    const btn = document.getElementById('reader-view-btn');
+    if (!btn) return;
+    if (enabled) {
+        btn.classList.add('active');
+        btn.title = 'Toggle Reader View (Active - F9 / e)';
+    } else {
+        btn.classList.remove('active');
+        btn.title = 'Toggle Reader View (F9 / e)';
+    }
 }
 
 export function toggleStatusBar(force) {

@@ -131,6 +131,7 @@ Mise Browser provides a Vim-inspired modal navigation engine that frees you from
 | `L` | History Forward | Navigates forward in page history |
 | `/` | Find in Page | Opens the in-page search bar |
 | `f` | Link Hints | Injects two-letter hint tags over clickable links |
+| `e` | Reader View | Toggles native distraction-free reader view |
 | `w` | Dashboard | Opens the Workspace Dashboard tree |
 | `s` | Focus Sidebar | Moves focus to vertical sidebar tab list |
 | `y` | Yank URL | Copies current URL to clipboard with status bar feedback |
@@ -157,4 +158,19 @@ For comparing documentation, pull requests, or research sources without tiling w
 * **Context Menu Link Routing**: Right-click any hyperlink on a page and select **Open Link in Split View** to open or send that link directly into the adjacent comparison pane.
 * **Tab Assignment**: Clicking any tab in the sidebar while in split mode routes that page into whichever pane currently holds active focus.
 * **Hibernation Exemption**: Both visible split panes are automatically protected from background tab sleep while displayed on screen.
+
+***
+
+## Native Reader View (`F9` / `e`)
+
+Mise includes an in-engine DOM distiller powered by Mozilla Readability to strip ads, sidebars, cookie banners, and visual clutter from articles:
+
+* **Instant Distillation**: Press **F9** or press **e** in NORMAL mode to extract the core article, byline, and imagery into a clean reading format.
+* **Isolated Shadow DOM**: The reader view is rendered inside an isolated Shadow DOM container over the active document. Closing Reader View (via **Escape**, **F9**, or the close icon) restores the original web page instantly without reloading or discarding form inputs.
+* **Custom Typography and Themes**: A floating controls pill at the top-right corner allows adjusting:
+  * **Themes**: Dark (Tokyo Night), Sepia (Warm Paper), and Light.
+  * **Font Families**: Modern Sans-serif, Classic Serif, or Clean Monospace.
+  * **Font Size**: Adjustable scale between 14px and 28px.
+  * **Reading Width**: Narrow (620px), Medium (760px), or Wide (940px).
+* **Reading Metrics**: Header estimates word count and reading time based on typical reading velocity.
 

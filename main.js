@@ -925,6 +925,19 @@ ipcMain.handle('read-hinter-code', async () => {
     return '';
 });
 
+let cachedReaderDistillerCode = null;
+ipcMain.handle('read-reader-code', async () => {
+    if (cachedReaderDistillerCode) return cachedReaderDistillerCode;
+    try {
+        const distillerPath = path.join(__dirname, 'modules', 'readerDistiller.js');
+        if (fs.existsSync(distillerPath)) {
+            cachedReaderDistillerCode = fs.readFileSync(distillerPath, 'utf8');
+            return cachedReaderDistillerCode;
+        }
+    } catch (err) {}
+    return '';
+});
+
 ipcMain.handle('get-session', async () => {
     try {
         if (fs.existsSync(sessionPath)) return JSON.parse(fs.readFileSync(sessionPath, 'utf8'));

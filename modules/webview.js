@@ -7,7 +7,8 @@ import {
     updateStatusBarFromActiveView, 
     handleGuestInputFocus, 
     handleGuestHintsState,
-    handleGuestPassthroughState
+    handleGuestPassthroughState,
+    updateReaderViewButtonUI
 } from './statusBar.js';
 import { buildUserScriptWrapper } from './userScriptShim.js';
 
@@ -220,6 +221,18 @@ export function createWebView(url, currentWS, idx) {
             handleGuestHintsState(!!e.args[0], currentWS, idx);
         } else if (e.channel === 'guest-passthrough-state') {
             handleGuestPassthroughState(!!e.args[0], currentWS, idx);
+        } else if (e.channel === 'reader-view-toggled') {
+            const data = e.args[0] || {};
+            webview.__miseReaderActive = !!data.active;
+            updateReaderViewButtonUI(!!data.active);
+            if (data.error) {
+                setTargetUrl(`Reader View: ${data.error}`, 3000);
+            } else if (data.active) {
+                const titleStr = data.title ? `: ${data.title.slice(0, 45)}...` : '';
+                setTargetUrl(`Reader View Active (F9 to exit)${titleStr}`, 3000);
+            } else {
+                setTargetUrl('Reader View Closed', 2000);
+            }
         } else if (e.channel === 'normal-mode-action') {
             const action = e.args[0];
             const extra = e.args[1];
@@ -310,6 +323,33 @@ export function handleNormalModeAction(action, extra, webview, currentWS, idx) {
                 window.toggleDarkReaderOnActiveTab();
             }
             break;
+        case 'toggle-reader-view':
+            toggleReaderViewOnActiveTab();
+            break;
+    }
+}
+
+export async function toggleReaderViewOnActiveTab() {
+    const activeWv = getActiveWebview();
+    if (!activeWv || typeof activeWv.executeJavaScript !== 'function') return;
+    try {
+        const readerCode = await window.miseAPI.readReaderCode();
+        if (!readerCode) return;
+        const res = await activeWv.executeJavaScript(readerCode, false);
+        if (res) {
+            activeWv.__miseReaderActive = !!res.active;
+            updateReaderViewButtonUI(!!res.active);
+            if (res.error) {
+                setTargetUrl(`Reader View: ${res.error}`, 3000);
+            } else if (res.active) {
+                const titleStr = res.title ? `: ${res.title.slice(0, 45)}...` : '';
+                setTargetUrl(`Reader View Active (F9 or Esc to exit)${titleStr}`, 3500);
+            } else {
+                setTargetUrl('Reader View Closed', 2000);
+            }
+        }
+    } catch (err) {
+        console.error('Failed to execute reader view:', err);
     }
 }
 

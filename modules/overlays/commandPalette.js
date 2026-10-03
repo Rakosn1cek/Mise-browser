@@ -542,6 +542,18 @@ export const COMMAND_DEFINITIONS = [
         action: () => window.toggleDarkReaderOnActiveTab && window.toggleDarkReaderOnActiveTab()
     },
     {
+        id: 'toggle-reader-view',
+        title: 'Toggle Reader View on Active Tab',
+        desc: 'Distil web article into clean, distraction-free reading layout',
+        details: 'Extracts article text, byline, and media using in-engine Mozilla Readability with custom themes and typography.',
+        tip: 'Press F9 or e in NORMAL mode to toggle Reader View instantly.',
+        category: 'Web Interaction',
+        icon: 'fa-solid fa-book-open',
+        actionId: 'toggle-reader-view',
+        keywords: ['reader', 'view', 'read', 'article', 'distill', 'clean', 'typography', 'book'],
+        action: () => window.toggleReaderViewOnActiveTab && window.toggleReaderViewOnActiveTab()
+    },
+    {
         id: 'toggle-theme',
         title: 'Toggle Colour Theme (Dark / Light)',
         desc: 'Switch browser interface and webview styling between dark and light',

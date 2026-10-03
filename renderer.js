@@ -26,7 +26,8 @@ import {
     hibernateInactiveTabs,
     wakeTab,
     wakeAllTabsInWorkspace,
-    reapplyActiveUserStyles
+    reapplyActiveUserStyles,
+    toggleReaderViewOnActiveTab
 } from './modules/webview.js';
 
 import { 
@@ -114,6 +115,7 @@ import {
 
 // Attach functions needed across module boundaries to window
 window.toggleDarkReaderOnActiveTab = toggleDarkReaderOnActiveTab;
+window.toggleReaderViewOnActiveTab = toggleReaderViewOnActiveTab;
 window.toggleDashboardView = toggleDashboardView;
 window.displayAddressOverlay = displayAddressOverlay;
 window.triggerLinkHints = triggerLinkHints;
@@ -389,6 +391,7 @@ async function initializeBrowser() {
 }
 
 function setupEventListeners() {
+    document.getElementById('reader-view-btn')?.addEventListener('click', toggleReaderViewOnActiveTab);
     document.getElementById('dark-reader-btn')?.addEventListener('click', toggleDarkReaderOnActiveTab);
     document.getElementById('theme-toggle-btn').addEventListener('click', toggleWebviewTheme);
     document.getElementById('toggle-nav-btn').addEventListener('click', displayAddressOverlay);
@@ -504,6 +507,7 @@ function setupEventListeners() {
             case 'toggle-history': toggleHistoryOverlay(); break;
             case 'toggle-status-bar': toggleStatusBar(); break;
             case 'toggle-dark-reader': toggleDarkReaderOnActiveTab(); break;
+            case 'toggle-reader-view': toggleReaderViewOnActiveTab(); break;
             case 'go-back':
             case 'go-back-signal': navigateFrameBack(); break;
             case 'go-forward':
@@ -560,7 +564,7 @@ function setupEventListeners() {
         });
     });
 
-    const bottomButtons = ['pin-sidebar-btn', 'dark-reader-btn', 'theme-toggle-btn', 'noti-toggle-btn'];
+    const bottomButtons = ['pin-sidebar-btn', 'reader-view-btn', 'dark-reader-btn', 'theme-toggle-btn', 'noti-toggle-btn'];
     bottomButtons.forEach((id, idx) => {
         const btn = document.getElementById(id);
         if (!btn) return;

@@ -2,6 +2,14 @@
 
 const { ipcRenderer, webFrame, contextBridge } = require('electron');
 
+ipcRenderer.on('toggle-reader-view', () => {
+    try { ipcRenderer.sendToHost('normal-mode-action', 'toggle-reader-view'); } catch (err) {}
+});
+
+window.addEventListener('mise-reader-closed', () => {
+    try { ipcRenderer.sendToHost('reader-view-toggled', { active: false }); } catch (err) {}
+});
+
 // Expose minimal, secure GM bridge for userscript execution
 try {
     if (contextBridge && typeof contextBridge.exposeInMainWorld === 'function') {
@@ -413,8 +421,17 @@ window.addEventListener('keydown', (e) => {
     const activeEl = document.activeElement;
     const inEditable = isEditableElement(activeEl);
 
-    // Escape key exits input fields and explicit insert mode
+    // Escape key exits reader view, input fields and explicit insert mode
     if (e.key === 'Escape') {
+        const readerOverlay = document.getElementById('mise-reader-overlay');
+        if (readerOverlay) {
+            e.preventDefault();
+            e.stopPropagation();
+            readerOverlay.remove();
+            document.documentElement.style.overflow = '';
+            try { ipcRenderer.sendToHost('reader-view-toggled', { active: false }); } catch (err) {}
+            return;
+        }
         if (inEditable && activeEl && typeof activeEl.blur === 'function') {
             activeEl.blur();
             e.preventDefault();
@@ -426,6 +443,14 @@ window.addEventListener('keydown', (e) => {
             e.stopPropagation();
         }
         try { ipcRenderer.sendToHost('guest-input-focus', false); } catch (err) {}
+        return;
+    }
+
+    // F9 toggles Reader View directly
+    if (e.key === 'F9') {
+        e.preventDefault();
+        e.stopPropagation();
+        try { ipcRenderer.sendToHost('normal-mode-action', 'toggle-reader-view'); } catch (err) {}
         return;
     }
 
@@ -460,6 +485,11 @@ window.addEventListener('keydown', (e) => {
     if (key === 'd') {
         e.preventDefault();
         try { ipcRenderer.sendToHost('normal-mode-action', 'toggle-dark-reader'); } catch (err) {}
+        return;
+    }
+    if (key === 'e') {
+        e.preventDefault();
+        try { ipcRenderer.sendToHost('normal-mode-action', 'toggle-reader-view'); } catch (err) {}
         return;
     }
     if (key === 'u') {
