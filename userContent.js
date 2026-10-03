@@ -10,6 +10,10 @@ const { shell, ipcMain, net } = require('electron');
 const dns = require('dns');
 const nodeNet = require('net');
 const crypto = require('crypto');
+let UndiciAgent = null;
+try {
+    UndiciAgent = require('undici').Agent;
+} catch {}
 
 const defaultBaseDir = path.join(os.homedir(), '.config', 'mise-browser');
 let scriptsDir = path.join(defaultBaseDir, 'scripts');
@@ -296,6 +300,8 @@ async function validateRequestDestination(targetUrl, tokenData) {
         if (isPrivateOrBlockedIP(cleanHost)) {
             throw new Error(`SSRF protection: destination IP "${cleanHost}" belongs to a private or restricted network range`);
         }
+        parsedUrl.pinnedIp = cleanHost;
+        parsedUrl.pinnedFamily = nodeNet.isIP(cleanHost);
         return parsedUrl;
     }
 
@@ -317,6 +323,8 @@ async function validateRequestDestination(targetUrl, tokenData) {
         }
     }
 
+    parsedUrl.pinnedIp = addresses[0].address;
+    parsedUrl.pinnedFamily = addresses[0].family;
     return parsedUrl;
 }
 
@@ -331,13 +339,26 @@ function hasStorageGrant(tokenData) {
     });
 }
 
+function createPinnedDispatcher(targetValidation) {
+    if (UndiciAgent && targetValidation && targetValidation.pinnedIp && !nodeNet.isIP(targetValidation.hostname)) {
+        return new UndiciAgent({
+            connect: {
+                lookup: (hostname, opts, cb) => {
+                    cb(null, [{ address: targetValidation.pinnedIp, family: targetValidation.pinnedFamily }]);
+                }
+            }
+        });
+    }
+    return null;
+}
+
 async function executeGmXmlHttpRequest(details, tokenData = null) {
     if (!details || typeof details !== 'object' || !details.url) {
         throw new Error('Valid URL is required for GM_xmlhttpRequest');
     }
 
     let currentUrl = details.url;
-    await validateRequestDestination(currentUrl, tokenData);
+    let validated = await validateRequestDestination(currentUrl, tokenData);
 
     const method = (details.method || 'GET').toUpperCase();
     const timeout = Number(details.timeout) || 30000;
@@ -372,11 +393,21 @@ async function executeGmXmlHttpRequest(details, tokenData = null) {
     const isManualRedirect = (details.redirect === 'manual' || details.redirect === 'error');
     const maxRedirects = 5;
     let redirectCount = 0;
+    let activeDispatcher = null;
 
     try {
         let res;
         while (true) {
             const reqInit = Object.assign({}, init, { redirect: 'manual' });
+            if (activeDispatcher && typeof activeDispatcher.destroy === 'function') {
+                activeDispatcher.destroy();
+                activeDispatcher = null;
+            }
+            activeDispatcher = createPinnedDispatcher(validated);
+            if (activeDispatcher) {
+                reqInit.dispatcher = activeDispatcher;
+            }
+
             res = await fetchFn(currentUrl, reqInit);
 
             const isRedirectStatus = [301, 302, 303, 307, 308].includes(res.status);
@@ -395,7 +426,7 @@ async function executeGmXmlHttpRequest(details, tokenData = null) {
                         }
                         redirectCount++;
                         const nextUrl = new URL(locationHeader, currentUrl).href;
-                        await validateRequestDestination(nextUrl, tokenData);
+                        validated = await validateRequestDestination(nextUrl, tokenData);
                         currentUrl = nextUrl;
                         if (res.status === 303 || (res.status === 302 && init.method === 'POST')) {
                             init.method = 'GET';
@@ -435,6 +466,11 @@ async function executeGmXmlHttpRequest(details, tokenData = null) {
             status: isTimeout ? 0 : 0,
             statusText: isTimeout ? 'Timeout' : 'Error'
         };
+    } finally {
+        if (activeDispatcher && typeof activeDispatcher.destroy === 'function') {
+            activeDispatcher.destroy();
+            activeDispatcher = null;
+        }
     }
 }
 

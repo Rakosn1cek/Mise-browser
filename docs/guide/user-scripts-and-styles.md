@@ -138,7 +138,7 @@ Standard `fetch()` inside a webpage cannot access third-party endpoints because 
 
 * **`@connect` Host Restriction**: Scripts must declare permitted network destinations via `@connect <host>`. A declared root domain covers its subdomains (e.g. `@connect github.com` allows `api.github.com`), while same-origin requests back to the host webpage are always permitted implicitly.
 * **SSRF Protection**: To prevent Server-Side Request Forgery against private network infrastructure, requests targeting loopback addresses (`127.0.0.0/8`, `::1`, `localhost`), internal subnets (`10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`), and link-local metadata endpoints (`169.254.0.0/16`) are unconditionally blocked.
-* **DNS Resolution Check**: Target hostnames are resolved before dispatching requests to prevent DNS rebinding attacks from routing requests to internal private IP addresses.
+* **DNS Resolution Check & IP Pinning**: Target hostnames are resolved before dispatching requests to prevent DNS rebinding attacks from routing requests to internal private IP addresses. Sockets are pinned directly to the validated IP to eliminate time-of-check race conditions.
 * **Redirect Validation**: Every HTTP redirect hop is validated against `@connect` and SSRF rules before following.
 
 ```javascript
