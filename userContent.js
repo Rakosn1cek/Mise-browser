@@ -7,6 +7,8 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 const { shell, ipcMain, net } = require('electron');
+const dns = require('dns');
+const nodeNet = require('net');
 const crypto = require('crypto');
 
 const defaultBaseDir = path.join(os.homedir(), '.config', 'mise-browser');
@@ -79,10 +81,13 @@ function deleteScriptValue(scriptId, key) {
     saveScriptStorage(scriptId, store);
 }
 
-function generateScriptToken(scriptId) {
+function generateScriptToken(scriptId, pageHostname = '', connects = [], grants = []) {
     const token = crypto.randomUUID();
     activeTokens.set(token, {
         scriptId: sanitizeScriptId(scriptId),
+        pageHostname: String(pageHostname || '').toLowerCase(),
+        connects: Array.isArray(connects) ? connects.map(c => String(c).trim()).filter(Boolean) : [],
+        grants: Array.isArray(grants) ? grants.map(g => String(g).trim()).filter(Boolean) : [],
         createdAt: Date.now()
     });
     if (activeTokens.size > 5000) {
@@ -96,12 +101,244 @@ function generateScriptToken(scriptId) {
     return token;
 }
 
-async function executeGmXmlHttpRequest(details) {
+function isPrivateOrBlockedIP(ip) {
+    if (!ip || typeof ip !== 'string') return true;
+    const cleanIp = ip.replace(/^\[|\]$/g, '').trim().toLowerCase();
+
+    // Check IPv4-mapped IPv6 addresses (e.g. ::ffff:127.0.0.1)
+    if (cleanIp.startsWith('::ffff:')) {
+        const remaining = cleanIp.slice(7);
+        if (nodeNet.isIPv4(remaining)) {
+            return isPrivateOrBlockedIP(remaining);
+        }
+    }
+
+    if (nodeNet.isIPv4(cleanIp)) {
+        const parts = cleanIp.split('.').map(p => parseInt(p, 10));
+        if (parts.length !== 4 || parts.some(p => isNaN(p) || p < 0 || p > 255)) {
+            return true;
+        }
+        const [a, b, c, d] = parts;
+
+        // 0.0.0.0/8 (Current network / default route)
+        if (a === 0) return true;
+        // 10.0.0.0/8 (Private Class A)
+        if (a === 10) return true;
+        // 127.0.0.0/8 (Loopback)
+        if (a === 127) return true;
+        // 100.64.0.0/10 (Shared address space / Carrier-grade NAT)
+        if (a === 100 && (b >= 64 && b <= 127)) return true;
+        // 169.254.0.0/16 (Link-local / Cloud metadata)
+        if (a === 169 && b === 254) return true;
+        // 172.16.0.0/12 (Private Class B)
+        if (a === 172 && (b >= 16 && b <= 31)) return true;
+        // 192.0.0.0/24 (IETF assignments)
+        if (a === 192 && b === 0 && c === 0) return true;
+        // 192.0.2.0/24 (TEST-NET-1)
+        if (a === 192 && b === 0 && c === 2) return true;
+        // 192.168.0.0/16 (Private Class C)
+        if (a === 192 && b === 168) return true;
+        // 198.18.0.0/15 (Network benchmark testing)
+        if (a === 198 && (b === 18 || b === 19)) return true;
+        // 198.51.100.0/24 (TEST-NET-2)
+        if (a === 198 && b === 51 && c === 100) return true;
+        // 203.0.113.0/24 (TEST-NET-3)
+        if (a === 203 && b === 0 && c === 113) return true;
+        // 224.0.0.0/4 (Multicast)
+        if (a >= 224 && a <= 239) return true;
+        // 240.0.0.0/4 (Reserved / Broadcast)
+        if (a >= 240) return true;
+
+        return false;
+    }
+
+    if (nodeNet.isIPv6(cleanIp)) {
+        // Loopback and unspecified
+        if (cleanIp === '::1' || cleanIp === '::' || cleanIp === '0:0:0:0:0:0:0:1' || cleanIp === '0:0:0:0:0:0:0:0') {
+            return true;
+        }
+        // Unique Local Address (ULA: fc00::/7)
+        if (cleanIp.startsWith('fc') || cleanIp.startsWith('fd')) {
+            return true;
+        }
+        // Link-local (fe80::/10)
+        if (/^fe[89ab][0-9a-f]/i.test(cleanIp) || cleanIp.startsWith('fe80:')) {
+            return true;
+        }
+        // Multicast (ff00::/8)
+        if (cleanIp.startsWith('ff')) {
+            return true;
+        }
+        // Documentation prefix (2001:db8::/32)
+        if (cleanIp.startsWith('2001:db8:') || cleanIp === '2001:db8::') {
+            return true;
+        }
+        // Discard prefix (100::/64)
+        if (cleanIp.startsWith('100::')) {
+            return true;
+        }
+
+        return false;
+    }
+
+    return true;
+}
+
+function isHostAllowed(targetHostname, pageHostname, allowedConnects) {
+    if (!targetHostname) return false;
+    const target = targetHostname.toLowerCase();
+    const page = (pageHostname || '').toLowerCase();
+
+    // Same-origin and subdomains of the hosting page are implicitly permitted
+    if (page && (target === page || target.endsWith('.' + page))) {
+        return true;
+    }
+
+    if (!Array.isArray(allowedConnects) || allowedConnects.length === 0) {
+        return false;
+    }
+
+    for (const rule of allowedConnects) {
+        let pattern = String(rule || '').trim().toLowerCase();
+        if (!pattern) continue;
+
+        if (pattern.includes('://')) {
+            try {
+                pattern = new URL(pattern).hostname.toLowerCase();
+            } catch {
+                // Ignore parse errors, continue with pattern
+            }
+        }
+
+        // Universal wildcard permits any public host
+        if (pattern === '*') {
+            return true;
+        }
+
+        // 'self' keyword explicitly matches the hosting page
+        if (pattern === 'self') {
+            if (page && (target === page || target.endsWith('.' + page))) {
+                return true;
+            }
+            continue;
+        }
+
+        // Wildcard subdomain prefix (e.g. *.example.com)
+        if (pattern.startsWith('*.')) {
+            const root = pattern.slice(2);
+            if (target === root || target.endsWith('.' + root)) {
+                return true;
+            }
+            continue;
+        }
+
+        // Exact host match or parent domain matching all subdomains
+        if (target === pattern || target.endsWith('.' + pattern)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+async function validateRequestDestination(targetUrl, tokenData) {
+    if (!targetUrl || typeof targetUrl !== 'string') {
+        throw new Error('Valid URL string is required for request');
+    }
+
+    let parsedUrl;
+    try {
+        parsedUrl = new URL(targetUrl);
+    } catch {
+        throw new Error(`Invalid URL provided: "${targetUrl}"`);
+    }
+
+    const protocol = parsedUrl.protocol.toLowerCase();
+    if (protocol !== 'http:' && protocol !== 'https:') {
+        throw new Error(`Unsupported protocol "${protocol}". Only http: and https: requests are permitted`);
+    }
+
+    // Verify @grant authorisation if grants are declared by the userscript
+    if (tokenData && Array.isArray(tokenData.grants) && tokenData.grants.length > 0) {
+        const hasNetGrant = tokenData.grants.some(g => {
+            const lower = String(g).trim().toLowerCase();
+            return lower === 'gm_xmlhttprequest' || lower === 'gm.xmlhttprequest' || lower === '*' || lower === 'gm_*';
+        });
+        if (!hasNetGrant) {
+            throw new Error('Permission denied: userscript does not declare @grant GM_xmlhttpRequest');
+        }
+    }
+
+    const targetHostname = parsedUrl.hostname.toLowerCase();
+    const cleanHost = targetHostname.replace(/^\[|\]$/g, '');
+
+    // Validate declared @connect host permissions
+    const pageHostname = (tokenData && tokenData.pageHostname) || '';
+    const allowedConnects = (tokenData && tokenData.connects) || [];
+    if (!isHostAllowed(targetHostname, pageHostname, allowedConnects)) {
+        throw new Error(`Permission denied: host "${targetHostname}" is not declared in userscript @connect directives`);
+    }
+
+    // Reject internal or local domain names unconditionally
+    if (
+        cleanHost === 'localhost' ||
+        cleanHost.endsWith('.localhost') ||
+        cleanHost.endsWith('.local') ||
+        cleanHost.endsWith('.lan') ||
+        cleanHost.endsWith('.internal') ||
+        cleanHost.endsWith('.home.arpa')
+    ) {
+        throw new Error(`SSRF protection: host "${targetHostname}" is a restricted local or internal domain`);
+    }
+
+    // Direct IP address validation against restricted ranges
+    if (nodeNet.isIP(cleanHost)) {
+        if (isPrivateOrBlockedIP(cleanHost)) {
+            throw new Error(`SSRF protection: destination IP "${cleanHost}" belongs to a private or restricted network range`);
+        }
+        return parsedUrl;
+    }
+
+    // Resolve domain name via DNS to prevent DNS rebinding or internal IP mapping
+    let addresses = [];
+    try {
+        addresses = await dns.promises.lookup(cleanHost, { all: true });
+    } catch (dnsErr) {
+        throw new Error(`DNS resolution failed for host "${targetHostname}": ${dnsErr.message}`);
+    }
+
+    if (!addresses || addresses.length === 0) {
+        throw new Error(`DNS resolution returned no records for host "${targetHostname}"`);
+    }
+
+    for (const record of addresses) {
+        if (isPrivateOrBlockedIP(record.address)) {
+            throw new Error(`SSRF protection: host "${targetHostname}" resolved to restricted IP ${record.address}`);
+        }
+    }
+
+    return parsedUrl;
+}
+
+function hasStorageGrant(tokenData) {
+    if (!tokenData || !Array.isArray(tokenData.grants) || tokenData.grants.length === 0) {
+        return true;
+    }
+    return tokenData.grants.some(g => {
+        const lower = String(g).trim().toLowerCase();
+        return lower === 'gm_setvalue' || lower === 'gm_getvalue' || lower === 'gm_deletevalue' ||
+               lower === 'gm_listvalues' || lower === 'gm.*' || lower === '*' || lower === 'gm_*';
+    });
+}
+
+async function executeGmXmlHttpRequest(details, tokenData = null) {
     if (!details || typeof details !== 'object' || !details.url) {
         throw new Error('Valid URL is required for GM_xmlhttpRequest');
     }
 
-    const url = details.url;
+    let currentUrl = details.url;
+    await validateRequestDestination(currentUrl, tokenData);
+
     const method = (details.method || 'GET').toUpperCase();
     const timeout = Number(details.timeout) || 30000;
 
@@ -116,17 +353,61 @@ async function executeGmXmlHttpRequest(details) {
     const init = {
         method,
         headers,
-        signal: controller.signal,
-        redirect: 'follow'
+        signal: controller.signal
     };
 
     if (details.data && method !== 'GET' && method !== 'HEAD') {
         init.body = typeof details.data === 'object' ? JSON.stringify(details.data) : String(details.data);
     }
 
+    const fetchFn = (typeof globalThis.fetch === 'function')
+        ? globalThis.fetch
+        : ((net && typeof net.fetch === 'function') ? net.fetch : null);
+
+    if (!fetchFn) {
+        clearTimeout(timer);
+        throw new Error('No fetch implementation available in runtime');
+    }
+
+    const isManualRedirect = (details.redirect === 'manual' || details.redirect === 'error');
+    const maxRedirects = 5;
+    let redirectCount = 0;
+
     try {
-        const fetchFn = (net && typeof net.fetch === 'function') ? net.fetch : globalThis.fetch;
-        const res = await fetchFn(url, init);
+        let res;
+        while (true) {
+            const reqInit = Object.assign({}, init, { redirect: 'manual' });
+            res = await fetchFn(currentUrl, reqInit);
+
+            const isRedirectStatus = [301, 302, 303, 307, 308].includes(res.status);
+            if (isRedirectStatus) {
+                if (details.redirect === 'error') {
+                    throw new Error('Encountered unexpected redirect with redirect=error');
+                }
+                if (!isManualRedirect) {
+                    const locationHeader = res.headers && typeof res.headers.get === 'function'
+                        ? res.headers.get('location')
+                        : null;
+
+                    if (locationHeader) {
+                        if (redirectCount >= maxRedirects) {
+                            throw new Error('Too many redirects encountered');
+                        }
+                        redirectCount++;
+                        const nextUrl = new URL(locationHeader, currentUrl).href;
+                        await validateRequestDestination(nextUrl, tokenData);
+                        currentUrl = nextUrl;
+                        if (res.status === 303 || (res.status === 302 && init.method === 'POST')) {
+                            init.method = 'GET';
+                            delete init.body;
+                        }
+                        continue;
+                    }
+                }
+            }
+            break;
+        }
+
         clearTimeout(timer);
 
         const responseText = await res.text();
@@ -143,7 +424,7 @@ async function executeGmXmlHttpRequest(details) {
             readyState: 4,
             responseText,
             responseHeaders,
-            finalUrl: res.url || url
+            finalUrl: currentUrl
         };
     } catch (err) {
         clearTimeout(timer);
@@ -214,6 +495,7 @@ function parseUserScriptMetadata(content, filename) {
         matches: [],
         includes: [],
         excludes: [],
+        connects: [],
         grants: [],
         runAt: 'document-end',
         matchRegexes: [],
@@ -249,6 +531,8 @@ function parseUserScriptMetadata(content, filename) {
                     meta.includes.push(value);
                 } else if (directive === 'exclude') {
                     meta.excludes.push(value);
+                } else if (directive === 'connect') {
+                    meta.connects.push(value);
                 } else if (directive === 'grant') {
                     meta.grants.push(value);
                 } else if (directive === 'run-at' || directive === 'runat') {
@@ -559,7 +843,7 @@ function getMatchingUserContent(targetUrl) {
                 runAt: item.meta.runAt,
                 meta: item.meta,
                 storage: loadScriptStorage(scriptId),
-                token: generateScriptToken(scriptId)
+                token: generateScriptToken(scriptId, hostname, item.meta.connects, item.meta.grants)
             });
         }
     }
@@ -651,7 +935,8 @@ function initializeUserContent(configDir, mainWindow) {
         if (!token || !activeTokens.has(token)) {
             throw new Error('Unauthorized: Invalid or expired GM token');
         }
-        return executeGmXmlHttpRequest(details);
+        const tokenData = activeTokens.get(token);
+        return executeGmXmlHttpRequest(details, tokenData);
     });
 
     ipcMain.handle('gm-storage-set', async (event, payload) => {
@@ -662,6 +947,9 @@ function initializeUserContent(configDir, mainWindow) {
         const tokenData = activeTokens.get(token);
         if (!tokenData || tokenData.scriptId !== sanitizeScriptId(scriptId)) {
             throw new Error('Unauthorized: Script ID mismatch');
+        }
+        if (!hasStorageGrant(tokenData)) {
+            throw new Error('Permission denied: userscript does not declare storage @grant');
         }
         setScriptValue(scriptId, key, value);
         return true;
@@ -676,6 +964,9 @@ function initializeUserContent(configDir, mainWindow) {
         if (!tokenData || tokenData.scriptId !== sanitizeScriptId(scriptId)) {
             throw new Error('Unauthorized: Script ID mismatch');
         }
+        if (!hasStorageGrant(tokenData)) {
+            throw new Error('Permission denied: userscript does not declare storage @grant');
+        }
         deleteScriptValue(scriptId, key);
         return true;
     });
@@ -688,6 +979,9 @@ function initializeUserContent(configDir, mainWindow) {
         const tokenData = activeTokens.get(token);
         if (!tokenData || tokenData.scriptId !== sanitizeScriptId(scriptId)) {
             throw new Error('Unauthorized: Script ID mismatch');
+        }
+        if (!hasStorageGrant(tokenData)) {
+            throw new Error('Permission denied: userscript does not declare storage @grant');
         }
         return loadScriptStorage(scriptId);
     });
@@ -703,5 +997,8 @@ module.exports = {
     setScriptValue,
     deleteScriptValue,
     generateScriptToken,
-    executeGmXmlHttpRequest
+    executeGmXmlHttpRequest,
+    isPrivateOrBlockedIP,
+    isHostAllowed,
+    validateRequestDestination
 };

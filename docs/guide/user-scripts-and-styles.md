@@ -82,6 +82,7 @@ Scripts support standard Greasemonkey/Tampermonkey metadata headers:
 // @description  Streamline GitHub repository navigation
 // @match        https://github.com/*
 // @exclude      https://github.com/settings/*
+// @connect      api.github.com
 // @grant        GM_xmlhttpRequest
 // @grant        GM_setValue
 // @grant        GM_getValue
@@ -101,6 +102,7 @@ Scripts support standard Greasemonkey/Tampermonkey metadata headers:
 * `@match`: Specifies URL match patterns (e.g. `https://*.example.com/*` or `*://*/*`).
 * `@include`: Additional wildcard patterns or regular expressions.
 * `@exclude`: Patterns to skip execution on specific paths or subdomains.
+* `@connect`: Declares permitted target hostnames for network requests (e.g. `api.github.com`, `*.example.com`, `self`, or `*`).
 * `@grant`: Declares intended API permissions (e.g. `GM_xmlhttpRequest`, `GM_setValue`).
 * `@run-at`: Determines execution timing (`document-end`, `document-idle`).
 
@@ -132,7 +134,12 @@ Mise includes a lightweight, secure API shim for popular Greasemonkey and Tamper
 
 ### Cross-Origin Requests (`GM_xmlhttpRequest`)
 
-Standard `fetch()` inside a webpage cannot access third-party endpoints because of browser CORS restrictions. Mise routes `GM_xmlhttpRequest` requests through the privileged main process:
+Standard `fetch()` inside a webpage cannot access third-party endpoints because of browser CORS restrictions. Mise routes `GM_xmlhttpRequest` requests through the privileged main process with strict security boundaries:
+
+* **`@connect` Host Restriction**: Scripts must declare permitted network destinations via `@connect <host>`. A declared root domain covers its subdomains (e.g. `@connect github.com` allows `api.github.com`), while same-origin requests back to the host webpage are always permitted implicitly.
+* **SSRF Protection**: To prevent Server-Side Request Forgery against private network infrastructure, requests targeting loopback addresses (`127.0.0.0/8`, `::1`, `localhost`), internal subnets (`10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`), and link-local metadata endpoints (`169.254.0.0/16`) are unconditionally blocked.
+* **DNS Resolution Check**: Target hostnames are resolved before dispatching requests to prevent DNS rebinding attacks from routing requests to internal private IP addresses.
+* **Redirect Validation**: Every HTTP redirect hop is validated against `@connect` and SSRF rules before following.
 
 ```javascript
 GM_xmlhttpRequest({

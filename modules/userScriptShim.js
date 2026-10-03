@@ -261,6 +261,8 @@ export function buildUserScriptWrapper(item) {
             matches: __gm_meta__.matches || [],
             includes: __gm_meta__.includes || [],
             excludes: __gm_meta__.excludes || [],
+            connects: __gm_meta__.connects || [],
+            grants: __gm_meta__.grants || [],
             runAt: __gm_meta__.runAt || 'document-end'
         },
         scriptHandler: 'Mise Browser',
