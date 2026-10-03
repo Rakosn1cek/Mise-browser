@@ -2835,16 +2835,16 @@ if (typeof module === "object") {
     function sanitizeArticleContent(rootNode, baseUri) {
         if (!rootNode) return '';
 
-        // Strip executable and injection elements
-        var dangerous = rootNode.querySelectorAll('script, style, iframe, frame, object, embed, form, button, input, textarea, select, meta, base, link, applet');
+        // Strip executable, vector-smuggling, and layout-breaking elements
+        var dangerous = rootNode.querySelectorAll('script, style, iframe, frame, object, embed, form, button, input, textarea, select, meta, base, link, applet, svg, math, canvas');
         dangerous.forEach(function(el) { el.remove(); });
 
-        // Strip inline event attributes (onclick, onerror, onload, etc.)
+        // Strip inline event attributes and inline styles (closing CSS tracking beacons and XSS vectors)
         var allElements = rootNode.querySelectorAll('*');
         allElements.forEach(function(el) {
             for (var i = el.attributes.length - 1; i >= 0; i--) {
                 var attrName = el.attributes[i].name.toLowerCase();
-                if (attrName.startsWith('on')) {
+                if (attrName.startsWith('on') || attrName === 'style' || attrName === 'srcdoc') {
                     el.removeAttribute(attrName);
                 }
             }
