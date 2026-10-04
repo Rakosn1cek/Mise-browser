@@ -1,61 +1,55 @@
 # The Google Auth Botguard Saga: The rrk=46 Riddle and Poisoned Cookies
 
-How an attempt to sign into Gmail in an isolated container led down a rabbit hole of Botguard detection, User-Agent traps, and self-perpetuating cookie poisoning.
+How signing into Gmail inside an isolated container turned into a chase through Botguard detection, a User-Agent trap, and cookies that kept re-triggering their own rejection.
 
 ---
 
 ## 1. The Problem
 
-Mise Browser provides multi-partition workspaces, allowing users to run separate, isolated containers for Work, Personal, and Mail without session leakage or shared cookies. However, navigating to Gmail or Google Workspace inside an isolated partition produced an immediate stop sign:
+Mise's workspaces run as separate, isolated Electron partitions, so Work, Personal, and Mail never share cookies or session state. Opening Gmail or Google Workspace inside one of those partitions hit an immediate wall:
 
-> **Couldn't sign you in**  
+> **Couldn't sign you in**
 > This browser or app may not be secure. Learn more.
 
-Inspecting the URL parameters revealed the rejection token: `rrk=46`. The login flow refused to present a password field, and no amount of refreshing or re-entering credentials allowed the user to proceed.
+The URL carried a rejection token: `rrk=46`. No password field ever appeared, and refreshing or re-entering credentials changed nothing.
 
 ---
 
-## 2. The Solution (First Attempt)
+## 2. The First Attempt
 
-The standard diagnosis across Chromium and Electron development when encountering Google rejection is User-Agent filtering. Chromium runtimes embedded inside `<webview>` containers carry runtime tokens that Google's login portal flags.
+The usual fix for Google rejecting an embedded Chromium runtime is User-Agent filtering, on the theory that Google is flagging the `<webview>`'s runtime tokens. So the first attempt was:
 
-The initial fix appeared straightforward:
-1. Override `app.userAgentFallback` with a clean, standard Chrome desktop User-Agent string.
-2. Strip Electron and application tokens from outgoing request headers.
-3. Enable privacy shields in `webview-preload.js` to farble hardware concurrency and canvas fingerprints.
+1. Override `app.userAgentFallback` with a plain desktop Chrome User-Agent string.
+2. Strip Electron-specific tokens from outgoing headers.
+3. Keep the usual privacy shields running: hardware concurrency, canvas, and fingerprint farbling in `webview-preload.js`.
 
-The hypothesis was simple: make the browser appear as an ordinary desktop Chrome instance.
+The idea was simple: look like an ordinary desktop Chrome session.
 
 ---
 
-## 3. The Bug / The Fail
+## 3. Why That Made It Worse
 
-The initial approach failed spectacularly and actually made the lock-out far worse.
+### Trap 1: GlifWebSignIn and Botguard
 
-### Trap 1: The GlifWebSignIn Route & Botguard Detection
-When Google receives requests carrying synthetic or altered User-Agent tokens, its edge routers automatically route the session into `flowName=GlifWebSignIn` (the full single-sign-on client). This flow executes **Botguard**, Google's proprietary anti-bot JavaScript payload.
+A synthetic or altered User-Agent routes the request into `flowName=GlifWebSignIn`, Google's full single-sign-on client. That flow runs **Botguard**, Google's anti-bot check, which validates the runtime at a platform level. An embedded `<webview>` is missing native Chrome platform components that Botguard checks for, so it gets flagged as automated and served `rrk=46` immediately. The fingerprint farbling on `navigator` added further heuristic flags on top of that.
 
-Botguard performs runtime platform validation. Because an embedded `<webview>` runtime lacks proprietary Chrome platform components and extensions, Botguard flags the environment as an automated bot and instantly serves `rrk=46`. Furthermore, the privacy shield farbling prototype values on `navigator` triggered additional heuristic alarms.
-
-```text
-Synthetic User-Agent -> Routed to GlifWebSignIn -> Botguard runs -> Platform checks fail -> rrk=46
+```
+Synthetic User-Agent -> routed to GlifWebSignIn -> Botguard runs -> platform check fails -> rrk=46
 ```
 
-### Trap 2: Session Cookie Poisoning
-The most baffling part of the failure was its persistence. Once an `rrk=46` rejection occurred, subsequent attempts to log in would instantly fail, even if User-Agent spoofing was disabled.
+### Trap 2: The Rejection Writes Its Own Cookies
 
-Google writes secure `__Host-GAPS` and `OTZ` cookies to the partition storage upon serving a rejection page. Every subsequent navigation to `accounts.google.com` sent those poisoned tokens back to the server. Google saw the poisoned cookies and immediately short-circuited the request back to the rejection screen before any login script even executed.
+The confusing part was that reverting the User-Agent change didn't fix anything either. Once `rrk=46` fires once, Google writes `__Host-GAPS` and `OTZ` cookies into that partition. Every later request to `accounts.google.com` sends those cookies back, and Google short-circuits straight to the rejection page before any login logic even runs. The partition was stuck rejecting itself.
 
 ---
 
-## 4. The Fix
+## 4. The Actual Fix
 
-The fix required understanding how Google treats embedded environments and eliminating the root triggers across three fronts:
+Three separate changes, each closing one part of the loop.
 
-### A. Transparent Flow Rewriting
-Google maintains a lightweight authentication flow designed specifically for embedded runtimes and lower-friction logins: `flowName=WebLiteSignIn`.
+### A. Rewrite the Flow Before It Leaves the Browser
 
-Instead of fighting Botguard, Mise intercepts incoming authentication requests in `security.js` before they leave the browser and rewrites the query parameter:
+Google also serves a lighter authentication flow built for embedded and lower-friction logins: `flowName=WebLiteSignIn`. Rather than fight Botguard, Mise intercepts the request and rewrites it before it's sent:
 
 ```javascript
 // Route Google authentication requests through the lightweight sign-in flow
@@ -71,8 +65,9 @@ if (targetSession.webRequest && typeof targetSession.webRequest.onBeforeRequest 
 }
 ```
 
-### B. Baseline Runtime Preservation
-Synthetic User-Agent spoofing was completely eliminated for trusted authentication endpoints:
+### B. Leave Auth Domains Alone
+
+User-Agent spoofing and fingerprint farbling are both switched off entirely for Google's authentication endpoints, which are added to the existing trusted-domain allowlist:
 
 ```javascript
 // Keep unmodified headers on trusted authentication domains
@@ -81,13 +76,14 @@ if (isTrustedDomain(hostname)) {
 }
 ```
 
-Google authentication endpoints were added to the `isTrustedDomain` allowlist. Fingerprint spoofing and privacy farbling in `webview-preload.js` bypass these domains, ensuring genuine browser attributes are visible to Google's sign-in engine.
+With the domain trusted, `webview-preload.js` skips its farbling pass entirely there, so Google's sign-in engine sees a genuine, internally consistent browser profile.
 
-### C. Automated Cookie Detox
-To prevent permanent partition lockouts, an automated cookie cleanup handler was introduced. If a partition ever encounters an authentication rejection, cached `__Host-GAPS` and `OTZ` cookies are immediately purged from partition storage, keeping the container clean for subsequent attempts:
+### C. Clean Up After a Rejection, Automatically
+
+To stop a single rejection from locking a partition out permanently, any `rrk=46` rejection now triggers an automatic cookie purge:
 
 ```javascript
-// In main.js: detect rejection navigation and trigger detox
+// In main.js: detect rejection navigation and trigger cleanup
 webContents.on('did-navigate', (navEvent, url) => {
     logVisit(webContents.getTitle(), url);
     if (url && url.includes('accounts.google.com') && url.includes('signin/rejected')) {
@@ -96,10 +92,8 @@ webContents.on('did-navigate', (navEvent, url) => {
 });
 ```
 
-The underlying cookie cleanup routine surgically strips all poisoned host tokens:
-
 ```javascript
-// In security.js: clean poisoned Google tokens
+// In security.js: strip the poisoned tokens
 async function clearGoogleAuthCookies(targetSession) {
     if (!targetSession || !targetSession.cookies) return;
     try {
@@ -120,6 +114,6 @@ async function clearGoogleAuthCookies(targetSession) {
 
 ---
 
-## Architectural Takeaway
+## What This Actually Showed
 
-When building privacy-focused browsers, more spoofing is often counterproductive against sophisticated anti-bot systems. Rather than masking identities with synthetic fingerprints, routing to native lightweight interfaces (`WebLiteSignIn`), maintaining pristine baseline headers on trusted domains, and proactively eliminating poisoned state cookies yields a clean and reliable sign-in experience.
+Spoofing harder wasn't the answer here, in either direction. Blocking fingerprint data outright makes a browser look like a bot. Faking a generic desktop identity on an endpoint that specifically checks platform authenticity does the same thing, just via a different signal. The fix wasn't more disguise, it was knowing which domains to leave completely alone, and cleaning up the one piece of state (the rejection cookies) that kept the failure alive after the original cause was already gone.
