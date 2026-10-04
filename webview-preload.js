@@ -300,10 +300,34 @@ if (!isTrustedSite) {
     }
 }
 
-// Element classification helper for Insert mode
+// Recursively resolve active element across shadow DOM and frame boundaries
+function getDeepActiveElement() {
+    let el = document.activeElement;
+    while (el) {
+        if (el.shadowRoot && el.shadowRoot.activeElement) {
+            el = el.shadowRoot.activeElement;
+        } else {
+            try {
+                if (el.contentDocument && el.contentDocument.activeElement) {
+                    el = el.contentDocument.activeElement;
+                    continue;
+                }
+            } catch (err) {}
+            break;
+        }
+    }
+    return el;
+}
+
+// Element classification helper for Insert mode and custom web components
 function isEditableElement(el) {
-    if (!el) return false;
+    if (!el || el.nodeType !== 1) return false;
     const tag = (el.tagName || '').toUpperCase();
+    const role = (el.getAttribute && el.getAttribute('role') || '').toLowerCase();
+
+    if (tag === 'BUTTON' || role === 'button' || tag.includes('BUTTON')) {
+        return false;
+    }
     if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
         const type = (el.type || '').toLowerCase();
         if (['button', 'submit', 'reset', 'checkbox', 'radio', 'image'].includes(type)) {
@@ -314,14 +338,34 @@ function isEditableElement(el) {
     if (el.isContentEditable || el.contentEditable === 'true') {
         return true;
     }
-    const role = (el.getAttribute && el.getAttribute('role') || '').toLowerCase();
     if (role === 'textbox' || role === 'searchbox' || role === 'combobox') {
         return true;
     }
+    if (tag.includes('-') && (tag.includes('SEARCH') || tag.includes('INPUT') || tag.includes('TEXT') || tag.includes('FIELD') || tag.includes('EDITOR') || tag.includes('COMPOSER'))) {
+        return true;
+    }
     if (typeof el.closest === 'function') {
-        const parentEditable = el.closest('[contenteditable="true"], input, textarea');
+        const parentEditable = el.closest('[contenteditable="true"], input, textarea, [role="textbox"], [role="searchbox"]');
         if (parentEditable) return true;
     }
+    return false;
+}
+
+// Deep inspection helper to verify if an event originated from an editable target
+function isEventInEditable(e) {
+    if (typeof e.composedPath === 'function') {
+        const path = e.composedPath();
+        for (let i = 0; i < path.length; i++) {
+            const node = path[i];
+            if (isEditableElement(node)) return true;
+            if (node && node.shadowRoot && isEditableElement(node.shadowRoot.activeElement)) {
+                return true;
+            }
+        }
+    }
+    if (isEditableElement(e.target)) return true;
+    const deepActive = getDeepActiveElement();
+    if (isEditableElement(deepActive)) return true;
     return false;
 }
 
@@ -337,19 +381,18 @@ ipcRenderer.on('set-passthrough-mode', (_event, enabled) => {
 
 // Guest input focus tracking for Insert mode indicator
 document.addEventListener('focusin', (e) => {
-    if (isEditableElement(e.target)) {
+    if (isEventInEditable(e)) {
         try { ipcRenderer.sendToHost('guest-input-focus', true); } catch (err) {}
     }
 }, true);
 
-document.addEventListener('focusout', (e) => {
-    if (isEditableElement(e.target)) {
-        setTimeout(() => {
-            if (!isEditableElement(document.activeElement) && !isExplicitInsert) {
-                try { ipcRenderer.sendToHost('guest-input-focus', false); } catch (err) {}
-            }
-        }, 10);
-    }
+document.addEventListener('focusout', () => {
+    setTimeout(() => {
+        const deepActive = getDeepActiveElement();
+        if (!isEditableElement(deepActive) && !isEditableElement(document.activeElement) && !isExplicitInsert) {
+            try { ipcRenderer.sendToHost('guest-input-focus', false); } catch (err) {}
+        }
+    }, 10);
 }, true);
 
 // Guest hints tracking for Hints mode indicator
@@ -419,7 +462,8 @@ window.addEventListener('keydown', (e) => {
     }
 
     const activeEl = document.activeElement;
-    const inEditable = isEditableElement(activeEl);
+    const deepActive = getDeepActiveElement();
+    const inEditable = isEventInEditable(e);
 
     // Escape key exits reader view, input fields and explicit insert mode
     if (e.key === 'Escape') {
@@ -432,8 +476,13 @@ window.addEventListener('keydown', (e) => {
             try { ipcRenderer.sendToHost('reader-view-toggled', { active: false }); } catch (err) {}
             return;
         }
-        if (inEditable && activeEl && typeof activeEl.blur === 'function') {
-            activeEl.blur();
+        if (inEditable) {
+            if (deepActive && typeof deepActive.blur === 'function') {
+                deepActive.blur();
+            }
+            if (activeEl && typeof activeEl.blur === 'function') {
+                activeEl.blur();
+            }
             e.preventDefault();
             e.stopPropagation();
         }
