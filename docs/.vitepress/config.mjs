@@ -13,11 +13,19 @@ export default defineConfig({
     nav: [
       { text: 'Guide', link: '/guide/getting-started' },
       { text: 'Features', link: '/guide/navigation' },
+      { text: 'Blog', link: '/blog/' },
       { text: 'Policies', link: '/guide/privacy-policy' },
       { text: 'Reference', link: '/reference/keybinds' },
       { text: 'GitHub', link: 'https://github.com/Rakosn1cek/Mise-browser' }
     ],
     sidebar: [
+      {
+        text: 'Engineering Blog',
+        items: [
+          { text: 'Chronicles Overview', link: '/blog/' },
+          { text: 'Google Auth & Botguard', link: '/blog/google-auth-rrk46-botguard' }
+        ]
+      },
       {
         text: 'Getting Started',
         items: [
