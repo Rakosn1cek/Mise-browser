@@ -19,10 +19,26 @@ try {
             deleteStorageValue: (token, scriptId, key) => ipcRenderer.invoke('gm-storage-delete', { token, scriptId, key }),
             getStorage: (token, scriptId) => ipcRenderer.invoke('gm-storage-get', { token, scriptId })
         });
+    }
+} catch (err) {}
 
+// Expose minimal, secure PDF bridge exclusively to the vendored viewer
+try {
+    const isViewerPage = (function() {
+        try {
+            if (window.location.protocol !== 'file:') return false;
+            const pathname = window.location.pathname || '';
+            const normalised = pathname.replace(/\\/g, '/');
+            return normalised.endsWith('/assets/pdfjs/viewer.html');
+        } catch (e) {
+            return false;
+        }
+    })();
+
+    if (isViewerPage && contextBridge && typeof contextBridge.exposeInMainWorld === 'function') {
         contextBridge.exposeInMainWorld('__misePDFBridge', {
-            loadPdfData: (url) => ipcRenderer.invoke('read-pdf-data', url),
-            savePdfFile: (options) => ipcRenderer.invoke('save-pdf-file', options)
+            loadPdfData: (token, url) => ipcRenderer.invoke('read-pdf-data', { token, url }),
+            savePdfFile: (token, options) => ipcRenderer.invoke('save-pdf-file', { token, options })
         });
     }
 } catch (err) {}

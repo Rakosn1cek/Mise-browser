@@ -16,6 +16,7 @@
 
     const urlParams = new URLSearchParams(window.location.search);
     const fileUrl = urlParams.get('file');
+    const token = urlParams.get('token');
 
     const elements = {
         title: document.getElementById('doc-title'),
@@ -70,7 +71,7 @@
 
         try {
             if (window.__misePDFBridge && typeof window.__misePDFBridge.loadPdfData === 'function') {
-                rawPdfBytes = await window.__misePDFBridge.loadPdfData(fileUrl);
+                rawPdfBytes = await window.__misePDFBridge.loadPdfData(token, fileUrl);
             } else {
                 const response = await fetch(fileUrl);
                 if (!response.ok) {
@@ -375,7 +376,7 @@
                 elements.saveBtn.disabled = true;
                 elements.saveBtn.textContent = 'Saving...';
                 try {
-                    await window.__misePDFBridge.savePdfFile({
+                    await window.__misePDFBridge.savePdfFile(token, {
                         url: fileUrl,
                         suggestedName: documentName,
                         data: rawPdfBytes

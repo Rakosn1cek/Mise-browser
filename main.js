@@ -924,10 +924,17 @@ ipcMain.on('get-pdf-viewer-path', (event) => {
     event.returnValue = 'file://' + path.join(__dirname, 'assets', 'pdfjs', 'viewer.html'); 
 });
 
-ipcMain.handle('read-pdf-data', async (event, sourceUrl) => {
+ipcMain.on('get-pdf-viewer-url', (event, targetUrl) => { 
+    event.returnValue = security.mintPdfViewerUrl(targetUrl); 
+});
+
+ipcMain.handle('read-pdf-data', async (event, payload) => {
+    const { token, url: sourceUrl } = payload || {};
     if (!sourceUrl || typeof sourceUrl !== 'string') {
         throw new Error('Invalid PDF URL specified.');
     }
+
+    security.validatePdfAccess(token, sourceUrl, event.sender ? event.sender.getURL() : '');
 
     if (sourceUrl.startsWith('file://') || sourceUrl.startsWith('/')) {
         let filePath = sourceUrl;
@@ -968,8 +975,13 @@ ipcMain.handle('read-pdf-data', async (event, sourceUrl) => {
     throw new Error(`Unsupported protocol for PDF loading: ${sourceUrl}`);
 });
 
-ipcMain.handle('save-pdf-file', async (event, { url, suggestedName, data }) => {
+ipcMain.handle('save-pdf-file', async (event, payload) => {
     try {
+        const { token, options } = payload || {};
+        const { url, suggestedName, data } = options || {};
+
+        security.validatePdfAccess(token, url, event.sender ? event.sender.getURL() : '');
+
         let cleanName = suggestedName || 'document.pdf';
         if (!cleanName.toLowerCase().endsWith('.pdf')) cleanName += '.pdf';
 

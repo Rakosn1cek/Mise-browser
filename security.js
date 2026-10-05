@@ -4,6 +4,7 @@
 const { ElectronBlocker } = require('@ghostery/adblocker-electron');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const { app, ipcMain } = require('electron');
 
 let blockerInstance = null;
@@ -216,7 +217,7 @@ function hardenSession(targetSession, spellLang = 'en-GB') {
                         }
                     }
                     if (isPdf) {
-                        const viewerUrl = `${viewerPrefix}?file=${encodeURIComponent(details.url)}`;
+                        const viewerUrl = mintPdfViewerUrl(details.url);
                         return callback({ redirectURL: viewerUrl });
                     }
                 }
@@ -340,11 +341,86 @@ async function clearGoogleAuthCookies(targetSession) {
     } catch (e) {}
 }
 
+const activePdfTokens = new Map();
+const PDF_TOKEN_TTL_MS = 30 * 60 * 1000;
+
+function pruneExpiredPdfTokens() {
+    const now = Date.now();
+    for (const [tok, data] of activePdfTokens.entries()) {
+        if (now - data.createdAt > PDF_TOKEN_TTL_MS) {
+            activePdfTokens.delete(tok);
+        }
+    }
+}
+
+function isPdfExtension(targetPath) {
+    if (!targetPath || typeof targetPath !== 'string') return false;
+    try {
+        const cleanPath = targetPath.split('?')[0].split('#')[0];
+        const ext = path.extname(cleanPath).toLowerCase();
+        return ext === '.pdf';
+    } catch (e) {
+        return false;
+    }
+}
+
+function mintPdfViewerUrl(targetUrl) {
+    if (!targetUrl || typeof targetUrl !== 'string') return '';
+    pruneExpiredPdfTokens();
+
+    const token = crypto.randomUUID();
+    activePdfTokens.set(token, {
+        url: targetUrl,
+        createdAt: Date.now()
+    });
+
+    const viewerPath = path.join(__dirname, 'assets', 'pdfjs', 'viewer.html');
+    return `file://${viewerPath}?file=${encodeURIComponent(targetUrl)}&token=${token}`;
+}
+
+function validatePdfAccess(token, targetUrl, senderUrl) {
+    const viewerPath = path.join(__dirname, 'assets', 'pdfjs', 'viewer.html');
+    const viewerPrefix = 'file://' + viewerPath;
+
+    // 1. Origin verification: sender must be the vendored viewer
+    if (!senderUrl || typeof senderUrl !== 'string' || !senderUrl.startsWith(viewerPrefix)) {
+        throw new Error('Authorisation failure: PDF bridge is restricted to the built-in PDF viewer.');
+    }
+
+    // 2. Token verification: token must exist and match target URL
+    if (!token || typeof token !== 'string' || !activePdfTokens.has(token)) {
+        throw new Error('Authorisation failure: Missing or invalid PDF capability token.');
+    }
+
+    const tokenData = activePdfTokens.get(token);
+    if (!tokenData || tokenData.url !== targetUrl) {
+        throw new Error('Authorisation failure: Capability token does not match requested PDF target.');
+    }
+
+    // 3. Path verification: local files must strictly possess a .pdf extension
+    if (targetUrl.startsWith('file://') || targetUrl.startsWith('/')) {
+        let filePath = targetUrl;
+        if (targetUrl.startsWith('file://')) {
+            try {
+                filePath = new URL(targetUrl).pathname;
+            } catch (e) {
+                filePath = targetUrl.replace(/^file:\/\//, '');
+            }
+        }
+        filePath = decodeURIComponent(filePath);
+        if (!isPdfExtension(filePath)) {
+            throw new Error('Authorisation failure: Target local file must possess a .pdf extension.');
+        }
+    }
+}
+
 module.exports = {
     hardenSession,
     hardenWebviewPreferences,
     setTrustedDomains,
     isTrustedDomain,
     applySpellcheckerLanguage,
-    clearGoogleAuthCookies
+    clearGoogleAuthCookies,
+    mintPdfViewerUrl,
+    validatePdfAccess
 };

@@ -75,10 +75,15 @@ export function isPdfUrl(url) {
 
 export function getPdfViewerUrl(targetUrl) {
     if (!targetUrl || typeof targetUrl !== 'string') return targetUrl;
-    if (typeof window.miseAPI?.getPdfViewerPath !== 'function') return targetUrl;
-    const viewerHtml = window.miseAPI.getPdfViewerPath();
-    if (targetUrl.startsWith(viewerHtml)) return targetUrl;
-    return `${viewerHtml}?file=${encodeURIComponent(targetUrl)}`;
+    if (typeof window.miseAPI?.getPdfViewerUrl === 'function') {
+        return window.miseAPI.getPdfViewerUrl(targetUrl);
+    }
+    if (typeof window.miseAPI?.getPdfViewerPath === 'function') {
+        const viewerHtml = window.miseAPI.getPdfViewerPath();
+        if (targetUrl.startsWith(viewerHtml)) return targetUrl;
+        return `${viewerHtml}?file=${encodeURIComponent(targetUrl)}`;
+    }
+    return targetUrl;
 }
 
 export function extractOriginalUrl(url) {
