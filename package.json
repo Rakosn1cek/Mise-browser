@@ -29,6 +29,7 @@
       "security.js",
       "keybinds.js",
       "userContent.js",
+      "diagnostics.js",
       "index.html",
       "style.css",
       "renderer.js",
