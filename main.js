@@ -103,6 +103,9 @@ function initializeEngineSwitches() {
     const disabledFeatures = [
         'Translate', 'PrivacySandboxSettings4',
         'PrivacySandboxAdsAPIsOverride', 'PrivacySandboxAdsAPIsM1Override',
+        'PrivacySandboxAdsAPIs', 'BrowsingTopics',
+        'BrowsingTopicsDocumentAPI', 'Fledge',
+        'FencedFrames', 'SharedStorage', 'PrivateAggregationApi',
         'InterestGroupStorage', 'AttributionReportingCrossAppWeb',
         'WebUSB', 'WebBluetooth', 'Serial',
         'GenericSensor', 'Vulkan',

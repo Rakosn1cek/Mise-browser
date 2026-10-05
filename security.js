@@ -112,7 +112,10 @@ function hardenSession(targetSession, spellLang = 'en-GB') {
         if (isTrustedDomain(hostname)) {
             return callback(true);
         }
-        if (permission === 'clipboard-read' || permission === 'clipboard-sanitized-write') {
+        if (permission === 'clipboard-read') {
+            return callback(false);
+        }
+        if (permission === 'clipboard-sanitized-write') {
             return callback(true);
         }
         if (permission === 'notifications') {
@@ -132,7 +135,10 @@ function hardenSession(targetSession, spellLang = 'en-GB') {
         if (isTrustedDomain(hostname)) {
             return true;
         }
-        if (permission === 'clipboard-read' || permission === 'clipboard-sanitized-write') {
+        if (permission === 'clipboard-read') {
+            return false;
+        }
+        if (permission === 'clipboard-sanitized-write') {
             return true;
         }
         if (permission === 'notifications') {
@@ -180,7 +186,8 @@ function hardenSession(targetSession, spellLang = 'en-GB') {
                     headers['User-Agent'] = cleanUserAgent(headers['User-Agent']);
                 }
                 const chromeMatch = (headers['User-Agent'] || '').match(/Chrome\/(\d+)\.([\d.]+)/);
-                const chromeMajor = chromeMatch ? chromeMatch[1] : '152';
+                const realChromeMajor = (process.versions && process.versions.chrome) ? process.versions.chrome.split('.')[0] : '132';
+                const chromeMajor = chromeMatch ? chromeMatch[1] : realChromeMajor;
 
                 headers['sec-ch-ua'] = `"Chromium";v="${chromeMajor}", "Google Chrome";v="${chromeMajor}", "Not-A.Brand";v="99"`;
                 headers['sec-ch-ua-full-version-list'] = `"Chromium";v="${chromeMajor}.0.0.0", "Google Chrome";v="${chromeMajor}.0.0.0", "Not-A.Brand";v="99.0.0.0"`;

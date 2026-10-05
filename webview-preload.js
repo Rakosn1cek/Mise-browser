@@ -102,7 +102,7 @@ if (!isTrustedSite) {
         } catch (e) {}
 
         const chromeMatch = (navigator.userAgent || '').match(new RegExp('Chrome/(\\\\d+)\\\\.([\\\\d.]+)'));
-        const chromeMajor = chromeMatch ? chromeMatch[1] : '152';
+        const chromeMajor = chromeMatch ? chromeMatch[1] : (typeof process !== 'undefined' && process.versions && process.versions.chrome ? process.versions.chrome.split('.')[0] : '132');
         const chromeFull = chromeMajor + '.0.0.0';
 
         if (navigator.userAgentData) {
