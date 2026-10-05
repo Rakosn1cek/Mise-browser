@@ -1,5 +1,5 @@
 import { state } from './state.js';
-import { escapeHtml, focusActiveWebview, getActiveWebview } from './utils.js';
+import { escapeHtml, focusActiveWebview, getActiveWebview, isPdfUrl, getPdfViewerUrl } from './utils.js';
 import { renderWorkspaceUI, switchTabFocus, spawnTabWithUrl, spawnNewBlankTab, handleTabRemoval, wakeTab } from './webview.js';
 import { formatSearchUrl } from './overlays/searchEngine.js';
 import { evaluateMathExpression } from './calculator.js';
@@ -66,8 +66,10 @@ function applyTargetUrl(targetUrl) {
     state.sessionState.workspaces[currentWS][currentIdx] = targetUrl;
     window.miseAPI.saveSession(state.sessionState);
 
+    const effectiveLoadUrl = isPdfUrl(targetUrl) ? getPdfViewerUrl(targetUrl) : targetUrl;
+
     if (state.activeViewsCache[currentWS] && state.activeViewsCache[currentWS][currentIdx]) {
-        state.activeViewsCache[currentWS][currentIdx].setAttribute('src', targetUrl);
+        state.activeViewsCache[currentWS][currentIdx].setAttribute('src', effectiveLoadUrl);
     } else {
         wakeTab(currentWS, currentIdx);
     }
@@ -173,7 +175,9 @@ export async function handleNavigation(input) {
         targetUrl = aliases[alias] + encodeURIComponent(query);
     } else {
         targetUrl = trimmedInput;
-        if (!trimmedInput.startsWith('http://') && !trimmedInput.startsWith('https://')) {
+        if (trimmedInput.startsWith('/') || trimmedInput.startsWith('file://')) {
+            targetUrl = trimmedInput.startsWith('/') ? 'file://' + trimmedInput : trimmedInput;
+        } else if (!trimmedInput.startsWith('http://') && !trimmedInput.startsWith('https://')) {
             if (trimmedInput.includes('.') && !trimmedInput.includes(' ')) {
                 targetUrl = `https://${trimmedInput}`;
             } else {

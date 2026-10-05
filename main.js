@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, session, Menu, MenuItem, nativeTheme, Notification, clipboard, shell, webContents } = require('electron');
+const { app, BrowserWindow, ipcMain, session, Menu, MenuItem, nativeTheme, Notification, clipboard, shell, webContents, dialog, net } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const https = require('https');
@@ -918,6 +918,118 @@ ipcMain.on('renderer-ready', () => {
 
 ipcMain.on('get-webview-preload-path', (event) => { 
     event.returnValue = path.join(__dirname, 'webview-preload.js'); 
+});
+
+ipcMain.on('get-pdf-viewer-path', (event) => { 
+    event.returnValue = 'file://' + path.join(__dirname, 'assets', 'pdfjs', 'viewer.html'); 
+});
+
+ipcMain.handle('read-pdf-data', async (event, sourceUrl) => {
+    if (!sourceUrl || typeof sourceUrl !== 'string') {
+        throw new Error('Invalid PDF URL specified.');
+    }
+
+    if (sourceUrl.startsWith('file://') || sourceUrl.startsWith('/')) {
+        let filePath = sourceUrl;
+        if (sourceUrl.startsWith('file://')) {
+            try {
+                filePath = new URL(sourceUrl).pathname;
+            } catch (e) {
+                filePath = sourceUrl.replace(/^file:\/\//, '');
+            }
+        }
+        filePath = decodeURIComponent(filePath);
+        if (!fs.existsSync(filePath)) {
+            throw new Error(`Local file not found: ${filePath}`);
+        }
+        const data = await fs.promises.readFile(filePath);
+        return data;
+    }
+
+    if (sourceUrl.startsWith('http://') || sourceUrl.startsWith('https://')) {
+        const callerSession = event.sender ? event.sender.session : session.defaultSession;
+        const netFetch = (callerSession && callerSession.net && typeof callerSession.net.fetch === 'function')
+            ? callerSession.net.fetch.bind(callerSession.net)
+            : net.fetch;
+
+        const response = await netFetch(sourceUrl);
+        if (!response.ok) {
+            throw new Error(`Failed to fetch PDF: HTTP ${response.status} ${response.statusText}`);
+        }
+        const arrayBuffer = await response.arrayBuffer();
+        return Buffer.from(arrayBuffer);
+    }
+
+    if (sourceUrl.startsWith('data:application/pdf;base64,')) {
+        const base64Data = sourceUrl.split(',')[1];
+        return Buffer.from(base64Data, 'base64');
+    }
+
+    throw new Error(`Unsupported protocol for PDF loading: ${sourceUrl}`);
+});
+
+ipcMain.handle('save-pdf-file', async (event, { url, suggestedName, data }) => {
+    try {
+        let cleanName = suggestedName || 'document.pdf';
+        if (!cleanName.toLowerCase().endsWith('.pdf')) cleanName += '.pdf';
+
+        const defaultSavePath = path.join(app.getPath('downloads'), cleanName);
+
+        const { canceled, filePath } = await dialog.showSaveDialog(mainWindow, {
+            title: 'Save PDF Document',
+            defaultPath: defaultSavePath,
+            filters: [
+                { name: 'PDF Documents', extensions: ['pdf'] },
+                { name: 'All Files', extensions: ['*'] }
+            ]
+        });
+
+        if (canceled || !filePath) {
+            return { success: false, canceled: true };
+        }
+
+        if (data && (Buffer.isBuffer(data) || data instanceof Uint8Array || ArrayBuffer.isView(data))) {
+            await fs.promises.writeFile(filePath, Buffer.from(data));
+        } else if (url && (url.startsWith('file://') || url.startsWith('/'))) {
+            let srcPath = url.startsWith('file://') ? new URL(url).pathname : url;
+            srcPath = decodeURIComponent(srcPath);
+            await fs.promises.copyFile(srcPath, filePath);
+        } else if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+            const callerSession = event.sender ? event.sender.session : session.defaultSession;
+            const netFetch = (callerSession && callerSession.net && typeof callerSession.net.fetch === 'function')
+                ? callerSession.net.fetch.bind(callerSession.net)
+                : net.fetch;
+            const resp = await netFetch(url);
+            const arrayBuf = await resp.arrayBuffer();
+            await fs.promises.writeFile(filePath, Buffer.from(arrayBuf));
+        } else {
+            throw new Error('No PDF payload or valid source URL provided.');
+        }
+
+        const stats = await fs.promises.stat(filePath);
+        const record = {
+            id: `dl_pdf_${Date.now()}`,
+            filename: path.basename(filePath),
+            totalBytes: stats.size,
+            receivedBytes: stats.size,
+            state: 'completed',
+            savePath: filePath,
+            url: url || ''
+        };
+
+        if (mainWindow && !mainWindow.isDestroyed()) {
+            mainWindow.webContents.send('download-done', record);
+        }
+
+        if (globalNotificationsEnabled) {
+            sendSystemNotification('PDF Saved', `${path.basename(filePath)} saved successfully.`);
+        }
+
+        return { success: true, filePath };
+    } catch (err) {
+        console.error('Failed to save PDF document:', err);
+        return { success: false, error: err.message };
+    }
 });
 
 ipcMain.handle('read-hinter-code', async () => {

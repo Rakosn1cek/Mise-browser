@@ -19,6 +19,11 @@ try {
             deleteStorageValue: (token, scriptId, key) => ipcRenderer.invoke('gm-storage-delete', { token, scriptId, key }),
             getStorage: (token, scriptId) => ipcRenderer.invoke('gm-storage-get', { token, scriptId })
         });
+
+        contextBridge.exposeInMainWorld('__misePDFBridge', {
+            loadPdfData: (url) => ipcRenderer.invoke('read-pdf-data', url),
+            savePdfFile: (options) => ipcRenderer.invoke('save-pdf-file', options)
+        });
     }
 } catch (err) {}
 
@@ -636,7 +641,14 @@ window.addEventListener('keydown', (e) => {
         case 'y':
             e.preventDefault();
             try {
-                const currentUrl = window.location.href;
+                let currentUrl = window.location.href;
+                if (currentUrl.includes('/assets/pdfjs/viewer.html') && currentUrl.includes('file=')) {
+                    try {
+                        const parsed = new URL(currentUrl);
+                        const fileParam = parsed.searchParams.get('file');
+                        if (fileParam) currentUrl = fileParam;
+                    } catch (urlErr) {}
+                }
                 navigator.clipboard.writeText(currentUrl).catch(() => {});
                 ipcRenderer.sendToHost('normal-mode-action', 'yank-url', currentUrl);
             } catch (err) {}

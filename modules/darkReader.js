@@ -18,7 +18,7 @@ body {
 }
 
 /* Re-invert media elements so photos, videos, canvases and charts preserve natural colours */
-img, video, canvas, svg:not(:root), picture, embed, object, iframe {
+img, video, canvas:not(.pdf-page-canvas), svg:not(:root), picture, embed, object, iframe {
     filter: invert(100%) hue-rotate(180deg) !important;
 }
 

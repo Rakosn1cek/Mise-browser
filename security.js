@@ -196,6 +196,34 @@ function hardenSession(targetSession, spellLang = 'en-GB') {
             callback({ requestHeaders: headers });
         });
     }
+
+    // Intercept main frame navigation to PDF documents and route to built-in viewer
+    if (targetSession.webRequest && typeof targetSession.webRequest.onHeadersReceived === 'function') {
+        targetSession.webRequest.onHeadersReceived((details, callback) => {
+            if (details.resourceType === 'main_frame' && details.url) {
+                const viewerPrefix = 'file://' + path.join(__dirname, 'assets', 'pdfjs', 'viewer.html');
+                if (!details.url.startsWith(viewerPrefix)) {
+                    const headers = details.responseHeaders || {};
+                    let isPdf = false;
+                    for (const [headerKey, headerVal] of Object.entries(headers)) {
+                        if (headerKey.toLowerCase() === 'content-type') {
+                            const valStr = Array.isArray(headerVal) ? headerVal.join(' ') : String(headerVal);
+                            const lowerVal = valStr.toLowerCase();
+                            if (lowerVal.includes('application/pdf') || lowerVal.includes('application/x-pdf')) {
+                                isPdf = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (isPdf) {
+                        const viewerUrl = `${viewerPrefix}?file=${encodeURIComponent(details.url)}`;
+                        return callback({ redirectURL: viewerUrl });
+                    }
+                }
+            }
+            callback({ responseHeaders: details.responseHeaders });
+        });
+    }
 }
 
 async function applyTrustedDomainExceptions() {

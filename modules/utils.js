@@ -61,3 +61,34 @@ export function getWorkspacePartition(workspaceName) {
     const clean = String(workspaceName).trim().toLowerCase().replace(/[^a-z0-9_-]/gi, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
     return `persist:${clean || 'default'}`;
 }
+
+export function isPdfUrl(url) {
+    if (!url || typeof url !== 'string') return false;
+    try {
+        const parsed = new URL(url);
+        return parsed.pathname.toLowerCase().endsWith('.pdf');
+    } catch (e) {
+        const clean = url.split('?')[0].split('#')[0];
+        return clean.toLowerCase().endsWith('.pdf');
+    }
+}
+
+export function getPdfViewerUrl(targetUrl) {
+    if (!targetUrl || typeof targetUrl !== 'string') return targetUrl;
+    if (typeof window.miseAPI?.getPdfViewerPath !== 'function') return targetUrl;
+    const viewerHtml = window.miseAPI.getPdfViewerPath();
+    if (targetUrl.startsWith(viewerHtml)) return targetUrl;
+    return `${viewerHtml}?file=${encodeURIComponent(targetUrl)}`;
+}
+
+export function extractOriginalUrl(url) {
+    if (!url || typeof url !== 'string') return url || '';
+    if (url.includes('/assets/pdfjs/viewer.html') && url.includes('file=')) {
+        try {
+            const parsed = new URL(url);
+            const fileParam = parsed.searchParams.get('file');
+            if (fileParam) return fileParam;
+        } catch (e) {}
+    }
+    return url;
+}

@@ -1,5 +1,5 @@
 import { state } from './state.js';
-import { getActiveWebview, focusActiveWebview, getWorkspacePartition, isDarkMode } from './utils.js';
+import { getActiveWebview, focusActiveWebview, getWorkspacePartition, isDarkMode, isPdfUrl, getPdfViewerUrl, extractOriginalUrl } from './utils.js';
 import { isSplitActive, applySplitLayout, handleSplitTabSelection, handleTabRemovalInSplit, getSplitState } from './splitView.js';
 import { 
     setTargetUrl, 
@@ -27,7 +27,15 @@ export function createWebView(url, currentWS, idx) {
         webview.setAttribute('partition', getWorkspacePartition(currentWS));
     }
     
-    webview.setAttribute('src', url);
+    const initialSrc = isPdfUrl(url) ? getPdfViewerUrl(url) : url;
+    webview.setAttribute('src', initialSrc);
+
+    webview.addEventListener('will-navigate', (e) => {
+        if (isPdfUrl(e.url)) {
+            e.preventDefault();
+            webview.setAttribute('src', getPdfViewerUrl(e.url));
+        }
+    });
     
     webview.addEventListener('page-title-updated', (e) => {
         if (!state.activeTitlesCache[currentWS]) state.activeTitlesCache[currentWS] = [];
@@ -72,8 +80,9 @@ export function createWebView(url, currentWS, idx) {
     });
 
     webview.addEventListener('did-navigate', async (e) => {
+        const cleanUrl = extractOriginalUrl(e.url);
         if (state.sessionState.workspaces[currentWS] && state.sessionState.workspaces[currentWS][idx]) {
-            state.sessionState.workspaces[currentWS][idx] = e.url;
+            state.sessionState.workspaces[currentWS][idx] = cleanUrl;
             window.miseAPI.saveSession(state.sessionState);
         }
         if (!state.tabActivityTimestamps[currentWS]) state.tabActivityTimestamps[currentWS] = [];
@@ -81,20 +90,21 @@ export function createWebView(url, currentWS, idx) {
         const targetLi = document.querySelectorAll('#TabList li')[idx];
         if (targetLi) {
             const cfg = (await window.miseAPI.getBrowserSettings()) || {};
-            updateTabShieldStatus(targetLi, e.url, cfg.trusted_domains || []);
+            updateTabShieldStatus(targetLi, cleanUrl, cfg.trusted_domains || []);
         }
         if (state.sessionState.current_workspace === currentWS) {
             const activeListItem = document.querySelector('#TabList li.selected');
             const currentIdx = activeListItem ? Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem) : -1;
             if (idx === currentIdx) {
-                updateSecurityStatus(e.url);
+                updateSecurityStatus(cleanUrl);
             }
         }
     });
 
     webview.addEventListener('did-navigate-in-page', async (e) => {
+        const cleanUrl = extractOriginalUrl(e.url);
         if (state.sessionState.workspaces[currentWS] && state.sessionState.workspaces[currentWS][idx]) {
-            state.sessionState.workspaces[currentWS][idx] = e.url;
+            state.sessionState.workspaces[currentWS][idx] = cleanUrl;
             window.miseAPI.saveSession(state.sessionState);
         }
         if (!state.tabActivityTimestamps[currentWS]) state.tabActivityTimestamps[currentWS] = [];
@@ -102,13 +112,13 @@ export function createWebView(url, currentWS, idx) {
         const targetLi = document.querySelectorAll('#TabList li')[idx];
         if (targetLi) {
             const cfg = (await window.miseAPI.getBrowserSettings()) || {};
-            updateTabShieldStatus(targetLi, e.url, cfg.trusted_domains || []);
+            updateTabShieldStatus(targetLi, cleanUrl, cfg.trusted_domains || []);
         }
         if (state.sessionState.current_workspace === currentWS) {
             const activeListItem = document.querySelector('#TabList li.selected');
             const currentIdx = activeListItem ? Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem) : -1;
             if (idx === currentIdx) {
-                updateSecurityStatus(e.url);
+                updateSecurityStatus(cleanUrl);
             }
         }
         webview.executeJavaScript(`
