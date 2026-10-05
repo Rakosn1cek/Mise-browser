@@ -14,10 +14,15 @@ How an attempt to sign into Gmail in an isolated container led down a rabbit hol
 
 ---
 
-### Upcoming Chronicles
+### [The Shadow DOM Keyboard Trap: When Reddit Swallowed My Vim Keys](./shadow-dom-keyboard-trap.md)
 
-- **The Shadow DOM Keyboard Trap: When Reddit Swallowed Vim Mode**  
-  Why modal navigation shortcuts broke inside modern Web Components and how event composed paths and deep shadow root penetration restored keyboard control.
+How modal keyboard shortcuts broke inside modern Web Components, why `document.activeElement` lied to me, and how deep shadow root penetration restored keyboard control.
+
+`DOM` · `Web Components` · `Keyboard Navigation` · `Vim`
+
+---
+
+### Upcoming Chronicles
 
 - **The Ghostery IPC Civil War: Adblocking Across Isolated Partitions**  
   How strict multi-account container partitions caused IPC channel collisions in the adblocking engine and the session detachment fix that resolved it.

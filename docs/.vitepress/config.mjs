@@ -23,7 +23,8 @@ export default defineConfig({
         text: 'Engineering Blog',
         items: [
           { text: 'Chronicles Overview', link: '/blog/' },
-          { text: 'Google Auth & Botguard', link: '/blog/google-auth-rrk46-botguard' }
+          { text: 'Google Auth & Botguard', link: '/blog/google-auth-rrk46-botguard' },
+          { text: 'Shadow DOM Keyboard Trap', link: '/blog/shadow-dom-keyboard-trap' }
         ]
       },
       {
