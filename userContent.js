@@ -967,19 +967,35 @@ function initializeUserContent(configDir, mainWindow) {
     });
 
     function validateTokenSender(tokenData, event) {
-        if (!tokenData || !event || !event.sender) return;
+        if (!tokenData || !event || !event.sender) {
+            throw new Error('Authorisation failure: Unable to verify GM token sender');
+        }
+
+        let senderUrl = '';
         let senderHost = '';
+        let senderProtocol = '';
         try {
-            const senderUrl = event.sender.getURL();
+            senderUrl = event.sender.getURL();
             if (senderUrl) {
-                senderHost = new URL(senderUrl).hostname.toLowerCase();
+                const parsed = new URL(senderUrl);
+                senderHost = parsed.hostname.toLowerCase();
+                senderProtocol = parsed.protocol.toLowerCase();
             }
         } catch (e) {}
 
-        if (tokenData.pageHostname && senderHost) {
-            if (senderHost !== tokenData.pageHostname && !senderHost.endsWith('.' + tokenData.pageHostname)) {
+        const expectedHost = tokenData.pageHostname || '';
+
+        // If token was minted for a local file context, sender must strictly be on file: protocol
+        if (!expectedHost) {
+            if (senderProtocol !== 'file:' || senderHost !== '') {
                 throw new Error('Authorisation failure: Origin mismatch for GM token');
             }
+            return;
+        }
+
+        // For web origins, verify exact hostname match or subdomain match
+        if (senderHost !== expectedHost && !senderHost.endsWith('.' + expectedHost)) {
+            throw new Error('Authorisation failure: Origin mismatch for GM token');
         }
     }
 
