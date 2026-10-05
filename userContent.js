@@ -966,12 +966,30 @@ function initializeUserContent(configDir, mainWindow) {
         };
     });
 
+    function validateTokenSender(tokenData, event) {
+        if (!tokenData || !event || !event.sender) return;
+        let senderHost = '';
+        try {
+            const senderUrl = event.sender.getURL();
+            if (senderUrl) {
+                senderHost = new URL(senderUrl).hostname.toLowerCase();
+            }
+        } catch (e) {}
+
+        if (tokenData.pageHostname && senderHost) {
+            if (senderHost !== tokenData.pageHostname && !senderHost.endsWith('.' + tokenData.pageHostname)) {
+                throw new Error('Authorisation failure: Origin mismatch for GM token');
+            }
+        }
+    }
+
     ipcMain.handle('gm-xmlhttprequest', async (event, payload) => {
         const { token, details } = payload || {};
         if (!token || !activeTokens.has(token)) {
             throw new Error('Unauthorized: Invalid or expired GM token');
         }
         const tokenData = activeTokens.get(token);
+        validateTokenSender(tokenData, event);
         return executeGmXmlHttpRequest(details, tokenData);
     });
 
@@ -981,6 +999,7 @@ function initializeUserContent(configDir, mainWindow) {
             throw new Error('Unauthorized: Invalid or expired GM token');
         }
         const tokenData = activeTokens.get(token);
+        validateTokenSender(tokenData, event);
         if (!tokenData || tokenData.scriptId !== sanitizeScriptId(scriptId)) {
             throw new Error('Unauthorized: Script ID mismatch');
         }
@@ -997,6 +1016,7 @@ function initializeUserContent(configDir, mainWindow) {
             throw new Error('Unauthorized: Invalid or expired GM token');
         }
         const tokenData = activeTokens.get(token);
+        validateTokenSender(tokenData, event);
         if (!tokenData || tokenData.scriptId !== sanitizeScriptId(scriptId)) {
             throw new Error('Unauthorized: Script ID mismatch');
         }
@@ -1013,6 +1033,7 @@ function initializeUserContent(configDir, mainWindow) {
             throw new Error('Unauthorized: Invalid or expired GM token');
         }
         const tokenData = activeTokens.get(token);
+        validateTokenSender(tokenData, event);
         if (!tokenData || tokenData.scriptId !== sanitizeScriptId(scriptId)) {
             throw new Error('Unauthorized: Script ID mismatch');
         }
