@@ -2857,7 +2857,7 @@ body.light-mode .download-action-btn:hover {
     font-variant-numeric: tabular-nums;
     letter-spacing: 0.3px;
     text-transform: none;
-    font-weight: 600;
+    font-weight: 800;
 }
 
 .status-badge-clock:hover {
@@ -2873,7 +2873,7 @@ body.light-mode .download-action-btn:hover {
 
 .status-clock-time {
     color: var(--accent);
-    font-weight: 700;
+    font-weight: 800;
 }
 
 /* Sidebar Clock Widget */
@@ -2887,7 +2887,7 @@ body.light-mode .download-action-btn:hover {
     border-radius: 6px;
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid var(--border);
-    font-size: 11px;
+    font-size: 13px;
     color: var(--text);
     font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
     font-variant-numeric: tabular-nums;
