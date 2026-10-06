@@ -2857,11 +2857,15 @@ if (typeof module === "object") {
                 var src = img.getAttribute('src');
                 if (src) {
                     var lowerSrc = src.trim().toLowerCase();
-                    if (lowerSrc.startsWith('javascript:') || lowerSrc.startsWith('vbscript:')) {
-                        img.remove();
-                        return;
-                    }
-                    if (!src.startsWith('data:') && !src.startsWith('blob:')) {
+                    if (lowerSrc.startsWith('javascript:') || lowerSrc.startsWith('data:') || lowerSrc.startsWith('vbscript:')) {
+                        // Only permit safe base64 raster image data URIs
+                        if (lowerSrc.startsWith('data:') && /^data:image\/(png|jpeg|jpg|webp|gif|avif);base64,/i.test(lowerSrc)) {
+                            // Safe raster image data URI, preserve as is
+                        } else {
+                            img.remove();
+                            return;
+                        }
+                    } else if (!lowerSrc.startsWith('blob:')) {
                         img.src = new URL(src, baseUri).href;
                     }
                 }
