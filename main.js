@@ -14,6 +14,7 @@ if (!gotSingleInstanceLock) {
 const security = require('./security');
 const keybinds = require('./keybinds');
 const userContent = require('./userContent');
+const diagnostics = require('./diagnostics');
 
 // NATIVE CONFIG UTILITIES
 const CONFIG_DIR = path.join(app.getPath('home'), '.config', 'mise-browser');
@@ -56,7 +57,8 @@ const DEFAULT_CONFIG = {
     tab_sleep_timeout_minutes: 15,
     sidebar_auto_collapse: true,
     show_status_bar: true,
-    theme_colors: { ...DEFAULT_THEME_COLORS }
+    theme_colors: { ...DEFAULT_THEME_COLORS },
+    enable_diagnostics: false
 };
 
 function loadBrowserConfig() {
@@ -1206,10 +1208,40 @@ ipcMain.handle('update-browser-settings', async (event, newCfg) => {
         if (merged.spellchecker_language !== undefined) {
             applySpellcheckerToAllSessions(merged.spellchecker_language);
         }
+        if (merged.enable_diagnostics !== undefined) {
+            diagnostics.setDiagnosticsEnabled(merged.enable_diagnostics);
+        }
         return true;
     } catch (e) {
         return false;
     }
+});
+
+ipcMain.handle('get-system-diagnostics', async (event, sessionStats) => {
+    return diagnostics.gatherSystemDiagnostics(sessionStats);
+});
+
+ipcMain.handle('clear-diagnostics-logs', async () => {
+    diagnostics.clearLogs();
+    return true;
+});
+
+ipcMain.handle('set-diagnostics-enabled', async (event, enabled) => {
+    diagnostics.setDiagnosticsEnabled(enabled);
+    try {
+        const cfg = loadBrowserConfig();
+        cfg.enable_diagnostics = !!enabled;
+        if (!fs.existsSync(CONFIG_DIR)) fs.mkdirSync(CONFIG_DIR, { recursive: true });
+        await fs.promises.writeFile(CONFIG_PATH, JSON.stringify(cfg, null, 4), 'utf-8');
+    } catch (e) {}
+    return true;
+});
+
+ipcMain.handle('log-diagnostics-event', async (event, data) => {
+    if (data && typeof data === 'object') {
+        diagnostics.logEvent(data.level, data.category, data.message, data.details);
+    }
+    return true;
 });
 
 function initializeMemoryWatcher() {
@@ -1487,8 +1519,16 @@ app.on('web-contents-created', (event, webContents) => {
 
         webContents.on('did-navigate', (navEvent, url) => {
             logVisit(webContents.getTitle(), url);
-            if (url && url.includes('accounts.google.com') && url.includes('signin/rejected')) {
-                security.clearGoogleAuthCookies(webContents.session);
+            if (url) {
+                try {
+                    const parsedUrl = new URL(url);
+                    if ((parsedUrl.hostname === 'accounts.google.com' || parsedUrl.hostname.endsWith('.accounts.google.com')) &&
+                        parsedUrl.pathname.includes('signin/rejected')) {
+                        security.clearGoogleAuthCookies(webContents.session);
+                    }
+                } catch (e) {
+                    // Ignore URL parsing errors
+                }
             }
         });
 
@@ -1684,7 +1724,32 @@ app.on('web-contents-created', (event, webContents) => {
                 handleAppAction(action, webContents);
             }
         });
+
+        webContents.on('render-process-gone', (event, details) => {
+            diagnostics.logEvent('error', 'webview', `Webview render process terminated: reason=${details.reason} exitCode=${details.exitCode}`);
+        });
+
+        webContents.on('unresponsive', () => {
+            diagnostics.logEvent('warn', 'performance', 'Webview became unresponsive');
+        });
+
+        webContents.on('responsive', () => {
+            diagnostics.logEvent('info', 'performance', 'Webview regained responsiveness');
+        });
+
+        webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
+            if (errorCode === -3) return;
+            diagnostics.logEvent('warn', 'network', `Navigation failed: code=${errorCode} description=${errorDescription}`, { url: validatedURL });
+        });
     }
+});
+
+app.on('render-process-gone', (event, wc, details) => {
+    diagnostics.logEvent('error', 'process', `Render process gone: reason=${details.reason} exitCode=${details.exitCode}`);
+});
+
+app.on('child-process-gone', (event, details) => {
+    diagnostics.logEvent('warn', 'process', `Child process gone: type=${details.type} reason=${details.reason} exitCode=${details.exitCode}`);
 });
 
 if (gotSingleInstanceLock) {
@@ -1714,6 +1779,7 @@ if (gotSingleInstanceLock) {
     });
 
     app.whenReady().then(() => {
+        diagnostics.initDiagnostics(loadBrowserConfig());
         createWindow();
         initializeMemoryWatcher();
     });

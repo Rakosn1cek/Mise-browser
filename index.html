@@ -412,6 +412,31 @@
                                 </div>
                             </section>
                 
+                            <!-- Diagnostics & System Health Section -->
+                            <section class="settings-section">
+                                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--border); padding-bottom: 8px;">
+                                    <h2 style="border-bottom: none; padding-bottom: 0; margin-bottom: 0;">Diagnostics & System Health</h2>
+                                    <span class="settings-save-note visible" style="opacity: 0.75;"><i class="fa-solid fa-lock"></i> 100% Local / Zero Telemetry</span>
+                                </div>
+
+                                <div class="setting-item">
+                                    <div class="setting-info">
+                                        <span class="setting-label">Local Diagnostics Recording</span>
+                                        <span class="setting-desc">Maintains an in-memory ring buffer of runtime errors, renderer crashes, and health logs to assist troubleshooting. Disabled by default. Zero telemetry or network transmission; all data remains strictly in volatile RAM.</span>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="setting-diagnostics-toggle">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+
+                                <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 5px;">
+                                    <button id="setting-open-diagnostics-btn" class="settings-action-btn" style="background-color: var(--accent); color: var(--bg-main); font-weight: bold; padding: 8px 16px; border-radius: 4px; border: none; cursor: pointer;">
+                                        <i class="fa-solid fa-stethoscope"></i> Open Diagnostics Hub
+                                    </button>
+                                </div>
+                            </section>
+
                             <!-- Complete Help Reference & Shortcuts Section -->
                             <section class="settings-section">
                                 <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--border); padding-bottom: 8px; flex-wrap: wrap; gap: 8px;">
@@ -558,6 +583,67 @@
                         <div class="bookmarks-column-pane">
                             <div class="quickmarks-section-title">Bookmarks</div>
                             <div id="BookmarksResultsList" class="bookmarks-results-list" tabindex="0"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Diagnostics & System Health Overlay -->
+                <div id="DiagnosticsOverlay" tabindex="0" style="display: none;">
+                    <div class="diag-page">
+                        <div class="diag-header">
+                            <div class="diag-header-left">
+                                <div class="diag-title-group">
+                                    <h1 class="diag-title"><i class="fa-solid fa-stethoscope"></i> Diagnostics & Health Hub</h1>
+                                    <span class="diag-subtitle">Local operational metrics, runtime telemetry and privacy-preserving bug reporting</span>
+                                </div>
+                            </div>
+                            <div class="diag-header-right">
+                                <div class="diag-recording-toggle-group">
+                                    <label class="toggle-switch" title="Toggle In-Memory Diagnostics Recording">
+                                        <input type="checkbox" id="diag-header-recording-toggle">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                    <span id="diag-status-badge" class="diag-status-badge inactive"><i class="fa-solid fa-circle-pause"></i> Recording Disabled</span>
+                                </div>
+                                <button type="button" id="diag-refresh-btn" class="nav-icon-button" title="Refresh Metrics">
+                                    <i class="fa-solid fa-arrows-rotate"></i>
+                                </button>
+                                <button type="button" id="CloseDiagnosticsBtn" class="nav-icon-button" title="Close Diagnostics (Esc)">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="diag-nav-tabs">
+                            <button type="button" class="diag-nav-tab active" data-tab="system">
+                                <i class="fa-solid fa-cube"></i> System & Runtimes
+                            </button>
+                            <button type="button" class="diag-nav-tab" data-tab="processes">
+                                <i class="fa-solid fa-microchip"></i> Processes & Memory
+                            </button>
+                            <button type="button" class="diag-nav-tab" data-tab="logs">
+                                <i class="fa-solid fa-list-ul"></i> In-Memory Logs
+                            </button>
+                            <button type="button" class="diag-nav-tab" data-tab="report">
+                                <i class="fa-solid fa-file-shield"></i> Bug Report Generator
+                            </button>
+                        </div>
+
+                        <div class="diag-body">
+                            <div id="diag-tab-system" class="diag-tab-content" style="display: block;"></div>
+                            <div id="diag-tab-processes" class="diag-tab-content" style="display: none;"></div>
+                            <div id="diag-tab-logs" class="diag-tab-content" style="display: none;"></div>
+                            <div id="diag-tab-report" class="diag-tab-content" style="display: none;"></div>
+                        </div>
+
+                        <div class="diag-footer">
+                            <div class="diag-footer-left">
+                                <span class="diag-footer-hint"><kbd>Esc</kbd> Close Overlay</span>
+                                <span class="diag-footer-hint"><i class="fa-solid fa-shield-halved"></i> 100% Local: Zero External Pings</span>
+                            </div>
+                            <div class="diag-footer-right">
+                                <span class="diag-footer-note">All metrics reset when closing Mise</span>
+                            </div>
                         </div>
                     </div>
                 </div>

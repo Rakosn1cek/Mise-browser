@@ -97,3 +97,22 @@ export function extractOriginalUrl(url) {
     }
     return url;
 }
+
+// Validates whether a given URL belongs to a target domain or its subdomains
+export function isMatchingDomain(url, targetDomain) {
+    if (!url || typeof url !== 'string' || !targetDomain) return false;
+    try {
+        const candidate = /^[a-zA-Z][a-zA-Z\d+\-.]*:\/\//.test(url) ? url : `https://${url}`;
+        const host = new URL(candidate).hostname.toLowerCase();
+        const target = targetDomain.toLowerCase();
+        return host === target || host.endsWith(`.${target}`);
+    } catch (e) {
+        return false;
+    }
+}
+
+// Checks whether a URL matches domains designated for isolated private sessions
+export function isTargetPrivateDomain(url) {
+    return isMatchingDomain(url, 'ycombinator.com');
+}
+

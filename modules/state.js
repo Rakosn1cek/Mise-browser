@@ -21,6 +21,7 @@ export const state = {
     notesActive: false,
     isEditingNotes: false,
     bookmarksActive: false,
+    diagnosticsActive: false,
     awaitingQuickmarkKey: false,
     quickmarkMode: null,
 

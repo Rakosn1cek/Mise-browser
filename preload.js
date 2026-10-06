@@ -77,6 +77,10 @@ contextBridge.exposeInMainWorld('miseAPI', {
         const handler = (event, kind) => callback(kind);
         ipcRenderer.on('user-content-updated', handler);
         return () => ipcRenderer.removeListener('user-content-updated', handler);
-    }
+    },
+    getSystemDiagnostics: (sessionStats) => ipcRenderer.invoke('get-system-diagnostics', sessionStats),
+    clearDiagnosticsLogs: () => ipcRenderer.invoke('clear-diagnostics-logs'),
+    setDiagnosticsEnabled: (enabled) => ipcRenderer.invoke('set-diagnostics-enabled', enabled),
+    logDiagnosticsEvent: (eventData) => ipcRenderer.invoke('log-diagnostics-event', eventData)
 });
 

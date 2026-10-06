@@ -1,5 +1,5 @@
 import { state } from './state.js';
-import { getActiveWebview, focusActiveWebview, getWorkspacePartition, isDarkMode, isPdfUrl, getPdfViewerUrl, extractOriginalUrl } from './utils.js';
+import { getActiveWebview, focusActiveWebview, getWorkspacePartition, isDarkMode, isPdfUrl, getPdfViewerUrl, extractOriginalUrl, isTargetPrivateDomain } from './utils.js';
 import { isSplitActive, applySplitLayout, handleSplitTabSelection, handleTabRemovalInSplit, getSplitState } from './splitView.js';
 import { 
     setTargetUrl, 
@@ -21,7 +21,7 @@ export function createWebView(url, currentWS, idx) {
     webview.setAttribute('preload', window.miseAPI.getWebviewPreloadPath());
     webview.setAttribute('allowpopups', '');
     
-    if (state.globalPrivateModeActive || url.toLowerCase().includes("ycombinator.com")) {
+    if (state.globalPrivateModeActive || isTargetPrivateDomain(url)) {
         webview.setAttribute('partition', 'MisePrivateProfile');
     } else {
         webview.setAttribute('partition', getWorkspacePartition(currentWS));

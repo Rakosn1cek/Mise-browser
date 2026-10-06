@@ -5,7 +5,8 @@ import {
     escapeHtml, 
     isTargetScript, 
     getActiveWebview, 
-    focusActiveWebview 
+    focusActiveWebview,
+    isTargetPrivateDomain 
 } from './modules/utils.js';
 import { 
     applyThemeVisuals, 
@@ -113,6 +114,13 @@ import {
     updateDarkReaderButtonUI 
 } from './modules/darkReader.js';
 
+import {
+    toggleDiagnosticsView,
+    closeDiagnosticsView,
+    toggleDiagnosticsRecording,
+    setupDiagnosticsListeners
+} from './modules/overlays/diagnostics.js';
+
 // Attach functions needed across module boundaries to window
 window.toggleDarkReaderOnActiveTab = toggleDarkReaderOnActiveTab;
 window.toggleReaderViewOnActiveTab = toggleReaderViewOnActiveTab;
@@ -138,6 +146,9 @@ window.toggleHistoryOverlay = toggleHistoryOverlay;
 window.handlePrivateBrowsingStateShift = handlePrivateBrowsingStateShift;
 window.executeSurgicalCookieWipe = executeSurgicalCookieWipe;
 window.executeGlobalCacheWipe = executeGlobalCacheWipe;
+window.toggleDiagnosticsView = toggleDiagnosticsView;
+window.closeDiagnosticsView = closeDiagnosticsView;
+window.toggleDiagnosticsRecording = toggleDiagnosticsRecording;
 window.toggleActiveDevTools = toggleActiveDevTools;
 window.toggleCommandPaletteView = toggleCommandPaletteView;
 window.closeCommandPalette = closeCommandPalette;
@@ -343,6 +354,7 @@ async function initializeBrowser() {
     setupNotesListeners();
     setupAddressBarAutocomplete();
     setupBookmarkOverlayListeners();
+    setupDiagnosticsListeners();
     initSearchEnginePreference();
     initDownloadShelf();
     initStatusBar();
@@ -506,6 +518,9 @@ function setupEventListeners() {
             case 'toggle-help': togglePreferencesView(); break;
             case 'toggle-history': toggleHistoryOverlay(); break;
             case 'toggle-status-bar': toggleStatusBar(); break;
+            case 'open-diagnostics':
+            case 'toggle-diagnostics': toggleDiagnosticsView(); break;
+            case 'toggle-diagnostics-recording': toggleDiagnosticsRecording(); break;
             case 'toggle-dark-reader': toggleDarkReaderOnActiveTab(); break;
             case 'toggle-reader-view': toggleReaderViewOnActiveTab(); break;
             case 'go-back':
@@ -749,13 +764,14 @@ function setupEventListeners() {
 
     document.getElementById('Sidebar').addEventListener('focusout', (e) => {
         if (e.relatedTarget && !document.getElementById('Sidebar').contains(e.relatedTarget)) {
-            if (state.dashboardActive || state.paletteActive || state.preferencesActive || state.bookmarksActive || state.historyActive || state.notesActive) return;
+            if (state.dashboardActive || state.paletteActive || state.preferencesActive || state.bookmarksActive || state.historyActive || state.notesActive || state.diagnosticsActive) return;
             
             const overlayIds = [
                 'PaletteInput', 'PaletteList', 'PreferencesOverlay',
                 'BookmarksOverlay', 'BookmarkSearchInput', 'HistoryOverlay',
                 'HistorySearchInput', 'NotesOverlay', 'NotesTextArea',
-                'DashboardOverlay', 'ShareModalOverlay', 'FindBarOverlay'
+                'DashboardOverlay', 'ShareModalOverlay', 'FindBarOverlay',
+                'DiagnosticsOverlay'
             ];
             for (const id of overlayIds) {
                 const el = document.getElementById(id);
@@ -825,7 +841,7 @@ async function executeSurgicalCookieWipe() {
     const currentIdx = Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem);
     const urlStr = state.sessionState.workspaces[currentWS][currentIdx] || "";
     
-    const isTargetPrivate = state.globalPrivateModeActive || urlStr.toLowerCase().includes("ycombinator.com");
+    const isTargetPrivate = state.globalPrivateModeActive || isTargetPrivateDomain(urlStr);
     await window.miseAPI.clearDomainCookies({ urlStr, isPrivate: isTargetPrivate, workspace: currentWS });
     
     window.miseAllowWebviewFocus = true;

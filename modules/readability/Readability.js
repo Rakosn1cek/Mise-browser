@@ -475,9 +475,14 @@ Readability.prototype = {
     this._forEachNode(links, function (link) {
       var href = link.getAttribute("href");
       if (href) {
-        // Remove links with javascript: URIs, since
-        // they won't work after scripts have been removed from the page.
-        if (href.indexOf("javascript:") === 0) {
+        var lowerHref = href.trim().toLowerCase();
+        // Remove links with javascript:, data: or vbscript: URIs, since
+        // they will not work or represent security risks in rendered reader content.
+        if (
+          lowerHref.startsWith("javascript:") ||
+          lowerHref.startsWith("data:") ||
+          lowerHref.startsWith("vbscript:")
+        ) {
           // if the link only contains simple text content, it can be converted to a text node
           if (
             link.childNodes.length === 1 &&

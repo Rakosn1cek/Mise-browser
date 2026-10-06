@@ -2889,5 +2889,640 @@ body.light-mode .status-badge-security.security-insecure {
     border-color: rgba(211, 47, 47, 0.3);
 }
 
+/* ==========================================================================
+   Diagnostics & System Health Overlay Styling
+   ========================================================================== */
+
+#DiagnosticsOverlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: color-mix(in srgb, var(--bg-main) var(--overlay-opacity, 100%), transparent);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    z-index: 2000;
+    display: none;
+    flex-direction: column;
+    overflow-y: auto;
+    outline: none;
+}
+
+.diag-page {
+    max-width: 1100px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 30px 24px 60px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.diag-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 16px;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.diag-header-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.diag-title-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.diag-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--accent);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.diag-subtitle {
+    font-size: 13px;
+    color: var(--text);
+    opacity: 0.7;
+}
+
+.diag-header-right {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.diag-recording-toggle-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--bg-sidebar);
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+}
+
+.diag-status-badge {
+    font-size: 11px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.3px;
+}
+
+.diag-status-badge.active {
+    background: rgba(158, 206, 106, 0.15);
+    color: #9ece6a;
+    border: 1px solid rgba(158, 206, 106, 0.35);
+}
+
+.diag-status-badge.inactive {
+    background: rgba(192, 202, 245, 0.08);
+    color: var(--text);
+    opacity: 0.6;
+    border: 1px solid var(--border);
+}
+
+.spinning i,
+i.spinning {
+    animation: diag-spin 0.6s linear infinite;
+}
+
+@keyframes diag-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.diag-nav-tabs {
+    display: flex;
+    gap: 8px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px;
+    overflow-x: auto;
+}
+
+.diag-nav-tab {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text);
+    opacity: 0.75;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.15s ease;
+}
+
+.diag-nav-tab:hover {
+    background: var(--hover);
+    opacity: 1;
+}
+
+.diag-nav-tab.active {
+    background: var(--selected);
+    border-color: var(--accent);
+    color: var(--accent);
+    opacity: 1;
+}
+
+.diag-body {
+    min-height: 420px;
+}
+
+.diag-tab-content {
+    animation: diag-fade-in 0.15s ease-in-out;
+}
+
+@keyframes diag-fade-in {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.diag-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(460px, 1fr));
+    gap: 16px;
+}
+
+.diag-card {
+    background: var(--bg-sidebar);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.diag-card-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px dashed var(--border);
+    padding-bottom: 8px;
+}
+
+.diag-kv-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.diag-kv-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+}
+
+.diag-k {
+    color: var(--text);
+    opacity: 0.7;
+}
+
+.diag-v {
+    font-weight: 600;
+    color: var(--text);
+    font-family: monospace;
+    font-size: 12px;
+}
+
+.diag-feature-table {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.diag-feature-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0;
+    font-size: 12px;
+}
+
+.diag-feature-name {
+    color: var(--text);
+    font-family: monospace;
+}
+
+.diag-feature-status {
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    font-family: monospace;
+}
+
+.diag-pill-ok {
+    background: rgba(158, 206, 106, 0.15);
+    color: #9ece6a;
+    border: 1px solid rgba(158, 206, 106, 0.3);
+}
+
+.diag-pill-warn {
+    background: rgba(224, 175, 104, 0.15);
+    color: #e0af68;
+    border: 1px solid rgba(224, 175, 104, 0.3);
+}
+
+.diag-pill-neutral {
+    background: rgba(192, 202, 245, 0.08);
+    color: var(--text);
+    border: 1px solid var(--border);
+}
+
+.diag-proc-summary-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.diag-mini-stat {
+    background: var(--bg-sidebar);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.diag-stat-label {
+    font-size: 12px;
+    color: var(--text);
+    opacity: 0.65;
+}
+
+.diag-stat-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--accent);
+    font-family: monospace;
+}
+
+.diag-actions-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    background: var(--bg-sidebar);
+    border: 1px solid var(--border);
+    border-radius: 8px 8px 0 0;
+    font-size: 13px;
+    gap: 12px;
+}
+
+.diag-hint-text strong {
+    color: var(--accent);
+}
+
+.diag-btn-action {
+    background: var(--selected);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.15s ease;
+}
+
+.diag-btn-action:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.diag-btn-action.primary {
+    background: var(--accent);
+    color: var(--bg-main);
+    border-color: var(--accent);
+}
+
+.diag-btn-action.primary:hover {
+    opacity: 0.9;
+    color: var(--bg-main);
+}
+
+.diag-btn-action.success {
+    background: #9ece6a;
+    color: #1a1b26;
+    border-color: #9ece6a;
+}
+
+.diag-table-container {
+    background: var(--bg-sidebar);
+    border: 1px solid var(--border);
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    overflow-x: auto;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.diag-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+}
+
+.diag-table th {
+    text-align: left;
+    padding: 10px 14px;
+    background: var(--bg-main);
+    color: var(--text);
+    opacity: 0.7;
+    font-weight: 600;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+
+.diag-table td {
+    padding: 8px 14px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    font-family: monospace;
+}
+
+.diag-proc-tag {
+    background: var(--hover);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    color: var(--accent);
+}
+
+.diag-logs-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+}
+
+.diag-logs-filters {
+    display: flex;
+    gap: 6px;
+}
+
+.diag-filter-chip {
+    background: var(--bg-sidebar);
+    border: 1px solid var(--border);
+    color: var(--text);
+    opacity: 0.75;
+    padding: 5px 12px;
+    border-radius: 14px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.diag-filter-chip:hover {
+    border-color: var(--accent);
+    opacity: 1;
+}
+
+.diag-filter-chip.active {
+    background: var(--selected);
+    border-color: var(--accent);
+    color: var(--accent);
+    opacity: 1;
+}
+
+.diag-logs-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.diag-search-input {
+    background: var(--bg-sidebar);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 12px;
+    outline: none;
+    min-width: 220px;
+}
+
+.diag-search-input:focus {
+    border-color: var(--accent);
+}
+
+.diag-empty-logs-warning,
+.diag-empty-logs {
+    background: var(--bg-sidebar);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 40px 20px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.diag-empty-logs-warning h3 {
+    margin: 8px 0;
+    color: var(--text);
+    font-size: 16px;
+}
+
+.diag-empty-logs-warning p,
+.diag-empty-logs p {
+    color: var(--text);
+    opacity: 0.65;
+    max-width: 500px;
+    font-size: 13px;
+    margin: 0;
+}
+
+.diag-logs-list {
+    background: var(--bg-sidebar);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    max-height: 420px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    font-family: monospace;
+    font-size: 12px;
+}
+
+.diag-log-row {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding: 6px 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.diag-log-row:last-child {
+    border-bottom: none;
+}
+
+.diag-log-time {
+    color: var(--text);
+    opacity: 0.45;
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+.diag-log-level {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 3px;
+    letter-spacing: 0.4px;
+}
+
+.log-badge-error {
+    background: rgba(247, 118, 142, 0.2);
+    color: #f7768e;
+    border: 1px solid rgba(247, 118, 142, 0.4);
+}
+
+.log-badge-warn {
+    background: rgba(224, 175, 104, 0.2);
+    color: #e0af68;
+    border: 1px solid rgba(224, 175, 104, 0.4);
+}
+
+.log-badge-info {
+    background: rgba(122, 162, 247, 0.15);
+    color: #7aa2f7;
+    border: 1px solid rgba(122, 162, 247, 0.35);
+}
+
+.diag-log-cat {
+    color: var(--accent);
+    font-weight: 600;
+}
+
+.diag-log-msg {
+    color: var(--text);
+    word-break: break-word;
+}
+
+.diag-logs-footer-note {
+    margin-top: 10px;
+    font-size: 11px;
+    color: var(--text);
+    opacity: 0.55;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.diag-report-banner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--bg-sidebar);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 14px;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.diag-report-banner-text h3 {
+    margin: 0 0 4px 0;
+    font-size: 15px;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.diag-report-banner-text p {
+    margin: 0;
+    font-size: 12px;
+    color: var(--text);
+    opacity: 0.7;
+}
+
+.diag-report-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.diag-markdown-preview-card {
+    background: var(--bg-sidebar);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    max-height: 420px;
+    overflow-y: auto;
+}
+
+.diag-markdown-pre {
+    margin: 0;
+    font-family: monospace;
+    font-size: 12px;
+    line-height: 1.55;
+    color: var(--text);
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.diag-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid var(--border);
+    padding-top: 14px;
+    font-size: 12px;
+    color: var(--text);
+    opacity: 0.65;
+}
+
+.diag-footer-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.diag-footer-hint kbd {
+    background: var(--bg-sidebar);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 2px 6px;
+    font-size: 11px;
+}
+
 
 

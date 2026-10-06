@@ -587,6 +587,30 @@ export const COMMAND_DEFINITIONS = [
         icon: 'fa-solid fa-arrows-rotate',
         keywords: ['update', 'upgrade', 'version', 'release', 'github', 'check'],
         action: () => window.checkForUpdates && window.checkForUpdates(true)
+    },
+    {
+        id: 'open-diagnostics',
+        title: 'Open Diagnostics & Health Hub',
+        desc: 'View system health, memory utilisation, logs, and generate sanitised bug reports',
+        details: 'Opens the Diagnostics modal overlay displaying Electron runtime versions, GPU acceleration states, process memory breakdown, and volatile in-memory logs.',
+        tip: 'Zero telemetry: all diagnostic statistics remain 100% local to your machine.',
+        category: 'Preferences & System',
+        icon: 'fa-solid fa-stethoscope',
+        actionId: 'open-diagnostics',
+        keywords: ['diagnostics', 'diag', 'health', 'bug', 'report', 'issue', 'memory', 'logs', 'system'],
+        action: () => window.toggleDiagnosticsView && window.toggleDiagnosticsView()
+    },
+    {
+        id: 'toggle-diagnostics-recording',
+        title: 'Toggle Diagnostics Recording (In-Memory)',
+        desc: 'Enable or disable local in-memory diagnostic event logging (OFF by default)',
+        details: 'Controls the local ring buffer for capturing renderer errors and navigation warnings. Never transmits data across the network.',
+        tip: 'Toggle recording on when reproducing issues before generating an issue report.',
+        category: 'Preferences & System',
+        icon: 'fa-solid fa-clipboard-check',
+        actionId: 'toggle-diagnostics-recording',
+        keywords: ['diagnostics', 'recording', 'telemetry', 'privacy', 'logs', 'debug'],
+        action: () => window.toggleDiagnosticsRecording && window.toggleDiagnosticsRecording()
     }
 ];
 
@@ -667,6 +691,9 @@ export async function syncPreferencesUI() {
 
             const statusBarToggle = document.getElementById('setting-status-bar-toggle');
             if (statusBarToggle) statusBarToggle.checked = cfg.show_status_bar !== false;
+
+            const diagToggle = document.getElementById('setting-diagnostics-toggle');
+            if (diagToggle) diagToggle.checked = !!cfg.enable_diagnostics;
 
             const trustedDomainsField = document.getElementById('setting-trusted-domains');
             if (trustedDomainsField) {
@@ -876,6 +903,25 @@ export function setupPreferencesListeners() {
                     note.textContent = 'Failed to save trusted sites.';
                     note.classList.add('visible');
                 }
+            }
+        };
+    }
+
+    const diagToggle = document.getElementById('setting-diagnostics-toggle');
+    if (diagToggle) {
+        diagToggle.onchange = async () => {
+            const isEnabled = diagToggle.checked;
+            if (window.toggleDiagnosticsRecording) {
+                await window.toggleDiagnosticsRecording(isEnabled);
+            }
+        };
+    }
+
+    const openDiagBtn = document.getElementById('setting-open-diagnostics-btn');
+    if (openDiagBtn) {
+        openDiagBtn.onclick = () => {
+            if (window.toggleDiagnosticsView) {
+                window.toggleDiagnosticsView();
             }
         };
     }
