@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>What's New in Mise v0.12.0</title>
+    <link rel="icon" type="image/png" href="icons/Mise-logo48.png">
+    <style>
+        :root {
+            --bg-main: #1a1b26;
+            --bg-card: #16161e;
+            --text-main: #c0caf5;
+            --text-muted: #9aa5ce;
+            --accent: #7aa2f7;
+            --accent-dim: rgba(122, 162, 247, 0.12);
+            --border: #24283b;
+            --border-hover: #414868;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            padding: 40px 20px 80px 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 760px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 28px;
+        }
+
+        header {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .tag-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .badge {
+            background-color: var(--accent-dim);
+            color: var(--accent);
+            border: 1px solid var(--accent);
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 8px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .version-date {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .github-link {
+            margin-left: auto;
+            font-size: 12px;
+            color: var(--accent);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: opacity 0.15s ease;
+        }
+
+        .github-link:hover {
+            text-decoration: underline;
+            opacity: 0.85;
+        }
+
+        .footer-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .github-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background-color: var(--accent-dim);
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 500;
+            padding: 5px 12px;
+            border-radius: 6px;
+            transition: background-color 0.15s ease, opacity 0.15s ease;
+        }
+
+        .github-button:hover {
+            background-color: var(--accent);
+            color: #ffffff;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .feature-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 22px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            transition: border-color 0.15s ease;
+        }
+
+        .feature-card:hover {
+            border-color: var(--border-hover);
+        }
+
+        .feature-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .feature-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            background-color: var(--accent-dim);
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .feature-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .feature-desc {
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        .feature-points {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding-left: 4px;
+        }
+
+        .feature-points li {
+            font-size: 13px;
+            color: var(--text-muted);
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+        }
+
+        .feature-points li::before {
+            content: "•";
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        footer {
+            margin-top: 10px;
+            padding: 20px 24px;
+            background-color: var(--bg-card);
+            border: 1px dashed var(--border);
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 14px;
+        }
+
+        .footer-note {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .footer-shortcuts {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        kbd {
+            background-color: var(--bg-main);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-size: 11px;
+            color: var(--accent);
+            font-family: inherit;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="tag-row">
+                <span class="badge">Release Notes</span>
+                <span class="version-date">October 2026</span>
+                <a href="https://github.com/Rakosn1cek/Mise-browser/releases" target="_blank" rel="noopener noreferrer" class="github-link">
+                    Full Release on GitHub ↗
+                </a>
+            </div>
+            <h1>What's New in Mise v0.12.0</h1>
+            <p class="subtitle">Modal navigation engine, native dark reader, privacy shields, and update checking.</p>
+        </header>
+
+        <section class="feature-card">
+            <div class="feature-header">
+                <div class="feature-icon">❖</div>
+                <h2 class="feature-title">Modal Navigation & Status Bar</h2>
+            </div>
+            <p class="feature-desc">
+                Keyboard-driven modal navigation inspired by Vim, featuring dedicated NORMAL, INSERT, and PASSTHROUGH modes.
+            </p>
+            <ul class="feature-points">
+                <li>Real-time visual mode indicator badge in the new bottom status bar.</li>
+                <li>Instant link hinting (<kbd>f</kbd>), in-page search (<kbd>/</kbd>), and quick address bar jump (<kbd>!</kbd>).</li>
+                <li>Customisable shortcut bindings through keybinds.json or the Preferences overlay.</li>
+            </ul>
+        </section>
+
+        <section class="feature-card">
+            <div class="feature-header">
+                <div class="feature-icon">◐</div>
+                <h2 class="feature-title">Native Dark Reader Engine</h2>
+            </div>
+            <p class="feature-desc">
+                High-performance dark theme engine operating directly within page DOMs without external extensions.
+            </p>
+            <ul class="feature-points">
+                <li>Automatic colour inversion and image preservation for comfortable night reading.</li>
+                <li>Per-site domain exclusions and persistence across reloads.</li>
+                <li>Quick toggle via keyboard shortcut (<kbd>Ctrl + D</kbd>) or status bar action.</li>
+            </ul>
+        </section>
+
+        <section class="feature-card">
+            <div class="feature-header">
+                <div class="feature-icon">🛡</div>
+                <h2 class="feature-title">Enhanced Privacy & Multi-Account Containers</h2>
+            </div>
+            <p class="feature-desc">
+                Comprehensive tracking protection and isolated partition environments.
+            </p>
+            <ul class="feature-points">
+                <li>Full Ghostery adblocker integration attached across all container workspaces.</li>
+                <li>Hardened User-Agent and client hint baselines to prevent unique fingerprint disclosures.</li>
+                <li>Background update checker keeping you informed of upstream security patches.</li>
+            </ul>
+        </section>
+
+        <footer>
+            <div class="footer-left">
+                <a href="https://github.com/Rakosn1cek/Mise-browser/releases" target="_blank" rel="noopener noreferrer" class="github-button">
+                    View Full Release on GitHub ↗
+                </a>
+                <span class="footer-note">Close this tab (<kbd>Ctrl + X</kbd>) whenever you are finished reading.</span>
+            </div>
+            <div class="footer-shortcuts">
+                <span class="footer-note">Preferences: <kbd>F1</kbd></span>
+                <span class="footer-note">Palette: <kbd>Ctrl + P</kbd></span>
+                <span class="footer-note">Address: <kbd>!</kbd></span>
+            </div>
+        </footer>
+    </div>
+</body>
+</html>

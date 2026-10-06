@@ -589,6 +589,24 @@ export const COMMAND_DEFINITIONS = [
         action: () => window.checkForUpdates && window.checkForUpdates(true)
     },
     {
+        id: 'show-whats-new',
+        title: "Show What's New",
+        desc: 'Open release highlights for this version in a new tab',
+        details: 'Opens the offline release highlights page covering recent features, performance improvements, and security updates.',
+        tip: 'Close the tab with Ctrl+X when finished reading.',
+        category: 'Preferences & System',
+        icon: 'fa-solid fa-sparkles',
+        keywords: ['whats', 'new', 'update', 'changelog', 'release', 'notes', 'version'],
+        action: () => {
+            if (typeof window.openWhatsNewTab === 'function') {
+                window.openWhatsNewTab();
+            } else if (window.miseAPI && typeof window.miseAPI.getWhatsNewPath === 'function') {
+                const url = window.miseAPI.getWhatsNewPath();
+                if (url) spawnTabWithUrl(url);
+            }
+        }
+    },
+    {
         id: 'open-diagnostics',
         title: 'Open Diagnostics & Health Hub',
         desc: 'View system health, memory utilisation, logs, and generate sanitised bug reports',

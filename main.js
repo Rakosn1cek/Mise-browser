@@ -58,7 +58,8 @@ const DEFAULT_CONFIG = {
     sidebar_auto_collapse: true,
     show_status_bar: true,
     theme_colors: { ...DEFAULT_THEME_COLORS },
-    enable_diagnostics: false
+    enable_diagnostics: false,
+    last_seen_version: null
 };
 
 function loadBrowserConfig() {
@@ -928,6 +929,10 @@ ipcMain.on('get-pdf-viewer-path', (event) => {
 
 ipcMain.on('get-pdf-viewer-url', (event, targetUrl) => { 
     event.returnValue = security.mintPdfViewerUrl(targetUrl); 
+});
+
+ipcMain.on('get-whats-new-path', (event) => { 
+    event.returnValue = 'file://' + path.join(__dirname, 'assets', 'whats-new.html'); 
 });
 
 ipcMain.handle('read-pdf-data', async (event, payload) => {

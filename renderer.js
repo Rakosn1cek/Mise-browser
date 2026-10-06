@@ -383,15 +383,49 @@ async function initializeBrowser() {
                 }
                 if (badge) badge.textContent = text;
                 if (welcomeBadge) welcomeBadge.textContent = text;
+
+                // Prompt What's New tab on version bump
+                if (window.miseAPI && typeof window.miseAPI.getBrowserSettings === 'function') {
+                    window.miseAPI.getBrowserSettings().then((cfg) => {
+                        const lastSeen = cfg?.last_seen_version;
+                        if (!lastSeen) {
+                            // First run on machine: record version silently
+                            window.miseAPI.updateBrowserSettings({ last_seen_version: appVer }).catch(() => {});
+                        } else if (lastSeen !== appVer) {
+                            // Version update: spawn What's New tab and record version
+                            window.miseAPI.updateBrowserSettings({ last_seen_version: appVer }).catch(() => {});
+                            if (typeof window.miseAPI.getWhatsNewPath === 'function') {
+                                const whatsNewPath = window.miseAPI.getWhatsNewPath();
+                                if (whatsNewPath) spawnTabWithUrl(whatsNewPath);
+                            }
+                        }
+                    }).catch(() => {});
+                }
             }
         }).catch(() => {});
     }
+
+    window.openWhatsNewTab = () => {
+        if (window.miseAPI && typeof window.miseAPI.getWhatsNewPath === 'function') {
+            const whatsNewPath = window.miseAPI.getWhatsNewPath();
+            if (whatsNewPath) spawnTabWithUrl(whatsNewPath);
+        }
+    };
 
     if (window.miseAPI && typeof window.miseAPI.onUpdateAvailable === 'function') {
         window.miseAPI.onUpdateAvailable((info) => {
             displayUpdateNotification(info);
         });
     }
+
+    document.getElementById('WhatsNewOpenBtn')?.addEventListener('click', () => {
+        if (typeof window.openWhatsNewTab === 'function') {
+            window.openWhatsNewTab();
+            if (typeof window.togglePreferencesView === 'function') {
+                window.togglePreferencesView();
+            }
+        }
+    });
 
     document.getElementById('CheckForUpdatesBtn')?.addEventListener('click', () => {
         triggerUpdateCheck(true);

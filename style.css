@@ -2159,7 +2159,16 @@ body.zen-mode #right-content {
 #TabList li {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-start;
+}
+
+.tab-title {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: left;
 }
 
 #TabList li.tab-sleeping {
@@ -2201,6 +2210,7 @@ body.zen-mode #right-content {
     font-size: 11px;
     outline: none;
     border-radius: 3px;
+    flex-shrink: 0;
 }
 
 .tab-shield-btn:hover {
