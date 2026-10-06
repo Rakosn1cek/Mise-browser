@@ -1,0 +1,110 @@
+name: Website Compatibility Issue
+description: Report a broken website, login failure, or rendering glitch caused by privacy shields, container isolation, or Dark Reader
+title: "[Site Breakdown]: "
+labels: ["bug", "compatibility"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Mise Browser employs isolated container partitions, native adblocker request filtering (Ghostery engine), and in-DOM dark theme styling. Some websites require adjusting shield settings or whitelisting trusted authentication domains.
+
+        Before submitting:
+        * Test if turning off the tab Shield button resolves the problem.
+        * Test if disabling Dark Reader (`Ctrl+D`) restores proper rendering.
+        * Check if adding the authentication domain to Trusted Sites in Preferences resolves login loops.
+
+  - type: input
+    id: website_url
+    attributes:
+      label: Affected Website URL
+      description: The exact URL where the problem occurs.
+      placeholder: "https://example.com/login"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: issue_category
+    attributes:
+      label: Issue Category
+      description: What type of breakage is occurring?
+      options:
+        - Visual layout or broken page styling
+        - Dark Reader colour inversion problem or illegible contrast
+        - Login / Authentication failure (OAuth, SSO, Google login)
+        - Cloudflare / CAPTCHA infinite verification loop
+        - Media or video streaming failure
+        - Payment, checkout, or cart portal malfunction
+        - Page fails to load or displays blank
+    validations:
+      required: true
+
+  - type: dropdown
+    id: shield_testing
+    attributes:
+      label: Adblocker Shield Testing
+      description: Does toggling the tab shield button alter the behaviour?
+      options:
+        - Issue is resolved when Shields are turned OFF
+        - Issue persists even when Shields are turned OFF
+        - Untested / Not applicable
+    validations:
+      required: true
+
+  - type: dropdown
+    id: dark_reader_testing
+    attributes:
+      label: Dark Reader Testing
+      description: Does toggling Dark Reader (Ctrl+D) alter the behaviour?
+      options:
+        - Issue only occurs when Dark Reader is ON
+        - Issue persists with Dark Reader turned OFF
+        - Untested / Not applicable
+    validations:
+      required: true
+
+  - type: input
+    id: container_info
+    attributes:
+      label: Workspace Container
+      description: Which workspace or container partition was active (e.g. Workspace 1, Private workspace)?
+      placeholder: "e.g. Workspace 1 (persist:ws_1)"
+    validations:
+      required: false
+
+  - type: textarea
+    id: detailed_description
+    attributes:
+      label: Detailed Description
+      description: Describe what fails on the page and how to trigger it.
+      placeholder: Explain what went wrong...
+    validations:
+      required: true
+
+  - type: textarea
+    id: console_errors
+    attributes:
+      label: Webview Console Logs or Diagnostics
+      description: Paste any console errors from Developer Tools (Ctrl+Shift+I on webview) or Diagnostics Hub.
+      render: shell
+      placeholder: Paste console error messages here...
+    validations:
+      required: false
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots or Media
+      description: Attach screenshots demonstrating the visual or functional breakage.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: validations
+    attributes:
+      label: Confirmation Checklist
+      description: Please verify each point below before submitting.
+      options:
+        - label: I have verified this is not an upstream outage on the target website.
+          required: true
+        - label: My report contains no passwords, session cookies, or confidential details.
+          required: true

@@ -1,0 +1,78 @@
+name: Feature Request
+description: Propose a new feature, shortcut, or workflow enhancement for Mise Browser
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for contributing ideas to Mise Browser!
+
+        Mise is engineered as a lightweight, keyboard-first, zero-bloat browser designed specifically for low-resource hardware. Feature proposals should prioritise:
+        * Minimal memory and CPU footprint.
+        * Mouse-free keyboard workflows and modal navigation (NORMAL, INSERT, PASSTHROUGH).
+        * Zero background telemetry and strict local privacy.
+
+  - type: textarea
+    id: problem_statement
+    attributes:
+      label: Problem or Workflow Gap
+      description: Is your feature request related to a specific limitation or pain point?
+      placeholder: A clear description of the current limitation or problem...
+    validations:
+      required: false
+
+  - type: textarea
+    id: proposed_solution
+    attributes:
+      label: Proposed Solution
+      description: Detailed explanation of what you would like Mise Browser to do.
+      placeholder: Describe the proposed capability or enhancement...
+    validations:
+      required: true
+
+  - type: textarea
+    id: keyboard_workflow
+    attributes:
+      label: Keyboard & Modal Workflow
+      description: How should this feature be triggered and navigated using the keyboard without mouse dependency?
+      placeholder: "e.g. Triggered via Command Palette action, customisable in keybinds.json, or bound to a modal shortcut..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: resource_considerations
+    attributes:
+      label: Performance & Resource Considerations
+      description: How does this proposal ensure low memory consumption and prevent background overhead?
+      placeholder: "e.g. Operates on-demand without persistent timers, reuses existing DOM structures, etc."
+    validations:
+      required: false
+
+  - type: textarea
+    id: alternatives_considered
+    attributes:
+      label: Alternatives Considered
+      description: Any alternative designs, existing workarounds, or external utilities you have considered.
+      placeholder: Describe any alternatives...
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional_context
+    attributes:
+      label: Additional Context
+      description: Add any mockups, screenshots, or reference implementations from other lightweight tools.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: validations
+    attributes:
+      label: Confirmation Checklist
+      description: Please verify each point below before submitting.
+      options:
+        - label: I have searched open and closed issues and confirmed this is not a duplicate.
+          required: true
+        - label: This proposal aligns with Mise's philosophy of lightweight, keyboard-centric browsing.
+          required: true

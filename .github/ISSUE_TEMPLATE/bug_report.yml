@@ -1,0 +1,160 @@
+name: Bug Report
+description: Report unexpected behaviour, rendering errors, or crashes in Mise Browser
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for helping improve Mise Browser!
+
+        Before submitting, please ensure:
+        * You have searched existing issues to confirm this has not already been reported.
+        * For security vulnerabilities, do not file a public issue. Please follow the [Security Policy](https://github.com/Rakosn1cek/Mise-browser/blob/main/SECURITY.md).
+        * You can export live system and runtime details using the Diagnostics Hub (Preferences -> Diagnostics, or run `open-diagnostics` in the Command Palette via `Ctrl+P`).
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear and concise explanation of what the bug is.
+      placeholder: Describe what happened...
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction_steps
+    attributes:
+      label: Steps to Reproduce
+      description: Clear, sequential steps to reproduce the issue.
+      placeholder: |
+        1. Launch Mise Browser
+        2. Navigate to '...'
+        3. Switch mode or trigger shortcut '...'
+        4. Notice unexpected behaviour
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected_behaviour
+    attributes:
+      label: Expected Behaviour
+      description: What you expected to occur.
+      placeholder: Describe the expected behaviour...
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual_behaviour
+    attributes:
+      label: Actual Behaviour
+      description: What actually occurred instead.
+      placeholder: Describe the actual outcome...
+    validations:
+      required: true
+
+  - type: input
+    id: mise_version
+    attributes:
+      label: Mise Browser Version
+      description: Found in the Preferences overlay (F1) or package.json (e.g. v0.12.0 or git main).
+      placeholder: "e.g. v0.12.0"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: operating_system
+    attributes:
+      label: Operating System
+      description: Which operating system and distribution are you running?
+      options:
+        - Arch Linux / Artix / EndeavourOS
+        - Debian / Ubuntu / Linux Mint
+        - Fedora / RHEL
+        - NixOS / Guix
+        - Alpine / Void Linux
+        - Other Linux distribution
+        - macOS
+        - Windows
+    validations:
+      required: true
+
+  - type: input
+    id: window_manager
+    attributes:
+      label: Desktop Environment / Window Manager
+      description: Tiling window manager or desktop shell (e.g. Hyprland, Sway, i3, River, bspwm, GNOME, KDE Plasma).
+      placeholder: "e.g. Hyprland 0.44"
+    validations:
+      required: false
+
+  - type: dropdown
+    id: display_server
+    attributes:
+      label: Display Server
+      description: Which display protocol or server is active?
+      options:
+        - Wayland
+        - X11
+        - macOS Quartz
+        - Windows DWM
+        - Not sure
+    validations:
+      required: true
+
+  - type: dropdown
+    id: install_method
+    attributes:
+      label: Installation / Execution Method
+      description: How do you run Mise Browser on your machine?
+      options:
+        - Pre-built AppImage (.AppImage)
+        - Release tarball (.tar.gz)
+        - Built from source (npm start)
+        - AUR package
+        - Other packaging format
+    validations:
+      required: true
+
+  - type: dropdown
+    id: gpu_status
+    attributes:
+      label: GPU Hardware Acceleration
+      description: Is hardware acceleration enabled or disabled?
+      options:
+        - Hardware Acceleration Enabled (Default)
+        - Hardware Acceleration Disabled (Preferences setting or CLI flag)
+        - Software Rendering (LLVMpipe / SwiftShader)
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Diagnostics Export or Terminal Logs
+      description: Paste relevant logs from Diagnostics Hub (Preferences -> Diagnostics -> Export Report) or terminal output when launched with debug logging.
+      render: shell
+      placeholder: Paste logs or stack trace here...
+    validations:
+      required: false
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots or Media
+      description: Drag and drop screenshots or screen recordings illustrating the issue, if applicable.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: validations
+    attributes:
+      label: Confirmation Checklist
+      description: Please verify each point below before submitting.
+      options:
+        - label: I have searched open and closed issues and verified this is not a duplicate.
+          required: true
+        - label: I have verified this issue on the latest stable release or main branch.
+          required: true
+        - label: My report contains no confidential personal data, passwords, or private tokens.
+          required: true
