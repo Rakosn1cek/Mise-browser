@@ -91,5 +91,8 @@
   },
   "dependencies": {
     "@ghostery/adblocker-electron": "^2.18.2"
+  },
+  "overrides": {
+    "vite": "^6.4.3"
   }
 }
