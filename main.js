@@ -57,6 +57,8 @@ const DEFAULT_CONFIG = {
     tab_sleep_timeout_minutes: 15,
     sidebar_auto_collapse: true,
     show_status_bar: true,
+    show_clock: true,
+    clock_format: 'datetime',
     theme_colors: { ...DEFAULT_THEME_COLORS },
     enable_diagnostics: false,
     last_seen_version: null

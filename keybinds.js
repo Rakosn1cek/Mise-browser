@@ -63,6 +63,8 @@ const ACTION_METADATA = {
     'toggle-history': { label: 'Toggle Actionable History', category: 'Navigation & Workspaces' },
     'toggle-downloads': { label: 'Toggle Downloads Shelf', category: 'Navigation & Workspaces' },
     'toggle-status-bar': { label: 'Toggle Status & Mode Bar', category: 'Navigation & Workspaces' },
+    'toggle-clock': { label: 'Toggle Live Clock & Date Display', category: 'Navigation & Workspaces' },
+    'cycle-clock-format': { label: 'Cycle Clock Format (Date & Time / Time / Seconds)', category: 'Navigation & Workspaces' },
     'toggle-split': { label: 'Toggle Dual-Split View (Side-by-Side)', category: 'Navigation & Workspaces' },
     'switch-split-focus': { label: 'Switch Split Pane Focus (Pane 1 / Pane 2)', category: 'Navigation & Workspaces' },
     'swap-split-panes': { label: 'Swap Split Panes (Left / Right)', category: 'Navigation & Workspaces' },

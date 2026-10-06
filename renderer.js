@@ -115,6 +115,12 @@ import {
 } from './modules/darkReader.js';
 
 import {
+    initClock,
+    toggleClock,
+    cycleClockFormat
+} from './modules/clock.js';
+
+import {
     toggleDiagnosticsView,
     closeDiagnosticsView,
     toggleDiagnosticsRecording,
@@ -131,6 +137,8 @@ window.toggleInPageSearch = toggleInPageSearch;
 window.toggleNotesOverlay = toggleNotesOverlay;
 window.toggleDownloadShelf = toggleDownloadShelf;
 window.toggleStatusBar = toggleStatusBar;
+window.toggleClock = toggleClock;
+window.cycleClockFormat = cycleClockFormat;
 window.togglePassthroughMode = togglePassthroughMode;
 window.recalculateStatusMode = recalculateMode;
 window.updateStatusBarFromActiveView = updateStatusBarFromActiveView;
@@ -358,6 +366,7 @@ async function initializeBrowser() {
     initSearchEnginePreference();
     initDownloadShelf();
     initStatusBar();
+    initClock();
 
     if (window.miseAPI && typeof window.miseAPI.getBrowserSettings === 'function') {
         window.miseAPI.getBrowserSettings().then((cfg) => {
@@ -552,6 +561,8 @@ function setupEventListeners() {
             case 'toggle-help': togglePreferencesView(); break;
             case 'toggle-history': toggleHistoryOverlay(); break;
             case 'toggle-status-bar': toggleStatusBar(); break;
+            case 'toggle-clock': toggleClock(); break;
+            case 'cycle-clock-format': cycleClockFormat(); break;
             case 'open-diagnostics':
             case 'toggle-diagnostics': toggleDiagnosticsView(); break;
             case 'toggle-diagnostics-recording': toggleDiagnosticsRecording(); break;

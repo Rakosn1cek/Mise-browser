@@ -77,6 +77,28 @@ export const COMMAND_DEFINITIONS = [
         action: () => window.toggleStatusBar && window.toggleStatusBar()
     },
     {
+        id: 'toggle-clock',
+        title: 'Toggle Clock & Date Display',
+        desc: 'Show or hide the live clock in the status bar and sidebar',
+        details: 'Toggles the real-time clock widget displaying local date and time in the bottom status bar and vertical sidebar.',
+        tip: 'Click on the clock at any time to cycle between date and time, time only, and seconds.',
+        category: 'Preferences & System',
+        icon: 'fa-regular fa-clock',
+        keywords: ['clock', 'time', 'date', 'watch', 'hours', 'minutes', 'status'],
+        action: () => window.toggleClock && window.toggleClock()
+    },
+    {
+        id: 'cycle-clock-format',
+        title: 'Cycle Clock Format (Date & Time / Time / Seconds)',
+        desc: 'Switch between date and time, compact time, or time with seconds',
+        details: 'Rotates the clock presentation mode between standard UK date and time, compact time-only, and high-precision seconds.',
+        tip: 'You can also click the clock widget directly in the status bar or sidebar.',
+        category: 'Preferences & System',
+        icon: 'fa-solid fa-stopwatch',
+        keywords: ['clock', 'format', 'seconds', 'time', 'date', 'cycle', 'switch'],
+        action: () => window.cycleClockFormat && window.cycleClockFormat()
+    },
+    {
         id: 'trigger-hints',
         title: 'Toggle Link Hints Overlay',
         desc: 'Display letter tags over clickable links for mouse-free browsing',
@@ -710,6 +732,9 @@ export async function syncPreferencesUI() {
             const statusBarToggle = document.getElementById('setting-status-bar-toggle');
             if (statusBarToggle) statusBarToggle.checked = cfg.show_status_bar !== false;
 
+            const clockToggle = document.getElementById('setting-clock-toggle');
+            if (clockToggle) clockToggle.checked = cfg.show_clock !== false;
+
             const diagToggle = document.getElementById('setting-diagnostics-toggle');
             if (diagToggle) diagToggle.checked = !!cfg.enable_diagnostics;
 
@@ -828,6 +853,15 @@ export function setupPreferencesListeners() {
         statusBarToggle.onchange = () => {
             if (typeof window.toggleStatusBar === 'function') {
                 window.toggleStatusBar(statusBarToggle.checked);
+            }
+        };
+    }
+
+    const clockToggle = document.getElementById('setting-clock-toggle');
+    if (clockToggle) {
+        clockToggle.onchange = () => {
+            if (typeof window.toggleClock === 'function') {
+                window.toggleClock(clockToggle.checked);
             }
         };
     }

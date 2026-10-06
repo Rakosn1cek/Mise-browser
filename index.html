@@ -27,6 +27,12 @@
                 <!-- Populated dynamically -->
             </ul>
 
+            <div id="SidebarClock" class="sidebar-clock" title="Current Date and Time">
+                <i class="fa-regular fa-clock"></i>
+                <span id="SidebarClockDate" class="sidebar-clock-date"></span>
+                <span id="SidebarClockTime" class="sidebar-clock-time"></span>
+            </div>
+
             <div class="bottom-theme-layout">
                 <button id="pin-sidebar-btn" class="nav-icon-button" title="Pin / Auto-Collapse Sidebar (Ctrl+Shift+Z)"><i class="fa-solid fa-thumbtack"></i></button>
                 <button id="reader-view-btn" class="nav-icon-button" title="Toggle Reader View (F9 / e)"><i class="fa-solid fa-book-open"></i></button>
@@ -281,6 +287,17 @@
                                     </div>
                                     <label class="toggle-switch">
                                         <input type="checkbox" id="setting-status-bar-toggle" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+
+                                <div class="setting-item">
+                                    <div class="setting-info">
+                                        <span class="setting-label">Live Clock & Date</span>
+                                        <span class="setting-desc">Display real-time clock and date widget in the status bar and sidebar for full screen browsing.</span>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="setting-clock-toggle" checked>
                                         <span class="toggle-slider"></span>
                                     </label>
                                 </div>
@@ -676,6 +693,11 @@
                     <span id="StatusBarPartition" class="status-badge status-badge-partition partition-container" title="Active Container Partition">
                         <i class="fa-solid fa-box-archive"></i>
                         <span class="status-badge-text">Workspace 1</span>
+                    </span>
+                    <span id="StatusBarClock" class="status-badge status-badge-clock" title="Current Date and Time">
+                        <i class="fa-regular fa-clock"></i>
+                        <span id="StatusBarClockDate" class="status-clock-date"></span>
+                        <span id="StatusBarClockTime" class="status-clock-time"></span>
                     </span>
                 </div>
             </footer>

@@ -2847,6 +2847,79 @@ body.light-mode .download-action-btn:hover {
     background: rgba(247, 118, 142, 0.25);
 }
 
+/* Live Clock Widgets */
+.status-badge-clock {
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.3px;
+    text-transform: none;
+    font-weight: 600;
+}
+
+.status-badge-clock:hover {
+    background: var(--selected);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.status-clock-date {
+    opacity: 0.8;
+    margin-right: 3px;
+}
+
+.status-clock-time {
+    color: var(--accent);
+    font-weight: 700;
+}
+
+/* Sidebar Clock Widget */
+.sidebar-clock {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    margin-top: 6px;
+    margin-bottom: 4px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--text);
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    font-variant-numeric: tabular-nums;
+    user-select: none;
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.sidebar-clock:hover {
+    background: var(--selected);
+    border-color: var(--accent);
+}
+
+.sidebar-clock i {
+    color: var(--accent);
+    font-size: 11px;
+}
+
+.sidebar-clock-date {
+    opacity: 0.8;
+}
+
+.sidebar-clock-time {
+    color: var(--accent);
+    font-weight: 700;
+    margin-left: auto;
+}
+
+body.sidebar-auto-collapse #Sidebar:not(:hover):not(.expanded):not(:focus-within) #SidebarClock {
+    display: none !important;
+}
+
 /* Light Theme Overrides */
 body.light-mode .status-bar {
     background-color: color-mix(in srgb, #f2f3f7 var(--sidebar-opacity, 100%), transparent);
