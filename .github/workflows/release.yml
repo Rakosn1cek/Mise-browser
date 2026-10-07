@@ -5,6 +5,11 @@ on:
     tags:
       - 'v*'
   workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Release tag (e.g. v0.13.0)'
+        required: false
+        default: ''
 
 permissions:
   contents: write
@@ -44,9 +49,7 @@ jobs:
         run: npm ci
 
       - name: Package application
-        run: ${{ matrix.command }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ${{ matrix.command }} --publish never
 
       - name: Upload platform artefacts
         uses: actions/upload-artifact@v4
@@ -83,10 +86,11 @@ jobs:
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          name: Mise Browser ${{ github.ref_name }}
+          tag_name: ${{ inputs.tag_name || github.ref_name }}
+          name: Mise Browser ${{ inputs.tag_name || github.ref_name }}
           files: release-assets/*
           generate_release_notes: true
-          draft: true
+          draft: false
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
