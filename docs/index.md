@@ -52,6 +52,8 @@ features:
     details: Distro-agnostic AppImage, Deb, RPM, and Arch packaging. Zero telemetry, zero usage tracking, and anonymous GitHub release notifications for effortless updates.
 ---
 
+![Mise Browser Dual-Split View](/screenshots/split-view.webp)
+
 ## Why Mise Browser?
 
 Most modern web browsers consume gigabytes of memory, leak telemetry continuously, and expect a pointing device for every interaction. **Mise** takes a fundamentally different path: it treats web navigation as a keyboard-centric, distraction-free environment designed to respect both your hardware and your privacy.

@@ -37,6 +37,8 @@ Mise actively protects against passive browser fingerprinting:
 
 ## Trusted Sites (Online Banking & Shopping)
 
+![Privacy and Trusted Sites Configuration](/screenshots/preferences-3.webp)
+
 Modern online banks, Google authentication, and e-commerce sites (such as Amazon or checkout payment gateways) employ sophisticated anti-fraud algorithms. When a browser randomises fingerprints, alters user-agent client hints, or strips verification headers, fraud systems flag the session as suspicious and block logins or payments.
 
 Mise resolves this through the **Trusted Sites** architecture:

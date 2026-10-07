@@ -6,6 +6,8 @@ Mise incorporates productivity utilities directly into the browser, saving all d
 
 ## Markdown Quick Notes (`Ctrl + N`)
 
+![Mise Browser Markdown Quick Notes](/screenshots/notes.webp)
+
 Mise includes an integrated scratchpad overlay for taking notes alongside your research:
 
 - Press **Ctrl + N** to open or close the Notes overlay.
@@ -58,6 +60,8 @@ Quickmarks are saved in:
 ---
 
 ## Actionable History Overlay (`Ctrl + Shift + H`)
+
+![Mise Browser Actionable History Overlay](/screenshots/history.webp)
 
 - Press **Ctrl + Shift + H** to open the History overlay.
 - Search through your browsing history in real time.

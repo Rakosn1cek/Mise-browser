@@ -58,6 +58,9 @@ When you launch Mise Browser with dozens of tabs across multiple workspaces:
 You can customise how quickly tabs hibernate using either the in-browser Preferences overlay or the native top menu bar:
 
 ### Method 1: In-Browser Preferences Overlay (Ctrl + H)
+
+![Mise Browser Performance & Hardware Preferences](/screenshots/preferences-1.webp)
+
 1. Open **Preferences** by pressing **Ctrl + H** (or open the Command Palette with **Ctrl + P** and select **Preferences**).
 2. Locate **Tab Hibernation (Sleep Timeout)** under the **Performance & Hardware** section.
 3. Choose your preferred idle duration from the dropdown:
@@ -69,6 +72,9 @@ You can customise how quickly tabs hibernate using either the in-browser Prefere
 The change takes effect immediately without needing to restart the browser.
 
 ### Method 2: Native Menu Bar (F1)
+
+![Mise Settings Tab Hibernation Menu](/screenshots/menu.webp)
+
 1. Press **F1** to display the native top menu bar.
 2. Click **Mise Settings** -> **Tab Hibernation (Sleep Timeout)**.
 3. Select your desired sleep timeout duration.

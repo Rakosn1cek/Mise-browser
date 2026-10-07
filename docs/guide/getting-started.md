@@ -31,6 +31,8 @@ Mise combines the rendering capabilities of Chromium with Electron and native sy
 
 Once launched, Mise presents a clean, distraction-free window:
 
+![Mise Browser Workspace Welcome Screen](/screenshots/new-workspace.webp)
+
 - Press **Ctrl + L** to open the floating address bar and navigate to any site.
 - Press **Ctrl + T** to open a new tab.
 - Press **Ctrl + F** to activate the Link Hints overlay and navigate links using your keyboard.

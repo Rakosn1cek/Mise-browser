@@ -11,6 +11,8 @@ Mise leverages the Chromium rendering engine wrapped inside a streamlined Electr
 📖 **Official Documentation**: [https://rakosn1cek.github.io/Mise-browser/](https://rakosn1cek.github.io/Mise-browser/)  
 📦 **Download Packages (v0.13.0)**: [GitHub Releases](https://github.com/Rakosn1cek/Mise-browser/releases/latest) • [Direct Package Links](#downloads)
 
+![Mise Browser Dual-Split View](docs/public/screenshots/split-view.webp)
+
 ***
 
 ## Key Highlights

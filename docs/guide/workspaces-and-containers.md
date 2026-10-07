@@ -27,6 +27,8 @@ In Mise, every workspace is automatically assigned its own dedicated, persistent
 
 The Workspace Dashboard provides a structural tree view of all open tabs across your entire session:
 
+![Mise Browser Workspace Dashboard](/screenshots/workspace-dashboard.webp)
+
 - Press **Ctrl + Shift + W** to open or close the Dashboard.
 - **Visual Overview**: Displays every workspace, highlighting the currently active workspace, along with the title and status of every tab.
 - **Tree Navigation**: Use the **Up** and **Down** arrow keys to traverse workspaces and tabs, and press **Enter** to jump directly to any tab.

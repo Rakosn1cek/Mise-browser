@@ -6,6 +6,8 @@ The Command Centre gives you rapid, searchable access to all Mise operations, in
 
 ## Accessing the Command Centre
 
+![Mise Browser Command Centre Overlay](/screenshots/command-centre.webp)
+
 - Press **Ctrl + P** from anywhere in Mise.
 - Type to fuzzy-search commands, shortcuts, and keywords dynamically.
 - Click category filter chips (**All**, **Tabs & Navigation**, **Split View**, **Performance**, **Tools & Notes**, **Scripts & Styles**, **Preferences**) to filter actions instantly.

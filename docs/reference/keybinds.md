@@ -6,6 +6,8 @@ All keyboard shortcuts in Mise Browser are fully customisable via `~/.config/mis
 
 ## Default Shortcut Bindings
 
+![Mise Browser Help and Shortcuts Reference](/screenshots/preferences-4.webp)
+
 ### Navigation & Workspaces
 
 | Shortcut | Action | Description |

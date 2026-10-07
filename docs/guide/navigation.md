@@ -32,6 +32,8 @@ Press **Ctrl + L** at any time to open the floating, high-contrast address overl
 
 ## DuckDuckGo Bang Redirection
 
+![DuckDuckGo Bangs and Address Bar Calculator](/screenshots/preferences-5.webp)
+
 Mise supports over 13,500 DuckDuckGo bangs directly from the floating address bar. Bangs route queries directly to the target website:
 
 * `!w Arch Linux`: Redirects directly to the Arch Linux article on Wikipedia.
