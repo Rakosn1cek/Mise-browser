@@ -127,6 +127,11 @@ import {
     setupDiagnosticsListeners
 } from './modules/overlays/diagnostics.js';
 
+import {
+    initWindowControls,
+    toggleWindowControls
+} from './modules/windowControls.js';
+
 // Attach functions needed across module boundaries to window
 window.toggleDarkReaderOnActiveTab = toggleDarkReaderOnActiveTab;
 window.toggleReaderViewOnActiveTab = toggleReaderViewOnActiveTab;
@@ -138,6 +143,7 @@ window.toggleNotesOverlay = toggleNotesOverlay;
 window.toggleDownloadShelf = toggleDownloadShelf;
 window.toggleStatusBar = toggleStatusBar;
 window.toggleClock = toggleClock;
+window.toggleWindowControls = toggleWindowControls;
 window.cycleClockFormat = cycleClockFormat;
 window.togglePassthroughMode = togglePassthroughMode;
 window.recalculateStatusMode = recalculateMode;
@@ -367,6 +373,7 @@ async function initializeBrowser() {
     initDownloadShelf();
     initStatusBar();
     initClock();
+    initWindowControls(initialCfg);
 
     if (window.miseAPI && typeof window.miseAPI.getBrowserSettings === 'function') {
         window.miseAPI.getBrowserSettings().then((cfg) => {
@@ -563,6 +570,7 @@ function setupEventListeners() {
             case 'toggle-status-bar': toggleStatusBar(); break;
             case 'toggle-clock': toggleClock(); break;
             case 'cycle-clock-format': cycleClockFormat(); break;
+            case 'toggle-window-controls': toggleWindowControls(args[0]); break;
             case 'open-diagnostics':
             case 'toggle-diagnostics': toggleDiagnosticsView(); break;
             case 'toggle-diagnostics-recording': toggleDiagnosticsRecording(); break;

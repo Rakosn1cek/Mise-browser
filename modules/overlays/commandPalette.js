@@ -99,6 +99,17 @@ export const COMMAND_DEFINITIONS = [
         action: () => window.cycleClockFormat && window.cycleClockFormat()
     },
     {
+        id: 'toggle-window-controls',
+        title: 'Toggle Window Controls (Minimise, Maximise, Close)',
+        desc: 'Show or hide window action buttons in the sidebar for desktop environments',
+        details: 'Displays window management buttons at the top of the vertical sidebar. Ideal for desktop environments such as KDE or GNOME where native window buttons are hidden or disabled.',
+        tip: 'Enable this if your desktop environment hides title bars on maximised windows.',
+        category: 'Preferences & System',
+        icon: 'fa-regular fa-window-restore',
+        keywords: ['window', 'controls', 'minimize', 'minimise', 'maximize', 'maximise', 'close', 'restore', 'buttons', 'kde', 'gnome'],
+        action: () => window.toggleWindowControls && window.toggleWindowControls()
+    },
+    {
         id: 'trigger-hints',
         title: 'Toggle Link Hints Overlay',
         desc: 'Display letter tags over clickable links for mouse-free browsing',
@@ -735,6 +746,9 @@ export async function syncPreferencesUI() {
             const clockToggle = document.getElementById('setting-clock-toggle');
             if (clockToggle) clockToggle.checked = cfg.show_clock !== false;
 
+            const windowControlsToggle = document.getElementById('setting-window-controls-toggle');
+            if (windowControlsToggle) windowControlsToggle.checked = !!cfg.show_window_controls;
+
             const diagToggle = document.getElementById('setting-diagnostics-toggle');
             if (diagToggle) diagToggle.checked = !!cfg.enable_diagnostics;
 
@@ -818,6 +832,7 @@ export function setupPreferencesListeners() {
             const sleepSelect = document.getElementById('setting-sleep-timeout');
             const sidebarToggle = document.getElementById('setting-sidebar-collapse-toggle');
             const spellSelect = document.getElementById('setting-spellchecker-language');
+            const windowControlsToggle = document.getElementById('setting-window-controls-toggle');
 
             const newCfg = {
                 disable_gpu: gpuToggle ? !gpuToggle.checked : false,
@@ -826,7 +841,8 @@ export function setupPreferencesListeners() {
                 tab_sleep_timeout_minutes: sleepSelect ? parseInt(sleepSelect.value, 10) : 15,
                 sidebar_auto_collapse: sidebarToggle ? sidebarToggle.checked : true,
                 email_handler: emailSelect ? emailSelect.value : 'system',
-                spellchecker_language: spellSelect ? spellSelect.value : 'en-GB'
+                spellchecker_language: spellSelect ? spellSelect.value : 'en-GB',
+                show_window_controls: windowControlsToggle ? windowControlsToggle.checked : false
             };
 
             if (window.miseAPI && typeof window.miseAPI.saveBrowserSettings === 'function') {
@@ -862,6 +878,15 @@ export function setupPreferencesListeners() {
         clockToggle.onchange = () => {
             if (typeof window.toggleClock === 'function') {
                 window.toggleClock(clockToggle.checked);
+            }
+        };
+    }
+
+    const windowControlsToggle = document.getElementById('setting-window-controls-toggle');
+    if (windowControlsToggle) {
+        windowControlsToggle.onchange = () => {
+            if (typeof window.toggleWindowControls === 'function') {
+                window.toggleWindowControls(windowControlsToggle.checked);
             }
         };
     }

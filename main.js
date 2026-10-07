@@ -61,6 +61,7 @@ const DEFAULT_CONFIG = {
     clock_format: 'datetime',
     theme_colors: { ...DEFAULT_THEME_COLORS },
     enable_diagnostics: false,
+    show_window_controls: false,
     last_seen_version: null
 };
 
@@ -1121,6 +1122,33 @@ ipcMain.on('toggle-menu-bar', () => {
     openSettingsMenu();
 });
 
+// Window management controls
+ipcMain.on('window-minimize', () => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.minimize();
+    }
+});
+
+ipcMain.on('window-toggle-maximize', () => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+        if (mainWindow.isMaximized()) {
+            mainWindow.unmaximize();
+        } else {
+            mainWindow.maximize();
+        }
+    }
+});
+
+ipcMain.on('window-close', () => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.close();
+    }
+});
+
+ipcMain.handle('window-is-maximized', () => {
+    return (mainWindow && !mainWindow.isDestroyed()) ? mainWindow.isMaximized() : false;
+});
+
 ipcMain.handle('get-keybinds', async () => {
     return keybinds.getKeybinds();
 });
@@ -1351,6 +1379,19 @@ function buildSettingsSubmenu(cfg) {
                 }
             }
         },
+        {
+            label: 'Window Controls (Sidebar)',
+            type: 'checkbox',
+            checked: !!cfg.show_window_controls,
+            click: (menuItem) => {
+                cfg.show_window_controls = menuItem.checked;
+                if (!fs.existsSync(CONFIG_DIR)) fs.mkdirSync(CONFIG_DIR, { recursive: true });
+                fs.writeFileSync(CONFIG_PATH, JSON.stringify(cfg, null, 4), 'utf-8');
+                if (mainWindow && !mainWindow.isDestroyed()) {
+                    mainWindow.webContents.send('master-shortcut', 'toggle-window-controls', menuItem.checked);
+                }
+            }
+        },
         { type: 'separator' },
         {
             label: 'Open User Scripts Directory',
@@ -1461,6 +1502,18 @@ function createWindow() {
     security.setTrustedDomains(loadBrowserConfig().trusted_domains || []);
 
     mainWindow.loadFile('index.html');
+
+    mainWindow.on('maximize', () => {
+        if (mainWindow && !mainWindow.isDestroyed() && mainWindow.webContents) {
+            mainWindow.webContents.send('window-maximized-state', true);
+        }
+    });
+
+    mainWindow.on('unmaximize', () => {
+        if (mainWindow && !mainWindow.isDestroyed() && mainWindow.webContents) {
+            mainWindow.webContents.send('window-maximized-state', false);
+        }
+    });
 
     mainWindow.webContents.once('did-finish-load', () => {
         setTimeout(() => {

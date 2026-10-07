@@ -82,6 +82,15 @@ contextBridge.exposeInMainWorld('miseAPI', {
     getSystemDiagnostics: (sessionStats) => ipcRenderer.invoke('get-system-diagnostics', sessionStats),
     clearDiagnosticsLogs: () => ipcRenderer.invoke('clear-diagnostics-logs'),
     setDiagnosticsEnabled: (enabled) => ipcRenderer.invoke('set-diagnostics-enabled', enabled),
-    logDiagnosticsEvent: (eventData) => ipcRenderer.invoke('log-diagnostics-event', eventData)
+    logDiagnosticsEvent: (eventData) => ipcRenderer.invoke('log-diagnostics-event', eventData),
+    minimizeWindow: () => ipcRenderer.send('window-minimize'),
+    toggleMaximizeWindow: () => ipcRenderer.send('window-toggle-maximize'),
+    closeWindow: () => ipcRenderer.send('window-close'),
+    isWindowMaximized: () => ipcRenderer.invoke('window-is-maximized'),
+    onWindowMaximizedChange: (callback) => {
+        const handler = (event, isMax) => callback(isMax);
+        ipcRenderer.on('window-maximized-state', handler);
+        return () => ipcRenderer.removeListener('window-maximized-state', handler);
+    }
 });
 
