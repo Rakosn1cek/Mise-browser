@@ -2,12 +2,14 @@
 
 > A lightweight, keyboard-first, and container-isolated web browser engineered specifically for low-resource and fanless Linux hardware.
 
+[![Latest Release](https://img.shields.io/github/v/release/Rakosn1cek/Mise-browser?logo=github&label=release)](https://github.com/Rakosn1cek/Mise-browser/releases/latest)
 [![Documentation](https://img.shields.io/badge/docs-GitHub_Pages-blue.svg)](https://rakosn1cek.github.io/Mise-browser/)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 
 Mise leverages the Chromium rendering engine wrapped inside a streamlined Electron framework to minimise system overhead while delivering a fast, isolated web experience without mouse dependency.
 
-📖 **Official Documentation & Landing Page**: [https://rakosn1cek.github.io/Mise-browser/](https://rakosn1cek.github.io/Mise-browser/)
+📖 **Official Documentation**: [https://rakosn1cek.github.io/Mise-browser/](https://rakosn1cek.github.io/Mise-browser/)  
+📦 **Download Packages (v0.13.0)**: [GitHub Releases](https://github.com/Rakosn1cek/Mise-browser/releases/latest) • [Direct Package Links](#downloads)
 
 ***
 
@@ -37,14 +39,51 @@ Security, isolation, and upstream dependency freshness are foundational principl
 
 ***
 
-## Quick Start
+## Downloads
+
+Pre-built standalone binaries and packages are compiled and published for Linux, macOS, and Windows with each release.
+
+> **Latest Release**: [**v0.13.0**](https://github.com/Rakosn1cek/Mise-browser/releases/latest) • [All Releases & Release Notes](https://github.com/Rakosn1cek/Mise-browser/releases)
+
+| Platform | Format | Architecture | Direct Download | Notes |
+| :--- | :--- | :--- | :--- | :--- |
+| **Linux** | AppImage | x64 | [Mise.Browser-0.13.0.AppImage](https://github.com/Rakosn1cek/Mise-browser/releases/download/v0.13.0/Mise.Browser-0.13.0.AppImage) | Portable executable (`chmod +x` and run) |
+| **Linux** | tar.gz | x64 | [mise-browser-0.13.0.tar.gz](https://github.com/Rakosn1cek/Mise-browser/releases/download/v0.13.0/mise-browser-0.13.0.tar.gz) | Standalone tarball archive |
+| **macOS** | DMG | Apple Silicon (arm64) | [Mise.Browser-0.13.0-arm64.dmg](https://github.com/Rakosn1cek/Mise-browser/releases/download/v0.13.0/Mise.Browser-0.13.0-arm64.dmg) | Drag and drop installer |
+| **macOS** | ZIP | Apple Silicon (arm64) | [Mise.Browser-0.13.0-arm64-mac.zip](https://github.com/Rakosn1cek/Mise-browser/releases/download/v0.13.0/Mise.Browser-0.13.0-arm64-mac.zip) | Standalone application bundle |
+| **Windows** | Setup EXE | x64 | [Mise.Browser.Setup.0.13.0.exe](https://github.com/Rakosn1cek/Mise-browser/releases/download/v0.13.0/Mise.Browser.Setup.0.13.0.exe) | NSIS desktop installer |
+| **Windows** | Portable EXE | x64 | [Mise.Browser.0.13.0.exe](https://github.com/Rakosn1cek/Mise-browser/releases/download/v0.13.0/Mise.Browser.0.13.0.exe) | Portable binary without installation |
+| **Integrity** | Checksums | All | [SHA256SUMS.txt](https://github.com/Rakosn1cek/Mise-browser/releases/download/v0.13.0/SHA256SUMS.txt) | Cryptographic SHA-256 hash list |
+
+### Quick Run (Linux AppImage)
+
+```bash
+chmod +x Mise.Browser-0.13.0.AppImage
+./Mise.Browser-0.13.0.AppImage
+```
+
+### Verifying Package Integrity
+
+Download `SHA256SUMS.txt` into the same folder as your downloaded package and run:
+
+```bash
+sha256sum -c SHA256SUMS.txt
+```
+
+For full installation guides and platform configurations, visit the [Installation Guide](https://rakosn1cek.github.io/Mise-browser/guide/installation).
+
+***
+
+## Quick Start (Running from Source)
+
+For developers and contributors running Mise directly from the repository:
 
 ### Prerequisites
 * Linux (recommended), macOS, or Windows
 * `Node.js` (v20+ recommended) and `npm`
 * A terminal emulator (e.g. Kitty, Alacritty, Foot, st, xterm)
 
-### Installation & Launch
+### Clone & Launch
 
 ```bash
 # Clone the repository
