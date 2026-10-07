@@ -469,7 +469,7 @@ function buildMarkdownIssueReport(data) {
     lines.push('_Privacy status: 100% local, scrubbed of user paths, auth tokens, and private IPs._\n');
 
     lines.push('#### 1. Software Environment');
-    lines.push(`- **Mise Version**: v${app.version || '0.12.0'}`);
+    lines.push(`- **Mise Version**: v${app.version || '0.13.0'}`);
     lines.push(`- **Electron**: v${app.electron || 'unknown'}`);
     lines.push(`- **Chromium**: v${app.chrome || 'unknown'}`);
     lines.push(`- **Node.js**: v${app.node || 'unknown'}`);

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>What's New in Mise v0.12.0</title>
+    <title>What's New in Mise v0.13.0</title>
     <link rel="icon" type="image/png" href="icons/Mise-logo48.png">
     <style>
         :root {
@@ -240,52 +240,67 @@
                     Full Release on GitHub ↗
                 </a>
             </div>
-            <h1>What's New in Mise v0.12.0</h1>
-            <p class="subtitle">Modal navigation engine, native dark reader, privacy shields, and update checking.</p>
+            <h1>What's New in Mise v0.13.0</h1>
+            <p class="subtitle">Built-in PDF reader, hardened reader view, live clock widgets, diagnostics hub, and address bar calculator.</p>
         </header>
 
         <section class="feature-card">
             <div class="feature-header">
-                <div class="feature-icon">❖</div>
-                <h2 class="feature-title">Modal Navigation & Status Bar</h2>
+                <div class="feature-icon">📄</div>
+                <h2 class="feature-title">Built-in Mozilla PDF.js & Hardened Reader View</h2>
             </div>
             <p class="feature-desc">
-                Keyboard-driven modal navigation inspired by Vim, featuring dedicated NORMAL, INSERT, and PASSTHROUGH modes.
+                Keyboard-first offline document reading and distraction-free article distillation directly integrated into the browser.
             </p>
             <ul class="feature-points">
-                <li>Real-time visual mode indicator badge in the new bottom status bar.</li>
-                <li>Instant link hinting (<kbd>f</kbd>), in-page search (<kbd>/</kbd>), and quick address bar jump (<kbd>!</kbd>).</li>
-                <li>Customisable shortcut bindings through keybinds.json or the Preferences overlay.</li>
+                <li>Native PDF.js viewer with capability tokens, origin-scoped IPC bridges, and keyboard navigation.</li>
+                <li>Hardened Readability engine sanitising dangerous tags, inline styling, and external tracking vectors.</li>
+                <li>Instant reader toggle with <kbd>F9</kbd> or <kbd>e</kbd> shortcut in Normal mode.</li>
             </ul>
         </section>
 
         <section class="feature-card">
             <div class="feature-header">
-                <div class="feature-icon">◐</div>
-                <h2 class="feature-title">Native Dark Reader Engine</h2>
+                <div class="feature-icon">⏱</div>
+                <h2 class="feature-title">Live Clock & Full-Screen Ergonomics</h2>
             </div>
             <p class="feature-desc">
-                High-performance dark theme engine operating directly within page DOMs without external extensions.
+                Real-time date and time indicators tailored for distraction-free browsing on lean tiling window managers like Hyprland.
             </p>
             <ul class="feature-points">
-                <li>Automatic colour inversion and image preservation for comfortable night reading.</li>
-                <li>Per-site domain exclusions and persistence across reloads.</li>
-                <li>Quick toggle via keyboard shortcut (<kbd>Ctrl + D</kbd>) or status bar action.</li>
+                <li>Persistent status bar clock widget visible in full-screen mode without external taskbars or docks.</li>
+                <li>Tabular monospace numerals (tabular-nums) preventing layout jitter as seconds elapse.</li>
+                <li>Click to cycle presentation formats: Date & Time, Compact Time, or High-Precision Seconds.</li>
             </ul>
         </section>
 
         <section class="feature-card">
             <div class="feature-header">
-                <div class="feature-icon">🛡</div>
-                <h2 class="feature-title">Enhanced Privacy & Multi-Account Containers</h2>
+                <div class="feature-icon">🩺</div>
+                <h2 class="feature-title">Diagnostics & Health Hub Overlay</h2>
             </div>
             <p class="feature-desc">
-                Comprehensive tracking protection and isolated partition environments.
+                Privacy-conscious system telemetry and performance auditing tools to monitor resource efficiency.
             </p>
             <ul class="feature-points">
-                <li>Full Ghostery adblocker integration attached across all container workspaces.</li>
-                <li>Hardened User-Agent and client hint baselines to prevent unique fingerprint disclosures.</li>
-                <li>Background update checker keeping you informed of upstream security patches.</li>
+                <li>Real-time process tree, CPU usage, and per-process memory consumption monitoring.</li>
+                <li>Scrubbed diagnostic logs with level filters, category search, and markdown report exporting.</li>
+                <li>Accessible via Preferences (<kbd>F1</kbd>), Command Palette (<kbd>Ctrl + P</kbd>), or shortcut (<kbd>Ctrl + Shift + D</kbd>).</li>
+            </ul>
+        </section>
+
+        <section class="feature-card">
+            <div class="feature-header">
+                <div class="feature-icon">⚡</div>
+                <h2 class="feature-title">Address Bar Calculator, Bangs & Userscript Hardening</h2>
+            </div>
+            <p class="feature-desc">
+                Expanded omnibox capabilities alongside enterprise-grade script security boundaries.
+            </p>
+            <ul class="feature-points">
+                <li>Live arithmetic evaluation directly in the floating address bar (e.g. '= 42 * 1.2').</li>
+                <li>Instant DuckDuckGo bang redirection (e.g. '!w Linux', '!yt Mise') without search roundtrips.</li>
+                <li>Hardened GM_xmlhttpRequest API with SSRF protection, IP pinning against DNS rebinding, and @connect validation.</li>
             </ul>
         </section>
 
