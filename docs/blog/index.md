@@ -22,6 +22,14 @@ How modal keyboard shortcuts broke inside modern Web Components, why `document.a
 
 ---
 
+### [The "Zero-RAM" Tab Hibernation Myth: Why Sleeping Tabs Still Cost 40-90MB](./tab-hibernation-zero-ram-myth.md)
+
+How chasing zero memory usage broke tabs with the `about:blank` amnesia trap, why Chromium partition sessions retain 40-90MB of RAM, and the pragmatic unmounting architecture that slashed memory bloat safely.
+
+`Memory Optimisation` · `Chromium` · `Electron` · `Linux` · `Architecture`
+
+---
+
 ### Upcoming Chronicles
 
 - **The Ghostery IPC Civil War: Adblocking Across Isolated Partitions**  
@@ -29,9 +37,6 @@ How modal keyboard shortcuts broke inside modern Web Components, why `document.a
 
 - **Taming the Userscript Engine: SSRF and DNS Rebinding Defences**  
   Closing critical security holes in `GM_xmlhttpRequest` by enforcing `@connect` rules, private IP blocking, and pre-resolution socket pinning.
-
-- **Zero-RAM Tab Hibernation Without State Amnesia**  
-  Unmounting background `<webview>` elements to eliminate memory usage on fanless Linux hardware while preserving history stacks and form inputs.
 
 - **The Ghost in the CSS: Tracking Pixels in Reader View**  
   How inline CSS background images and SVG containers bypassed DOM distillation and how strict sanitisation closed the leak.

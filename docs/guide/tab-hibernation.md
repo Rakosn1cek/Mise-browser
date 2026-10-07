@@ -9,7 +9,7 @@ True Tab Hibernation is a core performance feature in Mise Browser designed to c
 Standard browsers keep background tabs mounted in the DOM. Even when background timers are throttled, each open tab maintains an active Chromium renderer process consuming between 100 MB and 400 MB of RAM, in addition to background cache allocations. On fanless devices, 15 open tabs can quickly consume 3 GB of memory and induce CPU thermal throttling.
 
 Mise resolves this by implementing **True Hibernation**:
-When an inactive tab exceeds its sleep timer, its `<webview>` element is completely detached from the DOM. This terminates the Chromium renderer process, dropping its RAM consumption to zero while keeping the tab visible in the sidebar.
+When an inactive tab exceeds its sleep timer, its `<webview>` element is completely detached from the DOM. This terminates the guest document and JavaScript execution context, slashing RAM consumption by up to 85% down to the baseline Chromium process overhead (around 40-90 MB) while keeping the tab visible in the sidebar.
 
 ---
 
