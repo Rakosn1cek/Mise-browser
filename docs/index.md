@@ -115,3 +115,10 @@ Mise combines the battle-tested rendering speed of Chromium and Electron with cu
 * **safeStorage Encryption:** Linux `libsecret`, macOS Keychain, and Windows DPAPI hardware-backed encryption for persistent cookies.
 * **inotify Live Reloading:** Instant injection and live reloading of local `.user.js` and `.user.css` user customisations.
 * **Debounced Persistence:** Asynchronous disk flushing to prevent main-process stutter on single-page web applications.
+
+---
+
+## Community & Fediverse
+
+* <a rel="me" href="https://mastodon.social/@misebrowser">Mastodon (@misebrowser@mastodon.social)</a>
+* [GitHub Discussions & Source](https://github.com/Rakosn1cek/Mise-browser)

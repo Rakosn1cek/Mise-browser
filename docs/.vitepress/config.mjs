@@ -5,7 +5,20 @@ export default defineConfig({
   description: 'Keyboard-first, container-isolated web browser for fanless Linux systems',
   base: '/Mise-browser/',
   head: [
-    ['link', { rel: 'icon', href: '/Mise-browser/logo.png' }]
+    ['link', { rel: 'icon', href: '/Mise-browser/logo.png' }],
+    ['link', { rel: 'me', href: 'https://mastodon.social/@misebrowser' }],
+    ['meta', { property: 'og:type', content: 'website' }],
+    ['meta', { property: 'og:site_name', content: 'Mise Browser' }],
+    ['meta', { property: 'og:title', content: 'Mise Browser' }],
+    ['meta', { property: 'og:description', content: 'A lightweight, keyboard-first, and container-isolated web browser engineered specifically for low-resource and fanless Linux hardware.' }],
+    ['meta', { property: 'og:image', content: 'https://rakosn1cek.github.io/Mise-browser/og-image.png' }],
+    ['meta', { property: 'og:image:width', content: '1280' }],
+    ['meta', { property: 'og:image:height', content: '640' }],
+    ['meta', { property: 'og:url', content: 'https://rakosn1cek.github.io/Mise-browser/' }],
+    ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
+    ['meta', { name: 'twitter:title', content: 'Mise Browser' }],
+    ['meta', { name: 'twitter:description', content: 'A lightweight, keyboard-first, and container-isolated web browser engineered specifically for low-resource and fanless Linux hardware.' }],
+    ['meta', { name: 'twitter:image', content: 'https://rakosn1cek.github.io/Mise-browser/og-image.png' }]
   ],
   themeConfig: {
     logo: '/logo.png',
@@ -67,10 +80,11 @@ export default defineConfig({
       provider: 'local'
     },
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/Rakosn1cek/Mise-browser' }
+      { icon: 'github', link: 'https://github.com/Rakosn1cek/Mise-browser' },
+      { icon: 'mastodon', link: 'https://mastodon.social/@misebrowser' }
     ],
     footer: {
-      message: 'Released under the GNU General Public Licence v3.0.',
+      message: 'Released under the GNU General Public Licence v3.0. • Follow on <a rel="me" href="https://mastodon.social/@misebrowser" target="_blank">Mastodon</a>',
       copyright: 'Copyright © 2026 Mise Browser Project'
     }
   }
