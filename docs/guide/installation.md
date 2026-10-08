@@ -6,7 +6,7 @@ Mise is designed to be lightweight, modular, and easy to run across Linux, macOS
 
 ## Pre-Built Executables
 
-Official releases and cryptographic checksums are published for every tagged version on our [GitHub Releases page](https://github.com/Rakosn1cek/Mise-browser/releases).
+Official releases and cryptographic checksums are published for every tagged version on the [GitHub Releases page](https://github.com/Rakosn1cek/Mise-browser/releases).
 
 ### Linux (Distro-Agnostic AppImage)
 

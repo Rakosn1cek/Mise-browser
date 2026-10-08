@@ -2,7 +2,7 @@
 
 Deep dives into the most challenging bugs, feature failures, and architectural lessons encountered during the development of Mise Browser.
 
-Each chronicle follows our development anatomy: **Problem** → **Attempted Solution** → **The Bug / Fail** → **The Architectural Fix**.
+Each chronicle follows the development anatomy: **Problem** → **Attempted Solution** → **The Bug / Fail** → **The Architectural Fix**.
 
 ---
 

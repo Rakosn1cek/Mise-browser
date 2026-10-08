@@ -1,6 +1,6 @@
 # Security Policy
 
-Mise Browser treats security as a core architectural foundation. This document outlines our supported versions, release cadence, security architecture, and procedures for reporting vulnerabilities.
+Mise Browser treats security as a core architectural foundation. This document outlines supported versions, release cadence, security architecture, and procedures for reporting vulnerabilities.
 
 ---
 
@@ -20,7 +20,7 @@ Mise tracks upstream Electron and Chromium releases and audits dependencies twic
 
 ## Reporting a Vulnerability
 
-We appreciate the efforts of security researchers and users who report vulnerabilities responsibly:
+The maintainer appreciates the efforts of security researchers and users who report vulnerabilities responsibly:
 
 * **Private Reporting:** Please do **not** report security vulnerabilities via public GitHub issues, discussions, or pull requests.
 * **Preferred Channel:** Submit vulnerability disclosures privately via [GitHub Security Advisories](https://github.com/Rakosn1cek/Mise-browser/security/advisories/new).
@@ -29,7 +29,7 @@ We appreciate the efforts of security researchers and users who report vulnerabi
   * Detailed description of the vulnerability and its potential impact.
   * Step-by-step reproduction instructions or a minimal proof of concept.
   * Operating system, architecture, and exact Mise Browser release version.
-* **Response Timeline:** We aim to acknowledge reports within 48 hours and provide a remediation timeline within 7 calendar days.
+* **Response Timeline:** The maintainer aims to acknowledge reports within 48 hours and provide a remediation timeline within 7 calendar days.
 
 ---
 
@@ -75,7 +75,7 @@ Mise Browser is designed with multiple defence-in-depth layers:
 
 ## Responsible Disclosure Commitment
 
-In return for responsible disclosure, project maintainers commit to:
+In return for responsible disclosure, the project maintainer commits to:
 
 * Working collaboratively with researchers to validate and resolve reported issues promptly.
 * Crediting researchers in release notes and security advisories (unless anonymity is requested).

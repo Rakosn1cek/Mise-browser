@@ -20,12 +20,12 @@ Before proposing features or submitting pull requests, please keep Mise's founda
 
 ## 2. Reporting Issues
 
-Please use our structured GitHub issue forms to report problems:
+Please use the structured GitHub issue forms to report problems:
 
 * **Bug Reports:** Use the [Bug Report Form](.github/ISSUE_TEMPLATE/bug_report.yml) to report crashes, unexpected behaviour, or UI glitches. Please include your distribution, window manager (e.g. Hyprland, Sway, i3), display server (Wayland or X11), and relevant logs from the Diagnostics Hub.
 * **Website Breakdowns:** If an external site fails due to adblocking shields, Dark Reader colour inversion, or container authentication loops, submit a [Website Compatibility Report](.github/ISSUE_TEMPLATE/site_compatibility.yml).
 * **Feature Proposals:** Submit ideas via the [Feature Request Form](.github/ISSUE_TEMPLATE/feature_request.yml), describing the proposed keyboard workflow and performance considerations.
-* **Security Disclosures:** Do not report vulnerabilities publicly. Please refer to our [Security Policy](SECURITY.md) and disclose privately via [GitHub Security Advisories](https://github.com/Rakosn1cek/Mise-browser/security/advisories/new).
+* **Security Disclosures:** Do not report vulnerabilities publicly. Please refer to the [Security Policy](SECURITY.md) and disclose privately via [GitHub Security Advisories](https://github.com/Rakosn1cek/Mise-browser/security/advisories/new).
 
 ***
 
@@ -69,7 +69,7 @@ Contributions must follow these conventions:
   * Webviews must always maintain `contextIsolation: true`, `nodeIntegration: false`, and sandbox protections.
   * IPC messaging must follow existing whitelists in `preload.js` without exposing direct Node.js handles.
   * File and URL inputs must be vetted to prevent scheme traversal or unsanitised execution.
-* **AI Assistance Policy:** Review our [AI Policy](AI_POLICY.md). All code submitted must be thoroughly verified, manually tested on physical hardware, and understood line-by-line by the author.
+* **AI Assistance Policy:** Review the [AI Policy](AI_POLICY.md). All code submitted must be thoroughly verified, manually tested on physical hardware, and understood line-by-line by the author.
 
 ***
 
@@ -112,7 +112,7 @@ Before submitting a Pull Request, verify that your changes meet quality checks:
    * `perf:` for performance or memory optimisations
    * `ci:` for continuous integration updates
 
-3. Push your branch and open a Pull Request against `main`. Complete the checklist in our [Pull Request Template](.github/PULL_REQUEST_TEMPLATE.md).
+3. Push your branch and open a Pull Request against `main`. Complete the checklist in the [Pull Request Template](.github/PULL_REQUEST_TEMPLATE.md).
 
 ***
 

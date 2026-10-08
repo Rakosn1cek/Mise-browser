@@ -103,7 +103,7 @@ function hardenSession(targetSession, spellLang = 'en-GB') {
         targetSession.setWebRTCIPHandlingPolicy('default_public_interface_only');
     }
 
-    // Kept restricted permissions, but removed 'notifications' so our main toggle handles it
+    // Kept restricted permissions, but removed 'notifications' so the main toggle handles it
     const blockedPermissions = ['media', 'geolocation', 'midiSysex', 'audio', 'video'];
 
     targetSession.setPermissionRequestHandler((webContents, permission, callback) => {

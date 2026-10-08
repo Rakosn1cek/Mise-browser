@@ -37,7 +37,7 @@ Security, isolation, and upstream dependency freshness are foundational principl
 * **Strict Process Sandboxing**: Webviews run with `contextIsolation: true`, `nodeIntegration: false`, and Chromium sandboxing enabled, guarded by a minimal IPC whitelist.
 * **Permissions Denied by Default**: Hardware access (camera, microphone, geolocation, and MIDI) is blocked by default.
 * **Local Data Ownership & Zero Password Vault Targets**: Plaintext JSON configuration, notes, and history files are stored locally under user-only permissions (`0600`). Mise deliberately excludes built-in password managers, eliminating browser credential harvesting by infostealer malware. Session cookies are encrypted via host OS keyrings.
-* **Responsible Disclosure**: See our [Security Policy](SECURITY.md) for vulnerability disclosure guidelines via GitHub Security Advisories.
+* **Responsible Disclosure**: See the [Security Policy](SECURITY.md) for vulnerability disclosure guidelines via GitHub Security Advisories.
 
 ***
 
@@ -108,7 +108,7 @@ On Linux systems, you can also launch directly using the helper script:
 
 ## Documentation
 
-Comprehensive user guides and configuration references are hosted on our GitHub Pages site:
+Comprehensive user guides and configuration references are hosted on the GitHub Pages site:
 
 * [Getting Started & Philosophy](https://rakosn1cek.github.io/Mise-browser/guide/getting-started)
 * [Mouse-Free Navigation & Link Hints](https://rakosn1cek.github.io/Mise-browser/guide/navigation)
