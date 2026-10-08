@@ -138,6 +138,8 @@ function inputEventToKeyCombination(input) {
         normalizedKey = 'Tab';
     } else if (key === ' ') {
         normalizedKey = 'Space';
+    } else if (/^[a-z]$/i.test(key)) {
+        normalizedKey = key.toUpperCase();
     } else if (input.code && input.code.startsWith('Digit') && input.code.length === 6) {
         normalizedKey = input.code.slice(5);
     } else if (input.code && input.code.startsWith('Key') && input.code.length === 4) {
