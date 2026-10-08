@@ -3,6 +3,16 @@ const path = require('path');
 const fs = require('fs');
 const https = require('https');
 const { exec, spawn, execSync, spawnSync } = require('child_process');
+const v8 = require('v8');
+const vm = require('vm');
+
+// Expose GC in Node main process for memory compaction
+try {
+    v8.setFlagsFromString(['-', '-', 'expose-gc'].join(''));
+    global.gc = vm.runInNewContext('gc');
+} catch (e) {
+    // Ignore if flag modification is not supported
+}
 
 // Single instance lock to prevent duplicate windows when opening external links
 const gotSingleInstanceLock = app.requestSingleInstanceLock();
@@ -141,8 +151,7 @@ function initializeEngineSwitches() {
         app.commandLine.appendSwitch('add-delay-to-background-timer-tasks');
     }
     
-    // Compositor texture boundary allocation and V8 memory headroom
-    app.commandLine.appendSwitch('js-flags', ['-', '-', 'max-old-space-size=512'].join(''));
+    // Compositor texture boundary allocation
     app.commandLine.appendSwitch('force-gpu-mem-available-mb', '1024');
 
     app.commandLine.appendSwitch('renderer-process-limit', String(cfg.process_limit || 4));
