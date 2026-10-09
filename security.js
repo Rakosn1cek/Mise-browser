@@ -289,7 +289,9 @@ async function initialiseAdblocker(targetSession) {
         blockerInstance.updateFromDiff({
             added: [
                 // '@@||youtube.com/youtubei/v1/log_event',
-                'youtube.com#@#+js()'
+                'youtube.com#@#+js()',
+                'x.com#@#+js()',
+                'twitter.com#@#+js()'
             ]
         });
     } catch (err) {

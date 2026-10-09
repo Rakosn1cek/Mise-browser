@@ -160,6 +160,10 @@ function initializeEngineSwitches() {
     app.commandLine.appendSwitch('disable-battery-saver');
     app.commandLine.appendSwitch('log-level', '3');
     app.commandLine.appendSwitch('disable-speech-api');
+
+    // Standardise baseline User-Agent string across all renderers and network requests
+    const realChromeMajor = (process.versions && process.versions.chrome) ? process.versions.chrome.split('.')[0] : '132';
+    app.userAgentFallback = `Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${realChromeMajor}.0.0.0 Safari/537.36`;
 }
 
 initializeEngineSwitches();

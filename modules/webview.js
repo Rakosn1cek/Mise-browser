@@ -16,6 +16,15 @@ export function applyCSSThemeToView() {
     // Intentionally no-op to preserve native website themes
 }
 
+function getLiveTabIndex(webview, wsName, fallbackIdx) {
+    const views = state.activeViewsCache[wsName];
+    if (Array.isArray(views)) {
+        const liveIdx = views.indexOf(webview);
+        if (liveIdx !== -1) return liveIdx;
+    }
+    return fallbackIdx;
+}
+
 export function createWebView(url, currentWS, idx) {
     const webview = document.createElement('webview');
     webview.setAttribute('preload', window.miseAPI.getWebviewPreloadPath());
@@ -36,37 +45,48 @@ export function createWebView(url, currentWS, idx) {
             webview.setAttribute('src', getPdfViewerUrl(e.url));
         }
     });
-    
-    webview.addEventListener('page-title-updated', (e) => {
+
+    const syncTitle = (newTitle) => {
+        if (!newTitle || newTitle === 'about:blank' || newTitle === 'Loading...') return;
+        const liveIdx = getLiveTabIndex(webview, currentWS, idx);
+        if (liveIdx < 0) return;
+
         if (!state.activeTitlesCache[currentWS]) state.activeTitlesCache[currentWS] = [];
-        state.activeTitlesCache[currentWS][idx] = e.title;
+        state.activeTitlesCache[currentWS][liveIdx] = newTitle;
         if (!state.sessionState.tab_titles) state.sessionState.tab_titles = {};
         if (!state.sessionState.tab_titles[currentWS]) state.sessionState.tab_titles[currentWS] = [];
-        state.sessionState.tab_titles[currentWS][idx] = e.title;
+        state.sessionState.tab_titles[currentWS][liveIdx] = newTitle;
         window.miseAPI.saveSession(state.sessionState);
 
-        const targetLi = document.querySelectorAll('#TabList li')[idx];
+        const targetLi = document.querySelectorAll('#TabList li')[liveIdx];
         if (targetLi && state.sessionState.current_workspace === currentWS) {
             const titleEl = targetLi.querySelector('.tab-title');
             if (titleEl) {
-                titleEl.textContent = e.title.length > 24 ? e.title.slice(0, 24) + "..." : e.title;
+                titleEl.textContent = newTitle.length > 24 ? newTitle.slice(0, 24) + "..." : newTitle;
             }
-            targetLi.title = `${e.title}\n${state.sessionState.workspaces[currentWS]?.[idx] || ''}`;
+            targetLi.title = `${newTitle}\n${state.sessionState.workspaces[currentWS]?.[liveIdx] || ''}`;
         }
+    };
+    
+    webview.addEventListener('page-title-updated', (e) => {
+        syncTitle(e.title);
     });
 
     webview.addEventListener('page-favicon-updated', (e) => {
         if (e.favicons && e.favicons.length > 0) {
             const iconUrl = e.favicons[0];
+            const liveIdx = getLiveTabIndex(webview, currentWS, idx);
+            if (liveIdx < 0) return;
+
             if (!state.tabFavicons) state.tabFavicons = {};
             if (!state.tabFavicons[currentWS]) state.tabFavicons[currentWS] = [];
-            state.tabFavicons[currentWS][idx] = iconUrl;
+            state.tabFavicons[currentWS][liveIdx] = iconUrl;
             if (!state.sessionState.tab_favicons) state.sessionState.tab_favicons = {};
             if (!state.sessionState.tab_favicons[currentWS]) state.sessionState.tab_favicons[currentWS] = [];
-            state.sessionState.tab_favicons[currentWS][idx] = iconUrl;
+            state.sessionState.tab_favicons[currentWS][liveIdx] = iconUrl;
             window.miseAPI.saveSession(state.sessionState);
 
-            const targetLi = document.querySelectorAll('#TabList li')[idx];
+            const targetLi = document.querySelectorAll('#TabList li')[liveIdx];
             if (targetLi && state.sessionState.current_workspace === currentWS) {
                 const favImg = targetLi.querySelector('.tab-favicon');
                 const favFallback = targetLi.querySelector('.tab-fallback-icon');
@@ -80,44 +100,50 @@ export function createWebView(url, currentWS, idx) {
     });
 
     webview.addEventListener('did-navigate', async (e) => {
+        const liveIdx = getLiveTabIndex(webview, currentWS, idx);
+        if (liveIdx < 0) return;
+
         const cleanUrl = extractOriginalUrl(e.url);
-        if (state.sessionState.workspaces[currentWS] && state.sessionState.workspaces[currentWS][idx]) {
-            state.sessionState.workspaces[currentWS][idx] = cleanUrl;
+        if (state.sessionState.workspaces[currentWS] && state.sessionState.workspaces[currentWS][liveIdx] !== undefined) {
+            state.sessionState.workspaces[currentWS][liveIdx] = cleanUrl;
             window.miseAPI.saveSession(state.sessionState);
         }
         if (!state.tabActivityTimestamps[currentWS]) state.tabActivityTimestamps[currentWS] = [];
-        state.tabActivityTimestamps[currentWS][idx] = Date.now();
-        const targetLi = document.querySelectorAll('#TabList li')[idx];
+        state.tabActivityTimestamps[currentWS][liveIdx] = Date.now();
+        const targetLi = document.querySelectorAll('#TabList li')[liveIdx];
         if (targetLi) {
             const cfg = (await window.miseAPI.getBrowserSettings()) || {};
             updateTabShieldStatus(targetLi, cleanUrl, cfg.trusted_domains || []);
         }
         if (state.sessionState.current_workspace === currentWS) {
             const activeListItem = document.querySelector('#TabList li.selected');
-            const currentIdx = activeListItem ? Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem) : -1;
-            if (idx === currentIdx) {
+            const currentSelectedIdx = activeListItem ? Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem) : -1;
+            if (liveIdx === currentSelectedIdx) {
                 updateSecurityStatus(cleanUrl);
             }
         }
     });
 
     webview.addEventListener('did-navigate-in-page', async (e) => {
+        const liveIdx = getLiveTabIndex(webview, currentWS, idx);
+        if (liveIdx < 0) return;
+
         const cleanUrl = extractOriginalUrl(e.url);
-        if (state.sessionState.workspaces[currentWS] && state.sessionState.workspaces[currentWS][idx]) {
-            state.sessionState.workspaces[currentWS][idx] = cleanUrl;
+        if (state.sessionState.workspaces[currentWS] && state.sessionState.workspaces[currentWS][liveIdx] !== undefined) {
+            state.sessionState.workspaces[currentWS][liveIdx] = cleanUrl;
             window.miseAPI.saveSession(state.sessionState);
         }
         if (!state.tabActivityTimestamps[currentWS]) state.tabActivityTimestamps[currentWS] = [];
-        state.tabActivityTimestamps[currentWS][idx] = Date.now();
-        const targetLi = document.querySelectorAll('#TabList li')[idx];
+        state.tabActivityTimestamps[currentWS][liveIdx] = Date.now();
+        const targetLi = document.querySelectorAll('#TabList li')[liveIdx];
         if (targetLi) {
             const cfg = (await window.miseAPI.getBrowserSettings()) || {};
             updateTabShieldStatus(targetLi, cleanUrl, cfg.trusted_domains || []);
         }
         if (state.sessionState.current_workspace === currentWS) {
             const activeListItem = document.querySelector('#TabList li.selected');
-            const currentIdx = activeListItem ? Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem) : -1;
-            if (idx === currentIdx) {
+            const currentSelectedIdx = activeListItem ? Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem) : -1;
+            if (liveIdx === currentSelectedIdx) {
                 updateSecurityStatus(cleanUrl);
             }
         }
@@ -170,32 +196,48 @@ export function createWebView(url, currentWS, idx) {
     });
 
     webview.addEventListener('media-started-playing', () => {
+        const liveIdx = getLiveTabIndex(webview, currentWS, idx);
+        if (liveIdx < 0) return;
         if (!state.tabMediaAudible[currentWS]) state.tabMediaAudible[currentWS] = [];
-        state.tabMediaAudible[currentWS][idx] = true;
-        updateTabMediaIndicator(currentWS, idx, true);
+        state.tabMediaAudible[currentWS][liveIdx] = true;
+        updateTabMediaIndicator(currentWS, liveIdx, true);
     });
     
     webview.addEventListener('media-paused', () => {
+        const liveIdx = getLiveTabIndex(webview, currentWS, idx);
+        if (liveIdx < 0) return;
         if (!state.tabMediaAudible[currentWS]) state.tabMediaAudible[currentWS] = [];
-        state.tabMediaAudible[currentWS][idx] = false;
-        updateTabMediaIndicator(currentWS, idx, false);
+        state.tabMediaAudible[currentWS][liveIdx] = false;
+        updateTabMediaIndicator(currentWS, liveIdx, false);
     });
 
     webview.addEventListener('did-start-loading', () => {
         webview.style.opacity = '1';
-        if (!state.tabActivityTimestamps[currentWS]) state.tabActivityTimestamps[currentWS] = [];
-        state.tabActivityTimestamps[currentWS][idx] = Date.now();
-        updateTabMediaIndicator(currentWS, idx, false);
+        const liveIdx = getLiveTabIndex(webview, currentWS, idx);
+        if (liveIdx >= 0) {
+            if (!state.tabActivityTimestamps[currentWS]) state.tabActivityTimestamps[currentWS] = [];
+            state.tabActivityTimestamps[currentWS][liveIdx] = Date.now();
+            updateTabMediaIndicator(currentWS, liveIdx, false);
+        }
     });
 
     webview.addEventListener('dom-ready', async () => {
         webview.style.opacity = '1';
+        const liveIdx = getLiveTabIndex(webview, currentWS, idx);
+        if (liveIdx < 0) return;
 
-        const targetLi = document.querySelectorAll('#TabList li')[idx];
+        const targetLi = document.querySelectorAll('#TabList li')[liveIdx];
         if (targetLi) {
             const cfg = (await window.miseAPI.getBrowserSettings()) || {};
             updateTabShieldStatus(targetLi, webview.getURL(), cfg.trusted_domains || []);
         }
+
+        try {
+            const liveTitle = webview.getTitle();
+            if (liveTitle && liveTitle !== 'about:blank') {
+                syncTitle(liveTitle);
+            }
+        } catch (err) {}
 
         try {
             const hinterCode = await window.miseAPI.readHinterCode();
@@ -209,28 +251,67 @@ export function createWebView(url, currentWS, idx) {
 
         if (state.sessionState.current_workspace === currentWS) {
             const activeListItem = document.querySelector('#TabList li.selected');
-            const currentIdx = activeListItem ? Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem) : -1;
-            if (idx === currentIdx) {
+            const currentSelectedIdx = activeListItem ? Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem) : -1;
+            if (liveIdx === currentSelectedIdx) {
                 updateSecurityStatus(webview.getURL());
             }
         }
     });
 
+    webview.addEventListener('did-finish-load', () => {
+        try {
+            const liveTitle = webview.getTitle();
+            if (liveTitle && liveTitle !== 'about:blank') {
+                syncTitle(liveTitle);
+            }
+        } catch (err) {}
+    });
+
+    webview.addEventListener('did-stop-loading', () => {
+        try {
+            const liveTitle = webview.getTitle();
+            if (liveTitle && liveTitle !== 'about:blank') {
+                syncTitle(liveTitle);
+                return;
+            }
+        } catch (err) {}
+
+        webview.executeJavaScript('document.title', false).then(docTitle => {
+            if (docTitle && docTitle.trim() && docTitle !== 'about:blank') {
+                syncTitle(docTitle.trim());
+            } else {
+                const liveIdx = getLiveTabIndex(webview, currentWS, idx);
+                if (liveIdx >= 0 && (!state.activeTitlesCache[currentWS]?.[liveIdx] || state.activeTitlesCache[currentWS][liveIdx] === 'Loading...')) {
+                    try {
+                        const parsed = new URL(webview.getURL() || url);
+                        if (parsed.hostname) {
+                            syncTitle(parsed.hostname);
+                        }
+                    } catch (e) {}
+                }
+            }
+        }).catch(() => {});
+    });
+
     webview.addEventListener('update-target-url', (e) => {
         const activeListItem = document.querySelector('#TabList li.selected');
-        const currentIdx = activeListItem ? Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem) : -1;
-        if (state.sessionState.current_workspace === currentWS && (idx === currentIdx || isSplitActive(currentWS))) {
+        const currentSelectedIdx = activeListItem ? Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem) : -1;
+        const liveIdx = getLiveTabIndex(webview, currentWS, idx);
+        if (state.sessionState.current_workspace === currentWS && (liveIdx === currentSelectedIdx || isSplitActive(currentWS))) {
             setTargetUrl(e.url || '');
         }
     });
 
     webview.addEventListener('ipc-message', (e) => {
+        const liveIdx = getLiveTabIndex(webview, currentWS, idx);
+        if (liveIdx < 0) return;
+
         if (e.channel === 'guest-input-focus') {
-            handleGuestInputFocus(!!e.args[0], currentWS, idx);
+            handleGuestInputFocus(!!e.args[0], currentWS, liveIdx);
         } else if (e.channel === 'guest-hints-state') {
-            handleGuestHintsState(!!e.args[0], currentWS, idx);
+            handleGuestHintsState(!!e.args[0], currentWS, liveIdx);
         } else if (e.channel === 'guest-passthrough-state') {
-            handleGuestPassthroughState(!!e.args[0], currentWS, idx);
+            handleGuestPassthroughState(!!e.args[0], currentWS, liveIdx);
         } else if (e.channel === 'reader-view-toggled') {
             const data = e.args[0] || {};
             webview.__miseReaderActive = !!data.active;
@@ -246,17 +327,18 @@ export function createWebView(url, currentWS, idx) {
         } else if (e.channel === 'normal-mode-action') {
             const action = e.args[0];
             const extra = e.args[1];
-            handleNormalModeAction(action, extra, webview, currentWS, idx);
+            handleNormalModeAction(action, extra, webview, currentWS, liveIdx);
         }
     });
 
     webview.addEventListener('focus', () => {
         if (isSplitActive(currentWS)) {
             const split = getSplitState(currentWS);
-            if (idx === split.primaryIdx && split.activePane !== 'primary') {
+            const liveIdx = getLiveTabIndex(webview, currentWS, idx);
+            if (liveIdx === split.primaryIdx && split.activePane !== 'primary') {
                 split.activePane = 'primary';
                 applySplitLayout();
-            } else if (idx === split.secondaryIdx && split.activePane !== 'secondary') {
+            } else if (liveIdx === split.secondaryIdx && split.activePane !== 'secondary') {
                 split.activePane = 'secondary';
                 applySplitLayout();
             }
@@ -572,9 +654,30 @@ export function renderWorkspaceUI(targetTabToFocus = null) {
     if (!state.tabMediaAudible[currentWS]) state.tabMediaAudible[currentWS] = [];
     if (!state.tabFavicons) state.tabFavicons = {};
     if (!state.tabFavicons[currentWS]) state.tabFavicons[currentWS] = [];
-
     urls.forEach((url, idx) => {
-        const cachedTitle = state.activeTitlesCache[currentWS][idx] || "Loading...";
+        let cachedTitle = state.activeTitlesCache[currentWS]?.[idx];
+        if (!cachedTitle || cachedTitle === 'Loading...') {
+            if (state.tabSleepStates[currentWS]?.[idx]?.title) {
+                cachedTitle = state.tabSleepStates[currentWS][idx].title;
+                if (!state.activeTitlesCache[currentWS]) state.activeTitlesCache[currentWS] = [];
+                state.activeTitlesCache[currentWS][idx] = cachedTitle;
+            } else {
+                const existingWv = state.activeViewsCache[currentWS]?.[idx];
+                if (existingWv && typeof existingWv.getTitle === 'function') {
+                    try {
+                        const liveTitle = existingWv.getTitle();
+                        if (liveTitle && liveTitle !== 'about:blank') {
+                            cachedTitle = liveTitle;
+                            if (!state.activeTitlesCache[currentWS]) state.activeTitlesCache[currentWS] = [];
+                            state.activeTitlesCache[currentWS][idx] = cachedTitle;
+                        }
+                    } catch (e) {}
+                }
+            }
+        }
+        if (!cachedTitle) {
+            cachedTitle = "Loading...";
+        }
         const isSleeping = !!state.tabSleepStates[currentWS][idx];
         const cachedFavicon = state.tabFavicons[currentWS]?.[idx] || null;
 
