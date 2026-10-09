@@ -120,5 +120,6 @@ Mise combines the battle-tested rendering speed of Chromium and Electron with cu
 
 ## Community & Fediverse
 
+* [Reddit (r/mise_browser)](https://www.reddit.com/r/mise_browser/)
 * <a rel="me" href="https://mastodon.social/@misebrowser">Mastodon (@misebrowser@mastodon.social)</a>
 * [GitHub Discussions & Source](https://github.com/Rakosn1cek/Mise-browser)

@@ -40,3 +40,9 @@ How chasing zero memory usage broke tabs with the `about:blank` amnesia trap, wh
 
 - **The Ghost in the CSS: Tracking Pixels in Reader View**  
   How inline CSS background images and SVG containers bypassed DOM distillation and how strict sanitisation closed the leak.
+
+---
+
+### Community & Discussion
+
+Interested in discussing technical architectural decisions, bugs, or upcoming chronicles? Join the conversation on [Reddit (r/mise_browser)](https://www.reddit.com/r/mise_browser/) or connect on [Mastodon (@misebrowser@mastodon.social)](https://mastodon.social/@misebrowser).

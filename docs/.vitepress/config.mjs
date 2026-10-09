@@ -82,10 +82,11 @@ export default defineConfig({
     },
     socialLinks: [
       { icon: 'github', link: 'https://github.com/Rakosn1cek/Mise-browser' },
-      { icon: 'mastodon', link: 'https://mastodon.social/@misebrowser' }
+      { icon: 'mastodon', link: 'https://mastodon.social/@misebrowser' },
+      { icon: 'reddit', link: 'https://www.reddit.com/r/mise_browser/' }
     ],
     footer: {
-      message: 'Released under the GNU General Public Licence v3.0. • Follow on <a rel="me" href="https://mastodon.social/@misebrowser" target="_blank">Mastodon</a>',
+      message: 'Released under the GNU General Public Licence v3.0. • Follow on <a rel="me" href="https://mastodon.social/@misebrowser" target="_blank">Mastodon</a> • Discuss on <a href="https://www.reddit.com/r/mise_browser/" target="_blank">Reddit</a>',
       copyright: 'Copyright © 2026 Mise Browser Project'
     }
   }
