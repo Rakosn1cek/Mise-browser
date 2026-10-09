@@ -1,5 +1,5 @@
 // modules/darkReader.js
-// Lightweight, zero-dependency Dark Reader engine for Mise Browser (KISS)
+// Minimal, zero-dependency Dark Reader engine for Mise Browser (KISS)
 
 import { state } from './state.js';
 import { getActiveWebview } from './utils.js';

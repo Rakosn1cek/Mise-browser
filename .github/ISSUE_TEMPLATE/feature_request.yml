@@ -8,7 +8,7 @@ body:
       value: |
         Thank you for contributing ideas to Mise Browser!
 
-        Mise is engineered as a lightweight, keyboard-first, zero-bloat browser designed specifically for low-resource hardware. Feature proposals should prioritise:
+        Mise is engineered as an efficient, keyboard-first, zero-bloat browser designed specifically for low-resource hardware. Feature proposals should prioritise:
         * Minimal memory and CPU footprint.
         * Mouse-free keyboard workflows and modal navigation (NORMAL, INSERT, PASSTHROUGH).
         * Zero background telemetry and strict local privacy.
@@ -62,7 +62,7 @@ body:
     id: additional_context
     attributes:
       label: Additional Context
-      description: Add any mockups, screenshots, or reference implementations from other lightweight tools.
+      description: Add any mockups, screenshots, or reference implementations from other keyboard-driven or focused tools.
     validations:
       required: false
 
@@ -74,5 +74,5 @@ body:
       options:
         - label: I have searched open and closed issues and confirmed this is not a duplicate.
           required: true
-        - label: This proposal aligns with Mise's philosophy of lightweight, keyboard-centric browsing.
+        - label: This proposal aligns with Mise's philosophy of efficient, keyboard-centric browsing.
           required: true

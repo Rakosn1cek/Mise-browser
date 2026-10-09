@@ -1,7 +1,7 @@
 [Desktop Entry]
 Name=Mise
 Comment=Minimalist Keyboard-Driven Web Browser
-Exec=/home/rk1/.local/bin/mise %u
+Exec=mise %u
 Icon=mise
 Terminal=false
 Type=Application

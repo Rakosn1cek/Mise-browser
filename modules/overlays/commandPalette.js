@@ -113,7 +113,7 @@ export const COMMAND_DEFINITIONS = [
         id: 'trigger-hints',
         title: 'Toggle Link Hints Overlay',
         desc: 'Display letter tags over clickable links for mouse-free browsing',
-        details: 'Injects lightweight letter tags over all actionable elements, hyperlinks, and inputs in the viewport to enable rapid keyboard-only navigation.',
+        details: 'Injects minimal letter tags over all actionable elements, hyperlinks, and inputs in the viewport to enable rapid keyboard-only navigation.',
         tip: 'Press Ctrl+F, type the two-letter tag visible over any link, and follow it immediately.',
         category: 'Tabs & Navigation',
         icon: 'fa-solid fa-keyboard',

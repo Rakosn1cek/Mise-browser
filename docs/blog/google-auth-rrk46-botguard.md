@@ -52,7 +52,7 @@ Three separate changes, each closing one part of the loop.
 Google also serves a lighter authentication flow built for embedded and lower-friction logins: `flowName=WebLiteSignIn`. Rather than fight Botguard, Mise intercepts the request and rewrites it before it's sent:
 
 ```javascript
-// Route Google authentication requests through the lightweight sign-in flow
+// Route Google authentication requests through the WebLite sign-in flow
 if (targetSession.webRequest && typeof targetSession.webRequest.onBeforeRequest === 'function') {
     targetSession.webRequest.onBeforeRequest({ urls: ['*://accounts.google.com/*'] }, (details, callback) => {
         const url = details.url || '';

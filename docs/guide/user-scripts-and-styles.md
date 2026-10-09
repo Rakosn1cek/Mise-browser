@@ -18,7 +18,7 @@ Mise replaces this overhead with a filesystem-driven engine:
 ## Why Mise Avoids Full WebExtensions
 
 Mainstream browsers rely on the WebExtensions API (Manifest V2 and V3). While
-flexible, this architecture creates significant problems on lightweight and
+flexible, this architecture creates significant problems on low-resource and
 fanless Linux hardware:
 
 1. **Heavy Background Memory Overhead**:
@@ -112,7 +112,7 @@ If no `@match` or `@include` is supplied, the script runs across all standard `h
 
 ## Supported Userscript APIs (`GM_*` and `GM.*`)
 
-Mise includes a lightweight, secure API shim for popular Greasemonkey and Tampermonkey scripts without needing an extension runtime:
+Mise includes a minimal, secure API shim for popular Greasemonkey and Tampermonkey scripts without needing an extension runtime:
 
 | API | Type | Description |
 | :--- | :--- | :--- |

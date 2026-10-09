@@ -151,7 +151,7 @@ function hardenSession(targetSession, spellLang = 'en-GB') {
         return true;
     });
 
-    // Route Google authentication requests through the lightweight sign-in flow
+    // Route Google authentication requests through the WebLite sign-in flow
     if (targetSession.webRequest && typeof targetSession.webRequest.onBeforeRequest === 'function') {
         targetSession.webRequest.onBeforeRequest({ urls: ['*://accounts.google.com/*'] }, (details, callback) => {
             const url = details.url || '';

@@ -1,6 +1,6 @@
 # Installation & Setup
 
-Mise is designed to be lightweight, modular, and easy to run across Linux, macOS, and Windows. You can download pre-built self-contained binaries directly from GitHub Releases or run from source.
+Mise is designed to be efficient, modular, and easy to run across Linux, macOS, and Windows. You can download pre-built self-contained binaries directly from GitHub Releases or run from source.
 
 ---
 

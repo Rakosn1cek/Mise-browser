@@ -1,6 +1,6 @@
 # Mise Browser
 
-> A lightweight, keyboard-first, and container-isolated web browser engineered specifically for low-resource and fanless Linux hardware.
+> An efficient, keyboard-first, and container-isolated web browser engineered specifically for low-resource and fanless Linux hardware.
 
 [![Latest Release](https://img.shields.io/github/v/release/Rakosn1cek/Mise-browser?logo=github&label=release)](https://github.com/Rakosn1cek/Mise-browser/releases/latest)
 [![Documentation](https://img.shields.io/badge/docs-GitHub_Pages-blue.svg)](https://rakosn1cek.github.io/Mise-browser/)
@@ -23,7 +23,7 @@ Mise leverages the Chromium rendering engine wrapped inside a streamlined Electr
 * **Mouse-Free Navigation**: Complete keyboard control via Link Hints, floating address bar with search aliases, and customisable shortcuts in `keybinds.json`.
 * **Clipboard-Mediated Terminal Oversight**: High-risk script execution and raw web commands trigger a clipboard-mediated security handshake, sanitising and staging vetted commands to your clipboard for deliberate user review and execution in an external terminal.
 * **Native Privacy & Trusted Sites**: Built-in request interception blocks trackers, telemetry, and advertisements without heavy third-party extensions, while allowing selective whitelisting for trusted banking and shopping services.
-* **Local User Scripts & Styles**: Lightweight native injection of `.user.js` and `.user.css` files directly from `~/.config/mise-browser/` with inotify watching and live CSS hot-reloading, avoiding the heavy memory overhead of full WebExtensions.
+* **Local User Scripts & Styles**: Direct native injection of `.user.js` and `.user.css` files directly from `~/.config/mise-browser/` with inotify watching and live CSS hot-reloading, avoiding the heavy memory overhead of full WebExtensions.
 * **Power Tools**: Integrated Markdown notes, bookmarks, quickmarks, actionable history overlay, and a full-page Command Centre.
 
 ***
