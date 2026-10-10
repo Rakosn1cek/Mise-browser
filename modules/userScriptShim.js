@@ -16,6 +16,23 @@ export function buildUserScriptWrapper(item) {
     return `(function(__gm_token__, __gm_script_id__, __gm_initial_storage__, __gm_meta__) {
     'use strict';
 
+    if (!window.__miseInjectedScripts) {
+        try {
+            Object.defineProperty(window, '__miseInjectedScripts', {
+                value: new Set(),
+                writable: true,
+                configurable: true,
+                enumerable: false
+            });
+        } catch (e) {
+            window.__miseInjectedScripts = new Set();
+        }
+    }
+    if (window.__miseInjectedScripts.has(__gm_script_id__)) {
+        return;
+    }
+    window.__miseInjectedScripts.add(__gm_script_id__);
+
     var __gm_store = Object.assign({}, __gm_initial_storage__ || {});
     var __gm_listeners = new Map();
     var __gm_listener_id = 1;

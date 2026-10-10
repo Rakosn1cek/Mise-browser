@@ -104,9 +104,23 @@ Scripts support standard Greasemonkey/Tampermonkey metadata headers:
 * `@exclude`: Patterns to skip execution on specific paths or subdomains.
 * `@connect`: Declares permitted target hostnames for network requests (e.g. `api.github.com`, `*.example.com`, `self`, or `*`).
 * `@grant`: Declares intended API permissions (e.g. `GM_xmlhttpRequest`, `GM_setValue`).
-* `@run-at`: Determines execution timing (`document-end`, `document-idle`).
+* `@run-at`: Determines execution timing (`document-end`, `document-idle`). In the current engine architecture, all scripts execute upon `dom-ready`, so `document-start` scripts run slightly later once the DOM has initialised.
 
 If no `@match` or `@include` is supplied, the script runs across all standard `http://` and `https://` websites.
+
+### Execution Lifecycle & Scope
+
+1. **DOM-Ready Execution (`@run-at` Timing)**:
+   While the `@run-at` header is parsed for compatibility (`document-start`, `document-end`, `document-idle`), the current engine executes scripts when the webview emits `dom-ready`. Consequently, scripts expecting to run at `document-start` (prior to HTML parsing) execute slightly later once the Document Object Model has initialised.
+
+2. **Top-Level Window Scope**:
+   User scripts run exclusively within the top-level page window context. Scripts do not inject into child `<iframe>` elements or nested subframes.
+
+3. **Script Execution De-duplication**:
+   To prevent scripts from executing multiple times on the same page during rapid redirects, fast re-renders, or racing navigation events, Mise enforces three distinct protection layers:
+   * **Navigation Epoch Tracking**: Awaited IPC script queries are validated against a monotonic navigation counter. If the page navigates away before the disk query completes, stale results are discarded immediately.
+   * **Per-Webview Script ID Registry**: Injected script identifiers are tracked on the webview instance for the lifetime of the active navigation epoch.
+   * **In-Page Execution Guards**: A non-enumerable registry on the guest window prevents duplicate execution of the same userscript wrapper within the active document lifecycle.
 
 ---
 

@@ -40,6 +40,8 @@ export function createWebView(url, currentWS, idx) {
     webview.setAttribute('src', initialSrc);
 
     webview.addEventListener('will-navigate', (e) => {
+        webview.__miseNavigationEpoch = (webview.__miseNavigationEpoch || 0) + 1;
+        if (webview.__miseInjectedScriptIds) webview.__miseInjectedScriptIds.clear();
         if (isPdfUrl(e.url)) {
             e.preventDefault();
             webview.setAttribute('src', getPdfViewerUrl(e.url));
@@ -100,6 +102,8 @@ export function createWebView(url, currentWS, idx) {
     });
 
     webview.addEventListener('did-navigate', async (e) => {
+        webview.__miseNavigationEpoch = (webview.__miseNavigationEpoch || 0) + 1;
+        if (webview.__miseInjectedScriptIds) webview.__miseInjectedScriptIds.clear();
         const liveIdx = getLiveTabIndex(webview, currentWS, idx);
         if (liveIdx < 0) return;
 
@@ -213,6 +217,8 @@ export function createWebView(url, currentWS, idx) {
 
     webview.addEventListener('did-start-loading', () => {
         webview.style.opacity = '1';
+        webview.__miseNavigationEpoch = (webview.__miseNavigationEpoch || 0) + 1;
+        if (webview.__miseInjectedScriptIds) webview.__miseInjectedScriptIds.clear();
         const liveIdx = getLiveTabIndex(webview, currentWS, idx);
         if (liveIdx >= 0) {
             if (!state.tabActivityTimestamps[currentWS]) state.tabActivityTimestamps[currentWS] = [];
@@ -482,9 +488,15 @@ export async function injectMatchingUserContent(webview) {
     if (!currentUrl || currentUrl.startsWith('about:') || currentUrl.startsWith('devtools:')) return;
     if (!window.miseAPI || typeof window.miseAPI.getUserContentForUrl !== 'function') return;
 
+    const navEpoch = webview.__miseNavigationEpoch || 0;
+
     try {
         const content = await window.miseAPI.getUserContentForUrl(currentUrl);
         if (!content) return;
+
+        // Abort if page navigated or started loading a new destination while awaiting IPC lookup
+        if (webview.__miseNavigationEpoch !== navEpoch) return;
+        if (typeof webview.getURL === 'function' && webview.getURL() !== currentUrl) return;
 
         if (!webview.__miseInjectedCSSKeys) webview.__miseInjectedCSSKeys = [];
         if (typeof webview.removeInsertedCSS === 'function' && webview.__miseInjectedCSSKeys.length > 0) {
@@ -505,9 +517,18 @@ export async function injectMatchingUserContent(webview) {
             }
         }
 
+        if (!webview.__miseInjectedScriptIds) {
+            webview.__miseInjectedScriptIds = new Set();
+        }
+
         if (Array.isArray(content.scripts)) {
             for (const item of content.scripts) {
+                const scriptId = item.scriptId || item.filename || item.name;
+                if (webview.__miseInjectedScriptIds.has(scriptId)) {
+                    continue;
+                }
                 if (item.code && typeof webview.executeJavaScript === 'function') {
+                    webview.__miseInjectedScriptIds.add(scriptId);
                     const scriptWrapper = buildUserScriptWrapper(item);
                     webview.executeJavaScript(scriptWrapper, false).catch(() => {});
                 }
