@@ -10,6 +10,7 @@ export const state = {
     tabActivityTimestamps: {},
     tabMediaAudible: {},
     tabFavicons: {},
+    tabHistory: {},
     splitStates: {},
     
     // UI Active Flags

@@ -830,9 +830,23 @@ export function switchTabFocus(targetIdx) {
     const tabItems = document.querySelectorAll('#TabList li');
     const currentWS = state.sessionState.current_workspace;
 
+    if (tabItems.length === 0) return;
+
     if (targetIdx >= tabItems.length) {
         targetIdx = Math.max(0, tabItems.length - 1);
     }
+    if (targetIdx < 0) {
+        targetIdx = 0;
+    }
+
+    if (!state.tabHistory) state.tabHistory = {};
+    if (!Array.isArray(state.tabHistory[currentWS])) state.tabHistory[currentWS] = [];
+    const history = state.tabHistory[currentWS];
+    const existingPos = history.indexOf(targetIdx);
+    if (existingPos !== -1) {
+        history.splice(existingPos, 1);
+    }
+    history.push(targetIdx);
 
     if (isSplitActive(currentWS)) {
         if (handleSplitTabSelection(targetIdx)) {
@@ -980,6 +994,11 @@ export function handleTabRemoval() {
                 if (state.sessionState.tab_sleep_states?.[wsName]) state.sessionState.tab_sleep_states[wsName].splice(idx, 1);
                 if (state.tabFavicons?.[wsName]) state.tabFavicons[wsName].splice(idx, 1);
                 if (state.sessionState.tab_favicons?.[wsName]) state.sessionState.tab_favicons[wsName].splice(idx, 1);
+                if (state.tabHistory && Array.isArray(state.tabHistory[wsName])) {
+                    state.tabHistory[wsName] = state.tabHistory[wsName]
+                        .filter(hIdx => hIdx !== idx)
+                        .map(hIdx => (hIdx > idx ? hIdx - 1 : hIdx));
+                }
 
                 window.miseAPI.saveSession(state.sessionState);
                 renderWorkspaceUI();
@@ -1003,6 +1022,7 @@ export function handleTabRemoval() {
                 delete state.tabActivityTimestamps[wsName];
                 delete state.tabMediaAudible[wsName];
                 delete state.tabFavicons?.[wsName];
+                delete state.tabHistory?.[wsName];
                 if (state.sessionState.tab_titles?.[wsName]) delete state.sessionState.tab_titles[wsName];
                 if (state.sessionState.tab_sleep_states?.[wsName]) delete state.sessionState.tab_sleep_states[wsName];
                 if (state.sessionState.tab_favicons?.[wsName]) delete state.sessionState.tab_favicons[wsName];
@@ -1046,7 +1066,56 @@ export function handleTabRemoval() {
     window.miseAPI.saveSession(state.sessionState);
     window.miseAllowWebviewFocus = true;
 
-    renderWorkspaceUI(tabs.length > 0 ? Math.max(0, currentIdx - 1) : null);
+    let nextTargetIdx = null;
+
+    if (tabs.length > 0) {
+        if (state.tabHistory && Array.isArray(state.tabHistory[currentWS])) {
+            const updatedHistory = [];
+            for (const histIdx of state.tabHistory[currentWS]) {
+                if (histIdx === currentIdx) {
+                    continue;
+                }
+                const adjusted = histIdx > currentIdx ? histIdx - 1 : histIdx;
+                if (adjusted >= 0 && adjusted < tabs.length && !updatedHistory.includes(adjusted)) {
+                    updatedHistory.push(adjusted);
+                }
+            }
+            state.tabHistory[currentWS] = updatedHistory;
+
+            // Prioritise returning to an already awake tab from recent history
+            for (let i = updatedHistory.length - 1; i >= 0; i--) {
+                const candidate = updatedHistory[i];
+                const isAwake = state.activeViewsCache[currentWS]?.[candidate] && !state.tabSleepStates[currentWS]?.[candidate];
+                if (isAwake) {
+                    nextTargetIdx = candidate;
+                    break;
+                }
+            }
+
+            // Fallback to the most recently visited tab in history even if sleeping
+            if (nextTargetIdx === null && updatedHistory.length > 0) {
+                nextTargetIdx = updatedHistory[updatedHistory.length - 1];
+            }
+        }
+
+        // If no tab in history was found, look for any tab that is already awake
+        if (nextTargetIdx === null) {
+            for (let i = 0; i < tabs.length; i++) {
+                const isAwake = state.activeViewsCache[currentWS]?.[i] && !state.tabSleepStates[currentWS]?.[i];
+                if (isAwake) {
+                    nextTargetIdx = i;
+                    break;
+                }
+            }
+        }
+
+        // Ultimate fallback: adjacent tab
+        if (nextTargetIdx === null) {
+            nextTargetIdx = Math.min(currentIdx, tabs.length - 1);
+        }
+    }
+
+    renderWorkspaceUI(nextTargetIdx);
 }
 
 export function navigateFrameBack() {
