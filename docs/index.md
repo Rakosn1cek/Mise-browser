@@ -23,32 +23,23 @@ hero:
       link: https://github.com/Rakosn1cek/Mise-browser
 
 features:
-  - icon: 🌙
-    title: True Tab Hibernation
+  - title: True Tab Hibernation
     details: Inactive background tabs detach entirely from memory across all workspaces. Live scroll positions and navigation history restore smoothly upon selection.
-  - icon: 🪟
-    title: Dual-Split View
+  - title: Dual-Split View
     details: Browse two pages side-by-side with customisable partition ratios. Swap panes, open links directly into split view, or toggle seamlessly via keyboard shortcuts.
-  - icon: 📦
-    title: Multi-Account Containers
+  - title: Multi-Account Containers
     details: Every workspace runs inside an isolated persistent Chromium partition. Run multiple corporate and personal logins simultaneously with zero cookie cross-contamination.
-  - icon: ⌨️
-    title: Mouse-Free Navigation
+  - title: Mouse-Free Navigation
     details: Full Vim-inspired link hints (f), quickmark speed-dial (go), floating omnibar, and granular shortcut remapping in keybinds.json.
-  - icon: 🛡️
-    title: Native Privacy Shields
+  - title: Native Privacy Shields
     details: Built-in Ghostery request filtering stops trackers, cryptominers, and analytics at the network layer. Trusted domains bypass fingerprint farbling on banking portals.
-  - icon: 🔒
-    title: Clipboard-Mediated Oversight
+  - title: Clipboard-Mediated Oversight
     details: Web commands and script executions stage safely onto your system clipboard. External terminal scanning tools like Oversight can inspect actions before execution.
-  - icon: 🧩
-    title: User Scripts & Styles Engine
+  - title: User Scripts & Styles Engine
     details: Native injection of local .user.js and .user.css files without extension overhead. Automatic file watching and live hot-reloading keep workflows fluid.
-  - icon: 📝
-    title: Markdown Scratchpad & Tools
+  - title: Markdown Scratchpad & Tools
     details: Instant Markdown quick notes (Alt + N), actionable history overlay (Ctrl + Shift + H), and structured bookmarks built right into the interface.
-  - icon: 🐧
-    title: Distro-Agnostic & Zero Telemetry
+  - title: Distro-Agnostic & Zero Telemetry
     details: Distro-agnostic AppImage, Deb, RPM, and Arch packaging. Zero telemetry, zero usage tracking, and anonymous GitHub release notifications for effortless updates.
 ---
 
