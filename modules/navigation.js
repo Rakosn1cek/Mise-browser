@@ -316,8 +316,10 @@ export function setupAddressBarAutocomplete() {
             }
         } else if (e.key === 'Tab') {
             e.preventDefault();
-            if (state.addressSelectionIdx >= 0 && state.addressSuggestions[state.addressSelectionIdx]) {
-                addressBar.value = state.addressSuggestions[state.addressSelectionIdx].value;
+            const idx = state.addressSelectionIdx >= 0 ? state.addressSelectionIdx : 0;
+            if (state.addressSuggestions[idx]) {
+                state.addressSelectionIdx = idx;
+                updateSuggestionHighlight();
             }
         }
     });
