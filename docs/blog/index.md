@@ -6,6 +6,14 @@ Each chronicle follows the development anatomy: **Problem** → **Attempted Solu
 
 ---
 
+### [The Accidental Resurrection: How Closing a Tab Defeated Tab Hibernation](./accidental-tab-resurrection.md)
+
+How a naive index decrement broke tab closure ergonomics, why sleeping background tabs were silently woken into memory, and how Most Recently Used (MRU) lifecycle awareness restored efficiency.
+
+`Tab Management` · `Memory Optimisation` · `State Architecture` · `Ergonomics` · `Electron`
+
+---
+
 ### [The Google Auth Botguard Saga: The rrk=46 Riddle and Poisoned Cookies](./google-auth-rrk46-botguard.md)
 
 How an attempt to sign into Gmail in an isolated container led down a rabbit hole of Botguard detection, User-Agent traps, and self-perpetuating cookie poisoning.
