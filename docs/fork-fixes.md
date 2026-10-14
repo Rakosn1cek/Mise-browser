@@ -4,7 +4,7 @@ Record every solved problem here, including defects inherited from upstream. Eac
 
 ## Performance parity and low-resource audit · 14 October 2026
 
-Implementation/work-log: [PR #18](https://github.com/Arzuparreta/Mise-browser/pull/18).
+Implementation/work-log: [PR #18](https://github.com/Arzuparreta/Mise-browser/pull/18). Upstream adoption proposal: [PR #22](https://github.com/Rakosn1cek/Mise-browser/pull/22), open for maintainer review.
 
 Comparison, reproduction, raw measurements, cost map and limits: [performance audit](./performance-audit.md).
 
