@@ -38,7 +38,7 @@ features:
   - title: User Scripts & Styles Engine
     details: Native injection of local .user.js and .user.css files without extension overhead. Automatic file watching and live hot-reloading keep workflows fluid.
   - title: Markdown Scratchpad & Tools
-    details: Instant Markdown quick notes (Alt + N), actionable history overlay (Ctrl + Shift + H), and structured bookmarks built right into the interface.
+    details: Instant Markdown quick notes (Ctrl + N), actionable history overlay (Ctrl + Shift + H), and structured bookmarks built right into the interface.
   - title: Distro-Agnostic & Zero Telemetry
     details: Distro-agnostic AppImage, Deb, RPM, and Arch packaging. Zero telemetry, zero usage tracking, and anonymous GitHub release notifications for effortless updates.
 ---
@@ -66,12 +66,13 @@ Keep your hands on the home row. Every major workflow is reachable via concise, 
 | Shortcut | Command | Action |
 | :--- | :--- | :--- |
 | `f` | Link Hints | Highlight all clickable page links with two-letter tags |
-| `Alt + S` | Dual Split | Toggle side-by-side split screen view |
-| `Alt + \` | Swap Panes | Swap active page and split page positions |
-| `Ctrl + 1` to `9` | Workspace Jump | Switch between isolated multi-account containers |
+| `Ctrl + Shift + S` | Dual Split | Toggle side-by-side split screen view |
+| `Ctrl + \` | Swap Panes | Swap active page and split page positions |
+| `Ctrl + 1` to `9` | Tab Jump | Jump directly to tabs 1 through 9 |
+| `Ctrl + Shift + W` | Workspace Dashboard | Visualise, transfer tabs, and manage isolated containers |
 | `Ctrl + L` / `o` | Omnibar | Open floating address bar with search engine aliases |
 | `Ctrl + Shift + H` | History Overlay | Search, reopen, or purge visited history records |
-| `Alt + N` | Scratchpad | Open Markdown quick-notes scratchpad |
+| `Ctrl + N` | Scratchpad | Open Markdown quick-notes scratchpad |
 | `Ctrl + Shift + P` | Private Window | Open zero-trace volatile browsing container |
 | `F1` / `Ctrl + H` | Preferences | Adjust hardware flags, sleep timeouts, and site shields |
 

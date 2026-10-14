@@ -11,6 +11,8 @@ let modeBadgeEl = null;
 let targetUrlEl = null;
 let securityBadgeEl = null;
 let partitionBadgeEl = null;
+let lastSecurityUrl = Symbol('uninitialised');
+let lastPartitionKey = null;
 
 let isStatusBarEnabled = true;
 let isGuestInputFocused = false;
@@ -28,6 +30,18 @@ export function initStatusBar() {
     partitionBadgeEl = document.getElementById('StatusBarPartition');
 
     if (!statusBarEl) return;
+
+    for (const badge of [partitionBadgeEl, modeBadgeEl]) {
+        if (!badge) continue;
+        badge.tabIndex = 0;
+        badge.setAttribute('role', 'button');
+        badge.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                badge.click();
+            }
+        });
+    }
 
     // Attach click handler on partition badge to open Workspace Dashboard
     if (partitionBadgeEl) {
@@ -103,7 +117,8 @@ export function setTargetUrl(url, timeoutMs = 0) {
 
 export function updateSecurityStatus(url) {
     if (!securityBadgeEl) securityBadgeEl = document.getElementById('StatusBarSecurity');
-    if (!securityBadgeEl) return;
+    if (!securityBadgeEl || lastSecurityUrl === url) return;
+    lastSecurityUrl = url;
 
     if (!url || url === 'about:blank') {
         securityBadgeEl.innerHTML = '<i class="fa-solid fa-circle-minus"></i><span class="status-badge-text">BLANK</span>';
@@ -143,14 +158,19 @@ export function updatePartitionBadge(workspaceName, isPrivate) {
     if (!partitionBadgeEl) partitionBadgeEl = document.getElementById('StatusBarPartition');
     if (!partitionBadgeEl) return;
 
-    if (isPrivate || state.globalPrivateModeActive) {
+    const privateProfile = isPrivate || state.globalPrivateModeActive;
+    const ws = privateProfile ? null : workspaceName || state.sessionState.current_workspace || 'Workspace 1';
+    const key = privateProfile ? 'private' : `workspace:${ws}`;
+    if (key === lastPartitionKey) return;
+    lastPartitionKey = key;
+
+    if (privateProfile) {
         partitionBadgeEl.innerHTML = '<i class="fa-solid fa-user-secret"></i><span class="status-badge-text">Private Profile</span>';
         partitionBadgeEl.className = 'status-badge status-badge-partition partition-private';
         partitionBadgeEl.title = 'Partition: MisePrivateProfile (Click to manage workspaces)';
         return;
     }
 
-    const ws = workspaceName || state.sessionState.current_workspace || 'Workspace 1';
     const partitionStr = getWorkspacePartition(ws);
     partitionBadgeEl.innerHTML = `<i class="fa-solid fa-box-archive"></i><span class="status-badge-text">${ws}</span>`;
     partitionBadgeEl.className = 'status-badge status-badge-partition partition-container';
@@ -202,6 +222,10 @@ export function togglePassthroughMode(force) {
     const activeListItem = document.querySelector('#TabList li.selected');
     const currentIdx = activeListItem ? Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem) : 0;
     const activeWv = state.activeViewsCache[currentWS]?.[currentIdx];
+    if (activeWv) {
+        activeWv.__miseKeyboardMode ||= {};
+        activeWv.__miseKeyboardMode.passthrough = isPassthroughModeActive;
+    }
     if (activeWv && typeof activeWv.send === 'function') {
         try {
             activeWv.send('set-passthrough-mode', isPassthroughModeActive);
@@ -217,6 +241,11 @@ export function togglePassthroughMode(force) {
 }
 
 export function handleGuestPassthroughState(isActive, wsName, tabIdx) {
+    const view = state.activeViewsCache[wsName]?.[tabIdx];
+    if (view) {
+        view.__miseKeyboardMode ||= {};
+        view.__miseKeyboardMode.passthrough = !!isActive;
+    }
     const currentWS = state.sessionState.current_workspace;
     const activeListItem = document.querySelector('#TabList li.selected');
     const currentIdx = activeListItem ? Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem) : 0;
@@ -237,6 +266,11 @@ export function isPassthroughActive() {
 }
 
 export function handleGuestInputFocus(isFocused, wsName, tabIdx) {
+    const view = state.activeViewsCache[wsName]?.[tabIdx];
+    if (view) {
+        view.__miseKeyboardMode ||= {};
+        view.__miseKeyboardMode.input = !!isFocused;
+    }
     const currentWS = state.sessionState.current_workspace;
     const activeListItem = document.querySelector('#TabList li.selected');
     const currentIdx = activeListItem ? Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem) : 0;
@@ -248,6 +282,11 @@ export function handleGuestInputFocus(isFocused, wsName, tabIdx) {
 }
 
 export function handleGuestHintsState(isActive, wsName, tabIdx) {
+    const view = state.activeViewsCache[wsName]?.[tabIdx];
+    if (view) {
+        view.__miseKeyboardMode ||= {};
+        view.__miseKeyboardMode.hints = !!isActive;
+    }
     const currentWS = state.sessionState.current_workspace;
     const activeListItem = document.querySelector('#TabList li.selected');
     const currentIdx = activeListItem ? Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem) : 0;
@@ -263,12 +302,6 @@ export function updateStatusBarFromActiveView() {
     const isPrivate = !!state.globalPrivateModeActive;
     updatePartitionBadge(currentWS, isPrivate);
 
-    // Reset guest input focus and passthrough state on tab or workspace switch
-    isGuestInputFocused = false;
-    isHintsModeActive = false;
-    isPassthroughModeActive = false;
-    recalculateMode();
-
     const activeListItem = document.querySelector('#TabList li.selected');
     const currentIdx = activeListItem ? Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem) : 0;
     const urls = state.sessionState.workspaces[currentWS] || [];
@@ -278,6 +311,12 @@ export function updateStatusBarFromActiveView() {
     setTargetUrl('');
 
     const activeWv = state.activeViewsCache[currentWS]?.[currentIdx];
+    const mode = activeWv?.__miseKeyboardMode || {};
+    isGuestInputFocused = !!mode.input;
+    isHintsModeActive = !!mode.hints;
+    isPassthroughModeActive = !!mode.passthrough;
+    recalculateMode();
+
     updateDarkReaderButtonUI(isWebviewDarkReaderActive(activeWv));
     updateReaderViewButtonUI(!!(activeWv && activeWv.__miseReaderActive));
 }

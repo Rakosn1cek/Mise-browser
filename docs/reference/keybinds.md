@@ -119,13 +119,13 @@ Keybindings are decoupled from source code and managed by `keybinds.js`. You can
   "spawn-tab": "Ctrl+T",
   "toggle-address": "Ctrl+O",
   "remove-tab": ["Ctrl+W", "Ctrl+D", "Ctrl+Q"],
-  "focus-sidebar": "Alt+M",
-  "focus-webview": "Alt+B",
+  "focus-sidebar": "Ctrl+Shift+E",
+  "focus-webview": "Ctrl+Shift+B",
   "trigger-hints": "Ctrl+F",
   "toggle-zen-mode": "F11"
 }
 ```
 
-- **Modifiers**: Use `Ctrl`, `Alt`, `Shift`, or `Meta` combined with `+`.
+- **Modifiers**: Use `Ctrl`, `Shift`, or `Meta` combined with `+` (avoid `Alt` to prevent conflicts with Linux tiling window managers).
 - **Multiple Bindings**: Assign an array of strings to bind multiple shortcuts to the same action (e.g. `["Ctrl+W", "Ctrl+D"]`).
 - **Reloading**: Customisations apply immediately upon restarting Mise, or automatically when modifying bindings via the internal configuration bridge.
