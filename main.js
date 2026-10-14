@@ -205,6 +205,10 @@ function initializeEngineSwitches() {
     app.commandLine.appendSwitch('log-level', '3');
     app.commandLine.appendSwitch('disable-speech-api');
 
+    // Explicit disk and media cache caps (150MB and 50MB) to prevent profile bloat
+    app.commandLine.appendSwitch('disk-cache-size', '157286400');
+    app.commandLine.appendSwitch('media-cache-size', '52428800');
+
     // Google sign-in needs Electron's own identity, see security.js
     security.setGoogleSignInUserAgent(app.userAgentFallback);
 

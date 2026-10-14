@@ -27,6 +27,82 @@ function getLiveTabIndex(webview, wsName) {
     return -1;
 }
 
+export function destroyGuestWebview(webview) {
+    if (!webview) return;
+    webview.__miseDestroyed = true;
+
+    try {
+        if (webview.ownerDocument?.activeElement === webview || (typeof document !== 'undefined' && document.activeElement === webview)) {
+            if (typeof webview.blur === 'function') {
+                webview.blur();
+            }
+        }
+    } catch (err) {}
+
+    try {
+        if (webview.__miseAbortController) {
+            webview.__miseAbortController.abort();
+            webview.__miseAbortController = null;
+        }
+    } catch (err) {}
+
+    try {
+        if (typeof webview.setAudioMuted === 'function') {
+            webview.setAudioMuted(true);
+        }
+    } catch (err) {}
+
+    try {
+        if (typeof webview.stop === 'function') {
+            webview.stop();
+        }
+    } catch (err) {}
+
+    try {
+        webview.src = 'about:blank';
+    } catch (err) {}
+
+    try {
+        if (typeof webview.remove === 'function') {
+            webview.remove();
+        }
+    } catch (err) {}
+
+    if (webview.__miseInjectedScriptIds) {
+        webview.__miseInjectedScriptIds.clear();
+    }
+}
+
+export function handleWebviewCrash(webview, event) {
+    if (!webview || webview.__miseDestroyed) return;
+    if (event && (event.reason === 'clean-exit' || event.reason === 'killed')) return;
+
+    const now = Date.now();
+    webview.__miseCrashTimestamps = (webview.__miseCrashTimestamps || []).filter(t => (now - t) < 10000);
+
+    const maxAutoReloads = 2;
+    if (webview.__miseCrashTimestamps.length >= maxAutoReloads) {
+        if (typeof setTargetUrl === 'function') {
+            setTargetUrl('Webview process crashed repeatedly. Automatic reload suspended. Press Ctrl+R to retry.', 6000);
+        }
+        return;
+    }
+
+    webview.__miseCrashTimestamps.push(now);
+    const delay = webview.__miseCrashTimestamps.length > 1 ? 1500 : 500;
+    if (typeof setTargetUrl === 'function') {
+        setTargetUrl(`Webview process crashed (${event?.reason || 'abnormal'}). Reloading in ${(delay / 1000).toFixed(1)}s...`, 3000);
+    }
+
+    setTimeout(() => {
+        if (webview && !webview.__miseDestroyed && !webview.__miseAbortController?.signal?.aborted && typeof webview.reload === 'function') {
+            try {
+                webview.reload();
+            } catch (err) {}
+        }
+    }, delay);
+}
+
 export function createWebView(url, currentWS, idx) {
     if (!state.activeViewsCache[currentWS]) state.activeViewsCache[currentWS] = [];
     const webview = document.createElement('webview');
@@ -43,6 +119,10 @@ export function createWebView(url, currentWS, idx) {
     const initialSrc = isPdfUrl(url) ? getPdfViewerUrl(url) : url;
     webview.setAttribute('src', initialSrc);
 
+    const abortController = new AbortController();
+    webview.__miseAbortController = abortController;
+    const listenerOptions = { signal: abortController.signal };
+
     webview.addEventListener('will-navigate', (e) => {
         webview.__miseNavigationEpoch = (webview.__miseNavigationEpoch || 0) + 1;
         if (webview.__miseInjectedScriptIds) webview.__miseInjectedScriptIds.clear();
@@ -50,7 +130,7 @@ export function createWebView(url, currentWS, idx) {
             e.preventDefault();
             webview.setAttribute('src', getPdfViewerUrl(e.url));
         }
-    });
+    }, listenerOptions);
 
     const syncTitle = (newTitle) => {
         if (!newTitle || newTitle === 'about:blank' || newTitle === 'Loading...') return;
@@ -76,7 +156,7 @@ export function createWebView(url, currentWS, idx) {
     
     webview.addEventListener('page-title-updated', (e) => {
         syncTitle(e.title);
-    });
+    }, listenerOptions);
 
     webview.addEventListener('page-favicon-updated', (e) => {
         if (e.favicons && e.favicons.length > 0) {
@@ -103,7 +183,7 @@ export function createWebView(url, currentWS, idx) {
                 }
             }
         }
-    });
+    }, listenerOptions);
 
     webview.addEventListener('did-navigate', async (e) => {
         webview.__miseNavigationEpoch = (webview.__miseNavigationEpoch || 0) + 1;
@@ -131,7 +211,7 @@ export function createWebView(url, currentWS, idx) {
                 updateSecurityStatus(cleanUrl);
             }
         }
-    });
+    }, listenerOptions);
 
     webview.addEventListener('did-navigate-in-page', async (e) => {
         const liveIdx = getLiveTabIndex(webview, currentWS, idx);
@@ -171,7 +251,7 @@ export function createWebView(url, currentWS, idx) {
                 } catch (e) {}
             })();
         `, false).catch(() => {});
-    });
+    }, listenerOptions);
 
     webview.addEventListener('new-window', (e) => {
         e.preventDefault();
@@ -194,15 +274,11 @@ export function createWebView(url, currentWS, idx) {
             state.tabDarkReaderStates[currentWS][newTargetIdx] = true;
         }
         renderWorkspaceUI(newTargetIdx);
-    });
+    }, listenerOptions);
 
     webview.addEventListener('render-process-gone', (e) => {
-        if (e.reason !== 'clean-exit' && e.reason !== 'killed') {
-            setTimeout(() => {
-                webview.reload();
-            }, 500);
-        }
-    });
+        handleWebviewCrash(webview, e);
+    }, listenerOptions);
 
     webview.addEventListener('found-in-page', (e) => {
         if (e.result) {
@@ -213,7 +289,7 @@ export function createWebView(url, currentWS, idx) {
                 countEl.textContent = totalMatches > 0 ? `${activeMatch}/${totalMatches}` : '0/0';
             }
         }
-    });
+    }, listenerOptions);
 
     webview.addEventListener('media-started-playing', () => {
         const liveIdx = getLiveTabIndex(webview, currentWS, idx);
@@ -222,7 +298,7 @@ export function createWebView(url, currentWS, idx) {
         state.tabMediaAudible[currentWS][liveIdx] = true;
         const isMuted = typeof webview.isAudioMuted === 'function' ? webview.isAudioMuted() : !!state.tabAudioMuted[currentWS]?.[liveIdx];
         updateTabMediaIndicator(currentWS, liveIdx, true, isMuted);
-    });
+    }, listenerOptions);
     
     webview.addEventListener('media-paused', () => {
         const liveIdx = getLiveTabIndex(webview, currentWS, idx);
@@ -231,7 +307,7 @@ export function createWebView(url, currentWS, idx) {
         state.tabMediaAudible[currentWS][liveIdx] = false;
         const isMuted = typeof webview.isAudioMuted === 'function' ? webview.isAudioMuted() : !!state.tabAudioMuted[currentWS]?.[liveIdx];
         updateTabMediaIndicator(currentWS, liveIdx, false, isMuted);
-    });
+    }, listenerOptions);
 
     webview.addEventListener('did-start-loading', () => {
         webview.style.opacity = '1';
@@ -243,7 +319,7 @@ export function createWebView(url, currentWS, idx) {
             state.tabActivityTimestamps[currentWS][liveIdx] = Date.now();
             updateTabMediaIndicator(currentWS, liveIdx, false, false);
         }
-    });
+    }, listenerOptions);
 
     webview.addEventListener('dom-ready', async () => {
         webview.style.opacity = '1';
@@ -285,7 +361,7 @@ export function createWebView(url, currentWS, idx) {
                 updateStatusBarFromActiveView();
             }
         }
-    });
+    }, listenerOptions);
 
     webview.addEventListener('did-finish-load', () => {
         if (webview.__miseDarkReaderEnabled && !webview.__miseDarkKey) {
@@ -297,7 +373,7 @@ export function createWebView(url, currentWS, idx) {
                 syncTitle(liveTitle);
             }
         } catch (err) {}
-    });
+    }, listenerOptions);
 
     webview.addEventListener('did-stop-loading', () => {
         try {
@@ -323,7 +399,7 @@ export function createWebView(url, currentWS, idx) {
                 }
             }
         }).catch(() => {});
-    });
+    }, listenerOptions);
 
     webview.addEventListener('update-target-url', (e) => {
         const activeListItem = document.querySelector('#TabList li.selected');
@@ -332,7 +408,7 @@ export function createWebView(url, currentWS, idx) {
         if (state.sessionState.current_workspace === currentWS && (liveIdx === currentSelectedIdx || isSplitActive(currentWS))) {
             setTargetUrl(e.url || '');
         }
-    });
+    }, listenerOptions);
 
     webview.addEventListener('ipc-message', (e) => {
         const liveIdx = getLiveTabIndex(webview, currentWS, idx);
@@ -365,7 +441,7 @@ export function createWebView(url, currentWS, idx) {
             const extra = e.args[1];
             handleNormalModeAction(action, extra, webview, currentWS, liveIdx);
         }
-    });
+    }, listenerOptions);
 
     webview.addEventListener('focus', () => {
         if (isSplitActive(currentWS)) {
@@ -379,7 +455,7 @@ export function createWebView(url, currentWS, idx) {
                 applySplitLayout();
             }
         }
-    });
+    }, listenerOptions);
     
     return webview;
 }
@@ -1206,7 +1282,7 @@ export function handleTabRemoval(explicitIdx) {
             if (state.sessionState.workspaces[wsName].length > 1) {
                 state.sessionState.workspaces[wsName].splice(idx, 1);
                 if (state.activeViewsCache[wsName] && state.activeViewsCache[wsName][idx]) {
-                    state.activeViewsCache[wsName][idx].remove();
+                    destroyGuestWebview(state.activeViewsCache[wsName][idx]);
                     state.activeViewsCache[wsName].splice(idx, 1);
                 } else if (state.activeViewsCache[wsName]) {
                     state.activeViewsCache[wsName].splice(idx, 1);
@@ -1234,7 +1310,7 @@ export function handleTabRemoval(explicitIdx) {
                     state.sessionState.current_workspace = fallbackWS;
                 }
                 if (state.activeViewsCache[wsName]) {
-                    state.activeViewsCache[wsName].forEach(wv => { if (wv) wv.remove(); });
+                    state.activeViewsCache[wsName].forEach(wv => destroyGuestWebview(wv));
                     delete state.activeViewsCache[wsName];
                 }
                 delete state.activeTitlesCache[wsName];
@@ -1283,7 +1359,7 @@ export function handleTabRemoval(explicitIdx) {
     tabs.splice(currentIdx, 1);
     handleTabRemovalInSplit(currentIdx);
     if (state.activeViewsCache[currentWS] && state.activeViewsCache[currentWS][currentIdx]) {
-        state.activeViewsCache[currentWS][currentIdx].remove();
+        destroyGuestWebview(state.activeViewsCache[currentWS][currentIdx]);
         state.activeViewsCache[currentWS].splice(currentIdx, 1);
     } else if (state.activeViewsCache[currentWS]) {
         state.activeViewsCache[currentWS].splice(currentIdx, 1);
@@ -1698,7 +1774,8 @@ export function wakeTab(currentWS, idx) {
                 }, 300);
             }
         };
-        webview.addEventListener('dom-ready', restoreState, { once: true });
+        const restoreSignal = webview.__miseAbortController?.signal;
+        webview.addEventListener('dom-ready', restoreState, restoreSignal ? { once: true, signal: restoreSignal } : { once: true });
     }
 
     if (!state.activeViewsCache[currentWS]) state.activeViewsCache[currentWS] = [];
@@ -1817,7 +1894,7 @@ export async function hibernateTab(currentWS, idx) {
         } catch (err) {}
 
         try {
-            webview.remove();
+            destroyGuestWebview(webview);
         } catch (err) {}
         state.activeViewsCache[currentWS][idx] = null;
     }

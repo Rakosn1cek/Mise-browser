@@ -36,7 +36,8 @@ import {
     reapplyActiveUserStyles,
     toggleReaderViewOnActiveTab,
     exportActiveTabToNotes,
-    exportActiveTabToExternal
+    exportActiveTabToExternal,
+    destroyGuestWebview
 } from './modules/webview.js';
 
 import { 
@@ -1016,7 +1017,7 @@ function handlePrivateBrowsingStateShift(isPrivate) {
     
     const currentWS = state.sessionState.current_workspace;
     if (state.activeViewsCache[currentWS]) {
-        state.activeViewsCache[currentWS].forEach(wv => { if (wv) wv.remove(); });
+        state.activeViewsCache[currentWS].forEach(wv => destroyGuestWebview(wv));
         state.activeViewsCache[currentWS] = [];
     }
     

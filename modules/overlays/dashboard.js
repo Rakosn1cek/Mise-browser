@@ -1,6 +1,6 @@
 import { state } from '../state.js';
 import { focusActiveWebview, getWorkspacePartition } from '../utils.js';
-import { renderWorkspaceUI, switchTabFocus, spawnTabWithUrl, spawnNewBlankTab, handleTabRemoval, moveTabState } from '../webview.js';
+import { renderWorkspaceUI, switchTabFocus, spawnTabWithUrl, spawnNewBlankTab, handleTabRemoval, moveTabState, destroyGuestWebview } from '../webview.js';
 import { transferTab } from '../tabTransfer.js';
 
 export function toggleDashboardView() {
@@ -38,7 +38,7 @@ export function renameWorkspace(oldName, newName) {
 
     // Dispose cached webviews so they are re-created with the new container partition
     if (state.activeViewsCache[oldName]) {
-        state.activeViewsCache[oldName].forEach(wv => { if (wv) wv.remove(); });
+        state.activeViewsCache[oldName].forEach(wv => destroyGuestWebview(wv));
         delete state.activeViewsCache[oldName];
     }
 
@@ -99,7 +99,7 @@ export function deleteWorkspace(wsName) {
     }
 
     if (state.activeViewsCache[wsName]) {
-        state.activeViewsCache[wsName].forEach(wv => { if (wv) wv.remove(); });
+        state.activeViewsCache[wsName].forEach(wv => destroyGuestWebview(wv));
         delete state.activeViewsCache[wsName];
     }
     delete state.activeTitlesCache[wsName];

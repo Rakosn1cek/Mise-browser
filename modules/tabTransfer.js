@@ -55,11 +55,24 @@ export function transferTab(state, source, index, target, requestedIndex) {
 
         const [value] = table[source].splice(index, 1);
         if (field === 'activeViewsCache' && value) {
-            // Live webviews must release focus and unmount so guest processes do not cross partitions
+            // Live webviews must release focus, halt network streams, and unmount cleanly
             if (value.ownerDocument?.activeElement === value) {
-                value.blur();
+                if (typeof value.blur === 'function') value.blur();
             }
-            value.remove();
+            if (value.__miseAbortController) {
+                try { value.__miseAbortController.abort(); } catch (e) {}
+                value.__miseAbortController = null;
+            }
+            if (typeof value.setAudioMuted === 'function') {
+                try { value.setAudioMuted(true); } catch (e) {}
+            }
+            if (typeof value.stop === 'function') {
+                try { value.stop(); } catch (e) {}
+            }
+            try { value.src = 'about:blank'; } catch (e) {}
+            if (typeof value.remove === 'function') {
+                value.remove();
+            }
         }
         table[target].splice(destination, 0, field === 'activeViewsCache' ? null : value);
     }
