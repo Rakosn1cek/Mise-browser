@@ -111,7 +111,7 @@ const source = fs.readFileSync(path.join(__dirname, '../security.js'), 'utf8');
             assert.equal(writes, scenario === 'cached' ? 0 : 1);
             assert.equal(deserialisations, ['cached', 'corrupt'].includes(scenario) ? 1 : 0);
             assert.equal(rules.filter(rule => rule.added.includes('youtube.com#@#+js()')).length, 1, 'Shared exceptions must be installed once');
-            assert(rules.some(rule => rule.added.some(filter => filter.includes('example.org'))), 'Trusted domain exceptions must survive initialisation');
+            assert(rules.some(rule => rule.added.includes('@@||example.org^')), 'Trusted domain exceptions must survive initialisation');
 
             for (const target of targets) {
                 let result;

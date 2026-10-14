@@ -20,8 +20,13 @@ const expectedTabs = [
     { id: 'tab-help', label: 'Help & Shortcut Reference' }
 ];
 
+function escapeRegExp(str) {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 for (const tab of expectedTabs) {
-    const btnPattern = new RegExp(`data-tab="${tab.id}"[^>]*>[\\s\\S]*?<span>${tab.label.replace('[', '\\[').replace(']', '\\]')}<\\/span>`);
+    const escapedLabel = escapeRegExp(tab.label);
+    const btnPattern = new RegExp(`data-tab="${tab.id}"[^>]*>[\\s\\S]*?<span>${escapedLabel}<\\/span>`);
     assert.match(html, btnPattern, `Tab button for ${tab.label} must exist in index.html`);
 
     const sectionPattern = new RegExp(`<section[^>]*id="${tab.id}"[^>]*role="tabpanel"`);
