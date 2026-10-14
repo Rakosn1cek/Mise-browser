@@ -1179,6 +1179,17 @@ export function spawnTabWithUrl(url) {
     renderWorkspaceUI(newTargetIdx);
 }
 
+function removeTabMetadata(workspace, index) {
+    const arrays = new Set([
+        state.activeTitlesCache, state.tabSleepStates, state.tabActivityTimestamps,
+        state.tabMediaAudible, state.tabAudioMuted, state.tabDarkReaderStates,
+        state.tabFavicons, state.tabPinned, state.sessionState.tab_titles,
+        state.sessionState.tab_sleep_states, state.sessionState.tab_dark_reader,
+        state.sessionState.tab_favicons, state.sessionState.tab_pinned
+    ].map(cache => cache?.[workspace]).filter(Array.isArray));
+    for (const array of arrays) array.splice(index, 1);
+}
+
 export function handleTabRemoval(explicitIdx) {
     if (state.dashboardActive) {
         const currentItem = state.dashboardItems[state.dashboardSelectionIdx];
@@ -1200,18 +1211,7 @@ export function handleTabRemoval(explicitIdx) {
                 } else if (state.activeViewsCache[wsName]) {
                     state.activeViewsCache[wsName].splice(idx, 1);
                 }
-                if (state.activeTitlesCache[wsName]) state.activeTitlesCache[wsName].splice(idx, 1);
-                if (state.tabSleepStates[wsName]) state.tabSleepStates[wsName].splice(idx, 1);
-                if (state.tabActivityTimestamps[wsName]) state.tabActivityTimestamps[wsName].splice(idx, 1);
-                if (state.tabMediaAudible[wsName]) state.tabMediaAudible[wsName].splice(idx, 1);
-                if (state.tabAudioMuted[wsName]) state.tabAudioMuted[wsName].splice(idx, 1);
-                if (state.sessionState.tab_titles?.[wsName]) state.sessionState.tab_titles[wsName].splice(idx, 1);
-                if (state.sessionState.tab_sleep_states?.[wsName]) state.sessionState.tab_sleep_states[wsName].splice(idx, 1);
-                if (state.tabDarkReaderStates?.[wsName]) state.tabDarkReaderStates[wsName].splice(idx, 1);
-                if (state.tabFavicons?.[wsName]) state.tabFavicons[wsName].splice(idx, 1);
-                if (state.sessionState.tab_favicons?.[wsName]) state.sessionState.tab_favicons[wsName].splice(idx, 1);
-                if (state.tabPinned?.[wsName]) state.tabPinned[wsName].splice(idx, 1);
-                if (state.sessionState.tab_pinned?.[wsName]) state.sessionState.tab_pinned[wsName].splice(idx, 1);
+                removeTabMetadata(wsName, idx);
                 if (state.tabHistory && Array.isArray(state.tabHistory[wsName])) {
                     state.tabHistory[wsName] = state.tabHistory[wsName]
                         .filter(hIdx => hIdx !== idx)
@@ -1288,18 +1288,7 @@ export function handleTabRemoval(explicitIdx) {
     } else if (state.activeViewsCache[currentWS]) {
         state.activeViewsCache[currentWS].splice(currentIdx, 1);
     }
-    if (state.activeTitlesCache[currentWS]) state.activeTitlesCache[currentWS].splice(currentIdx, 1);
-    if (state.tabSleepStates[currentWS]) state.tabSleepStates[currentWS].splice(currentIdx, 1);
-    if (state.tabActivityTimestamps[currentWS]) state.tabActivityTimestamps[currentWS].splice(currentIdx, 1);
-    if (state.tabMediaAudible[currentWS]) state.tabMediaAudible[currentWS].splice(currentIdx, 1);
-    if (state.tabAudioMuted[currentWS]) state.tabAudioMuted[currentWS].splice(currentIdx, 1);
-    if (state.tabFavicons?.[currentWS]) state.tabFavicons[currentWS].splice(currentIdx, 1);
-    if (state.sessionState.tab_titles?.[currentWS]) state.sessionState.tab_titles[currentWS].splice(currentIdx, 1);
-    if (state.sessionState.tab_sleep_states?.[currentWS]) state.sessionState.tab_sleep_states[currentWS].splice(currentIdx, 1);
-    if (state.tabDarkReaderStates?.[currentWS]) state.tabDarkReaderStates[currentWS].splice(currentIdx, 1);
-    if (state.sessionState.tab_favicons?.[currentWS]) state.sessionState.tab_favicons[currentWS].splice(currentIdx, 1);
-    if (state.tabPinned?.[currentWS]) state.tabPinned[currentWS].splice(currentIdx, 1);
-    if (state.sessionState.tab_pinned?.[currentWS]) state.sessionState.tab_pinned[currentWS].splice(currentIdx, 1);
+    removeTabMetadata(currentWS, currentIdx);
 
     state.sessionState.tab_dark_reader = state.tabDarkReaderStates;
     state.sessionState.tab_pinned = state.tabPinned;

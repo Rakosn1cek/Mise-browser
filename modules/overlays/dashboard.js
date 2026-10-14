@@ -1,6 +1,7 @@
 import { state } from '../state.js';
 import { focusActiveWebview, getWorkspacePartition } from '../utils.js';
 import { renderWorkspaceUI, switchTabFocus, spawnTabWithUrl, spawnNewBlankTab, handleTabRemoval, moveTabState } from '../webview.js';
+import { transferTab } from '../tabTransfer.js';
 
 export function toggleDashboardView() {
     if (state.paletteActive && typeof window.toggleCommandPaletteView === 'function') {
@@ -250,55 +251,7 @@ export function buildDashboardTree() {
                 const sourceIdx = data.index;
                 const targetWS = wsName;
 
-                if (sourceWS === targetWS) return;
-
-                const [movedUrl] = state.sessionState.workspaces[sourceWS].splice(sourceIdx, 1);
-                if (!state.sessionState.workspaces[targetWS]) {
-                    state.sessionState.workspaces[targetWS] = [];
-                }
-                state.sessionState.workspaces[targetWS].push(movedUrl);
-
-                if (state.activeViewsCache[sourceWS] && state.activeViewsCache[sourceWS][sourceIdx]) {
-                    const [movedView] = state.activeViewsCache[sourceWS].splice(sourceIdx, 1);
-                    if (!state.activeViewsCache[targetWS]) state.activeViewsCache[targetWS] = [];
-                    state.activeViewsCache[targetWS].push(movedView);
-                }
-
-                if (state.activeTitlesCache[sourceWS] && state.activeTitlesCache[sourceWS][sourceIdx]) {
-                    const [movedTitle] = state.activeTitlesCache[sourceWS].splice(sourceIdx, 1);
-                    if (!state.activeTitlesCache[targetWS]) state.activeTitlesCache[targetWS] = [];
-                    state.activeTitlesCache[targetWS].push(movedTitle);
-                }
-
-                if (state.tabSleepStates[sourceWS]) {
-                    const [movedSleep] = state.tabSleepStates[sourceWS].splice(sourceIdx, 1);
-                    if (!state.tabSleepStates[targetWS]) state.tabSleepStates[targetWS] = [];
-                    state.tabSleepStates[targetWS].push(movedSleep);
-                }
-                if (state.tabActivityTimestamps[sourceWS]) {
-                    const [movedTime] = state.tabActivityTimestamps[sourceWS].splice(sourceIdx, 1);
-                    if (!state.tabActivityTimestamps[targetWS]) state.tabActivityTimestamps[targetWS] = [];
-                    state.tabActivityTimestamps[targetWS].push(movedTime);
-                }
-                if (state.tabMediaAudible[sourceWS]) {
-                    const [movedMedia] = state.tabMediaAudible[sourceWS].splice(sourceIdx, 1);
-                    if (!state.tabMediaAudible[targetWS]) state.tabMediaAudible[targetWS] = [];
-                    state.tabMediaAudible[targetWS].push(movedMedia);
-                }
-                if (state.tabPinned[sourceWS]) {
-                    const [movedPinned] = state.tabPinned[sourceWS].splice(sourceIdx, 1);
-                    if (!state.tabPinned[targetWS]) state.tabPinned[targetWS] = [];
-                    state.tabPinned[targetWS].push(movedPinned);
-                }
-                if (state.tabAudioMuted[sourceWS]) {
-                    const [movedMuted] = state.tabAudioMuted[sourceWS].splice(sourceIdx, 1);
-                    if (!state.tabAudioMuted[targetWS]) state.tabAudioMuted[targetWS] = [];
-                    state.tabAudioMuted[targetWS].push(movedMuted);
-                }
-                state.sessionState.tab_titles = state.activeTitlesCache;
-                state.sessionState.tab_sleep_states = state.tabSleepStates;
-                state.sessionState.tab_pinned = state.tabPinned;
-
+                transferTab(state, sourceWS, sourceIdx, targetWS);
                 window.miseAPI.saveSession(state.sessionState);
                 renderWorkspaceUI();
                 buildDashboardTree();
@@ -353,61 +306,7 @@ export function buildDashboardTree() {
                         return;
                     }
 
-                    const [movedUrl] = state.sessionState.workspaces[sourceWS].splice(sourceIdx, 1);
-                    if (!state.sessionState.workspaces[targetWS]) {
-                        state.sessionState.workspaces[targetWS] = [];
-                    }
-                    state.sessionState.workspaces[targetWS].splice(targetIdx, 0, movedUrl);
-
-                    if (sourceWS === targetWS) {
-                        if (state.activeViewsCache[sourceWS] && state.activeViewsCache[sourceWS][sourceIdx]) {
-                            const [movedView] = state.activeViewsCache[sourceWS].splice(sourceIdx, 1);
-                            if (!state.activeViewsCache[targetWS]) state.activeViewsCache[targetWS] = [];
-                            state.activeViewsCache[targetWS].splice(targetIdx, 0, movedView);
-                        }
-                    } else {
-                        // Dispose webview when moved across different workspaces so target workspace recreates it with its partition
-                        if (state.activeViewsCache[sourceWS] && state.activeViewsCache[sourceWS][sourceIdx]) {
-                            const [movedView] = state.activeViewsCache[sourceWS].splice(sourceIdx, 1);
-                            if (movedView) movedView.remove();
-                        }
-                    }
-
-                    if (state.activeTitlesCache[sourceWS] && state.activeTitlesCache[sourceWS][sourceIdx]) {
-                        const [movedTitle] = state.activeTitlesCache[sourceWS].splice(sourceIdx, 1);
-                        if (!state.activeTitlesCache[targetWS]) state.activeTitlesCache[targetWS] = [];
-                        state.activeTitlesCache[targetWS].splice(targetIdx, 0, movedTitle);
-                    }
-
-                    if (state.tabSleepStates[sourceWS]) {
-                        const [movedSleep] = state.tabSleepStates[sourceWS].splice(sourceIdx, 1);
-                        if (!state.tabSleepStates[targetWS]) state.tabSleepStates[targetWS] = [];
-                        state.tabSleepStates[targetWS].splice(targetIdx, 0, movedSleep);
-                    }
-                    if (state.tabActivityTimestamps[sourceWS]) {
-                        const [movedTime] = state.tabActivityTimestamps[sourceWS].splice(sourceIdx, 1);
-                        if (!state.tabActivityTimestamps[targetWS]) state.tabActivityTimestamps[targetWS] = [];
-                        state.tabActivityTimestamps[targetWS].splice(targetIdx, 0, movedTime);
-                    }
-                    if (state.tabMediaAudible[sourceWS]) {
-                        const [movedMedia] = state.tabMediaAudible[sourceWS].splice(sourceIdx, 1);
-                        if (!state.tabMediaAudible[targetWS]) state.tabMediaAudible[targetWS] = [];
-                        state.tabMediaAudible[targetWS].splice(targetIdx, 0, movedMedia);
-                    }
-                    if (state.tabPinned[sourceWS]) {
-                        const [movedPinned] = state.tabPinned[sourceWS].splice(sourceIdx, 1);
-                        if (!state.tabPinned[targetWS]) state.tabPinned[targetWS] = [];
-                        state.tabPinned[targetWS].splice(targetIdx, 0, movedPinned);
-                    }
-                    if (state.tabAudioMuted[sourceWS]) {
-                        const [movedMuted] = state.tabAudioMuted[sourceWS].splice(sourceIdx, 1);
-                        if (!state.tabAudioMuted[targetWS]) state.tabAudioMuted[targetWS] = [];
-                        state.tabAudioMuted[targetWS].splice(targetIdx, 0, movedMuted);
-                    }
-                    state.sessionState.tab_titles = state.activeTitlesCache;
-                    state.sessionState.tab_sleep_states = state.tabSleepStates;
-                    state.sessionState.tab_pinned = state.tabPinned;
-
+                    transferTab(state, sourceWS, sourceIdx, targetWS, targetIdx);
                     window.miseAPI.saveSession(state.sessionState);
                     renderWorkspaceUI();
                     buildDashboardTree();
