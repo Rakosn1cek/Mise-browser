@@ -1,11 +1,18 @@
 import { state } from '../state.js';
-import { getWorkspacePartition } from '../utils.js';
+import { prepareOverlay } from '../focus.js';
+import { getWorkspacePartition, focusActiveWebview, removeWebview } from '../utils.js';
+
+let activeClose = null;
+
+export function closeTransientShareModal() { activeClose?.(); }
 
 export function openTransientShareModal(targetUrl) {
     const overlay = document.getElementById('ShareModalOverlay');
     const container = document.getElementById('ShareModalWebviewContainer');
     if (!overlay || !container || !targetUrl) return;
 
+    closeTransientShareModal();
+    prepareOverlay('ShareModalOverlay');
     container.innerHTML = '';
 
     const webview = document.createElement('webview');
@@ -35,8 +42,11 @@ export function openTransientShareModal(targetUrl) {
 
     const closeModal = () => {
         overlay.style.display = 'none';
+        removeWebview(webview);
         container.innerHTML = '';
         window.removeEventListener('keydown', handleEsc);
+        activeClose = null;
+        focusActiveWebview();
     };
 
     const handleEsc = (e) => {
@@ -49,7 +59,13 @@ export function openTransientShareModal(targetUrl) {
     const closeBtn = document.getElementById('CloseShareModalBtn');
     if (closeBtn) {
         closeBtn.onclick = closeModal;
+        closeBtn.focus();
     }
 
+    activeClose = closeModal;
+    webview.addEventListener('ipc-message', event => {
+        if (event.channel === 'guest-escape') setTimeout(closeModal, 0);
+        if (event.channel === 'guest-pointer-enter') document.getElementById('Sidebar').classList.remove('pointer-inside');
+    });
     window.addEventListener('keydown', handleEsc);
 }

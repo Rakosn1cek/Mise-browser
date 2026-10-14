@@ -1,25 +1,22 @@
+import { prepareOverlay } from '../focus.js';
+import { transferTab } from '../tabTransfer.js';
 import { state } from '../state.js';
 import { focusActiveWebview, getWorkspacePartition } from '../utils.js';
 import { renderWorkspaceUI, switchTabFocus, spawnTabWithUrl, spawnNewBlankTab, handleTabRemoval, moveTabState } from '../webview.js';
 
 export function toggleDashboardView() {
-    if (state.paletteActive && typeof window.toggleCommandPaletteView === 'function') {
-        window.toggleCommandPaletteView();
-    }
-    if (state.preferencesActive && typeof window.togglePreferencesView === 'function') {
-        window.togglePreferencesView();
-    }
-    
     const overlay = document.getElementById('DashboardOverlay');
     state.dashboardActive = !state.dashboardActive;
 
     if (state.dashboardActive) {
+        prepareOverlay('DashboardOverlay');
         buildDashboardTree();
         overlay.style.display = 'flex';
         overlay.focus();
         const allWebviews = document.getElementById('webview-container').querySelectorAll('webview');
         allWebviews.forEach((wv) => wv.style.display = 'none');
     } else {
+        document.getElementById('WorkspaceInputBox').style.display = 'none';
         overlay.style.display = 'none';
         const activeListItem = document.querySelector('#TabList li.selected');
         const currentIdx = activeListItem ? Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem) : 0;
@@ -175,8 +172,10 @@ export function buildDashboardTree() {
                 if (ie.key === 'Enter') {
                     submitRename();
                 } else if (ie.key === 'Escape') {
+                    ie.preventDefault();
                     saved = true;
                     buildDashboardTree();
+                    document.getElementById('DashboardOverlay').focus();
                 }
             });
 
@@ -252,52 +251,7 @@ export function buildDashboardTree() {
 
                 if (sourceWS === targetWS) return;
 
-                const [movedUrl] = state.sessionState.workspaces[sourceWS].splice(sourceIdx, 1);
-                if (!state.sessionState.workspaces[targetWS]) {
-                    state.sessionState.workspaces[targetWS] = [];
-                }
-                state.sessionState.workspaces[targetWS].push(movedUrl);
-
-                if (state.activeViewsCache[sourceWS] && state.activeViewsCache[sourceWS][sourceIdx]) {
-                    const [movedView] = state.activeViewsCache[sourceWS].splice(sourceIdx, 1);
-                    if (!state.activeViewsCache[targetWS]) state.activeViewsCache[targetWS] = [];
-                    state.activeViewsCache[targetWS].push(movedView);
-                }
-
-                if (state.activeTitlesCache[sourceWS] && state.activeTitlesCache[sourceWS][sourceIdx]) {
-                    const [movedTitle] = state.activeTitlesCache[sourceWS].splice(sourceIdx, 1);
-                    if (!state.activeTitlesCache[targetWS]) state.activeTitlesCache[targetWS] = [];
-                    state.activeTitlesCache[targetWS].push(movedTitle);
-                }
-
-                if (state.tabSleepStates[sourceWS]) {
-                    const [movedSleep] = state.tabSleepStates[sourceWS].splice(sourceIdx, 1);
-                    if (!state.tabSleepStates[targetWS]) state.tabSleepStates[targetWS] = [];
-                    state.tabSleepStates[targetWS].push(movedSleep);
-                }
-                if (state.tabActivityTimestamps[sourceWS]) {
-                    const [movedTime] = state.tabActivityTimestamps[sourceWS].splice(sourceIdx, 1);
-                    if (!state.tabActivityTimestamps[targetWS]) state.tabActivityTimestamps[targetWS] = [];
-                    state.tabActivityTimestamps[targetWS].push(movedTime);
-                }
-                if (state.tabMediaAudible[sourceWS]) {
-                    const [movedMedia] = state.tabMediaAudible[sourceWS].splice(sourceIdx, 1);
-                    if (!state.tabMediaAudible[targetWS]) state.tabMediaAudible[targetWS] = [];
-                    state.tabMediaAudible[targetWS].push(movedMedia);
-                }
-                if (state.tabPinned[sourceWS]) {
-                    const [movedPinned] = state.tabPinned[sourceWS].splice(sourceIdx, 1);
-                    if (!state.tabPinned[targetWS]) state.tabPinned[targetWS] = [];
-                    state.tabPinned[targetWS].push(movedPinned);
-                }
-                if (state.tabAudioMuted[sourceWS]) {
-                    const [movedMuted] = state.tabAudioMuted[sourceWS].splice(sourceIdx, 1);
-                    if (!state.tabAudioMuted[targetWS]) state.tabAudioMuted[targetWS] = [];
-                    state.tabAudioMuted[targetWS].push(movedMuted);
-                }
-                state.sessionState.tab_titles = state.activeTitlesCache;
-                state.sessionState.tab_sleep_states = state.tabSleepStates;
-                state.sessionState.tab_pinned = state.tabPinned;
+                if (transferTab(state, sourceWS, sourceIdx, targetWS) === null) return;
 
                 window.miseAPI.saveSession(state.sessionState);
                 renderWorkspaceUI();
@@ -353,60 +307,7 @@ export function buildDashboardTree() {
                         return;
                     }
 
-                    const [movedUrl] = state.sessionState.workspaces[sourceWS].splice(sourceIdx, 1);
-                    if (!state.sessionState.workspaces[targetWS]) {
-                        state.sessionState.workspaces[targetWS] = [];
-                    }
-                    state.sessionState.workspaces[targetWS].splice(targetIdx, 0, movedUrl);
-
-                    if (sourceWS === targetWS) {
-                        if (state.activeViewsCache[sourceWS] && state.activeViewsCache[sourceWS][sourceIdx]) {
-                            const [movedView] = state.activeViewsCache[sourceWS].splice(sourceIdx, 1);
-                            if (!state.activeViewsCache[targetWS]) state.activeViewsCache[targetWS] = [];
-                            state.activeViewsCache[targetWS].splice(targetIdx, 0, movedView);
-                        }
-                    } else {
-                        // Dispose webview when moved across different workspaces so target workspace recreates it with its partition
-                        if (state.activeViewsCache[sourceWS] && state.activeViewsCache[sourceWS][sourceIdx]) {
-                            const [movedView] = state.activeViewsCache[sourceWS].splice(sourceIdx, 1);
-                            if (movedView) movedView.remove();
-                        }
-                    }
-
-                    if (state.activeTitlesCache[sourceWS] && state.activeTitlesCache[sourceWS][sourceIdx]) {
-                        const [movedTitle] = state.activeTitlesCache[sourceWS].splice(sourceIdx, 1);
-                        if (!state.activeTitlesCache[targetWS]) state.activeTitlesCache[targetWS] = [];
-                        state.activeTitlesCache[targetWS].splice(targetIdx, 0, movedTitle);
-                    }
-
-                    if (state.tabSleepStates[sourceWS]) {
-                        const [movedSleep] = state.tabSleepStates[sourceWS].splice(sourceIdx, 1);
-                        if (!state.tabSleepStates[targetWS]) state.tabSleepStates[targetWS] = [];
-                        state.tabSleepStates[targetWS].splice(targetIdx, 0, movedSleep);
-                    }
-                    if (state.tabActivityTimestamps[sourceWS]) {
-                        const [movedTime] = state.tabActivityTimestamps[sourceWS].splice(sourceIdx, 1);
-                        if (!state.tabActivityTimestamps[targetWS]) state.tabActivityTimestamps[targetWS] = [];
-                        state.tabActivityTimestamps[targetWS].splice(targetIdx, 0, movedTime);
-                    }
-                    if (state.tabMediaAudible[sourceWS]) {
-                        const [movedMedia] = state.tabMediaAudible[sourceWS].splice(sourceIdx, 1);
-                        if (!state.tabMediaAudible[targetWS]) state.tabMediaAudible[targetWS] = [];
-                        state.tabMediaAudible[targetWS].splice(targetIdx, 0, movedMedia);
-                    }
-                    if (state.tabPinned[sourceWS]) {
-                        const [movedPinned] = state.tabPinned[sourceWS].splice(sourceIdx, 1);
-                        if (!state.tabPinned[targetWS]) state.tabPinned[targetWS] = [];
-                        state.tabPinned[targetWS].splice(targetIdx, 0, movedPinned);
-                    }
-                    if (state.tabAudioMuted[sourceWS]) {
-                        const [movedMuted] = state.tabAudioMuted[sourceWS].splice(sourceIdx, 1);
-                        if (!state.tabAudioMuted[targetWS]) state.tabAudioMuted[targetWS] = [];
-                        state.tabAudioMuted[targetWS].splice(targetIdx, 0, movedMuted);
-                    }
-                    state.sessionState.tab_titles = state.activeTitlesCache;
-                    state.sessionState.tab_sleep_states = state.tabSleepStates;
-                    state.sessionState.tab_pinned = state.tabPinned;
+                    if (transferTab(state, sourceWS, sourceIdx, targetWS, targetIdx) === null) return;
 
                     window.miseAPI.saveSession(state.sessionState);
                     renderWorkspaceUI();
@@ -469,6 +370,7 @@ export function showWorkspaceInputDialog() {
     const container = document.getElementById('WorkspaceInputBox');
     const input = document.getElementById('NewWorkspaceTitleInput');
     if (container && input) {
+        if (!state.dashboardActive) toggleDashboardView();
         container.style.display = 'flex';
         input.value = '';
         input.focus();
@@ -477,7 +379,8 @@ export function showWorkspaceInputDialog() {
 
 export function hideWorkspaceInputDialog() {
     document.getElementById('WorkspaceInputBox').style.display = 'none';
-    document.getElementById('DashboardOverlay').focus();
+    if (state.dashboardActive) document.getElementById('DashboardOverlay').focus();
+    else focusActiveWebview();
 }
 
 export function processWorkspaceCreation() {

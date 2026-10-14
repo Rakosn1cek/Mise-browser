@@ -1,5 +1,7 @@
+import { hasActiveOverlay } from './focus.js';
 import { state } from './state.js';
-import { getActiveWebview, focusActiveWebview, getWorkspacePartition, isDarkMode, isPdfUrl, getPdfViewerUrl, extractOriginalUrl, isTargetPrivateDomain } from './utils.js';
+import { getActiveWebview, focusActiveWebview, removeWebview, getWorkspacePartition, isDarkMode, isPdfUrl, getPdfViewerUrl, extractOriginalUrl, isTargetPrivateDomain } from './utils.js';
+import { loadWebviewSource } from './extensions.js';
 import { isSplitActive, applySplitLayout, handleSplitTabSelection, handleTabRemovalInSplit, getSplitState } from './splitView.js';
 import { 
     setTargetUrl, 
@@ -41,7 +43,7 @@ export function createWebView(url, currentWS, idx) {
     }
     
     const initialSrc = isPdfUrl(url) ? getPdfViewerUrl(url) : url;
-    webview.setAttribute('src', initialSrc);
+    loadWebviewSource(webview, currentWS, initialSrc);
 
     webview.addEventListener('will-navigate', (e) => {
         webview.__miseNavigationEpoch = (webview.__miseNavigationEpoch || 0) + 1;
@@ -246,6 +248,7 @@ export function createWebView(url, currentWS, idx) {
     });
 
     webview.addEventListener('dom-ready', async () => {
+        webview.__miseKeyboardMode = {};
         webview.style.opacity = '1';
         const liveIdx = getLiveTabIndex(webview, currentWS, idx);
         if (liveIdx < 0) return;
@@ -338,7 +341,9 @@ export function createWebView(url, currentWS, idx) {
         const liveIdx = getLiveTabIndex(webview, currentWS, idx);
         if (liveIdx < 0) return;
 
-        if (e.channel === 'guest-input-focus') {
+        if (e.channel === 'guest-pointer-enter') {
+            if (webview.getClientRects().length) document.getElementById('Sidebar').classList.remove('pointer-inside');
+        } else if (e.channel === 'guest-input-focus') {
             handleGuestInputFocus(!!e.args[0], currentWS, liveIdx);
         } else if (e.channel === 'guest-hints-state') {
             handleGuestHintsState(!!e.args[0], currentWS, liveIdx);
@@ -352,10 +357,14 @@ export function createWebView(url, currentWS, idx) {
                 setTargetUrl(`Reader View: ${data.error}`, 3000);
             } else if (data.active) {
                 const titleStr = data.title ? `: ${data.title.slice(0, 45)}...` : '';
-                setTargetUrl(`Reader View Active (F9 to exit)${titleStr}`, 3000);
+                setTargetUrl(`Reader view active (Escape to exit)${titleStr}`, 3000);
             } else {
                 setTargetUrl('Reader View Closed', 2000);
             }
+        } else if (e.channel === 'keyboard-action') {
+            // Finish the guest input event before an action can destroy its own webview.
+            const action = e.args[0];
+            setTimeout(() => window.dispatchKeyboardAction(action), 0);
         } else if (e.channel === 'reader-export-notes') {
             exportArticleToNotes(e.args[0]);
         } else if (e.channel === 'reader-export-external') {
@@ -500,7 +509,7 @@ export async function toggleReaderViewOnActiveTab() {
                 setTargetUrl(`Reader View: ${res.error}`, 3000);
             } else if (res.active) {
                 const titleStr = res.title ? `: ${res.title.slice(0, 45)}...` : '';
-                setTargetUrl(`Reader View Active (F9 or Esc to exit)${titleStr}`, 3500);
+                setTargetUrl(`Reader view active (Escape to exit)${titleStr}`, 3500);
             } else {
                 setTargetUrl('Reader View Closed', 2000);
             }
@@ -998,6 +1007,10 @@ export function renderWorkspaceUI(targetTabToFocus = null) {
     }
 }
 
+let pendingTabFocus = null;
+// The host window blurs when a page takes focus, so a pending programmatic focus is obsolete.
+if (typeof window !== 'undefined') window.addEventListener('blur', () => { clearTimeout(pendingTabFocus); pendingTabFocus = null; });
+
 export function switchTabFocus(targetIdx) {
     const tabItems = document.querySelectorAll('#TabList li');
     const currentWS = state.sessionState.current_workspace;
@@ -1051,15 +1064,24 @@ export function switchTabFocus(targetIdx) {
         if (!state.tabActivityTimestamps[currentWS]) state.tabActivityTimestamps[currentWS] = [];
         state.tabActivityTimestamps[currentWS][targetIdx] = Date.now();
 
-        setTimeout(() => {
+        const targetView = currentWSViews[targetIdx];
+        clearTimeout(pendingTabFocus);
+        pendingTabFocus = setTimeout(() => {
+            pendingTabFocus = null;
+            // A click inside a page already moved focus there; a second focus request racing it
+            // leaves Chromium routing keys to the host while the page looks focused.
+            if (document.activeElement === targetView) return;
+            if (state.sessionState.current_workspace !== currentWS || state.activeViewsCache[currentWS]?.[targetIdx] !== targetView || !targetView.isConnected) return;
+            const selected = document.querySelector('#TabList li.selected');
+            if ([...document.querySelectorAll('#TabList li')].indexOf(selected) !== targetIdx) return;
             const currentFocused = document.activeElement;
             const sidebarHasFocus = document.getElementById('Sidebar').contains(currentFocused);
             const addressBar = document.getElementById('WideAddressBar');
             const addressBarIsActive = addressBar && (addressBar.style.display === 'block' || currentFocused === addressBar);
 
-            if (!sidebarHasFocus && !state.paletteActive && !state.helpActive && !addressBarIsActive) {
+            if (!sidebarHasFocus && !hasActiveOverlay() && !addressBarIsActive) {
                 window.miseAllowWebviewFocus = true;
-                currentWSViews[targetIdx].focus();
+                targetView.focus();
             }
         }, 50);
     }
@@ -1179,6 +1201,37 @@ export function spawnTabWithUrl(url) {
     renderWorkspaceUI(newTargetIdx);
 }
 
+// Closed tabs are kept only in memory and cleared when private mode changes.
+const closedTabs = [];
+function rememberClosedTab(workspace, index) {
+    const url = state.sessionState.workspaces[workspace]?.[index];
+    if (!url) return;
+    closedTabs.push({url, workspace});
+    if (closedTabs.length > 20) closedTabs.shift();
+}
+export function clearClosedTabs() { closedTabs.length = 0; }
+export function reopenClosedTab() {
+    const tab = closedTabs.pop();
+    if (!tab) { setTargetUrl('No closed tabs to reopen', 2000); return; }
+    if (state.sessionState.workspaces[tab.workspace]) {
+        state.sessionState.current_workspace = tab.workspace;
+        renderWorkspaceUI();
+    }
+    spawnTabWithUrl(tab.url);
+}
+
+// Session metadata can share arrays with the live caches after hibernation or saving.
+function removeTabMetadata(workspace, index) {
+    const arrays = new Set([
+        state.activeTitlesCache, state.tabSleepStates, state.tabActivityTimestamps,
+        state.tabMediaAudible, state.tabAudioMuted, state.tabDarkReaderStates,
+        state.tabFavicons, state.tabPinned, state.sessionState.tab_titles,
+        state.sessionState.tab_sleep_states, state.sessionState.tab_dark_reader,
+        state.sessionState.tab_favicons, state.sessionState.tab_pinned
+    ].map(cache => cache?.[workspace]).filter(Array.isArray));
+    for (const array of arrays) array.splice(index, 1);
+}
+
 export function handleTabRemoval(explicitIdx) {
     if (state.dashboardActive) {
         const currentItem = state.dashboardItems[state.dashboardSelectionIdx];
@@ -1193,25 +1246,15 @@ export function handleTabRemoval(explicitIdx) {
                 return;
             }
             if (state.sessionState.workspaces[wsName].length > 1) {
+                rememberClosedTab(wsName, idx);
                 state.sessionState.workspaces[wsName].splice(idx, 1);
                 if (state.activeViewsCache[wsName] && state.activeViewsCache[wsName][idx]) {
-                    state.activeViewsCache[wsName][idx].remove();
+                    removeWebview(state.activeViewsCache[wsName][idx]);
                     state.activeViewsCache[wsName].splice(idx, 1);
                 } else if (state.activeViewsCache[wsName]) {
                     state.activeViewsCache[wsName].splice(idx, 1);
                 }
-                if (state.activeTitlesCache[wsName]) state.activeTitlesCache[wsName].splice(idx, 1);
-                if (state.tabSleepStates[wsName]) state.tabSleepStates[wsName].splice(idx, 1);
-                if (state.tabActivityTimestamps[wsName]) state.tabActivityTimestamps[wsName].splice(idx, 1);
-                if (state.tabMediaAudible[wsName]) state.tabMediaAudible[wsName].splice(idx, 1);
-                if (state.tabAudioMuted[wsName]) state.tabAudioMuted[wsName].splice(idx, 1);
-                if (state.sessionState.tab_titles?.[wsName]) state.sessionState.tab_titles[wsName].splice(idx, 1);
-                if (state.sessionState.tab_sleep_states?.[wsName]) state.sessionState.tab_sleep_states[wsName].splice(idx, 1);
-                if (state.tabDarkReaderStates?.[wsName]) state.tabDarkReaderStates[wsName].splice(idx, 1);
-                if (state.tabFavicons?.[wsName]) state.tabFavicons[wsName].splice(idx, 1);
-                if (state.sessionState.tab_favicons?.[wsName]) state.sessionState.tab_favicons[wsName].splice(idx, 1);
-                if (state.tabPinned?.[wsName]) state.tabPinned[wsName].splice(idx, 1);
-                if (state.sessionState.tab_pinned?.[wsName]) state.sessionState.tab_pinned[wsName].splice(idx, 1);
+                removeTabMetadata(wsName, idx);
                 if (state.tabHistory && Array.isArray(state.tabHistory[wsName])) {
                     state.tabHistory[wsName] = state.tabHistory[wsName]
                         .filter(hIdx => hIdx !== idx)
@@ -1234,7 +1277,7 @@ export function handleTabRemoval(explicitIdx) {
                     state.sessionState.current_workspace = fallbackWS;
                 }
                 if (state.activeViewsCache[wsName]) {
-                    state.activeViewsCache[wsName].forEach(wv => { if (wv) wv.remove(); });
+                    state.activeViewsCache[wsName].forEach(removeWebview);
                     delete state.activeViewsCache[wsName];
                 }
                 delete state.activeTitlesCache[wsName];
@@ -1271,7 +1314,7 @@ export function handleTabRemoval(explicitIdx) {
     if (currentIdx === -1) return;
 
     const tabs = state.sessionState.workspaces[currentWS] || [];
-    if (tabs.length === 0) return;
+    if (tabs.length === 0 || currentIdx >= tabs.length) return;
 
     if (state.tabPinned?.[currentWS]?.[currentIdx]) {
         if (typeof setTargetUrl === 'function') {
@@ -1280,33 +1323,25 @@ export function handleTabRemoval(explicitIdx) {
         return;
     }
 
+    rememberClosedTab(currentWS, currentIdx);
     tabs.splice(currentIdx, 1);
     handleTabRemovalInSplit(currentIdx);
     if (state.activeViewsCache[currentWS] && state.activeViewsCache[currentWS][currentIdx]) {
-        state.activeViewsCache[currentWS][currentIdx].remove();
+        removeWebview(state.activeViewsCache[currentWS][currentIdx]);
         state.activeViewsCache[currentWS].splice(currentIdx, 1);
     } else if (state.activeViewsCache[currentWS]) {
         state.activeViewsCache[currentWS].splice(currentIdx, 1);
     }
-    if (state.activeTitlesCache[currentWS]) state.activeTitlesCache[currentWS].splice(currentIdx, 1);
-    if (state.tabSleepStates[currentWS]) state.tabSleepStates[currentWS].splice(currentIdx, 1);
-    if (state.tabActivityTimestamps[currentWS]) state.tabActivityTimestamps[currentWS].splice(currentIdx, 1);
-    if (state.tabMediaAudible[currentWS]) state.tabMediaAudible[currentWS].splice(currentIdx, 1);
-    if (state.tabAudioMuted[currentWS]) state.tabAudioMuted[currentWS].splice(currentIdx, 1);
-    if (state.tabFavicons?.[currentWS]) state.tabFavicons[currentWS].splice(currentIdx, 1);
-    if (state.sessionState.tab_titles?.[currentWS]) state.sessionState.tab_titles[currentWS].splice(currentIdx, 1);
-    if (state.sessionState.tab_sleep_states?.[currentWS]) state.sessionState.tab_sleep_states[currentWS].splice(currentIdx, 1);
-    if (state.tabDarkReaderStates?.[currentWS]) state.tabDarkReaderStates[currentWS].splice(currentIdx, 1);
-    if (state.sessionState.tab_favicons?.[currentWS]) state.sessionState.tab_favicons[currentWS].splice(currentIdx, 1);
-    if (state.tabPinned?.[currentWS]) state.tabPinned[currentWS].splice(currentIdx, 1);
-    if (state.sessionState.tab_pinned?.[currentWS]) state.sessionState.tab_pinned[currentWS].splice(currentIdx, 1);
+    removeTabMetadata(currentWS, currentIdx);
 
     state.sessionState.tab_dark_reader = state.tabDarkReaderStates;
     state.sessionState.tab_pinned = state.tabPinned;
     window.miseAPI.saveSession(state.sessionState);
     window.miseAllowWebviewFocus = true;
 
-    let nextTargetIdx = null;
+    const selectedIdx = tabElements.indexOf(activeListItem);
+    let nextTargetIdx = selectedIdx >= 0 && selectedIdx !== currentIdx
+        ? selectedIdx - (selectedIdx > currentIdx ? 1 : 0) : null;
 
     if (tabs.length > 0) {
         if (state.tabHistory && Array.isArray(state.tabHistory[currentWS])) {
@@ -1323,7 +1358,7 @@ export function handleTabRemoval(explicitIdx) {
             state.tabHistory[currentWS] = updatedHistory;
 
             // Prioritise returning to an already awake tab from recent history
-            for (let i = updatedHistory.length - 1; i >= 0; i--) {
+            for (let i = updatedHistory.length - 1; nextTargetIdx === null && i >= 0; i--) {
                 const candidate = updatedHistory[i];
                 const isAwake = state.activeViewsCache[currentWS]?.[candidate] && !state.tabSleepStates[currentWS]?.[candidate];
                 if (isAwake) {
@@ -1828,7 +1863,7 @@ export async function hibernateTab(currentWS, idx) {
         } catch (err) {}
 
         try {
-            webview.remove();
+            removeWebview(webview);
         } catch (err) {}
         state.activeViewsCache[currentWS][idx] = null;
     }

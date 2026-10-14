@@ -1,8 +1,12 @@
+import { prepareOverlay } from '../focus.js';
 import { state } from '../state.js';
 import { escapeHtml, focusActiveWebview } from '../utils.js';
 import { spawnTabWithUrl } from '../webview.js';
 
 let notesSaveTimeout = null;
+let notesRequest = 0;
+let notesLoaded = false;
+let notesEdited = false;
 
 // Lightweight inline markdown parser
 export function parseMarkdownToHtml(text) {
@@ -67,6 +71,7 @@ export function renderNotesView() {
         mdView.style.display = 'none';
         if (editBtn) editBtn.innerHTML = '<i class="fa-solid fa-eye"></i> Preview';
         setTimeout(() => {
+            if (!state.notesActive || !state.isEditingNotes) return;
             textarea.focus();
             const len = textarea.value.length;
             textarea.setSelectionRange(len, len);
@@ -77,7 +82,7 @@ export function renderNotesView() {
         mdView.style.display = 'block';
         if (editBtn) editBtn.innerHTML = '<i class="fa-solid fa-pen-to-square"></i> Edit';
         setTimeout(() => {
-            mdView.focus();
+            if (state.notesActive && !state.isEditingNotes) mdView.focus();
         }, 30);
     }
 }
@@ -374,56 +379,31 @@ export function toggleNotesOverlay() {
 
     if (!overlay || !textarea) return;
 
+    const request = ++notesRequest;
     state.notesActive = !state.notesActive;
 
     if (state.notesActive) {
-        if (state.paletteActive && typeof window.toggleCommandPaletteView === 'function') {
-            window.toggleCommandPaletteView();
-        }
-        if (state.helpActive && typeof window.toggleHelpMenuWindow === 'function') {
-            window.toggleHelpMenuWindow();
-        }
-        if (state.dashboardActive && typeof window.toggleDashboardView === 'function') {
-            window.toggleDashboardView();
-        }
-        if (state.historyActive && typeof window.toggleHistoryOverlay === 'function') {
-            window.toggleHistoryOverlay();
-        }
-        if (state.bookmarksActive && typeof window.toggleBookmarksOverlay === 'function') {
-            window.toggleBookmarksOverlay();
-        }
-
-        // Release webview focus to ensure window captures keystrokes
-        if (document.activeElement && typeof document.activeElement.blur === 'function') {
-            document.activeElement.blur();
-        }
-        window.focus();
-
-        const finishOpening = (content) => {
-            textarea.value = content || '';
-            renderNotesView();
-            overlay.style.display = 'flex';
-            setTimeout(() => {
-                if (state.isEditingNotes) {
-                    textarea.focus();
-                } else if (mdView) {
-                    mdView.focus();
-                }
-            }, 50);
-        };
-
+        prepareOverlay('NotesOverlay');
+        notesLoaded = false;
+        notesEdited = false;
+        overlay.style.display = 'flex';
+        document.getElementById('CloseNotesBtn')?.focus();
         if (window.miseAPI && typeof window.miseAPI.readNotes === 'function') {
             window.miseAPI.readNotes().then((content) => {
-                finishOpening(content);
+                if (!state.notesActive || request !== notesRequest || notesEdited) return;
+                notesLoaded = true;
+                textarea.value = content || '';
+                state.isEditingNotes = false;
+                renderNotesView();
             }).catch((err) => {
                 console.error("Failed to load notes:", err);
-                finishOpening(textarea.value);
             });
         } else {
             finishOpening(textarea.value);
         }
     } else {
-        if (window.miseAPI && typeof window.miseAPI.saveNotes === 'function') {
+        clearTimeout(notesSaveTimeout);
+        if (notesLoaded && window.miseAPI && typeof window.miseAPI.saveNotes === 'function') {
             window.miseAPI.saveNotes(textarea.value);
         }
         overlay.style.display = 'none';
@@ -481,13 +461,24 @@ export function setupNotesListeners() {
 
     if (textarea) {
         textarea.addEventListener('input', (e) => {
+            notesLoaded = true;
+            notesEdited = true;
+            const content = e.target.value;
             updateWordCountBadge(e.target.value);
             clearTimeout(notesSaveTimeout);
             notesSaveTimeout = setTimeout(() => {
                 if (window.miseAPI && typeof window.miseAPI.saveNotes === 'function') {
-                    window.miseAPI.saveNotes(e.target.value);
+                    window.miseAPI.saveNotes(content);
                 }
             }, 300);
+        });
+
+        textarea.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                e.stopPropagation();
+                toggleNotesOverlay();
+            }
         });
     }
 

@@ -1,3 +1,4 @@
+import { prepareOverlay } from '../focus.js';
 import { state } from '../state.js';
 import { escapeHtml, focusActiveWebview } from '../utils.js';
 import { renderWorkspaceUI, switchTabFocus, spawnTabWithUrl, spawnNewBlankTab, handleTabRemoval } from '../webview.js';
@@ -8,19 +9,7 @@ export function toggleHistoryOverlay() {
     
     state.historyActive = !state.historyActive;
     if (state.historyActive) {
-        if (state.paletteActive && typeof window.toggleCommandPaletteView === 'function') {
-            window.toggleCommandPaletteView();
-        }
-        if (state.helpActive && typeof window.toggleHelpMenuWindow === 'function') {
-            window.toggleHelpMenuWindow();
-        }
-        if (state.dashboardActive && typeof window.toggleDashboardView === 'function') {
-            window.toggleDashboardView();
-        }
-        if (state.bookmarksActive && typeof window.toggleBookmarksOverlay === 'function') {
-            window.toggleBookmarksOverlay();
-        }
-
+        prepareOverlay('HistoryOverlay');
         overlay.style.display = 'flex';
         input.value = '';
         input.focus();
@@ -44,15 +33,16 @@ export function filterHistoryItems(filterText) {
         }
 
         state.historyResults.forEach((item) => {
-            const itemEl = document.createElement('div');
+            const itemEl = document.createElement('button');
+            itemEl.type = 'button';
             itemEl.className = 'history-item';
             
             const safeTitle = escapeHtml(item.title);
             const safeUrl = escapeHtml(item.url);
 
             itemEl.innerHTML = `
-                <div class="history-item-title">${safeTitle}</div>
-                <div class="history-item-url">${safeUrl}</div>
+                <span class="history-item-title">${safeTitle}</span>
+                <span class="history-item-url">${safeUrl}</span>
             `;
 
             itemEl.addEventListener('click', () => {

@@ -20,7 +20,7 @@ Mise includes an integrated, expansive scratchpad overlay for taking notes along
   ```
 - **Export from Reader View (`Ctrl + Shift + E`)**: Distilled Reader View articles and web clippings can be appended straight into Quick Notes with a single click or keyboard shortcut.
 - **Right-Click Text Clipping**: Highlight any text passage on a web page or in a document and right-click to choose **Save to Notes**. The snippet is formatted into a clean Markdown blockquote with source citation and timestamp, and appended directly to `notes.md`.
-- **External Note-Taking Integration**: Click the **External** button in the notes header to open `notes.md` in your preferred desktop note application (Obsidian, Logseq, Neovim, VS Code) or system default Markdown editor. Custom launch commands can be configured in Preferences.
+- **External Note-Taking Integration**: Click the **External** button in the notes header to open `notes.md` in your preferred desktop note application (Obsidian, Logseq, Neovim, VS Code) or system default Markdown editor. Custom launch commands can be configured in **Preferences → General → Notes & external tools**.
 
 ---
 
@@ -29,7 +29,8 @@ Mise includes an integrated, expansive scratchpad overlay for taking notes along
 The Bookmarks overlay allows you to manage saved links with full keyboard navigation:
 
 - Press **Ctrl + Shift + B** to toggle the Bookmarks Manager.
-- **Add Bookmark**: Press **Ctrl + Shift + A** while viewing any page to save the current URL into your bookmarks collection.
+- **Add Bookmark**: Press **Ctrl + D** while viewing any page to save the current URL into your bookmarks collection.
+- **Move Between Columns**: Use Left/Right arrows to select quickmarks or bookmarks. Tab moves between controls.
 - **Fuzzy Search**: Start typing inside the overlay to filter bookmarks dynamically.
 - **Open Bookmark**: Use the arrow keys to highlight a bookmark and press **Enter** to open it.
 - **Delete Bookmark**: Highlight a bookmark and press **Delete** to remove it from your collection.

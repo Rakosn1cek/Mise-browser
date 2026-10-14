@@ -73,6 +73,7 @@
         const seenRects = [];
 
         candidates.forEach(el => {
+            if (el.disabled || el.getAttribute('aria-disabled') === 'true' || el.closest('[inert]')) return;
             const rect = el.getBoundingClientRect();
             if (rect.width <= 0 || rect.height <= 0) return;
             
@@ -131,7 +132,14 @@
             badgeElements.push(badge);
         });
 
-        function cleanup() {
+        function cleanup(event) {
+            // Queued resize events must not dismiss labels that still match their targets.
+            if (event?.type === 'resize' && visible.every(({el, rect}) => {
+                const current = el.getBoundingClientRect();
+                return el.isConnected && current.bottom > 0 && current.top < window.innerHeight &&
+                    current.right > 0 && current.left < window.innerWidth &&
+                    ['left', 'top', 'width', 'height'].every(key => Math.abs(current[key] - rect[key]) < 0.5);
+            })) return;
             layer.remove();
             document.removeEventListener('keydown', window.hintKeyListener, true);
             window.removeEventListener('resize', cleanup, true);
@@ -141,7 +149,7 @@
         }
 
         window.hintCleanup = cleanup;
-        window.addEventListener('resize', cleanup, { once: true, capture: true });
+        window.addEventListener('resize', cleanup, true);
         window.addEventListener('scroll', cleanup, { once: true, capture: true });
         document.addEventListener('fullscreenchange', cleanup, { once: true, capture: true });
 
@@ -159,6 +167,8 @@
         }
 
         window.hintKeyListener = function(e) {
+            if (!e.isTrusted || e.isComposing || e.key === 'Dead' || e.key === 'Process' || e.repeat) return;
+            if (e.ctrlKey || e.altKey || e.metaKey) return;
             if (e.key === 'Escape') {
                 e.preventDefault();
                 e.stopPropagation();

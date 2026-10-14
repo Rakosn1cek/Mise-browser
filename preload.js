@@ -37,6 +37,14 @@ contextBridge.exposeInMainWorld('miseAPI', {
     },
     signalRendererReady: () => ipcRenderer.send('renderer-ready'),
     toggleMenuBar: () => ipcRenderer.send('toggle-menu-bar'),
+    executeKeyboardAction: action => ipcRenderer.send('keyboard-action', action),
+    getKeyboardConfig: () => ipcRenderer.invoke('get-keyboard-config'),
+    getKeyboardDefaults: () => ipcRenderer.invoke('get-keyboard-defaults'),
+    onKeyboardConfigChanged: callback => {
+        const handler = (_event, config) => callback(config);
+        ipcRenderer.on('keyboard-config-changed', handler);
+        return () => ipcRenderer.removeListener('keyboard-config-changed', handler);
+    },
     getKeybinds: () => ipcRenderer.invoke('get-keybinds'),
     saveKeybinds: (binds) => ipcRenderer.invoke('save-keybinds', binds),
     getActionMetadata: () => ipcRenderer.invoke('get-action-metadata'),
@@ -95,6 +103,16 @@ contextBridge.exposeInMainWorld('miseAPI', {
         const handler = (event, isMax) => callback(isMax);
         ipcRenderer.on('window-maximized-state', handler);
         return () => ipcRenderer.removeListener('window-maximized-state', handler);
-    }
+    },
+    // Opt-in Chrome extensions (extensions.js)
+    extensionsEnsure: (workspace, partition) => ipcRenderer.invoke('extensions-ensure', workspace, partition),
+    extensionsTabFocused: (webContentsId) => ipcRenderer.send('extensions-tab-focused', webContentsId),
+    extensionsActivate: (extensionId, partition) => ipcRenderer.invoke('extensions-activate', extensionId, partition),
+    extensionsRunCommand: (extensionId, partition, name) => ipcRenderer.invoke('extensions-run-command', extensionId, partition, name),
+    extensionsGetActions: (partition) => ipcRenderer.invoke('extensions-get-actions', partition),
+    extensionsGetState: (options) => ipcRenderer.invoke('extensions-get-state', options),
+    extensionsApplyConfig: () => ipcRenderer.invoke('extensions-apply-config'),
+    extensionsReload: () => ipcRenderer.invoke('extensions-reload'),
+    extensionsOpenDir: () => ipcRenderer.invoke('extensions-open-dir')
 });
 

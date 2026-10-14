@@ -60,7 +60,7 @@ Controls hardware switches, process limits, privacy whitelists, and search prefe
 
 ### Options Description
 
-![Performance and Hardware Preferences](/screenshots/preferences-1.webp)
+![Preferences Performance section](/screenshots/preferences-1.webp)
 
 - **`disable_gpu`**: Set to `true` to disable hardware GPU acceleration on systems with problematic graphics drivers.
 - **`background_throttling`**: Throttles timers and delays tasks in background tabs to conserve CPU cycles.
@@ -76,7 +76,7 @@ Controls hardware switches, process limits, privacy whitelists, and search prefe
 - **`webview_theme`**: Website native theme preference (`dark` or `light`), toggled via the sidebar theme button.
 - **`theme_colors`**: Custom visual colour palette and opacity settings per theme mode:
 
-![Appearance and Visual Theme Preferences](/screenshots/preferences-2.webp)
+![Preferences Appearance section](/screenshots/preferences-2.webp)
   - **`accent`**: Primary highlight colour for active tabs, borders, and controls (defaults to `#7aa2f7` in dark, `#2b59c3` in light).
   - **`bg_main`**: Base window and modal canvas background colour.
   - **`bg_sidebar`**: Vertical sidebar background colour.
@@ -84,6 +84,9 @@ Controls hardware switches, process limits, privacy whitelists, and search prefe
   - **`sidebar_opacity`**: Sidebar background translucency percentage (40% to 100%) with backdrop blur glass effect.
   - **`overlay_opacity`**: Modal and overlay translucency percentage (50% to 100%) for Command Palette, Notes, and Preferences.
 - **`trusted_domains`**: Array of domains exempted from tracker blocking and fingerprint spoofing.
+- **`extensions_enabled`**: Master switch for [opt-in Chrome extensions](/guide/extensions). `false` by default; while `false` nothing extension related runs.
+- **`extensions_by_workspace`**: Map of workspace name to the extension folders (inside `~/.config/mise-browser/extensions/`) allowed to run there, e.g. `{ "Work": ["darkreader"] }`. Workspaces not listed load nothing.
+- **`extensions_unload_grace_seconds`**: How long a workspace keeps its extensions loaded after its last live tab closes or hibernates (default `60`).
 - **`external_notes_command`**: Optional command or executable used to open notes and clippings (e.g. `obsidian`, `logseq`, `code`, `nvim`). When empty, uses system default Markdown handler.
 - **`custom_search_aliases`**: Key-value map of custom search prefixes and URL templates (with `%s` query placeholder). Typing `<alias> <query>` in the address bar (such as `aur hyprland` or `gh mise`) bypasses fallback engines and routes queries straight to the destination. Users can configure, override, or extend default built-ins directly in Preferences.
 
@@ -91,7 +94,7 @@ Controls hardware switches, process limits, privacy whitelists, and search prefe
 
 ## 2. Keybindings Map (`keybinds.json`)
 
-Maps internal browser actions to custom keystroke combinations. See the [Keyboard Shortcuts Reference](/reference/keybinds) for the complete list of action names.
+Version 2 stores separate `shortcuts` and `normal` tables for browser chords and Vim-style page keys. Use **Preferences → Keyboard** to record, validate and save bindings without editing the file. See the [Keyboard Shortcuts Reference](/reference/keybinds) for the complete list of action names.
 
 ---
 

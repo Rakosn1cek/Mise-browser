@@ -1,3 +1,4 @@
+import { prepareOverlay } from '../focus.js';
 import { state } from '../state.js';
 import { escapeHtml, focusActiveWebview, getActiveWebview } from '../utils.js';
 import { renderWorkspaceUI, switchTabFocus, spawnTabWithUrl, spawnNewBlankTab, handleTabRemoval } from '../webview.js';
@@ -83,23 +84,7 @@ export async function toggleBookmarksOverlay() {
     state.bookmarksActive = !state.bookmarksActive;
 
     if (state.bookmarksActive) {
-        // Close conflicting overlays
-        if (state.paletteActive && typeof window.toggleCommandPaletteView === 'function') {
-            window.toggleCommandPaletteView();
-        }
-        if (state.helpActive && typeof window.toggleHelpMenuWindow === 'function') {
-            window.toggleHelpMenuWindow();
-        }
-        if (state.dashboardActive && typeof window.toggleDashboardView === 'function') {
-            window.toggleDashboardView();
-        }
-        if (state.historyActive && typeof window.toggleHistoryOverlay === 'function') {
-            window.toggleHistoryOverlay();
-        }
-        if (state.notesActive && typeof window.toggleNotesOverlay === 'function') {
-            window.toggleNotesOverlay();
-        }
-
+        prepareOverlay('BookmarksOverlay');
         // Hide webviews to ensure guest process releases keyboard focus cleanly
         const container = document.getElementById('webview-container');
         if (container) {
@@ -332,15 +317,6 @@ export function handleBookmarkKeyNavigation(e) {
         e.preventDefault();
         e.stopPropagation();
         toggleBookmarksOverlay();
-        return;
-    }
-
-    // Tab key toggles between Quickmarks column and Bookmarks column
-    if (e.key === 'Tab') {
-        e.preventDefault();
-        e.stopPropagation();
-        state.bookmarkActiveColumn = (state.bookmarkActiveColumn === 'quickmarks') ? 'bookmarks' : 'quickmarks';
-        updateBookmarkVisualSelection();
         return;
     }
 

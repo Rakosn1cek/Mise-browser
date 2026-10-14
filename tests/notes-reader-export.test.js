@@ -20,17 +20,12 @@ console.log('Running Mise notes overlay and Reader View export regression tests.
     console.log('✓ Export reader to notes default keybinds registered');
 }
 
-// 2. Strict Alt modifier guard: ensure no default keybinds use Alt modifier
+// 2. The new export shortcut must not conflict with the fork's browser bindings.
 {
-    const defaults = keybinds.DEFAULT_KEYBINDS;
-    for (const [action, binding] of Object.entries(defaults)) {
-        const list = Array.isArray(binding) ? binding : [binding];
-        for (const item of list) {
-            if (!item) continue;
-            assert(!item.toLowerCase().includes('alt'), `Action "${action}" binding "${item}" must not use Alt modifier`);
-        }
-    }
-    console.log('✓ Verified no default keybindings use Alt modifier');
+    const keyboard = require('../keyboard.js');
+    const result = keyboard.validateConfig(keybinds.getDefaults(), keybinds.getActionMetadata());
+    assert(result.ok, JSON.stringify(result.errors));
+    console.log('✓ Export shortcut coexists with personalised browser bindings');
 }
 
 // 3. Verify action metadata

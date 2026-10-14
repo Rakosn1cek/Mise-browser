@@ -10,9 +10,9 @@
 
     var existing = document.getElementById(READER_OVERLAY_ID);
     if (existing) {
+        window.dispatchEvent(new CustomEvent('mise-reader-close'));
         existing.remove();
         document.documentElement.style.overflow = '';
-        try { window.dispatchEvent(new CustomEvent('mise-reader-closed')); } catch (e) {}
         return { active: false };
     }
 
@@ -3294,7 +3294,7 @@ if (typeof module === "object") {
             '<button class="toolbar-btn export-notes-btn" title="Export Article to Quick Notes (Ctrl+Shift+E)">📝 Notes</button>' +
             '<button class="toolbar-btn export-external-btn" title="Export Article to External Note App">↗ External</button>' +
             '<div class="toolbar-divider"></div>' +
-            '<button class="toolbar-btn toolbar-close close-btn" title="Close Reader View (Esc / F9)">✕</button>';
+            '<button class="toolbar-btn toolbar-close close-btn" title="Close reader view (Escape)">✕</button>';
 
         var container = document.createElement('article');
         container.className = 'mise-reader-container width-' + prefs.contentWidth;
@@ -3338,17 +3338,19 @@ if (typeof module === "object") {
             if (el) el.remove();
             document.documentElement.style.overflow = '';
             window.removeEventListener('keydown', onKeyDown, true);
+            window.removeEventListener('mise-reader-close', closeReader);
             try { window.dispatchEvent(new CustomEvent('mise-reader-closed')); } catch (e) {}
         }
 
         function onKeyDown(e) {
-            if (e.key === 'Escape' || e.key === 'F9') {
+            if (e.key === 'Escape') {
                 e.preventDefault();
                 e.stopPropagation();
                 closeReader();
             }
         }
         window.addEventListener('keydown', onKeyDown, true);
+        window.addEventListener('mise-reader-close', closeReader);
 
         // Toolbar Events
         var themeBtn = toolbar.querySelector('.theme-toggle-btn');

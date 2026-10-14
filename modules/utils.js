@@ -1,3 +1,4 @@
+import { isOverlayTransition } from './focus.js';
 import { state } from './state.js';
 
 // Returns true if the browser interface is currently in dark mode
@@ -44,6 +45,7 @@ export function getActiveWebview() {
 }
 
 export function focusActiveWebview() {
+    if (isOverlayTransition()) return;
     const currentWS = state.sessionState.current_workspace;
     const activeListItem = document.querySelector('#TabList li.selected');
     if (activeListItem) {
@@ -53,6 +55,14 @@ export function focusActiveWebview() {
             state.activeViewsCache[currentWS][currentIdx].focus();
         }
     }
+}
+
+// Removing a focused guest leaves Chromium routing keys to it, so later clicks and
+// focus() on another webview never receive typing. Release focus first.
+export function removeWebview(view) {
+    if (!view) return;
+    if (document.activeElement === view) view.blur();
+    view.remove();
 }
 
 // Generates a filesystem-safe persistent container partition string for a workspace

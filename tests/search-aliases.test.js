@@ -2,10 +2,10 @@
 // Regression test suite for built-in and user-customisable search aliases
 
 const assert = require('assert');
-const { 
-    DEFAULT_SEARCH_ALIASES, 
-    getEffectiveSearchAliases, 
-    resolveSearchAliasUrl 
+const {
+    DEFAULT_SEARCH_ALIASES,
+    getEffectiveSearchAliases,
+    resolveSearchAliasUrl
 } = require('../modules/overlays/searchEngine.js');
 const keybinds = require('../keybinds.js');
 
@@ -110,18 +110,6 @@ console.log('Running Mise search aliases and custom bangs regression tests...');
     assert.strictEqual(resolveSearchAliasUrl(null, 'query'), null, 'Null alias must return null');
 
     console.log('✓ Input validation and null returns for invalid inputs verified');
-}
-
-// 9. Keybinding verification (Strictly no Alt modifier)
-{
-    const defaults = keybinds.DEFAULT_KEYBINDS;
-    for (const [action, keys] of Object.entries(defaults)) {
-        const list = Array.isArray(keys) ? keys : [keys];
-        for (const key of list) {
-            assert(!key.includes('Alt'), `Keybinding '${key}' for action '${action}' must not contain Alt modifier`);
-        }
-    }
-    console.log('✓ Verified no default keybindings use Alt modifier');
 }
 
 console.log('\nAll search aliases and custom bangs regression tests passed successfully!');

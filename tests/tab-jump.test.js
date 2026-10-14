@@ -1,5 +1,5 @@
 // tests/tab-jump.test.js
-// Automated verification for direct tab jumping, keybind mappings, and Alt modifier exclusion
+// Automated verification for direct tab jumping, keybind mappings, and shared shortcut grammar
 
 const assert = require('assert');
 const keybinds = require('../keybinds.js');
@@ -13,8 +13,8 @@ console.log('Running Mise direct tab jumping and cursor navigation regression te
         const action = `jump-to-tab-${i}`;
         assert(defaults[action], `${action} must be present in default keybinds`);
 
-        const bindings = Array.isArray(defaults[action]) 
-            ? defaults[action] 
+        const bindings = Array.isArray(defaults[action])
+            ? defaults[action]
             : [defaults[action]];
 
         assert(bindings.includes(`Ctrl+${i}`), `${action} must include Ctrl+${i}`);
@@ -23,18 +23,13 @@ console.log('Running Mise direct tab jumping and cursor navigation regression te
     console.log('✓ Tab jump default keybinds (Ctrl+1 to Ctrl+9) registered');
 }
 
-// 2. Strict Alt modifier guard: ensure no default keybinds use Alt modifier
+// 2. New upstream chords must coexist with the fork's editable shortcut map.
 {
-    const defaults = keybinds.DEFAULT_KEYBINDS;
-    for (const [action, binding] of Object.entries(defaults)) {
-        const list = Array.isArray(binding) ? binding : [binding];
-        for (const item of list) {
-            if (!item) continue;
-            assert(!item.toLowerCase().includes('alt'), `Action "${action}" binding "${item}" must not use Alt modifier`);
-        }
-    }
-
-    console.log('✓ Verified no default keybindings use Alt modifier');
+    const keyboard = require('../keyboard');
+    const result = keyboard.validateConfig(keybinds.getDefaults(), keybinds.ACTION_METADATA);
+    assert(result.ok, result.error);
+    assert(result.config.shortcuts['focus-sidebar'].includes('Alt+S'));
+    console.log('✓ Merged defaults are conflict-free and retain sidebar focus');
 }
 
 // 3. Verify action metadata
@@ -62,7 +57,7 @@ console.log('Running Mise direct tab jumping and cursor navigation regression te
             alt: false,
             meta: false
         };
-        const combo = keybinds.inputEventToKeyCombination(event);
+        const combo = require('../keyboard').eventCombo(event);
         assert.strictEqual(combo, `Ctrl+${i}`, `Input event should resolve to Ctrl+${i}`);
 
         const action = keybinds.getActionForInput(event);
@@ -72,31 +67,39 @@ console.log('Running Mise direct tab jumping and cursor navigation regression te
     console.log('✓ Input event translation and action dispatch for Ctrl+1 to Ctrl+9 verified');
 }
 
-// 5. Verify tab jumping boundary calculations
+// Exercise the production boundary and focus handling rather than a copied calculation.
 {
-    function computeTargetIdx(oneBasedIdx, totalTabs) {
-        if (totalTabs === 0) return -1;
-        let targetIdx = oneBasedIdx - 1;
-        if (oneBasedIdx === 9 && targetIdx >= totalTabs) {
-            targetIdx = totalTabs - 1;
+    const fs = require('node:fs');
+    const vm = require('node:vm');
+    const source = fs.readFileSync(require.resolve('../modules/webview.js'), 'utf8');
+    const fn = source.slice(source.indexOf('export function jumpToTabByIndex'), source.indexOf('export async function spawnNewBlankTab')).replace('export ', '');
+    for (const [count, requested, expected] of [[0, 1, null], [4, 1, 0], [4, 3, 2], [4, 5, null], [4, 9, 3], [10, 9, 8], [4, 0, null]]) {
+        for (const sidebarFocused of [false, true]) {
+            let selected = null, focused = null;
+            const items = Array.from({length: count}, (_, index) => ({setAttribute() {}, focus() { focused = index; }}));
+            const context = {state: {sessionState: {current_workspace: 'Work', workspaces: {Work: items}}},
+                document: {activeElement: {}, querySelectorAll: () => items, getElementById: () => ({contains: () => sidebarFocused})},
+                window: {}, switchTabFocus: index => { selected = index; }, focusActiveWebview: () => { focused = 'page'; }};
+            vm.runInNewContext(fn + `; jumpToTabByIndex(${requested});`, context);
+            assert.equal(selected, expected);
+            assert.equal(focused, expected === null ? null : sidebarFocused ? expected : 'page');
         }
-        if (targetIdx < 0 || targetIdx >= totalTabs) return -1;
-        return targetIdx;
     }
-
-    // 4 tabs open:
-    assert.strictEqual(computeTargetIdx(1, 4), 0, 'Tab 1 maps to index 0');
-    assert.strictEqual(computeTargetIdx(3, 4), 2, 'Tab 3 maps to index 2');
-    assert.strictEqual(computeTargetIdx(4, 4), 3, 'Tab 4 maps to index 3');
-    // Tab 5 does not exist with 4 tabs:
-    assert.strictEqual(computeTargetIdx(5, 4), -1, 'Tab 5 should return -1 when only 4 tabs exist');
-    // Tab 9 falls back to the last tab (index 3) matching standard browser behaviour:
-    assert.strictEqual(computeTargetIdx(9, 4), 3, 'Tab 9 should fall back to last tab index');
-
-    // 10 tabs open:
-    assert.strictEqual(computeTargetIdx(9, 10), 8, 'Tab 9 maps to 9th tab (index 8) when 10 tabs exist');
-
-    console.log('✓ Tab index boundary and fallback calculations verified');
+    console.log('✓ Production tab bounds, ninth-tab fallback and focus routing verified');
 }
+console.log('All direct tab jumping tests passed.');
 
-console.log('\nAll direct tab jumping & cursor navigation tests passed successfully!');
+// Closing must splice each shared session/live array exactly once.
+{
+    const vm = require('node:vm');
+    const source = require('node:fs').readFileSync(require.resolve('../modules/webview.js'), 'utf8');
+    const fn = source.slice(source.indexOf('function removeTabMetadata'), source.indexOf('export function handleTabRemoval'));
+    const sleeping = ['first', 'second', 'third', null];
+    const pinned = [false, true, false, false];
+    const titles = ['one', 'two', 'three', 'four'];
+    const state = {tabSleepStates: {Work: sleeping}, tabPinned: {Work: pinned}, activeTitlesCache: {Work: titles}, sessionState: {tab_sleep_states: {Work: sleeping}, tab_pinned: {Work: pinned}}};
+    vm.runInNewContext(fn + '; removeTabMetadata("Work", 1);', {state});
+    assert.deepEqual(sleeping, ['first', 'third', null]);
+    assert.deepEqual(pinned, [false, false, false]);
+    assert.deepEqual(titles, ['one', 'three', 'four']);
+}

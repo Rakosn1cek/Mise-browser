@@ -63,7 +63,8 @@ export default defineConfig({
           { text: 'Notes, Bookmarks & Quickmarks', link: '/guide/notes-and-bookmarks' },
           { text: 'Terminal Security & Oversight', link: '/guide/terminal-oversight' },
           { text: 'User Scripts & Styles', link: '/guide/user-scripts-and-styles' },
-          { text: 'Community Scripts', link: '/guide/community-scripts' }
+          { text: 'Community Scripts', link: '/guide/community-scripts' },
+          { text: 'Chrome Extensions (Opt-in)', link: '/guide/extensions' }
         ]
       },
       {
@@ -79,7 +80,9 @@ export default defineConfig({
         items: [
           { text: 'Keyboard Shortcuts', link: '/reference/keybinds' },
           { text: 'Command Palette', link: '/reference/command-palette' },
-          { text: 'Configuration Files', link: '/reference/configuration' }
+          { text: 'Configuration Files', link: '/reference/configuration' },
+          { text: 'Fork Performance Audit', link: '/performance-audit' },
+          { text: 'Adoption and Review', link: '/adoption-review' }
         ]
       }
     ],
