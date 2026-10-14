@@ -148,10 +148,37 @@
                             <h1 class="settings-title">Preferences</h1>
                             <button id="CloseSettingsBtn" class="nav-icon-button" title="Close Preferences"><i class="fa-solid fa-xmark"></i></button>
                         </div>
+
+                        <nav id="SettingsTabs" class="settings-tabs" role="tablist" aria-label="Preferences sections">
+                            <button type="button" class="settings-tab-btn active" role="tab" id="tab-btn-performance" data-tab="tab-performance" aria-selected="true" aria-controls="tab-performance">
+                                <i class="fa-solid fa-microchip"></i>
+                                <span>Performance & Hardware</span>
+                            </button>
+                            <button type="button" class="settings-tab-btn" role="tab" id="tab-btn-external-tools" data-tab="tab-external-tools" aria-selected="false" aria-controls="tab-external-tools">
+                                <i class="fa-solid fa-pen-to-square"></i>
+                                <span>External Tools [Notes]</span>
+                            </button>
+                            <button type="button" class="settings-tab-btn" role="tab" id="tab-btn-appearance" data-tab="tab-appearance" aria-selected="false" aria-controls="tab-appearance">
+                                <i class="fa-solid fa-palette"></i>
+                                <span>Appearance & Visual Theme</span>
+                            </button>
+                            <button type="button" class="settings-tab-btn" role="tab" id="tab-btn-privacy" data-tab="tab-privacy" aria-selected="false" aria-controls="tab-privacy">
+                                <i class="fa-solid fa-shield-halved"></i>
+                                <span>Privacy & Protection</span>
+                            </button>
+                            <button type="button" class="settings-tab-btn" role="tab" id="tab-btn-diagnostics" data-tab="tab-diagnostics" aria-selected="false" aria-controls="tab-diagnostics">
+                                <i class="fa-solid fa-stethoscope"></i>
+                                <span>Diagnostics & System Health</span>
+                            </button>
+                            <button type="button" class="settings-tab-btn" role="tab" id="tab-btn-help" data-tab="tab-help" aria-selected="false" aria-controls="tab-help">
+                                <i class="fa-solid fa-circle-question"></i>
+                                <span>Help & Shortcut Reference</span>
+                            </button>
+                        </nav>
                 
                         <div class="settings-content">
                             <!-- Performance & Hardware Section -->
-                            <section class="settings-section">
+                            <section class="settings-section" id="tab-performance" role="tabpanel" aria-labelledby="tab-btn-performance">
                                 <h2>Performance & Hardware (Requires Restart)</h2>
                                 <div class="setting-item">
                                     <div class="setting-info">
@@ -291,9 +318,9 @@
                                 </div>
                             </section>
                 
-                            <!-- Notes & External Tools Section -->
-                            <section class="settings-section">
-                                <h2>Notes & External Tools</h2>
+                            <!-- External Tools [Notes] Section -->
+                            <section class="settings-section" id="tab-external-tools" role="tabpanel" aria-labelledby="tab-btn-external-tools" style="display: none;">
+                                <h2>External Tools [Notes]</h2>
                                 <div class="setting-item">
                                     <div class="setting-info">
                                         <span class="setting-label">External Note-Taking Application / Command</span>
@@ -304,7 +331,7 @@
                             </section>
                 
                             <!-- Appearance & Visual Theme Section -->
-                            <section class="settings-section">
+                            <section class="settings-section" id="tab-appearance" role="tabpanel" aria-labelledby="tab-btn-appearance" style="display: none;">
                                 <h2>Appearance & Visual Theme</h2>
                                 <div class="setting-item">
                                     <div class="setting-info">
@@ -441,7 +468,7 @@
                             </section>
                 
                             <!-- Privacy & Protection Section -->
-                            <section class="settings-section">
+                            <section class="settings-section" id="tab-privacy" role="tabpanel" aria-labelledby="tab-btn-privacy" style="display: none;">
                                 <h2>Privacy & Protection</h2>
                                 <div class="setting-item">
                                     <div class="setting-info">
@@ -479,7 +506,7 @@
                             </section>
                 
                             <!-- Diagnostics & System Health Section -->
-                            <section class="settings-section">
+                            <section class="settings-section" id="tab-diagnostics" role="tabpanel" aria-labelledby="tab-btn-diagnostics" style="display: none;">
                                 <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--border); padding-bottom: 8px;">
                                     <h2 style="border-bottom: none; padding-bottom: 0; margin-bottom: 0;">Diagnostics & System Health</h2>
                                     <span class="settings-save-note visible" style="opacity: 0.75;"><i class="fa-solid fa-lock"></i> 100% Local / Zero Telemetry</span>
@@ -504,7 +531,7 @@
                             </section>
 
                             <!-- Complete Help Reference & Shortcuts Section -->
-                            <section class="settings-section">
+                            <section class="settings-section" id="tab-help" role="tabpanel" aria-labelledby="tab-btn-help" style="display: none;">
                                 <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--border); padding-bottom: 8px; flex-wrap: wrap; gap: 8px;">
                                     <h2 style="border-bottom: none; padding-bottom: 0; margin-bottom: 0;">Help & Shortcuts Reference</h2>
                                     <div style="display: flex; align-items: center; gap: 10px;">

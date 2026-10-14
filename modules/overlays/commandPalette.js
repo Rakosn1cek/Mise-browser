@@ -896,7 +896,121 @@ export async function syncPreferencesUI() {
     }
 }
 
+let activePreferencesTab = 'tab-performance';
+
+export function switchPreferencesTab(targetTabId) {
+    if (!targetTabId) return;
+    const tabButtons = document.querySelectorAll('#SettingsTabs .settings-tab-btn');
+    const sections = document.querySelectorAll('#PreferencesOverlay .settings-section[role="tabpanel"]');
+    if (!tabButtons.length || !sections.length) return;
+
+    let targetSection = document.getElementById(targetTabId);
+    if (!targetSection) {
+        targetSection = document.getElementById(`tab-${targetTabId}`);
+    }
+    if (!targetSection) return;
+
+    activePreferencesTab = targetSection.id;
+
+    sections.forEach((sec) => {
+        if (sec.id === activePreferencesTab) {
+            sec.style.display = 'flex';
+        } else {
+            sec.style.display = 'none';
+        }
+    });
+
+    tabButtons.forEach((btn) => {
+        const isSelected = btn.dataset.tab === activePreferencesTab;
+        btn.classList.toggle('active', isSelected);
+        btn.setAttribute('aria-selected', isSelected ? 'true' : 'false');
+        btn.tabIndex = isSelected ? 0 : -1;
+    });
+
+    const overlay = document.getElementById('PreferencesOverlay');
+    if (overlay && overlay.scrollTop !== 0) overlay.scrollTop = 0;
+}
+
+export function setupPreferencesTabs() {
+    const tabNav = document.getElementById('SettingsTabs');
+    if (!tabNav) return;
+
+    const tabButtons = Array.from(tabNav.querySelectorAll('.settings-tab-btn'));
+    tabButtons.forEach((btn) => {
+        btn.onclick = (e) => {
+            e.preventDefault();
+            switchPreferencesTab(btn.dataset.tab);
+        };
+    });
+
+    tabNav.onkeydown = (e) => {
+        const currentActive = tabNav.querySelector('.settings-tab-btn.active');
+        const currentIndex = tabButtons.indexOf(currentActive);
+        if (currentIndex === -1) return;
+
+        let nextIndex = null;
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+            nextIndex = (currentIndex + 1) % tabButtons.length;
+        } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+            nextIndex = (currentIndex - 1 + tabButtons.length) % tabButtons.length;
+        } else if (e.key === 'Home') {
+            nextIndex = 0;
+        } else if (e.key === 'End') {
+            nextIndex = tabButtons.length - 1;
+        }
+
+        if (nextIndex !== null) {
+            e.preventDefault();
+            const targetBtn = tabButtons[nextIndex];
+            switchPreferencesTab(targetBtn.dataset.tab);
+            targetBtn.focus();
+        }
+    };
+
+    if (typeof window !== 'undefined') {
+        window.switchPreferencesTab = switchPreferencesTab;
+    }
+
+    switchPreferencesTab(activePreferencesTab);
+}
+
+function isVisibleControl(el) {
+    if (!el) return false;
+    if (el.style && el.style.display === 'none') return false;
+    if (el.hidden) return false;
+    if (typeof el.getClientRects === 'function' && el.getClientRects().length === 0) {
+        if (el.offsetParent === null && el.style?.position !== 'fixed') return false;
+    }
+    return true;
+}
+
+export function getPreferencesFocusableElements() {
+    const overlay = document.getElementById('PreferencesOverlay');
+    if (!overlay) return [];
+
+    const closeBtn = document.getElementById('CloseSettingsBtn');
+    const activeTabBtn = document.querySelector('#SettingsTabs .settings-tab-btn.active');
+    const activePanel = document.getElementById(activePreferencesTab);
+
+    const elements = [];
+    if (closeBtn && isVisibleControl(closeBtn)) {
+        elements.push(closeBtn);
+    }
+    if (activeTabBtn && isVisibleControl(activeTabBtn)) {
+        elements.push(activeTabBtn);
+    }
+    if (activePanel) {
+        const controls = Array.from(activePanel.querySelectorAll(
+            'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex="0"]'
+        )).filter(el => isVisibleControl(el) && !el.hasAttribute('disabled'));
+        elements.push(...controls);
+    }
+    return elements;
+}
+
 export function setupPreferencesListeners() {
+    setupPreferencesTabs();
+
     const closeBtn = document.getElementById('CloseSettingsBtn');
     if (closeBtn) {
         closeBtn.onclick = (e) => {
@@ -911,6 +1025,53 @@ export function setupPreferencesListeners() {
             if (e.key === 'Escape') {
                 e.preventDefault();
                 togglePreferencesView();
+                return;
+            }
+
+            if (e.key === 'Enter') {
+                const currentActive = document.activeElement;
+                if (currentActive && currentActive.type === 'checkbox' && overlay.contains(currentActive)) {
+                    e.preventDefault();
+                    currentActive.checked = !currentActive.checked;
+                    currentActive.dispatchEvent(new Event('change', { bubbles: true }));
+                    return;
+                }
+            }
+
+            if (e.key === 'F6' || (e.ctrlKey && e.key === 'ArrowUp')) {
+                const activeTabBtn = document.querySelector('#SettingsTabs .settings-tab-btn.active');
+                if (activeTabBtn) {
+                    e.preventDefault();
+                    activeTabBtn.focus();
+                    return;
+                }
+            }
+
+            if (e.key === 'Tab') {
+                const focusables = getPreferencesFocusableElements();
+                if (focusables.length === 0) return;
+
+                const firstEl = focusables[0];
+                const lastEl = focusables[focusables.length - 1];
+                const currentActive = document.activeElement;
+
+                if (!e.shiftKey) {
+                    if (currentActive === overlay) {
+                        e.preventDefault();
+                        const activeTabBtn = document.querySelector('#SettingsTabs .settings-tab-btn.active');
+                        (activeTabBtn || firstEl).focus();
+                        return;
+                    }
+                    if (currentActive === lastEl || !overlay.contains(currentActive)) {
+                        e.preventDefault();
+                        firstEl.focus();
+                    }
+                } else {
+                    if (currentActive === overlay || currentActive === firstEl || !overlay.contains(currentActive)) {
+                        e.preventDefault();
+                        lastEl.focus();
+                    }
+                }
             }
         };
     }
@@ -1130,8 +1291,14 @@ export async function togglePreferencesView() {
         if (state.dashboardActive) document.getElementById('DashboardOverlay').style.display = 'none';
 
         overlay.style.display = 'block';
+        switchPreferencesTab(activePreferencesTab);
         await syncPreferencesUI();
-        overlay.focus();
+        const activeTabBtn = document.querySelector('#SettingsTabs .settings-tab-btn.active');
+        if (activeTabBtn) {
+            activeTabBtn.focus();
+        } else {
+            overlay.focus();
+        }
     } else {
         overlay.style.display = 'none';
         returnFocusToWebview();
