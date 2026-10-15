@@ -10,6 +10,7 @@ contextBridge.exposeInMainWorld('miseAPI', {
     getPdfViewerPath: () => ipcRenderer.sendSync('get-pdf-viewer-path'),
     getPdfViewerUrl: (targetUrl) => ipcRenderer.sendSync('get-pdf-viewer-url', targetUrl),
     getWhatsNewPath: () => ipcRenderer.sendSync('get-whats-new-path'),
+    getWelcomePath: () => ipcRenderer.sendSync('get-welcome-path'),
     readHinterCode: () => ipcRenderer.invoke('read-hinter-code'),
     readReaderCode: () => ipcRenderer.invoke('read-reader-code'),
     showContextMenu: (params) => ipcRenderer.send('show-context-menu', params),

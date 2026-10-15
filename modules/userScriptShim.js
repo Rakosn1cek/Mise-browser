@@ -1,7 +1,7 @@
 // modules/userScriptShim.js
 // Userscript execution wrapper and GM_* API shim for Mise Browser
 
-export function buildUserScriptWrapper(item) {
+export function buildUserScriptWrapper(item, appVersion = '') {
     const token = item.token || '';
     const scriptId = item.scriptId || item.name || 'script';
     const initialStorage = item.storage || {};
@@ -11,9 +11,10 @@ export function buildUserScriptWrapper(item) {
     const scriptIdJson = JSON.stringify(scriptId);
     const storageJson = JSON.stringify(initialStorage);
     const metaJson = JSON.stringify(meta);
+    const appVersionJson = JSON.stringify(appVersion || '1.0.0');
     const sourceUrlName = encodeURIComponent((item.name || scriptId).replace(/\s+/g, '_'));
 
-    return `(function(__gm_token__, __gm_script_id__, __gm_initial_storage__, __gm_meta__) {
+    return `(function(__gm_token__, __gm_script_id__, __gm_initial_storage__, __gm_meta__, __gm_version__) {
     'use strict';
 
     if (!window.__miseInjectedScripts) {
@@ -283,7 +284,7 @@ export function buildUserScriptWrapper(item) {
             runAt: __gm_meta__.runAt || 'document-end'
         },
         scriptHandler: 'Mise Browser',
-        version: '0.15.0'
+        version: __gm_version__
     };
 
     var unsafeWindow = window;
@@ -327,6 +328,6 @@ ${item.code}
     } catch (err) {
         console.error('[Mise UserScript: ' + (__gm_meta__.name || __gm_script_id__) + ']', err);
     }
-})(${tokenJson}, ${scriptIdJson}, ${storageJson}, ${metaJson});
+})(${tokenJson}, ${scriptIdJson}, ${storageJson}, ${metaJson}, ${appVersionJson});
 //# sourceURL=mise-userscript://${sourceUrlName}.user.js`;
 }

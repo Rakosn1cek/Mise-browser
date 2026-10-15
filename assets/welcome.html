@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to Mise Browser</title>
+    <link rel="icon" type="image/png" href="icons/Mise-logo48.png">
+    <style>
+        :root {
+            --bg-main: #1a1b26;
+            --bg-card: #16161e;
+            --text-main: #c0caf5;
+            --text-muted: #9aa5ce;
+            --accent: #7aa2f7;
+            --accent-dim: rgba(122, 162, 247, 0.12);
+            --border: #24283b;
+            --border-hover: #414868;
+            --kbd-bg: #24283b;
+            --kbd-border: #414868;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            padding: 40px 20px 80px 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 760px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        header {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .tag-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .badge {
+            background-color: var(--accent-dim);
+            color: var(--accent);
+            border: 1px solid var(--accent);
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 8px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .title-group {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .title-group img {
+            width: 40px;
+            height: 40px;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-main);
+            letter-spacing: -0.5px;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        .philosophy-card {
+            background: linear-gradient(135deg, rgba(122, 162, 247, 0.08) 0%, rgba(22, 22, 30, 0.8) 100%);
+            border: 1px solid var(--accent);
+            border-radius: 8px;
+            padding: 20px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .philosophy-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        .philosophy-text {
+            font-size: 13.5px;
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        .section-header {
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-top: 6px;
+        }
+
+        .feature-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            transition: border-color 0.15s ease;
+        }
+
+        .feature-card:hover {
+            border-color: var(--border-hover);
+        }
+
+        .feature-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .feature-desc {
+            font-size: 13.5px;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        .feature-points {
+            list-style: none;
+            padding: 0;
+            margin: 4px 0 0 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .feature-points li {
+            position: relative;
+            padding-left: 18px;
+            font-size: 13px;
+            color: var(--text-main);
+            line-height: 1.6;
+            word-break: normal;
+            overflow-wrap: break-word;
+        }
+
+        .feature-points li::before {
+            content: "•";
+            position: absolute;
+            left: 2px;
+            top: 0;
+            color: var(--accent);
+            font-size: 14px;
+            line-height: 1.6;
+            font-weight: bold;
+        }
+
+        kbd {
+            background-color: var(--kbd-bg);
+            border: 1px solid var(--kbd-border);
+            border-radius: 4px;
+            box-shadow: 0 1px 0 rgba(0, 0, 0, 0.25);
+            color: var(--accent);
+            display: inline-block;
+            font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+            font-size: 11px;
+            font-weight: 600;
+            line-height: 1.2;
+            padding: 2px 6px;
+            margin: 0 2px;
+            vertical-align: baseline;
+            white-space: nowrap;
+        }
+
+        .cheat-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            font-size: 13px;
+        }
+
+        .cheat-table th, .cheat-table td {
+            padding: 10px 14px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .cheat-table th {
+            background-color: rgba(36, 40, 59, 0.5);
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .cheat-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .cheat-table tr:hover td {
+            background-color: rgba(255, 255, 255, 0.02);
+        }
+
+        footer {
+            margin-top: 8px;
+            padding: 18px 22px;
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .footer-note {
+            font-size: 12.5px;
+            color: var(--text-muted);
+        }
+
+        .action-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background-color: var(--accent-dim);
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 500;
+            padding: 6px 14px;
+            border-radius: 6px;
+            transition: background-color 0.15s ease, color 0.15s ease;
+        }
+
+        .action-link:hover {
+            background-color: var(--accent);
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="tag-row">
+                <span class="badge">Quick Start Guide</span>
+                <span class="badge">Offline Reference</span>
+            </div>
+            <div class="title-group">
+                <img src="icons/Mise-logo48.png" alt="Mise Browser Logo">
+                <h1>Welcome to Mise Browser</h1>
+            </div>
+            <p class="subtitle">A minimalist, privacy-focused, keyboard-centric web browser engineered for Linux desktops, window managers, and power users.</p>
+        </header>
+
+        <section class="philosophy-card">
+            <h2 class="philosophy-title">The Uncluttered Canvas Philosophy</h2>
+            <p class="philosophy-text">
+                Mise intentionally eliminates persistent address bars, bulky tab strips, and floating window controls from the browser canvas. 
+                Your web content occupies 100% of your screen estate, while the vertical sidebar auto-collapses into a slim icon strip. 
+                Every browser capability is accessible via fast keyboard chords or modal Vim commands.
+            </p>
+        </section>
+
+        <h2 class="section-header">Core Navigation & Daily Essentials</h2>
+
+        <section class="feature-card">
+            <h3 class="feature-title">Address Bar & Search Bangs</h3>
+            <p class="feature-desc">Open the floating address palette from anywhere to navigate or query search engines.</p>
+            <ul class="feature-points">
+                <li>Press <kbd>Ctrl + L</kbd> or <kbd>!</kbd> to trigger the address bar.</li>
+                <li>Type a URL directly or enter search terms for DuckDuckGo.</li>
+                <li>Quick search bangs: prefix queries with <kbd>g</kbd> for Google, <kbd>gh</kbd> for GitHub, <kbd>aur</kbd> for Arch User Repository, or <kbd>yt</kbd> for YouTube.</li>
+                <li>Define and customise search aliases in Preferences (<kbd>Ctrl + H</kbd>).</li>
+            </ul>
+        </section>
+
+        <section class="feature-card">
+            <h3 class="feature-title">Vim-Inspired Link Hints</h3>
+            <p class="feature-desc">Navigate hyperlinks and form controls effortlessly without touching a mouse or trackpad.</p>
+            <ul class="feature-points">
+                <li>Press <kbd>f</kbd> to activate Link Hints mode.</li>
+                <li>Two-letter cyan badges appear across all clickable elements on the active page (highlighting in orange as you type).</li>
+                <li>Type the two hint letters to simulate an instant click.</li>
+                <li>Press <kbd>Escape</kbd> at any point to dismiss hint tags.</li>
+            </ul>
+        </section>
+
+        <section class="feature-card">
+            <h3 class="feature-title">Tabs & Accidental Closure Guard</h3>
+            <p class="feature-desc">Organise your research with persistent workspaces, top-anchored pinned tabs, and memory saving hibernation.</p>
+            <ul class="feature-points">
+                <li>Press <kbd>Ctrl + T</kbd> to open a new tab, and <kbd>Ctrl + X</kbd> to close the current tab.</li>
+                <li>Press <kbd>Ctrl + 1</kbd> through <kbd>Ctrl + 9</kbd> to jump straight to tabs 1 through 9.</li>
+                <li>Press <kbd>Ctrl + Shift + X</kbd> or <kbd>p</kbd> to pin essential tabs to the top with a golden badge.</li>
+                <li>Pinned tabs are protected against accidental closure: pressing <kbd>Ctrl + X</kbd> displays a status guard warning.</li>
+                <li>Background tabs hibernate automatically to preserve system memory.</li>
+            </ul>
+        </section>
+
+        <section class="feature-card">
+            <h3 class="feature-title">Command Centre & Preferences</h3>
+            <p class="feature-desc">A unified searchable hub for all browser operations, settings, and diagnostic tools.</p>
+            <ul class="feature-points">
+                <li>Press <kbd>Ctrl + P</kbd> to summon the Command Palette.</li>
+                <li>Filter any action by title or keywords with real-time fuzzy matching.</li>
+                <li>Press <kbd>Ctrl + H</kbd> (or <kbd>F1</kbd>) to access the 6-tab Preferences overlay.</li>
+                <li>Customise process limits, hardware switches, adblocking, and visual colours.</li>
+            </ul>
+        </section>
+
+        <h2 class="section-header">Power Tools & Advanced Features</h2>
+
+        <section class="feature-card">
+            <h3 class="feature-title">Dual Split Comparison View</h3>
+            <p class="feature-desc">Compare documentation, pull requests, or articles side by side without tiling window manager complexity.</p>
+            <ul class="feature-points">
+                <li>Press <kbd>Ctrl + Shift + S</kbd> to split the viewport into two 50% comparison panes.</li>
+                <li>Press <kbd>Ctrl + O</kbd> to switch keyboard focus between Pane 1 and Pane 2.</li>
+                <li>Press <kbd>Ctrl + \</kbd> to swap the positions of the two open split panes instantly.</li>
+            </ul>
+        </section>
+
+        <section class="feature-card">
+            <h3 class="feature-title">Distraction-Free Reader & Quick Notes</h3>
+            <p class="feature-desc">Distil messy web pages into clean typography and export highlights into Markdown notes.</p>
+            <ul class="feature-points">
+                <li>Press <kbd>e</kbd> or <kbd>F9</kbd> to toggle native distraction-free Reader View.</li>
+                <li>Press <kbd>Ctrl + Shift + E</kbd> to export the distilled article directly to Quick Notes.</li>
+                <li>Press <kbd>Ctrl + N</kbd> to view or edit your local Markdown scratchpad.</li>
+                <li>Notes are stored locally in plain text under your configuration directory.</li>
+            </ul>
+        </section>
+
+        <h2 class="section-header">Essential Shortcut Reference</h2>
+        <table class="cheat-table">
+            <thead>
+                <tr>
+                    <th>Action</th>
+                    <th>Shortcut Chord</th>
+                    <th>Vim Normal Mode</th>
+                    <th>Purpose</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Open Address Bar</strong></td>
+                    <td><kbd>Ctrl + L</kbd></td>
+                    <td><kbd>!</kbd></td>
+                    <td>Navigate to URL or perform aliased searches</td>
+                </tr>
+                <tr>
+                    <td><strong>Link Hints</strong></td>
+                    <td><kbd>Ctrl + F</kbd></td>
+                    <td><kbd>f</kbd></td>
+                    <td>Inject clickable hint badges over all links</td>
+                </tr>
+                <tr>
+                    <td><strong>Command Palette</strong></td>
+                    <td><kbd>Ctrl + P</kbd></td>
+                    <td>—</td>
+                    <td>Searchable command registry and action runner</td>
+                </tr>
+                <tr>
+                    <td><strong>Preferences & Settings</strong></td>
+                    <td><kbd>Ctrl + H</kbd> / <kbd>F1</kbd></td>
+                    <td>—</td>
+                    <td>Configuration, theming, process limits, and privacy</td>
+                </tr>
+                <tr>
+                    <td><strong>New Tab</strong></td>
+                    <td><kbd>Ctrl + T</kbd></td>
+                    <td>—</td>
+                    <td>Spawn a fresh webview tab</td>
+                </tr>
+                <tr>
+                    <td><strong>Close Tab</strong></td>
+                    <td><kbd>Ctrl + X</kbd></td>
+                    <td>—</td>
+                    <td>Close active tab (guarded on pinned tabs)</td>
+                </tr>
+                <tr>
+                    <td><strong>Pin / Unpin Tab</strong></td>
+                    <td><kbd>Ctrl + Shift + X</kbd> / <kbd>F4</kbd></td>
+                    <td><kbd>p</kbd></td>
+                    <td>Anchor tab to the top of the workspace</td>
+                </tr>
+                <tr>
+                    <td><strong>Direct Tab Jump</strong></td>
+                    <td><kbd>Ctrl + 1</kbd> to <kbd>Ctrl + 9</kbd></td>
+                    <td><kbd>1</kbd> to <kbd>9</kbd> (in sidebar)</td>
+                    <td>Switch directly to numbered tab</td>
+                </tr>
+                <tr>
+                    <td><strong>Toggle Dual Split View</strong></td>
+                    <td><kbd>Ctrl + Shift + S</kbd></td>
+                    <td>—</td>
+                    <td>Split viewport into two comparison panes</td>
+                </tr>
+                <tr>
+                    <td><strong>Switch Split Focus</strong></td>
+                    <td><kbd>Ctrl + O</kbd></td>
+                    <td>—</td>
+                    <td>Cycle keyboard focus between split panes</td>
+                </tr>
+                <tr>
+                    <td><strong>Reader View</strong></td>
+                    <td><kbd>F9</kbd></td>
+                    <td><kbd>e</kbd></td>
+                    <td>Distil article text with clean typography</td>
+                </tr>
+                <tr>
+                    <td><strong>Quick Markdown Notes</strong></td>
+                    <td><kbd>Ctrl + N</kbd></td>
+                    <td>—</td>
+                    <td>Open persistent local notes scratchpad</td>
+                </tr>
+                <tr>
+                    <td><strong>Workspace Dashboard</strong></td>
+                    <td><kbd>Ctrl + Shift + W</kbd></td>
+                    <td><kbd>w</kbd></td>
+                    <td>Manage partitioned workspaces and containers</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <footer>
+            <div class="footer-note">
+                Press <kbd>Ctrl + X</kbd> to close this guide whenever you are ready to begin browsing.
+            </div>
+            <a href="https://rakosn1cek.github.io/Mise-browser/" target="_blank" rel="noopener noreferrer" class="action-link">
+                Official Documentation ↗
+            </a>
+        </footer>
+    </div>
+</body>
+</html>

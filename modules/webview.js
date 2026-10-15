@@ -740,7 +740,7 @@ export async function injectMatchingUserContent(webview) {
                 }
                 if (item.code && typeof webview.executeJavaScript === 'function') {
                     webview.__miseInjectedScriptIds.add(scriptId);
-                    const scriptWrapper = buildUserScriptWrapper(item);
+                    const scriptWrapper = buildUserScriptWrapper(item, state.appVersion);
                     webview.executeJavaScript(scriptWrapper, false).catch(() => {});
                 }
             }

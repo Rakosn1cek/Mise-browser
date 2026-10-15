@@ -707,11 +707,29 @@ export const COMMAND_DEFINITIONS = [
         title: 'Check for Updates',
         desc: 'Check GitHub Releases for newer Mise versions and release notes',
         details: 'Queries the GitHub release ledger to check if a newer Mise version is available, providing direct links to release notes and binary packages.',
-        tip: 'Mise tracks upstream Electron and Chromium security releases twice weekly.',
+        tip: 'Mise tracks upstream Electron and Chromium security releases weekly.',
         category: 'Preferences & System',
         icon: 'fa-solid fa-arrows-rotate',
         keywords: ['update', 'upgrade', 'version', 'release', 'github', 'check'],
         action: () => window.checkForUpdates && window.checkForUpdates(true)
+    },
+    {
+        id: 'show-welcome',
+        title: 'Show Welcome & Quick Start Guide',
+        desc: 'Open the offline introduction and keyboard shortcuts cheat sheet',
+        details: 'Opens the local welcome guide detailing Mise navigation, Vim mode, Link Hints, split view, and search aliases.',
+        tip: 'A great refresher on core keyboard chords and features.',
+        category: 'Preferences & System',
+        icon: 'fa-solid fa-book-open',
+        keywords: ['welcome', 'guide', 'start', 'help', 'tutorial', 'intro', 'shortcuts', 'onboarding'],
+        action: () => {
+            if (typeof window.openWelcomeTab === 'function') {
+                window.openWelcomeTab();
+            } else if (window.miseAPI && typeof window.miseAPI.getWelcomePath === 'function') {
+                const url = window.miseAPI.getWelcomePath();
+                if (url) spawnTabWithUrl(url);
+            }
+        }
     },
     {
         id: 'show-whats-new',

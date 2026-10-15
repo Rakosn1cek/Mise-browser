@@ -22,13 +22,14 @@ Module.prototype.require = function(id) {
     return origRequire.apply(this, arguments);
 };
 
+const pkg = require('../package.json');
 const security = require('../security.js');
 
 console.log('Running Mise authentication & network security tests...');
 
 // 1. Test User-Agent sanitisation for Google sign-in
 {
-    const sampleDefaultUa = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Mise/0.15.0 Chrome/132.0.6834.196 Electron/34.0.0 Safari/537.36';
+    const sampleDefaultUa = `Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Mise/${pkg.version} Chrome/132.0.6834.196 Electron/34.0.0 Safari/537.36`;
     security.setGoogleSignInUserAgent(sampleDefaultUa);
 
     const uaForAccounts = security.getGoogleSignInUserAgent('accounts.google.com');

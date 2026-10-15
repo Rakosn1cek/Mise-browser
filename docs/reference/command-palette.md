@@ -106,6 +106,7 @@ The Command Centre gives you rapid, searchable access to all Mise operations, in
 | **Open Diagnostics & Health Hub** | — | `open-diagnostics` | View local system health, runtime memory breakdown, and sanitised logs. |
 | **Toggle Diagnostics Recording** | — | `toggle-diagnostics-recording` | Toggles local in-memory event recording for reproduction and bug reports. |
 | **Check for Updates** | — | — | Checks GitHub Releases ledger for newer Mise versions. |
+| **Show Welcome & Quick Start Guide** | — | `show-welcome` | Opens the offline onboarding guide and keyboard cheat sheet. |
 | **Show What's New** | — | — | Opens offline release highlights and changelog for the active version. |
 | **Test Clean Google Sign-In Flow** | — | `test-google-signin` | Launches Google Sign-In in a clean, volatile scratch partition to audit authentication health. |
 | **Toggle Colour Theme (Dark / Light)** | — | — | Swaps UI styling and webview shader inversion between dark and light. |

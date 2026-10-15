@@ -476,6 +476,8 @@ async function initializeBrowser() {
             const chromeVer = typeof info === 'object' ? info.chrome : '';
 
             if (appVer) {
+                state.appVersion = appVer;
+                window.__miseAppVersion = appVer;
                 let text = `Mise v${appVer}`;
                 if (electronVer && chromeVer) {
                     text += ` · Electron ${electronVer} · Chromium ${chromeVer}`;
@@ -483,13 +485,17 @@ async function initializeBrowser() {
                 if (badge) badge.textContent = text;
                 if (welcomeBadge) welcomeBadge.textContent = text;
 
-                // Prompt What's New tab on version bump
+                // Prompt Welcome tab on first run, or What's New tab on version bump
                 if (window.miseAPI && typeof window.miseAPI.getBrowserSettings === 'function') {
                     window.miseAPI.getBrowserSettings().then((cfg) => {
                         const lastSeen = cfg?.last_seen_version;
                         if (!lastSeen) {
-                            // First run on machine: record version silently
+                            // First run on machine: record version and spawn Welcome guide tab
                             window.miseAPI.updateBrowserSettings({ last_seen_version: appVer }).catch(() => {});
+                            if (typeof window.miseAPI.getWelcomePath === 'function') {
+                                const welcomePath = window.miseAPI.getWelcomePath();
+                                if (welcomePath) spawnTabWithUrl(welcomePath);
+                            }
                         } else if (lastSeen !== appVer) {
                             // Version update: spawn What's New tab and record version
                             window.miseAPI.updateBrowserSettings({ last_seen_version: appVer }).catch(() => {});
@@ -508,6 +514,13 @@ async function initializeBrowser() {
         if (window.miseAPI && typeof window.miseAPI.getWhatsNewPath === 'function') {
             const whatsNewPath = window.miseAPI.getWhatsNewPath();
             if (whatsNewPath) spawnTabWithUrl(whatsNewPath);
+        }
+    };
+
+    window.openWelcomeTab = () => {
+        if (window.miseAPI && typeof window.miseAPI.getWelcomePath === 'function') {
+            const welcomePath = window.miseAPI.getWelcomePath();
+            if (welcomePath) spawnTabWithUrl(welcomePath);
         }
     };
 

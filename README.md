@@ -32,7 +32,7 @@ Named after the Czech word for *"mission"*, Mise leverages the Chromium renderin
 
 Security, isolation, and upstream dependency freshness are foundational principles for Mise:
 
-* **Twice-Weekly Upstream Tracking**: Mise monitors upstream Electron and Chromium security releases twice weekly. Patches are evaluated, verified, and shipped promptly.
+* **Weekly Upstream Security Auditing**: Mise monitors upstream Electron and Chromium security releases weekly. Security patches and CVE fixes are evaluated, verified, and shipped promptly.
 * **Engine Version Verification**: Active Mise, Electron, and Chromium runtime versions are visible directly within the Preferences overlay (`Ctrl + H`) and the Welcome view.
 * **Strict Process Sandboxing**: Webviews run with `contextIsolation: true`, `nodeIntegration: false`, and Chromium sandboxing enabled, guarded by a minimal IPC whitelist.
 * **Permissions Denied by Default**: Hardware access (camera, microphone, geolocation, and MIDI) is blocked by default.
@@ -53,7 +53,7 @@ Pre-built standalone binaries and packages are compiled and published for Linux,
 | **Linux** | tar.gz | x64 | [mise-browser-0.15.0.tar.gz](https://github.com/Rakosn1cek/Mise-browser/releases/download/v0.15.0/mise-browser-0.15.0.tar.gz) | Standalone tarball archive |
 | **macOS** | DMG | Apple Silicon (arm64) | [Mise.Browser-0.15.0-arm64.dmg](https://github.com/Rakosn1cek/Mise-browser/releases/download/v0.15.0/Mise.Browser-0.15.0-arm64.dmg) | Drag and drop installer |
 | **macOS** | ZIP | Apple Silicon (arm64) | [Mise.Browser-0.15.0-arm64-mac.zip](https://github.com/Rakosn1cek/Mise-browser/releases/download/v0.15.0/Mise.Browser-0.15.0-arm64-mac.zip) | Standalone application bundle |
-| **Windows** | Setup EXE | x64 | [Mise.Browser.Setup.0.15.0.exe](https://github.com/Rakosn1cek/Mise-browser/releases/download/v0.15.0/Mise.Browser.Setup.0.15.0.exe) | NSIS desktop installer |
+| **Windows** | Setup EXE | x64 | [Mise.Browser.0.15.0.exe](https://github.com/Rakosn1cek/Mise-browser/releases/download/v0.15.0/Mise.Browser.0.15.0.exe) | NSIS desktop installer |
 | **Windows** | Portable EXE | x64 | [Mise.Browser.0.15.0.exe](https://github.com/Rakosn1cek/Mise-browser/releases/download/v0.15.0/Mise.Browser.0.15.0.exe) | Portable binary without installation |
 | **Integrity** | Checksums | All | [SHA256SUMS.txt](https://github.com/Rakosn1cek/Mise-browser/releases/download/v0.15.0/SHA256SUMS.txt) | Cryptographic SHA-256 hash list |
 
@@ -64,7 +64,7 @@ chmod +x Mise.Browser-0.15.0.AppImage
 ./Mise.Browser-0.15.0.AppImage
 ```
 
-No `libfuse2` is needed. On systems without FUSE, run it with `--appimage-extract-and-run`.
+No `libfuse2` is needed. On systems without FUSE, execute the AppImage with the extract-and-run argument or unpack package contents directly.
 
 ### Verifying Package Integrity
 

@@ -1114,6 +1114,10 @@ ipcMain.on('get-whats-new-path', (event) => {
     event.returnValue = 'file://' + path.join(__dirname, 'assets', 'whats-new.html'); 
 });
 
+ipcMain.on('get-welcome-path', (event) => { 
+    event.returnValue = 'file://' + path.join(__dirname, 'assets', 'welcome.html'); 
+});
+
 ipcMain.handle('read-pdf-data', async (event, payload) => {
     const { token, url: sourceUrl } = payload || {};
     if (!sourceUrl || typeof sourceUrl !== 'string') {

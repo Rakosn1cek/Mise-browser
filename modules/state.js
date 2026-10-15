@@ -15,6 +15,7 @@ export const state = {
     tabHistory: {},
     tabDarkReaderStates: {},
     splitStates: {},
+    appVersion: '',
     
     // UI Active Flags
     dashboardActive: false,
