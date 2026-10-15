@@ -5,7 +5,7 @@ export default defineConfig({
   description: 'Keyboard-first, container-isolated web browser for fanless Linux systems',
   base: '/Mise-browser/',
   head: [
-    ['link', { rel: 'icon', href: '/Mise-browser/logo.png' }],
+    ['link', { rel: 'icon', href: '/Mise-browser/logo.png?v=0.15.0' }],
     ['link', { rel: 'me', href: 'https://mastodon.social/@misebrowser' }],
     ['meta', { property: 'og:type', content: 'website' }],
     ['meta', { property: 'og:site_name', content: 'Mise Browser' }],
@@ -21,7 +21,7 @@ export default defineConfig({
     ['meta', { name: 'twitter:image', content: 'https://rakosn1cek.github.io/Mise-browser/og-image.png' }]
   ],
   themeConfig: {
-    logo: '/logo.png',
+    logo: '/logo.png?v=0.15.0',
     siteTitle: 'Mise Browser',
     nav: [
       { text: 'Guide', link: '/guide/getting-started' },
