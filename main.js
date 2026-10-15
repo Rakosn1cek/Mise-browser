@@ -20,6 +20,10 @@ if (!gotSingleInstanceLock) {
     app.quit();
 }
 
+// Canonical application identity for Wayland and X11 desktop integration
+app.setName('mise-browser');
+app.setAppUserModelId('io.github.rakosn1cek.mise-browser');
+
 // Require the security config module to isolate filtering and hardening rules
 const security = require('./security');
 const keybinds = require('./keybinds');
