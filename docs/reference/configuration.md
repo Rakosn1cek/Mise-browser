@@ -41,7 +41,7 @@ Controls hardware switches, process limits, privacy whitelists, and search prefe
             "overlay_opacity": 100
         },
         "light": {
-            "accent": "#2b59c3",
+            "accent": "#6d3b09",
             "bg_main": "#e5e5e5",
             "bg_sidebar": "#d4d4d4",
             "text": "#1a1a1a",
@@ -77,7 +77,7 @@ Controls hardware switches, process limits, privacy whitelists, and search prefe
 - **`theme_colors`**: Custom visual colour palette and opacity settings per theme mode:
 
 ![Appearance and Visual Theme Preferences](/screenshots/preferences-2.webp)
-  - **`accent`**: Primary highlight colour for active tabs, borders, and controls (defaults to `#7aa2f7` in dark, `#2b59c3` in light).
+  - **`accent`**: Primary highlight colour for active tabs, borders, and controls (defaults to `#7aa2f7` in dark, `#6d3b09` in light).
   - **`bg_main`**: Base window and modal canvas background colour.
   - **`bg_sidebar`**: Vertical sidebar background colour.
   - **`text`**: Primary text and icon foreground colour.

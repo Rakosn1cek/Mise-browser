@@ -77,7 +77,7 @@ const DEFAULT_THEME_COLORS = {
         overlay_opacity: 100
     },
     light: {
-        accent: '#2b59c3',
+        accent: '#6d3b09',
         bg_main: '#e5e5e5',
         bg_sidebar: '#d4d4d4',
         text: '#1a1a1a',

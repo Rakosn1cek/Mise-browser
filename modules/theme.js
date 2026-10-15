@@ -11,13 +11,40 @@ export const DEFAULT_THEME_COLORS = {
         overlay_opacity: 100
     },
     light: {
-        accent: '#2b59c3',
+        accent: '#6d3b09',
         bg_main: '#e5e5e5',
         bg_sidebar: '#d4d4d4',
         text: '#1a1a1a',
         sidebar_opacity: 100,
         overlay_opacity: 100
     }
+};
+
+export const ACCENT_PRESETS = {
+    dark: [
+        { name: 'Tokyo Blue', color: '#7aa2f7' },
+        { name: 'Emerald Green', color: '#9ece6a' },
+        { name: 'Amber Gold', color: '#e0af68' },
+        { name: 'Roasted Mocha', color: '#c48b71' },
+        { name: 'Warm Terracotta', color: '#e07a5f' },
+        { name: 'Coral Rose', color: '#f7768e' },
+        { name: 'Amethyst Purple', color: '#bb9af7' },
+        { name: 'Marine Cyan', color: '#7dcfff' },
+        { name: 'Electric Teal', color: '#2ac3de' },
+        { name: 'Tangerine Orange', color: '#ff9e64' }
+    ],
+    light: [
+        { name: 'Amber Chestnut', color: '#6d3b09' },
+        { name: 'Warm Chestnut', color: '#7b3f28' },
+        { name: 'Espresso Brown', color: '#5c3d2e' },
+        { name: 'Terracotta Rust', color: '#a64b2a' },
+        { name: 'Warm Bronze', color: '#854d0e' },
+        { name: 'Forest Green', color: '#2d6a4f' },
+        { name: 'Wine Burgundy', color: '#801a2a' },
+        { name: 'Royal Sapphire', color: '#1e3a8a' },
+        { name: 'Deep Amethyst', color: '#581c87' },
+        { name: 'Slate Teal', color: '#134e4a' }
+    ]
 };
 
 let cachedThemeConfig = null;
@@ -56,6 +83,20 @@ function setVisualProperty(prop, value) {
     }
 }
 
+export function renderAccentSwatches(modeOverride = null, activeAccentOverride = null) {
+    const swatchesContainer = document.getElementById('accent-preset-swatches');
+    if (!swatchesContainer) return;
+
+    const mode = modeOverride || getCurrentThemeMode();
+    const presets = ACCENT_PRESETS[mode] || ACCENT_PRESETS.dark;
+    const currentAccent = (activeAccentOverride || getActiveThemeColors(cachedThemeConfig, mode).accent || '').toLowerCase();
+
+    swatchesContainer.innerHTML = presets.map((preset) => {
+        const isActive = preset.color.toLowerCase() === currentAccent;
+        return `<button type="button" class="swatch-btn${isActive ? ' active' : ''}" data-color="${preset.color}" style="background:${preset.color}" title="${preset.name}"></button>`;
+    }).join('');
+}
+
 export function applyThemeVisuals(cfg = null, modeOverride = null) {
     if (cfg) cachedThemeConfig = cfg;
     const mode = modeOverride || getCurrentThemeMode();
@@ -68,6 +109,7 @@ export function applyThemeVisuals(cfg = null, modeOverride = null) {
     setVisualProperty('--sidebar-opacity', `${colors.sidebar_opacity}%`);
     setVisualProperty('--overlay-opacity', `${colors.overlay_opacity}%`);
 
+    renderAccentSwatches(mode, colors.accent);
     highlightActiveSwatch(colors.accent);
 }
 
@@ -114,6 +156,8 @@ export function syncVisualSettingsInputs(cfg = null) {
     if (cfg) cachedThemeConfig = cfg;
     const mode = getCurrentThemeMode();
     const colors = getActiveThemeColors(cfg || cachedThemeConfig, mode);
+
+    renderAccentSwatches(mode, colors.accent);
 
     const accentPicker = document.getElementById('setting-accent-color-picker');
     const accentText = document.getElementById('setting-accent-color-text');
