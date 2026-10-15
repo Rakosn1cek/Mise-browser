@@ -10,7 +10,7 @@
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs",
-    "install-desktop": "mkdir -p ~/.local/share/applications ~/.local/share/icons/hicolor/{48x48,128x128,256x256}/apps && cp mise.desktop ~/.local/share/applications/ && cp mise.desktop ~/.local/share/applications/mise-browser.desktop && cp assets/icons/Mise-logo48.png ~/.local/share/icons/hicolor/48x48/apps/mise.png && cp assets/icons/Mise-logo48.png ~/.local/share/icons/hicolor/48x48/apps/mise-browser.png && cp assets/icons/Mise-logo128.png ~/.local/share/icons/hicolor/128x128/apps/mise.png && cp assets/icons/Mise-logo128.png ~/.local/share/icons/hicolor/128x128/apps/mise-browser.png && cp assets/icons/Mise-logo256.png ~/.local/share/icons/hicolor/256x256/apps/mise.png && cp assets/icons/Mise-logo256.png ~/.local/share/icons/hicolor/256x256/apps/mise-browser.png && update-desktop-database ~/.local/share/applications && gtk-update-icon-cache -f -t ~/.local/share/icons/hicolor",
+    "install-desktop": "mkdir -p ~/.local/share/applications ~/.local/share/icons/hicolor/{48x48,128x128,256x256}/apps && cp mise-browser.desktop ~/.local/share/applications/ && cp assets/icons/Mise-logo48.png ~/.local/share/icons/hicolor/48x48/apps/mise-browser.png && cp assets/icons/Mise-logo128.png ~/.local/share/icons/hicolor/128x128/apps/mise-browser.png && cp assets/icons/Mise-logo256.png ~/.local/share/icons/hicolor/256x256/apps/mise-browser.png && update-desktop-database ~/.local/share/applications && gtk-update-icon-cache -f -t ~/.local/share/icons/hicolor",
     "dist": "electron-builder",
     "dist:linux": "electron-builder --linux",
     "dist:dir": "electron-builder --dir",
