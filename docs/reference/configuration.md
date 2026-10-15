@@ -16,10 +16,12 @@ Controls hardware switches, process limits, privacy whitelists, and search prefe
 {
     "disable_gpu": false,
     "background_throttling": true,
-    "process_limit": 1,
+    "process_limit": 4,
     "tab_sleep_timeout_minutes": 15,
     "sidebar_auto_collapse": true,
     "show_status_bar": true,
+    "show_clock": true,
+    "clock_format": "datetime",
     "show_window_controls": false,
     "email_handler": "system",
     "search_engine": "https://duckduckgo.com/?q=%s",
@@ -49,6 +51,7 @@ Controls hardware switches, process limits, privacy whitelists, and search prefe
             "overlay_opacity": 100
         }
     },
+    "enable_diagnostics": false,
     "trusted_domains": [
         "x.com",
         "amazon.co.uk",
@@ -68,6 +71,8 @@ Controls hardware switches, process limits, privacy whitelists, and search prefe
 - **`tab_sleep_timeout_minutes`**: Inactivity timeout before background tabs detach and hibernate (5, 15, 30, 60, or 0 to disable).
 - **`sidebar_auto_collapse`**: When `true`, collapses the vertical sidebar into a 36px icon strip, expanding smoothly on hover or via shortcut.
 - **`show_status_bar`**: When `true`, displays the 22px footer status bar with modal state, real-time link hover preview, and TLS security status.
+- **`show_clock`**: When `true`, displays a real-time clock and date widget in the status bar and sidebar for full screen browsing.
+- **`clock_format`**: Date and time display format: `12h` (e.g. 02:45 PM), `24h` (e.g. 14:45), `seconds` (e.g. 14:45:08), or `datetime` (e.g. 15 Oct, 14:45).
 - **`show_window_controls`**: When `true`, displays window action buttons (minimise, maximise/restore, close) at the top of the sidebar for desktop environments without native window decorations.
 - **`email_handler`**: Choose between `system` (OS default `mailto:`) or webmail providers (Gmail, Zoho, Outlook, Fastmail, ProtonMail).
 - **`search_engine`**: Fallback search provider URL when non-URL queries are entered without an alias.
@@ -77,12 +82,13 @@ Controls hardware switches, process limits, privacy whitelists, and search prefe
 - **`theme_colors`**: Custom visual colour palette and opacity settings per theme mode:
 
 ![Appearance and Visual Theme Preferences](/screenshots/preferences-2.webp)
-  - **`accent`**: Primary highlight colour for active tabs, borders, and controls (defaults to `#7aa2f7` in dark, `#6d3b09` in light).
+  - **`accent`**: Primary highlight colour for active tabs, borders, and controls (defaults to `#7aa2f7` in dark, `#6d3b09` in light, with curated mode-tailored preset palettes).
   - **`bg_main`**: Base window and modal canvas background colour.
   - **`bg_sidebar`**: Vertical sidebar background colour.
   - **`text`**: Primary text and icon foreground colour.
   - **`sidebar_opacity`**: Sidebar background translucency percentage (40% to 100%) with backdrop blur glass effect.
   - **`overlay_opacity`**: Modal and overlay translucency percentage (50% to 100%) for Command Palette, Notes, and Preferences.
+- **`enable_diagnostics`**: When `true`, enables local in-memory diagnostic ring buffer recording for auditing and issue reproduction (OFF by default for zero telemetry).
 - **`trusted_domains`**: Array of domains exempted from tracker blocking and fingerprint spoofing.
 - **`external_notes_command`**: Optional command or executable used to open notes and clippings (e.g. `obsidian`, `logseq`, `code`, `nvim`). When empty, uses system default Markdown handler.
 - **`custom_search_aliases`**: Key-value map of custom search prefixes and URL templates (with `%s` query placeholder). Typing `<alias> <query>` in the address bar (such as `aur hyprland` or `gh mise`) bypasses fallback engines and routes queries straight to the destination. Users can configure, override, or extend default built-ins directly in Preferences.
@@ -128,6 +134,14 @@ Maintains persistent workspaces, URLs, titles, Dark Reader preferences, and slee
     "tab_dark_reader": {
         "Work": [true],
         "Personal": [false]
+    },
+    "tab_pinned": {
+        "Work": [true],
+        "Personal": [false]
+    },
+    "tab_favicons": {
+        "Work": ["https://github.com/favicon.ico"],
+        "Personal": ["https://news.ycombinator.com/favicon.ico"]
     }
 }
 ```

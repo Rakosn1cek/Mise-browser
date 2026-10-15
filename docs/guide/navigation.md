@@ -166,11 +166,25 @@ Mise Browser provides a Vim-inspired modal navigation engine that frees you from
 | `/` | Find in Page | Opens the in-page search bar |
 | `f` | Link Hints | Injects two-letter hint tags over clickable links |
 | `e` | Reader View | Toggles native distraction-free reader view |
+| `m` | Mute Tab | Mutes or unmutes audio output on active tab |
+| `M` | Global Mute | Mutes or unmutes audio across all tabs |
+| `p` | Pin Tab | Toggles pinned status on active tab |
 | `w` | Dashboard | Opens the Workspace Dashboard tree |
 | `s` | Focus Sidebar | Moves focus to vertical sidebar tab list |
 | `y` | Yank URL | Copies current URL to clipboard with status bar feedback |
 | `i` | Insert Mode | Explicitly enters INSERT mode |
 | `Shift + Escape` | Passthrough Mode | Toggles PASSTHROUGH mode on or off |
+
+***
+
+## Pinned Tabs & Accidental Closure Guard
+
+Keep vital dashboards, communications, and media tabs protected from accidental closure and easily accessible:
+
+* **Instant Pinning**: Press **Ctrl + Shift + X** or **F4** (or press **p** in NORMAL mode, or click the pin icon in the tab item) to pin or unpin any tab.
+* **Top-Anchored Priority**: Pinned tabs are neatly grouped and anchored at the very top of the active workspace tab list, marked with a distinctive golden pin dot badge.
+* **Accidental Closure Guard**: If you press **Ctrl + X** while viewing a pinned tab, Mise blocks closure and displays a status bar warning reminding you that the tab is pinned. This prevents losing ongoing research, active streams, or draft forms.
+* **Persistent Pinning**: Pinned tab states persist in `~/.config/mise-browser/session.json` across reboots and window reloads.
 
 ***
 
@@ -188,10 +202,10 @@ Mise Browser provides a Vim-inspired modal navigation engine that frees you from
 
 For comparing documentation, pull requests, or research sources without tiling window manager complexity, Mise includes a built-in dual split view:
 
-* **Instant Comparison**: Press **Ctrl + \\** or **Ctrl + Alt + S** (or click the column icon in the sidebar) to split the viewport into two 50% columns side by side.
+* **Instant Comparison**: Press **Ctrl + Shift + S** (or click the column icon in the sidebar) to split the viewport into two 50% columns side by side.
 * **Orientation Toggle**: Right-click the split icon button or execute **Cycle Split View Orientation** in the Command Palette to switch between side by side (vertical columns) and stacked (horizontal rows).
-* **Focus Switching**: Press **Ctrl + Alt + O** or **Ctrl + Alt + Tab** to switch keyboard focus between Pane 1 and Pane 2. The active pane displays an accent focus ring, and its matching sidebar tab is highlighted with a numbered badge (1 or 2).
-* **Pane Swapping**: Press **Ctrl + Alt + X** to swap the positions of the two open split panes instantly.
+* **Focus Switching**: Press **Ctrl + O** to switch keyboard focus between Pane 1 and Pane 2. The active pane displays an accent focus ring, and its matching sidebar tab is highlighted with a numbered badge (1 or 2).
+* **Pane Swapping**: Press **Ctrl + \** to swap the positions of the two open split panes instantly.
 * **Context Menu Link Routing**: Right-click any hyperlink on a page and select **Open Link in Split View** to open or send that link directly into the adjacent comparison pane.
 * **Tab Assignment**: Clicking any tab in the sidebar while in split mode routes that page into whichever pane currently holds active focus.
 * **Hibernation Exemption**: Both visible split panes are automatically protected from background tab sleep while displayed on screen.

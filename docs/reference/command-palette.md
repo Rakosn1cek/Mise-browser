@@ -41,7 +41,7 @@ The Command Centre gives you rapid, searchable access to all Mise operations, in
 | **Reload Active Tab** | `Ctrl+R` / `F5` | `reload-active-tab` | Refreshes current webview document while preserving session state. |
 | **Close Current Tab** | `Ctrl+X` | `remove-tab` | Disposes of active webview and reclaims allocated V8 heap memory. |
 | **Pin / Unpin Active Tab** | `Ctrl+Shift+X` / `F4` | `toggle-pin-tab` | Pins essential tab to the top of the workspace or unpins it. |
-| **Mute / Unmute Active Tab** | — | — | Toggles Chromium audio output for the active tab without pausing playback. |
+| **Direct Tab Jump (Tabs 1 to 9)** | `Ctrl+1` - `Ctrl+9` | `jump-to-tab-1` - `jump-to-tab-9` | Jumps directly to tab 1 through 9 from anywhere in the browser. |
 | **Reset Tab Zoom Level** | — | — | Restores webview zoom factor back to 100% default. |
 | **Focus Sidebar Tab List** | `Ctrl+S` | `focus-sidebar` | Moves keyboard focus directly into the vertical tab list. |
 | **Focus Navigation Buttons** | `Ctrl+Shift+N` | `focus-nav-buttons` | Cycles keyboard focus across toolbar navigation controls. |
@@ -94,6 +94,7 @@ The Command Centre gives you rapid, searchable access to all Mise operations, in
 | :--- | :--- | :--- | :--- |
 | **Open User Scripts Directory** | — | — | Opens `~/.config/mise-browser/scripts` in default system file manager. |
 | **Open User Styles Directory** | — | — | Opens `~/.config/mise-browser/styles` in default system file manager. |
+| **Open User Script Storage Directory** | — | — | Opens `~/.config/mise-browser/script-storage` in default system file manager. |
 | **Reload User Scripts and Styles** | — | — | Hot-reloads custom scripts and stylesheets across active webviews. |
 
 ### Preferences & System
@@ -102,6 +103,10 @@ The Command Centre gives you rapid, searchable access to all Mise operations, in
 | :--- | :--- | :--- | :--- |
 | **Open Preferences** | `Ctrl+H` | `toggle-help` | Full-page settings view for GPU switches, memory caps, and themes. |
 | **Toggle Private Browsing Mode** | `Ctrl+Shift+P` | `toggle-private-mode` | Switches session to in-memory non-persistent partition. |
+| **Open Diagnostics & Health Hub** | — | `open-diagnostics` | View local system health, runtime memory breakdown, and sanitised logs. |
+| **Toggle Diagnostics Recording** | — | `toggle-diagnostics-recording` | Toggles local in-memory event recording for reproduction and bug reports. |
+| **Check for Updates** | — | — | Checks GitHub Releases ledger for newer Mise versions. |
+| **Show What's New** | — | — | Opens offline release highlights and changelog for the active version. |
 | **Test Clean Google Sign-In Flow** | — | `test-google-signin` | Launches Google Sign-In in a clean, volatile scratch partition to audit authentication health. |
 | **Toggle Colour Theme (Dark / Light)** | — | — | Swaps UI styling and webview shader inversion between dark and light. |
 | **Toggle Application Menu Bar** | `F1` | `toggle-menu-bar` | Shows or hides the native top window menu bar. |

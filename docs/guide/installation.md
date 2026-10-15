@@ -22,7 +22,7 @@ The AppImage runs out of the box on Ubuntu, Debian, Fedora, Arch Linux, openSUSE
    ./Mise-*.AppImage
    ```
 
-The AppImage uses the static AppImage runtime, so it does not need `libfuse2`. It only requires FUSE, which almost every desktop distribution provides through `fuse3`. On systems without FUSE (such as some containers), run it with `--appimage-extract-and-run` instead.
+The AppImage uses the static AppImage runtime, so it does not need `libfuse2`. It only requires FUSE, which almost every desktop distribution provides through `fuse3`. On systems without FUSE (such as minimal containers), execute the AppImage with the extract-and-run argument or unpack the package contents directly.
 
 To integrate with desktop menus, you can also place the AppImage in your `~/Applications/` directory or use utilities such as `AppImageLauncher` (version 3 or newer).
 
