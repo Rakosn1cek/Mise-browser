@@ -314,6 +314,53 @@ function scheduleHistoryFlush() {
     }, 4000);
 }
 
+let pendingSessionData = null;
+let sessionFlushTimer = null;
+
+function flushSessionToDisk() {
+    if (sessionFlushTimer) {
+        clearTimeout(sessionFlushTimer);
+        sessionFlushTimer = null;
+    }
+    if (!pendingSessionData || typeof pendingSessionData !== 'object') return true;
+    try {
+        const dir = path.dirname(sessionPath);
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+
+        const serialized = JSON.stringify(pendingSessionData, null, 4);
+        const tempPath = sessionPath + '.tmp';
+
+        // Write to temporary file first
+        fs.writeFileSync(tempPath, serialized, 'utf8');
+
+        // Rotate existing valid session to backup before overwriting
+        if (fs.existsSync(sessionPath)) {
+            try {
+                fs.copyFileSync(sessionPath, sessionBackupPath);
+            } catch (copyErr) {}
+        }
+
+        // Atomically rename temporary file to destination
+        fs.renameSync(tempPath, sessionPath);
+        pendingSessionData = null;
+        return true;
+    } catch (err) {
+        diagnostics.logEvent('error', 'session', 'Failed to save session atomically', { error: err.message });
+        return false;
+    }
+}
+
+function scheduleSessionSave(sessionData) {
+    if (!sessionData || typeof sessionData !== 'object') return false;
+    pendingSessionData = sessionData;
+    if (sessionFlushTimer) return true;
+    sessionFlushTimer = setTimeout(() => {
+        sessionFlushTimer = null;
+        flushSessionToDisk();
+    }, 300);
+    return true;
+}
+
 function logVisit(title, url) {
     if (!url || url === 'about:blank' || url.startsWith('file://')) return;
 
@@ -888,6 +935,7 @@ ipcMain.handle('open-external', async (event, url) => {
 
 // IPC HANDLERS
 ipcMain.handle('flush-session-store', async (event, context) => {
+    flushSessionToDisk();
     const targetSession = getSessionForContext(context);
     try {
         if (targetSession && targetSession.cookies) {
@@ -1208,6 +1256,9 @@ ipcMain.handle('get-session-recovery-status', async () => {
 });
 
 ipcMain.handle('get-session', async () => {
+    if (pendingSessionData && typeof pendingSessionData === 'object') {
+        return pendingSessionData;
+    }
     try {
         if (fs.existsSync(sessionPath)) {
             const raw = fs.readFileSync(sessionPath, 'utf8');
@@ -1238,31 +1289,7 @@ ipcMain.handle('get-session', async () => {
 });
 
 ipcMain.handle('save-session', async (event, sessionData) => {
-    try {
-        if (!sessionData || typeof sessionData !== 'object') return false;
-        const dir = path.dirname(sessionPath);
-        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-
-        const serialized = JSON.stringify(sessionData, null, 4);
-        const tempPath = sessionPath + '.tmp';
-
-        // Write to temporary file first
-        fs.writeFileSync(tempPath, serialized, 'utf8');
-
-        // Rotate existing valid session to backup before overwriting
-        if (fs.existsSync(sessionPath)) {
-            try {
-                fs.copyFileSync(sessionPath, sessionBackupPath);
-            } catch (copyErr) {}
-        }
-
-        // Atomically rename temporary file to destination
-        fs.renameSync(tempPath, sessionPath);
-        return true;
-    } catch (err) {
-        diagnostics.logEvent('error', 'session', 'Failed to save session atomically', { error: err.message });
-        return false;
-    }
+    return scheduleSessionSave(sessionData);
 });
 
 ipcMain.handle('search-history', async (event, query) => {
@@ -1683,6 +1710,8 @@ function createWindow() {
 
     mainWindow.on('close', () => {
         markSentinelState(true);
+        flushSessionToDisk();
+        flushHistoryToDisk();
     });
 
     mainWindow.on('maximize', () => {
@@ -2050,6 +2079,7 @@ if (gotSingleInstanceLock) {
 
     app.on('before-quit', () => {
         markSentinelState(true);
+        flushSessionToDisk();
         flushHistoryToDisk();
     });
 

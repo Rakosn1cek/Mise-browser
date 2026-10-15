@@ -423,9 +423,18 @@ ipcRenderer.on('set-passthrough-mode', (_event, enabled) => {
 });
 
 // Guest input focus tracking for Insert mode indicator
+let lastInputFocusState = false;
+function setInputFocusState(focused) {
+    const nextState = !!focused;
+    if (nextState !== lastInputFocusState) {
+        lastInputFocusState = nextState;
+        try { ipcRenderer.sendToHost('guest-input-focus', nextState); } catch (err) {}
+    }
+}
+
 document.addEventListener('focusin', (e) => {
     if (isEventInEditable(e)) {
-        try { ipcRenderer.sendToHost('guest-input-focus', true); } catch (err) {}
+        setInputFocusState(true);
     }
 }, true);
 
@@ -433,16 +442,20 @@ document.addEventListener('focusout', () => {
     setTimeout(() => {
         const deepActive = getDeepActiveElement();
         if (!isEditableElement(deepActive) && !isEditableElement(document.activeElement) && !isExplicitInsert) {
-            try { ipcRenderer.sendToHost('guest-input-focus', false); } catch (err) {}
+            setInputFocusState(false);
         }
     }, 10);
 }, true);
 
 // Guest hints tracking for Hints mode indicator
 try {
+    let lastHintsState = false;
     const notifyHintsState = () => {
         const active = !!document.getElementById('mise-hint-layer');
-        try { ipcRenderer.sendToHost('guest-hints-state', active); } catch (err) {}
+        if (active !== lastHintsState) {
+            lastHintsState = active;
+            try { ipcRenderer.sendToHost('guest-hints-state', active); } catch (err) {}
+        }
     };
 
     const attachHintObserver = () => {
@@ -536,10 +549,10 @@ window.addEventListener('keydown', (e) => {
             e.preventDefault();
             e.stopPropagation();
             e.stopImmediatePropagation();
-            try { ipcRenderer.sendToHost('guest-input-focus', false); } catch (err) {}
+            setInputFocusState(false);
             return;
         }
-        try { ipcRenderer.sendToHost('guest-input-focus', false); } catch (err) {}
+        setInputFocusState(false);
         try { ipcRenderer.sendToHost('normal-mode-action', 'escape'); } catch (err) {}
         return;
     }
@@ -639,7 +652,7 @@ window.addEventListener('keydown', (e) => {
     if (key === 'i') {
         consumeEvent(e);
         isExplicitInsert = true;
-        try { ipcRenderer.sendToHost('guest-input-focus', true); } catch (err) {}
+        setInputFocusState(true);
         return;
     }
 

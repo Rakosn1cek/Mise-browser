@@ -251,12 +251,15 @@ export function handleGuestPassthroughState(isActive, wsName, tabIdx) {
     const currentIdx = activeListItem ? Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem) : 0;
 
     if (wsName === currentWS && tabIdx === currentIdx) {
-        isPassthroughModeActive = !!isActive;
-        recalculateMode();
-        if (isPassthroughModeActive) {
-            setTargetUrl('PASSTHROUGH mode enabled (Shift+Escape to return)', 2500);
-        } else {
-            setTargetUrl('NORMAL mode restored', 1500);
+        const nextState = !!isActive;
+        if (isPassthroughModeActive !== nextState) {
+            isPassthroughModeActive = nextState;
+            recalculateMode();
+            if (isPassthroughModeActive) {
+                setTargetUrl('PASSTHROUGH mode enabled (Shift+Escape to return)', 2500);
+            } else {
+                setTargetUrl('NORMAL mode restored', 1500);
+            }
         }
     }
 }
@@ -276,8 +279,11 @@ export function handleGuestInputFocus(isFocused, wsName, tabIdx) {
     const currentIdx = activeListItem ? Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem) : 0;
 
     if (wsName === currentWS && tabIdx === currentIdx) {
-        isGuestInputFocused = !!isFocused;
-        recalculateMode();
+        const nextState = !!isFocused;
+        if (isGuestInputFocused !== nextState) {
+            isGuestInputFocused = nextState;
+            recalculateMode();
+        }
     }
 }
 
@@ -292,8 +298,11 @@ export function handleGuestHintsState(isActive, wsName, tabIdx) {
     const currentIdx = activeListItem ? Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem) : 0;
 
     if (wsName === currentWS && tabIdx === currentIdx) {
-        isHintsModeActive = !!isActive;
-        recalculateMode();
+        const nextState = !!isActive;
+        if (isHintsModeActive !== nextState) {
+            isHintsModeActive = nextState;
+            recalculateMode();
+        }
     }
 }
 
