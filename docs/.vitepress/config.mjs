@@ -11,14 +11,14 @@ export default defineConfig({
     ['meta', { property: 'og:site_name', content: 'Mise Browser' }],
     ['meta', { property: 'og:title', content: 'Mise Browser' }],
     ['meta', { property: 'og:description', content: 'An efficient, keyboard-first, and container-isolated web browser engineered specifically for low-resource and fanless Linux hardware.' }],
-    ['meta', { property: 'og:image', content: 'https://rakosn1cek.github.io/Mise-browser/og-image.png' }],
+    ['meta', { property: 'og:image', content: 'https://rakosn1cek.github.io/Mise-browser/og-image.png?v=1.0.2' }],
     ['meta', { property: 'og:image:width', content: '1280' }],
     ['meta', { property: 'og:image:height', content: '640' }],
     ['meta', { property: 'og:url', content: 'https://rakosn1cek.github.io/Mise-browser/' }],
     ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
     ['meta', { name: 'twitter:title', content: 'Mise Browser' }],
     ['meta', { name: 'twitter:description', content: 'An efficient, keyboard-first, and container-isolated web browser engineered specifically for low-resource and fanless Linux hardware.' }],
-    ['meta', { name: 'twitter:image', content: 'https://rakosn1cek.github.io/Mise-browser/og-image.png' }]
+    ['meta', { name: 'twitter:image', content: 'https://rakosn1cek.github.io/Mise-browser/og-image.png?v=1.0.2' }]
   ],
   themeConfig: {
     logo: '/logo.png?v=1.0.0',

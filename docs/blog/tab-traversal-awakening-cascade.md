@@ -61,7 +61,7 @@ if (e.key === 'ArrowDown' || e.key === 'j') {
 }
 ```
 
-In Google Chrome or Mozilla Firefox, tabs either stay resident in memory or use lightweight internal discarded states where changing tabs has minimal immediate cost.
+In Google Chrome or Mozilla Firefox, tabs either stay resident in memory or use lean internal discarded states where changing tabs has minimal immediate cost.
 
 In Mise, however, `switchTabFocus(idx)` carries a heavy architectural consequence:
 
@@ -127,7 +127,7 @@ To make the state transition unmistakable, we introduced distinct visual styling
     border-color: var(--accent);
 }
 
-/* Dashed accent outline: lightweight keyboard cursor */
+/* Dashed accent outline: efficient keyboard cursor */
 #TabList li:focus:not(.selected) {
     border-color: var(--accent);
     background-color: rgba(122, 162, 247, 0.16);

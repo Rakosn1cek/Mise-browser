@@ -102,7 +102,7 @@ export async function setWebviewDarkReader(wv, enable) {
 
 If the key existed (`wv.__miseDarkKey`), the tab was considered dark. If the key was null, the tab was considered light.
 
-It seemed fast, lightweight, and elegant.
+It seemed fast, efficient, and elegant.
 
 ---
 

@@ -1,6 +1,6 @@
 # Community Scripts & Styles
 
-A curated catalogue of lightweight user styles (`*.user.css`) and user scripts (`*.user.js`) tested specifically for Mise Browser.
+A curated catalogue of efficient user styles (`*.user.css`) and user scripts (`*.user.js`) tested specifically for Mise Browser.
 
 All scripts and styles are maintained in the official **[Mise-community-scripts](https://github.com/Rakosn1cek/Mise-community-scripts)** repository.
 
