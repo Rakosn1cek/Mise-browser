@@ -1,4 +1,22 @@
-# Engineering Chronicles
+# Mise Browser Blog
+
+Welcome to the Mise Browser technical publication, featuring architectural essays on web ecology and deep-dive engineering post-mortems.
+
+---
+
+## Perspectives & Essays
+
+Commentary on browser culture, trust models, security realities, and deliberate software craftsmanship.
+
+### [The Illusion of Corporate Safety: The Double Standard Facing Indie Browsers](./the-illusion-of-corporate-safety.md)
+
+Why technical communities extend blind trust to corporate browsers harvesting telemetry while reflexively dismissing auditable indie alternatives, the paradox of third-party extensions, and engineering with discipline in the age of "vibe coding".
+
+`Perspectives` · `Open Source` · `Browser Security` · `Craftsmanship` · `Mise Browser`
+
+---
+
+## Engineering Chronicles
 
 Deep dives into the most challenging bugs, feature failures, and architectural lessons encountered during the development of Mise Browser.
 

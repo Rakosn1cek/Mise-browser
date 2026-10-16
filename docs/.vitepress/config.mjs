@@ -34,9 +34,15 @@ export default defineConfig({
     ],
     sidebar: [
       {
-        text: 'Engineering Blog',
+        text: 'Perspectives & Essays',
         items: [
-          { text: 'Chronicles Overview', link: '/blog/' },
+          { text: 'Blog Overview', link: '/blog/' },
+          { text: 'The Illusion of Corporate Safety', link: '/blog/the-illusion-of-corporate-safety' }
+        ]
+      },
+      {
+        text: 'Engineering Chronicles',
+        items: [
           { text: 'The Awakening Cascade', link: '/blog/tab-traversal-awakening-cascade' },
           { text: 'Dark Reader Dilemma', link: '/blog/dark-reader-navigation-persistence' },
           { text: 'Link Hints & Shadow DOM', link: '/blog/shadow-dom-link-hints' },
