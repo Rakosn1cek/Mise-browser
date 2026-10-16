@@ -9,6 +9,8 @@ const rootDir = path.resolve(__dirname, '..');
 const pkgPath = path.join(rootDir, 'package.json');
 const readmePath = path.join(rootDir, 'README.md');
 const whatsNewPath = path.join(rootDir, 'assets', 'whats-new.html');
+const vitepressConfigPath = path.join(rootDir, 'docs', '.vitepress', 'config.mjs');
+const docsIndexPath = path.join(rootDir, 'docs', 'index.md');
 
 if (!fs.existsSync(pkgPath)) {
     console.error('Error: package.json not found');
@@ -121,6 +123,28 @@ if (fs.existsSync(whatsNewPath)) {
     );
     fs.writeFileSync(whatsNewPath, whatsNew, 'utf8');
     console.log('✓ assets/whats-new.html titles updated');
+}
+
+// 3. Synchronise docs/.vitepress/config.mjs logo version query
+if (fs.existsSync(vitepressConfigPath)) {
+    let vpConfig = fs.readFileSync(vitepressConfigPath, 'utf8');
+    vpConfig = vpConfig.replace(
+        /logo\.png\?v=[0-9a-zA-Z.-]+/g,
+        `logo.png?v=${version}`
+    );
+    fs.writeFileSync(vitepressConfigPath, vpConfig, 'utf8');
+    console.log('✓ docs/.vitepress/config.mjs logo cache version updated');
+}
+
+// 4. Synchronise docs/index.md logo version query
+if (fs.existsSync(docsIndexPath)) {
+    let docsIndex = fs.readFileSync(docsIndexPath, 'utf8');
+    docsIndex = docsIndex.replace(
+        /logo\.png\?v=[0-9a-zA-Z.-]+/g,
+        `logo.png?v=${version}`
+    );
+    fs.writeFileSync(docsIndexPath, docsIndex, 'utf8');
+    console.log('✓ docs/index.md logo cache version updated');
 }
 
 console.log('Version synchronisation complete.');

@@ -1,6 +1,6 @@
 {
   "name": "mise-browser",
-  "version": "0.15.0",
+  "version": "1.0.0",
   "description": "Mise Browser - Electron Edition",
   "main": "main.js",
   "license": "GPL-3.0-or-later",
@@ -14,7 +14,7 @@
     "dist": "electron-builder",
     "dist:linux": "electron-builder --linux",
     "dist:dir": "electron-builder --dir",
-    "version": "node scripts/sync-version.js && git add README.md assets/"
+    "version": "node scripts/sync-version.js && git add README.md assets/ docs/"
   },
   "build": {
     "appId": "io.github.rakosn1cek.mise-browser",

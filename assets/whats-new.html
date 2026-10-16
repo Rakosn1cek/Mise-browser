@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>What's New in Mise v0.15.0</title>
+    <title>What's New in Mise v1.0.0</title>
     <link rel="icon" type="image/png" href="icons/Mise-logo48.png">
     <style>
         :root {
@@ -214,75 +214,74 @@
     <div class="container">
         <header>
             <div class="tag-row">
-                <span class="badge">Release Notes</span>
+                <span class="badge">Milestone Release</span>
                 <span class="version-date">October 2026</span>
                 <a href="https://github.com/Rakosn1cek/Mise-browser/releases" target="_blank" rel="noopener noreferrer" class="github-link">
                     Full Release on GitHub ↗
                 </a>
             </div>
-            <h1>What's New in Mise v0.15.0</h1>
-            <p class="subtitle">Custom search engine aliases & bangs, expansive quick notes with reader export, pinned tabs, and per-tab audio management.</p>
+            <h1>What's New in Mise v1.0.0</h1>
+            <p class="subtitle">The v1.0.0 Milestone: True tab hibernation, 1x2 dual-split view, container-isolated workspaces, native user scripts, and keyboard-centric web navigation.</p>
         </header>
 
         <section class="feature-card">
-            <h2 class="feature-title">Custom Search Engine Aliases & Bangs</h2>
+            <h2 class="feature-title">True Tab Hibernation & Memory Conservation</h2>
             <p class="feature-desc">
-                Execute targeted queries across search engines, developer documentation, and package repositories straight from the address bar or Command Palette.
+                Engineered specifically for fanless Linux hardware and low-resource devices, Mise achieves dramatic memory savings without losing state.
             </p>
             <ul class="feature-points">
-                <li>Built-in aliases and DuckDuckGo bang syntax: use quick prefixes like <kbd>g</kbd>, <kbd>!ddg</kbd>, <kbd>yt</kbd>, <kbd>gh</kbd>, <kbd>aur</kbd>, <kbd>pkg</kbd>, <kbd>so</kbd>, <kbd>r</kbd>, <kbd>sp</kbd>, <kbd>b</kbd>, and <kbd>k</kbd>.</li>
-                <li>Fully user-customisable search providers: define, edit, or override engine aliases directly in Preferences (<kbd>F1</kbd>) or via <kbd>config.json</kbd>.</li>
-                <li>Live address bar autocomplete with visual badge indicators highlighting the active search provider.</li>
+                <li>Inactive background tabs detach entirely from the DOM across all workspaces, terminating idle Chromium renderer processes and reducing RAM usage by 60% or more.</li>
+                <li>Live URLs, titles, and exact scroll positions are preserved and restored smoothly on demand upon tab selection.</li>
+                <li>Safe hibernation startup mode guards against sudden memory pressure and kernel OOM panics when launching large saved sessions.</li>
             </ul>
         </section>
 
         <section class="feature-card">
-            <h2 class="feature-title">Expansive Quick Notes & Reader View Export</h2>
+            <h2 class="feature-title">1x2 Dual-Split View & Isolated Container Partitions</h2>
             <p class="feature-desc">
-                A redesigned Markdown scratchpad optimised for comfortable authoring, web clipping, and knowledge management interoperability.
+                Browse side-by-side with independent navigation and maintain strict privacy boundaries between different accounts and tasks.
             </p>
             <ul class="feature-points">
-                <li>Expansive 920px responsive overlay with full canvas toggle (<kbd>f</kbd>) and real-time word and character counters.</li>
-                <li>Export clean distilled articles from Reader View directly into Quick Notes via <kbd>Ctrl + Shift + E</kbd> with YAML frontmatter.</li>
-                <li>Context menu web clipping: highlight any text on a web page, right-click, and select "Save to Notes".</li>
-                <li>Instant launcher buttons to open notes directly inside your favourite external vault editors: Obsidian, Neovim, and Logseq.</li>
+                <li>Toggle dual-split view instantly via <kbd>Ctrl + Shift + S</kbd> to inspect reference documents, compare web pages, or cross-reference research.</li>
+                <li>Swap pane positions (<kbd>Ctrl + \</kbd>) and adjust partition ratios with intuitive keyboard controls.</li>
+                <li>Each workspace runs in its own dedicated Chromium partition store (<kbd>persist:work</kbd>, <kbd>persist:personal</kbd>), preventing cookie cross-contamination across accounts.</li>
             </ul>
         </section>
 
         <section class="feature-card">
-            <h2 class="feature-title">Pinned Tabs & Accidental Closure Protection</h2>
+            <h2 class="feature-title">Mouse-Free Navigation, Search Aliases & Bangs</h2>
             <p class="feature-desc">
-                Dock essential communication channels, web applications, and reference documents permanently at the top of your tab strip.
+                Keep your hands on the home row with a complete suite of Vim-inspired navigation keys, link hints, and address bar shortcuts.
             </p>
             <ul class="feature-points">
-                <li>Toggle pinned state instantly via <kbd>Ctrl + Shift + X</kbd>, <kbd>F4</kbd>, or Normal mode <kbd>p</kbd>.</li>
-                <li>Pinned tabs remain docked at the top in a compact icon-first format across all workspace navigation.</li>
-                <li>Guard against accidental closure: pinned tabs ignore single-key <kbd>x</kbd> and mass tab closure sweeps.</li>
-                <li>Automatic hibernation exemption ensures pinned tabs remain active in memory for audio playback and real-time alerts.</li>
+                <li>Link Hints (<kbd>f</kbd>) highlight clickable targets with two-letter tags for lightning-fast, mouse-free page interaction.</li>
+                <li>Built-in search engine aliases and bangs: quick prefixes like <kbd>g</kbd>, <kbd>!ddg</kbd>, <kbd>yt</kbd>, <kbd>gh</kbd>, <kbd>aur</kbd>, <kbd>pkg</kbd>, <kbd>so</kbd>, <kbd>r</kbd>, <kbd>sp</kbd>, <kbd>b</kbd>, and <kbd>k</kbd>.</li>
+                <li>Direct tab jumping (<kbd>Ctrl + 1</kbd> to <kbd>Ctrl + 9</kbd>), floating omnibar (<kbd>Ctrl + L</kbd> / <kbd>o</kbd>), and fully customisable shortcuts via <kbd>keybinds.json</kbd>.</li>
             </ul>
         </section>
 
         <section class="feature-card">
-            <h2 class="feature-title">Per-Tab Audio Indicators & Global Mute</h2>
+            <h2 class="feature-title">Markdown Scratchpad & Reader View Export</h2>
             <p class="feature-desc">
-                Granular control over audio-producing web pages with instant visual feedback and dedicated keyboard shortcuts.
+                Integrated knowledge management tools designed for research, reading, and personal note-taking workflows.
             </p>
             <ul class="feature-points">
-                <li>Dynamic speaker indicators on active tabs displaying subtle audio pulse animations when sound is detected.</li>
-                <li>Clickable speaker badge on tabs to mute or unmute individual webviews with a single click.</li>
-                <li>Per-tab mute toggle via <kbd>Ctrl + Shift + M</kbd>, <kbd>F8</kbd>, or Normal mode <kbd>m</kbd>.</li>
-                <li>Global mute toggle via Normal mode <kbd>M</kbd> or Command Palette to silence all browser tabs instantly.</li>
+                <li>Instant Markdown quick notes (<kbd>Ctrl + N</kbd>) with full canvas toggle (<kbd>f</kbd>) and live word counters.</li>
+                <li>Export clean distilled articles from Reader View directly into Quick Notes via <kbd>Ctrl + Shift + E</kbd> complete with YAML frontmatter.</li>
+                <li>Context menu web clipping: highlight any web text, right-click, and select "Save to Notes".</li>
+                <li>Launcher buttons to open notes directly inside your favourite external vault editors: Obsidian, Neovim, and Logseq.</li>
             </ul>
         </section>
 
         <section class="feature-card">
-            <h2 class="feature-title">Atomic Configuration Writes & Upcoming Roadmap</h2>
+            <h2 class="feature-title">Pinned Tabs, Audio Controls & Crash Safety</h2>
             <p class="feature-desc">
-                Enhanced crash safety and persistent state protection on low-resource and embedded Linux systems.
+                Robust tab management, granular media controls, and atomic POSIX file safety for bulletproof daily browsing.
             </p>
             <ul class="feature-points">
-                <li>Atomic configuration writes via temporary file staging and rename swaps eliminate risk of corrupted configuration on abrupt shutdowns.</li>
-                <li>Session Auto-Recovery: slated as the immediate focus for the next release cycle to restore tabs seamlessly after unexpected crashes.</li>
+                <li>Dock essential communication channels and tools via <kbd>Ctrl + Shift + X</kbd> or Normal mode <kbd>p</kbd>, protected against accidental closure.</li>
+                <li>Per-tab audio indicators with direct mute toggles (<kbd>Ctrl + Shift + M</kbd>) and global audio mute (<kbd>M</kbd>).</li>
+                <li>Atomic configuration and session writes via temporary staging and rename swaps eliminate the risk of corrupted state during abrupt shutdowns.</li>
             </ul>
         </section>
 
