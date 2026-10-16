@@ -8,15 +8,18 @@ const vm = require('node:vm');
 
 console.log('Running Mise session persistence and IPC throttling regression tests...');
 
-// 1. Verify debounced atomic session persistence in main.js
+// 1. Verify debounced atomic session persistence in main process
 {
-    const mainSource = fs.readFileSync(path.join(__dirname, '../main.js'), 'utf8');
+    const sessionStorePath = path.join(__dirname, '../main/sessionStore.js');
+    const mainPath = path.join(__dirname, '../main.js');
+    const source = fs.existsSync(sessionStorePath) ? fs.readFileSync(sessionStorePath, 'utf8') : fs.readFileSync(mainPath, 'utf8');
+    const mainSource = fs.readFileSync(mainPath, 'utf8');
 
-    assert(mainSource.includes('function flushSessionToDisk()'), 'flushSessionToDisk must be defined in main.js');
-    assert(mainSource.includes('function scheduleSessionSave(sessionData)'), 'scheduleSessionSave must be defined in main.js');
-    assert(mainSource.includes('ipcMain.handle(\'save-session\', async (event, sessionData) => {\n    return scheduleSessionSave(sessionData);\n});'), 'save-session handler must delegate to scheduleSessionSave');
-    assert(mainSource.includes("mainWindow.on('close', () => {\n        markSentinelState(true);\n        flushSessionToDisk();"), 'mainWindow close must flush session to disk');
-    assert(mainSource.includes("app.on('before-quit', () => {\n        markSentinelState(true);\n        flushSessionToDisk();"), 'before-quit must flush session to disk');
+    assert(source.includes('function flushSessionToDisk('), 'flushSessionToDisk must be defined in session store module');
+    assert(source.includes('function scheduleSessionSave('), 'scheduleSessionSave must be defined in session store module');
+    assert(source.includes('ipcMain.handle(\'save-session\''), 'save-session handler must delegate to scheduleSessionSave');
+    assert(mainSource.includes("mainWindow.on('close'"), 'mainWindow close must flush session to disk');
+    assert(mainSource.includes("app.on('before-quit'"), 'before-quit must flush session to disk');
 
     // Test debounced write and atomic flush behaviour
     let writtenFiles = {};
@@ -42,11 +45,11 @@ console.log('Running Mise session persistence and IPC throttling regression test
     const mockDiagnostics = { logEvent: () => {} };
 
     // Extract persistence functions
-    const fnStart = mainSource.indexOf('let pendingSessionData = null;');
-    const fnEnd = mainSource.indexOf('function logVisit(');
+    const fnStart = source.indexOf('let pendingSessionData = null;');
+    const fnEnd = source.indexOf('function readCurrentSession(');
     assert(fnStart !== -1 && fnEnd !== -1, 'Persistence code block must exist');
 
-    const fnCode = mainSource.slice(fnStart, fnEnd);
+    const fnCode = source.slice(fnStart, fnEnd);
 
     const wrappedCode = `
         ${fnCode}

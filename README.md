@@ -3,6 +3,8 @@
 > An efficient, keyboard-first, and container-isolated web browser engineered specifically for low-resource and fanless Linux hardware.
 
 [![Latest Release](https://img.shields.io/github/v/release/Rakosn1cek/Mise-browser?logo=github&label=release)](https://github.com/Rakosn1cek/Mise-browser/releases/latest)
+[![Total Downloads](https://img.shields.io/github/downloads/Rakosn1cek/Mise-browser/total?color=7aa2f7&logo=github&label=downloads)](https://github.com/Rakosn1cek/Mise-browser/releases)
+[![AppImageHub](https://img.shields.io/badge/AppImageHub-Mise_Browser-blue?logo=linux)](https://appimage.github.io/Mise_Browser/)
 [![Documentation](https://img.shields.io/badge/docs-GitHub_Pages-blue.svg)](https://rakosn1cek.github.io/Mise-browser/)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 

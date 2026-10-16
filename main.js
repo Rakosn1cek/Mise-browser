@@ -42,44 +42,25 @@ const {
     updateBrowserConfig
 } = config;
 
+const sessionStore = require('./main/sessionStore');
+const {
+    sessionPath,
+    sessionBackupPath,
+    sentinelPath,
+    checkAndInitializeSentinel,
+    markSentinelState,
+    isCrashRecoveryState,
+    flushSessionToDisk,
+    scheduleSessionSave,
+    readCurrentSession,
+    registerSessionIpc
+} = sessionStore;
+
 // NATIVE CONFIG UTILITIES
 const NOTES_PATH = path.join(CONFIG_DIR, 'notes.md');
 const BOOKMARKS_PATH = path.join(CONFIG_DIR, 'bookmarks.json');
 const QUICKMARKS_PATH = path.join(CONFIG_DIR, 'quickmarks.json');
-const sessionPath = path.join(CONFIG_DIR, 'session.json');
-const sessionBackupPath = path.join(CONFIG_DIR, 'session.json.bak');
-const sentinelPath = path.join(CONFIG_DIR, 'session_sentinel.json');
 const historyPath = path.join(CONFIG_DIR, 'history.json');
-
-let isCrashRecovery = false;
-
-function checkAndInitializeSentinel() {
-    try {
-        if (!fs.existsSync(CONFIG_DIR)) fs.mkdirSync(CONFIG_DIR, { recursive: true });
-        if (fs.existsSync(sentinelPath)) {
-            const raw = fs.readFileSync(sentinelPath, 'utf8');
-            const data = JSON.parse(raw);
-            if (data && data.clean_exit === false) {
-                isCrashRecovery = true;
-            }
-        }
-    } catch (err) {}
-    markSentinelState(false);
-}
-
-function markSentinelState(cleanExit) {
-    try {
-        if (!fs.existsSync(CONFIG_DIR)) fs.mkdirSync(CONFIG_DIR, { recursive: true });
-        const data = {
-            clean_exit: !!cleanExit,
-            timestamp: Date.now(),
-            pid: process.pid
-        };
-        const tmpPath = sentinelPath + '.tmp';
-        fs.writeFileSync(tmpPath, JSON.stringify(data, null, 2), 'utf8');
-        fs.renameSync(tmpPath, sentinelPath);
-    } catch (err) {}
-}
 
 // Initialise keybinds configuration
 keybinds.initializeKeybinds(CONFIG_DIR);
@@ -244,52 +225,7 @@ function scheduleHistoryFlush() {
     }, 4000);
 }
 
-let pendingSessionData = null;
-let sessionFlushTimer = null;
 
-function flushSessionToDisk() {
-    if (sessionFlushTimer) {
-        clearTimeout(sessionFlushTimer);
-        sessionFlushTimer = null;
-    }
-    if (!pendingSessionData || typeof pendingSessionData !== 'object') return true;
-    try {
-        const dir = path.dirname(sessionPath);
-        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-
-        const serialized = JSON.stringify(pendingSessionData, null, 4);
-        const tempPath = sessionPath + '.tmp';
-
-        // Write to temporary file first
-        fs.writeFileSync(tempPath, serialized, 'utf8');
-
-        // Rotate existing valid session to backup before overwriting
-        if (fs.existsSync(sessionPath)) {
-            try {
-                fs.copyFileSync(sessionPath, sessionBackupPath);
-            } catch (copyErr) {}
-        }
-
-        // Atomically rename temporary file to destination
-        fs.renameSync(tempPath, sessionPath);
-        pendingSessionData = null;
-        return true;
-    } catch (err) {
-        diagnostics.logEvent('error', 'session', 'Failed to save session atomically', { error: err.message });
-        return false;
-    }
-}
-
-function scheduleSessionSave(sessionData) {
-    if (!sessionData || typeof sessionData !== 'object') return false;
-    pendingSessionData = sessionData;
-    if (sessionFlushTimer) return true;
-    sessionFlushTimer = setTimeout(() => {
-        sessionFlushTimer = null;
-        flushSessionToDisk();
-    }, 300);
-    return true;
-}
 
 function logVisit(title, url) {
     if (!url || url === 'about:blank' || url.startsWith('file://')) return;
@@ -834,46 +770,8 @@ ipcMain.handle('read-reader-code', async () => {
     return '';
 });
 
-ipcMain.handle('get-session-recovery-status', async () => {
-    return { wasCrash: isCrashRecovery };
-});
-
-ipcMain.handle('get-session', async () => {
-    if (pendingSessionData && typeof pendingSessionData === 'object') {
-        return pendingSessionData;
-    }
-    try {
-        if (fs.existsSync(sessionPath)) {
-            const raw = fs.readFileSync(sessionPath, 'utf8');
-            const parsed = JSON.parse(raw);
-            if (parsed && typeof parsed.workspaces === 'object' && parsed.current_workspace) {
-                return parsed;
-            }
-        }
-    } catch (err) {
-        diagnostics.logEvent('warn', 'session', 'Failed to parse primary session file, attempting recovery from backup', { error: err.message });
-    }
-
-    // Resilient fallback: attempt recovery from rolling backup journal
-    try {
-        if (fs.existsSync(sessionBackupPath)) {
-            const rawBackup = fs.readFileSync(sessionBackupPath, 'utf8');
-            const parsedBackup = JSON.parse(rawBackup);
-            if (parsedBackup && typeof parsedBackup.workspaces === 'object' && parsedBackup.current_workspace) {
-                diagnostics.logEvent('info', 'session', 'Successfully recovered session state from session.json.bak');
-                return parsedBackup;
-            }
-        }
-    } catch (backupErr) {
-        diagnostics.logEvent('error', 'session', 'Failed to recover session from backup', { error: backupErr.message });
-    }
-
-    return { current_workspace: "Workspace 1", workspaces: { "Workspace 1": ["https://duckduckgo.com"] } };
-});
-
-ipcMain.handle('save-session', async (event, sessionData) => {
-    return scheduleSessionSave(sessionData);
-});
+// Register session persistence and crash recovery IPC channels
+sessionStore.registerSessionIpc(ipcMain);
 
 ipcMain.handle('search-history', async (event, query) => {
     const history = getHistoryCache();
@@ -1255,13 +1153,7 @@ function createWindow() {
 
     // Configure active workspace partition; other partitions configure lazily on demand
     try {
-        let initialSession = null;
-        if (fs.existsSync(sessionPath)) {
-            try { initialSession = JSON.parse(fs.readFileSync(sessionPath, 'utf8')); } catch (e) {}
-        }
-        if (!initialSession && fs.existsSync(sessionBackupPath)) {
-            try { initialSession = JSON.parse(fs.readFileSync(sessionBackupPath, 'utf8')); } catch (e) {}
-        }
+        const initialSession = readCurrentSession();
         const activeWs = (initialSession && initialSession.current_workspace) || 'default';
         configureAndHardenSession(session.fromPartition(getWorkspacePartition(activeWs)));
     } catch (err) {
@@ -1650,7 +1542,7 @@ if (gotSingleInstanceLock) {
     app.whenReady().then(() => {
         checkAndInitializeSentinel();
         diagnostics.initDiagnostics(loadBrowserConfig());
-        if (isCrashRecovery) {
+        if (isCrashRecoveryState()) {
             diagnostics.logEvent('warn', 'session', 'Detected previous unclean shutdown or crash, initialising recovery mode');
         }
         createWindow();
