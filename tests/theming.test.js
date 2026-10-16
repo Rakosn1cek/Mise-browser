@@ -9,12 +9,13 @@ console.log('Running Mise theming and accent colour regression tests...');
 
 // 1. Verify DEFAULT_THEME_COLORS in main.js and modules/theme.js
 {
-    const mainSource = fs.readFileSync(path.join(__dirname, '../main.js'), 'utf8');
+    const configPath = path.join(__dirname, '../main/config.js');
+    const mainSource = fs.existsSync(configPath) ? fs.readFileSync(configPath, 'utf8') : fs.readFileSync(path.join(__dirname, '../main.js'), 'utf8');
     const themeSource = fs.readFileSync(path.join(__dirname, '../modules/theme.js'), 'utf8');
 
-    // Extract DEFAULT_THEME_COLORS from main.js
+    // Extract DEFAULT_THEME_COLORS from main process configuration
     const mainMatch = mainSource.match(/const DEFAULT_THEME_COLORS = ({[\s\S]*?\n};)/);
-    assert(mainMatch, 'DEFAULT_THEME_COLORS must be defined in main.js');
+    assert(mainMatch, 'DEFAULT_THEME_COLORS must be defined in main process configuration');
     const mainDefaults = new Function(`return ${mainMatch[1]}`)();
 
     // Extract DEFAULT_THEME_COLORS from modules/theme.js

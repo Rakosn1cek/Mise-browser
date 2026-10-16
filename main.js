@@ -30,10 +30,19 @@ const keybinds = require('./keybinds');
 const userContent = require('./userContent');
 const diagnostics = require('./diagnostics');
 const downloads = require('./main/downloads');
+const config = require('./main/config');
+const {
+    CONFIG_DIR,
+    CONFIG_PATH,
+    DEFAULT_CONFIG,
+    DEFAULT_THEME_COLORS,
+    loadBrowserConfig,
+    saveBrowserConfig,
+    writeConfigFile,
+    updateBrowserConfig
+} = config;
 
 // NATIVE CONFIG UTILITIES
-const CONFIG_DIR = path.join(app.getPath('home'), '.config', 'mise-browser');
-const CONFIG_PATH = path.join(CONFIG_DIR, 'config.json');
 const NOTES_PATH = path.join(CONFIG_DIR, 'notes.md');
 const BOOKMARKS_PATH = path.join(CONFIG_DIR, 'bookmarks.json');
 const QUICKMARKS_PATH = path.join(CONFIG_DIR, 'quickmarks.json');
@@ -72,92 +81,8 @@ function markSentinelState(cleanExit) {
     } catch (err) {}
 }
 
-const DEFAULT_THEME_COLORS = {
-    dark: {
-        accent: '#7aa2f7',
-        bg_main: '#1a1b26',
-        bg_sidebar: '#16161e',
-        text: '#c0caf5',
-        sidebar_opacity: 100,
-        overlay_opacity: 100
-    },
-    light: {
-        accent: '#6d3b09',
-        bg_main: '#e5e5e5',
-        bg_sidebar: '#d4d4d4',
-        text: '#1a1a1a',
-        sidebar_opacity: 100,
-        overlay_opacity: 100
-    }
-};
-
-const DEFAULT_CONFIG = {
-    disable_gpu: false,
-    background_throttling: true,
-    process_limit: 4,
-    email_handler: 'system',
-    search_engine: 'https://duckduckgo.com/?q=%s',
-    spellchecker_language: 'en-GB',
-    theme: 'dark',
-    webview_theme: 'dark',
-    trusted_domains: ['accounts.google.com'],
-    tab_sleep_timeout_minutes: 15,
-    sidebar_auto_collapse: true,
-    show_status_bar: true,
-    show_clock: true,
-    clock_format: 'datetime',
-    theme_colors: { ...DEFAULT_THEME_COLORS },
-    enable_diagnostics: false,
-    show_window_controls: false,
-    external_notes_command: '',
-    custom_search_aliases: {},
-    last_seen_version: null
-};
-
-// Writes to a temporary file and renames it over config.json. A plain write truncates
-// the file first, so a concurrent loadBrowserConfig could read it empty, fall back to
-// DEFAULT_CONFIG and have the next save persist those defaults over the user's settings.
-// Synchronous on purpose: saves never interleave, so no update can be lost either.
-function writeConfigFile(cfg) {
-    const tmpPath = `${CONFIG_PATH}.${process.pid}.tmp`;
-    fs.writeFileSync(tmpPath, JSON.stringify(cfg, null, 4), 'utf-8');
-    fs.renameSync(tmpPath, CONFIG_PATH);
-}
-
-function loadBrowserConfig() {
-    try {
-        if (!fs.existsSync(CONFIG_DIR)) fs.mkdirSync(CONFIG_DIR, { recursive: true });
-        if (!fs.existsSync(CONFIG_PATH)) {
-            writeConfigFile(DEFAULT_CONFIG);
-            return { ...DEFAULT_CONFIG };
-        }
-        const parsed = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf-8'));
-        return {
-            ...DEFAULT_CONFIG,
-            ...parsed,
-            spellchecker_language: parsed.spellchecker_language || 'en-GB',
-            webview_theme: parsed.webview_theme || 'dark',
-            theme_colors: {
-                dark: { ...DEFAULT_THEME_COLORS.dark, ...(parsed.theme_colors?.dark || {}) },
-                light: { ...DEFAULT_THEME_COLORS.light, ...(parsed.theme_colors?.light || {}) }
-            }
-        };
-    } catch (e) {
-        return { ...DEFAULT_CONFIG };
-    }
-}
-
 // Initialise keybinds configuration
 keybinds.initializeKeybinds(CONFIG_DIR);
-
-function saveBrowserConfig(cfg) {
-    try {
-        const merged = { ...loadBrowserConfig(), ...cfg };
-        writeConfigFile(merged);
-        app.relaunch();
-        app.exit(0);
-    } catch (e) {}
-}
 
 function initializeEngineSwitches() {
     const cfg = loadBrowserConfig();
@@ -740,13 +665,11 @@ ipcMain.on('set-native-theme', (event, mode) => {
     nativeTheme.themeSource = cfg.webview_theme || 'dark';
 });
 
-ipcMain.handle('get-browser-settings', async () => {
-    return loadBrowserConfig();
-});
-
-ipcMain.handle('save-browser-settings', async (event, newCfg) => {
-    saveBrowserConfig(newCfg);
-    return true;
+// Register configuration and preference IPC handlers
+config.registerConfigIpc(ipcMain, {
+    onTrustedDomainsChange: security.setTrustedDomains,
+    onSpellcheckerChange: applySpellcheckerToAllSessions,
+    onDiagnosticsChange: diagnostics.setDiagnosticsEnabled
 });
 
 ipcMain.on('renderer-ready', () => {
@@ -1092,26 +1015,7 @@ ipcMain.on('execute-terminal-command', (event, commandStr) => {
     }
 });
 
-ipcMain.handle('update-browser-settings', async (event, newCfg) => {
-    try {
-        if (!fs.existsSync(CONFIG_DIR)) fs.mkdirSync(CONFIG_DIR, { recursive: true });
-        const existing = loadBrowserConfig();
-        const merged = { ...existing, ...newCfg };
-        writeConfigFile(merged);
-        if (Array.isArray(merged.trusted_domains)) {
-            security.setTrustedDomains(merged.trusted_domains);
-        }
-        if (merged.spellchecker_language !== undefined) {
-            applySpellcheckerToAllSessions(merged.spellchecker_language);
-        }
-        if (merged.enable_diagnostics !== undefined) {
-            diagnostics.setDiagnosticsEnabled(merged.enable_diagnostics);
-        }
-        return true;
-    } catch (e) {
-        return false;
-    }
-});
+
 
 ipcMain.handle('get-system-diagnostics', async (event, sessionStats) => {
     return diagnostics.gatherSystemDiagnostics(sessionStats);
