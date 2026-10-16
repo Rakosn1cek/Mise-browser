@@ -200,7 +200,7 @@ function initializeEngineSwitches() {
     }
     
     // Compositor texture boundary allocation
-    app.commandLine.appendSwitch('force-gpu-mem-available-mb', '1024');
+    app.commandLine.appendSwitch('force-gpu-mem-available-mb', '512');
 
     app.commandLine.appendSwitch('renderer-process-limit', String(cfg.process_limit || 4));
     app.commandLine.appendSwitch('disable-smooth-scrolling');
