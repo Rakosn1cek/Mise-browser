@@ -1768,8 +1768,10 @@ webview {
     transition: background 0.15s;
 }
 
-.history-item:hover {
+.history-item:hover,
+.history-item.selected {
     background-color: var(--selected);
+    border-left: 3px solid var(--accent);
 }
 
 .history-item-title {

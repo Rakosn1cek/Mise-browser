@@ -75,7 +75,8 @@ import {
 
 import { 
     toggleHistoryOverlay, 
-    filterHistoryItems 
+    filterHistoryItems,
+    setupHistoryOverlayListeners
 } from './modules/overlays/history.js';
 
 import { 
@@ -445,6 +446,7 @@ async function initializeBrowser() {
     setupNotesListeners();
     setupAddressBarAutocomplete();
     setupBookmarkOverlayListeners();
+    setupHistoryOverlayListeners();
     setupDiagnosticsListeners();
     initSearchEnginePreference();
     initDownloadShelf();
@@ -994,28 +996,6 @@ function setupEventListeners() {
         }
     });
 
-    const historySearchInput = document.getElementById('HistorySearchInput');
-    historySearchInput.addEventListener('input', (e) => {
-        filterHistoryItems(e.target.value.trim());
-    });
-
-    document.getElementById('CloseHistoryBtn').addEventListener('click', toggleHistoryOverlay);
-
-    document.getElementById('PurgeHistoryBtn').addEventListener('click', async () => {
-        const confirmPurge = confirm("Are you sure you want to permanently delete all history?");
-        if (confirmPurge) {
-            const success = await window.miseAPI.purgeHistory();
-            if (success) {
-                filterHistoryItems('');
-            }
-        }
-    });
-
-    document.getElementById('HistoryOverlay').addEventListener('click', (e) => {
-        if (e.target.id === 'HistoryOverlay') {
-            toggleHistoryOverlay();
-        }
-    });
 
     loadBookmarksAndQuickmarks();
 }

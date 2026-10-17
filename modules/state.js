@@ -37,6 +37,7 @@ export const state = {
     paletteMatches: [],
     paletteSelectionIdx: 0,
     historyResults: [],
+    historySelectionIdx: 0,
     addressSuggestions: [],
     addressSelectionIdx: -1,
     customSearchAliases: {},
