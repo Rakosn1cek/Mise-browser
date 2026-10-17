@@ -27,3 +27,7 @@ docs/.vitepress/cache/
 
 # Build and distribution outputs
 dist/
+
+# Local planning and roadmaps
+ROADMAP.md
+
