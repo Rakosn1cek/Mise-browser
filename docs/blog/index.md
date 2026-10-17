@@ -22,6 +22,14 @@ Deep dives into the most challenging bugs, feature failures, and architectural l
 
 Each chronicle follows the development anatomy: **Problem** → **Attempted Solution** → **The Bug / Fail** → **The Architectural Fix**.
 
+### [From 2,000 Lines of Spaghetti to Clean Orchestration: Taming the Electron Main Process](./taming-the-electron-main-process.md)
+
+How rapid prototyping turned `main.js` into a 2,100-line monolith, why shared mutable scope threatens browser stability, and how a disciplined six-phase modularisation protocol reduced technical debt without breaking tab hibernation or session state.
+
+`Architecture` · `Refactoring` · `Process Isolation` · `Testing` · `Electron` · `Mise Browser`
+
+---
+
 ### [The Awakening Cascade: How Naive Tab Traversal Defeated Tab Hibernation](./tab-traversal-awakening-cascade.md)
 
 How linear keyboard navigation secretly allocated hundreds of megabytes of RAM, why scrolling past sleeping tabs broke process isolation, and how decoupled roving cursors and direct random-access tab jumping restored true memory efficiency.

@@ -43,6 +43,7 @@ export default defineConfig({
       {
         text: 'Engineering Chronicles',
         items: [
+          { text: 'Taming the Main Process', link: '/blog/taming-the-electron-main-process' },
           { text: 'The Awakening Cascade', link: '/blog/tab-traversal-awakening-cascade' },
           { text: 'Dark Reader Dilemma', link: '/blog/dark-reader-navigation-persistence' },
           { text: 'Link Hints & Shadow DOM', link: '/blog/shadow-dom-link-hints' },
