@@ -1,7 +1,6 @@
 const { app, BrowserWindow, ipcMain, session, Menu, MenuItem, nativeTheme, Notification, clipboard, shell, webContents, dialog, net } = require('electron');
 const path = require('path');
 const fs = require('fs');
-const https = require('https');
 const { exec, spawn, execSync, spawnSync } = require('child_process');
 const v8 = require('v8');
 const vm = require('vm');
@@ -61,6 +60,8 @@ const {
     flushHistoryToDisk,
     logVisit
 } = storage;
+
+const updater = require('./main/updater');
 
 // Initialise keybinds configuration
 keybinds.initializeKeybinds(CONFIG_DIR);
@@ -278,103 +279,8 @@ downloads.registerDownloadIpc(ipcMain, {
     sendNotification: sendSystemNotification
 });
 
-ipcMain.handle('get-app-version', () => {
-    return {
-        version: app.getVersion(),
-        electron: process.versions.electron,
-        chrome: process.versions.chrome,
-        node: process.versions.node
-    };
-});
-
-function isNewerVersion(latest, current) {
-    const cleanL = String(latest || '').replace(/^v/i, '').trim();
-    const cleanC = String(current || '').replace(/^v/i, '').trim();
-    const partsL = cleanL.split('.').map(n => parseInt(n, 10) || 0);
-    const partsC = cleanC.split('.').map(n => parseInt(n, 10) || 0);
-    const maxLen = Math.max(partsL.length, partsC.length);
-    for (let i = 0; i < maxLen; i++) {
-        const l = partsL[i] || 0;
-        const c = partsC[i] || 0;
-        if (l > c) return true;
-        if (l < c) return false;
-    }
-    return false;
-}
-
-function fetchLatestRelease() {
-    return new Promise((resolve, reject) => {
-        const options = {
-            hostname: 'api.github.com',
-            path: '/repos/Rakosn1cek/Mise-browser/releases/latest',
-            headers: {
-                'User-Agent': `Mise-Browser/${app.getVersion()}`,
-                'Accept': 'application/vnd.github.v3+json'
-            },
-            timeout: 10000
-        };
-
-        const req = https.get(options, (res) => {
-            if (res.statusCode === 404) {
-                return resolve(null);
-            }
-            if (res.statusCode !== 200) {
-                return reject(new Error(`GitHub API returned status ${res.statusCode}`));
-            }
-            let data = '';
-            res.on('data', chunk => { data += chunk; });
-            res.on('end', () => {
-                try {
-                    const parsed = JSON.parse(data);
-                    resolve(parsed);
-                } catch (err) {
-                    reject(err);
-                }
-            });
-        });
-
-        req.on('error', reject);
-        req.on('timeout', () => {
-            req.destroy();
-            reject(new Error('Request timed out'));
-        });
-    });
-}
-
-async function checkAppUpdates(manual = false) {
-    try {
-        const release = await fetchLatestRelease();
-        if (!release || !release.tag_name) {
-            return { updateAvailable: false, currentVersion: app.getVersion(), checkedAt: Date.now(), manual };
-        }
-        const currentVersion = app.getVersion();
-        const latestTag = release.tag_name;
-        const updateAvailable = isNewerVersion(latestTag, currentVersion);
-        return {
-            updateAvailable,
-            currentVersion,
-            latestVersion: latestTag,
-            releaseName: release.name || latestTag,
-            releaseUrl: release.html_url || 'https://github.com/Rakosn1cek/Mise-browser/releases',
-            publishedAt: release.published_at,
-            releaseNotes: release.body || '',
-            checkedAt: Date.now(),
-            manual
-        };
-    } catch (err) {
-        return {
-            error: err.message,
-            updateAvailable: false,
-            currentVersion: app.getVersion(),
-            checkedAt: Date.now(),
-            manual
-        };
-    }
-}
-
-ipcMain.handle('check-for-updates', async (event, manual = false) => {
-    return checkAppUpdates(manual);
-});
+// Register version information and update check IPC channels
+updater.registerUpdaterIpc(ipcMain, { app });
 
 ipcMain.handle('open-external', async (event, url) => {
     if (!url || typeof url !== 'string') return false;
