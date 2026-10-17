@@ -56,11 +56,11 @@ const {
     registerSessionIpc
 } = sessionStore;
 
-// NATIVE CONFIG UTILITIES
-const NOTES_PATH = path.join(CONFIG_DIR, 'notes.md');
-const BOOKMARKS_PATH = path.join(CONFIG_DIR, 'bookmarks.json');
-const QUICKMARKS_PATH = path.join(CONFIG_DIR, 'quickmarks.json');
-const historyPath = path.join(CONFIG_DIR, 'history.json');
+const storage = require('./main/storage');
+const {
+    flushHistoryToDisk,
+    logVisit
+} = storage;
 
 // Initialise keybinds configuration
 keybinds.initializeKeybinds(CONFIG_DIR);
@@ -132,7 +132,6 @@ initializeEngineSwitches();
 
 let mainWindow;
 let privateBrowsingEnabled = false;
-const MAX_HISTORY_ITEMS = 500;
 
 // URL queue and readiness tracking for external link dispatch
 let isRendererReady = false;
@@ -185,66 +184,6 @@ function flushPendingUrls() {
 // Queue initial command line URLs received on cold start
 extractUrlsFromArgs(process.argv).forEach(url => pendingUrls.push(url));
 
-
-let inMemoryHistory = null;
-let historyFlushTimer = null;
-
-function getHistoryCache() {
-    if (inMemoryHistory === null) {
-        try {
-            if (fs.existsSync(historyPath)) {
-                inMemoryHistory = JSON.parse(fs.readFileSync(historyPath, 'utf8'));
-            } else {
-                inMemoryHistory = [];
-            }
-        } catch (err) {
-            inMemoryHistory = [];
-        }
-    }
-    return inMemoryHistory;
-}
-
-function flushHistoryToDisk() {
-    if (historyFlushTimer) {
-        clearTimeout(historyFlushTimer);
-        historyFlushTimer = null;
-    }
-    if (inMemoryHistory === null) return;
-    try {
-        const dir = path.dirname(historyPath);
-        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-        fs.writeFileSync(historyPath, JSON.stringify(inMemoryHistory, null, 4), 'utf8');
-    } catch (err) {}
-}
-
-function scheduleHistoryFlush() {
-    if (historyFlushTimer) return;
-    historyFlushTimer = setTimeout(() => {
-        historyFlushTimer = null;
-        flushHistoryToDisk();
-    }, 4000);
-}
-
-
-
-function logVisit(title, url) {
-    if (!url || url === 'about:blank' || url.startsWith('file://')) return;
-
-    const history = getHistoryCache();
-    if (history.length > 0 && history[0].url === url) return;
-
-    const newEntry = {
-        title: title || url,
-        url: url,
-        timestamp: Date.now()
-    };
-
-    history.unshift(newEntry);
-    if (history.length > MAX_HISTORY_ITEMS) {
-        history.length = MAX_HISTORY_ITEMS;
-    }
-    scheduleHistoryFlush();
-}
 
 function sendSystemNotification(title, body) {
     if (!Notification.isSupported()) return;
@@ -504,89 +443,6 @@ ipcMain.handle('get-workspace-partition', (event, name) => {
     return getWorkspacePartition(name);
 });
 
-ipcMain.handle('read-notes', async () => {
-    try {
-        if (!fs.existsSync(CONFIG_DIR)) fs.mkdirSync(CONFIG_DIR, { recursive: true });
-        if (!fs.existsSync(NOTES_PATH)) fs.writeFileSync(NOTES_PATH, '', 'utf-8');
-        return fs.readFileSync(NOTES_PATH, 'utf-8');
-    } catch (err) {
-        return '';
-    }
-});
-
-ipcMain.handle('save-notes', async (event, content) => {
-    try {
-        if (!fs.existsSync(CONFIG_DIR)) fs.mkdirSync(CONFIG_DIR, { recursive: true });
-        fs.writeFileSync(NOTES_PATH, content, 'utf-8');
-        return true;
-    } catch (err) {
-        return false;
-    }
-});
-
-ipcMain.handle('open-notes-in-external-app', async (event, customPath) => {
-    try {
-        const cfg = loadBrowserConfig();
-        const targetPath = customPath || NOTES_PATH;
-        if (!fs.existsSync(targetPath)) {
-            if (!fs.existsSync(CONFIG_DIR)) fs.mkdirSync(CONFIG_DIR, { recursive: true });
-            fs.writeFileSync(targetPath, '', 'utf-8');
-        }
-        const cmd = (cfg.external_notes_command || '').trim();
-        if (cmd) {
-            const { spawn } = require('child_process');
-            const tokens = cmd.split(/\s+/);
-            const proc = spawn(tokens[0], [...tokens.slice(1), targetPath], {
-                detached: true,
-                stdio: 'ignore'
-            });
-            proc.unref();
-            return { success: true, app: tokens[0] };
-        } else {
-            const err = await shell.openPath(targetPath);
-            return { success: !err, error: err || null, app: 'system-default' };
-        }
-    } catch (err) {
-        return { success: false, error: err.message };
-    }
-});
-
-ipcMain.handle('export-article-to-external', async (event, { title, markdown }) => {
-    try {
-        const cfg = loadBrowserConfig();
-        const clippingsDir = path.join(CONFIG_DIR, 'clippings');
-        if (!fs.existsSync(clippingsDir)) fs.mkdirSync(clippingsDir, { recursive: true });
-
-        const safeTitle = (title || 'article')
-            .replace(/[^a-zA-Z0-9_\-\u00C0-\u017F ]/g, '')
-            .trim()
-            .replace(/\s+/g, '_')
-            .slice(0, 60) || 'article';
-        const timestamp = Date.now();
-        const filename = `${safeTitle}_${timestamp}.md`;
-        const targetPath = path.join(clippingsDir, filename);
-
-        fs.writeFileSync(targetPath, markdown || '', 'utf-8');
-
-        const cmd = (cfg.external_notes_command || '').trim();
-        if (cmd) {
-            const { spawn } = require('child_process');
-            const tokens = cmd.split(/\s+/);
-            const proc = spawn(tokens[0], [...tokens.slice(1), targetPath], {
-                detached: true,
-                stdio: 'ignore'
-            });
-            proc.unref();
-            return { success: true, path: targetPath, app: tokens[0] };
-        } else {
-            const err = await shell.openPath(targetPath);
-            return { success: !err, error: err || null, path: targetPath, app: 'system-default' };
-        }
-    } catch (err) {
-        return { success: false, error: err.message };
-    }
-});
-
 ipcMain.on('toggle-active-devtools', () => {
     if (!mainWindow) return;
     mainWindow.webContents.send('master-shortcut', 'toggle-devtools');
@@ -773,32 +629,8 @@ ipcMain.handle('read-reader-code', async () => {
 // Register session persistence and crash recovery IPC channels
 sessionStore.registerSessionIpc(ipcMain);
 
-ipcMain.handle('search-history', async (event, query) => {
-    const history = getHistoryCache();
-    if (!query || !query.trim()) return history;
-
-    const lowerQuery = query.toLowerCase();
-    return history.filter(item => 
-        item.title.toLowerCase().includes(lowerQuery) || 
-        item.url.toLowerCase().includes(lowerQuery)
-    );
-});
-
-ipcMain.handle('purge-history', async () => {
-    try {
-        inMemoryHistory = [];
-        if (historyFlushTimer) {
-            clearTimeout(historyFlushTimer);
-            historyFlushTimer = null;
-        }
-        if (fs.existsSync(historyPath)) {
-            fs.writeFileSync(historyPath, JSON.stringify([], null, 4), 'utf8');
-        }
-        return true;
-    } catch (err) {
-        return false;
-    }
-});
+// Register storage and local data IPC channels
+storage.registerStorageIpc(ipcMain);
 
 ipcMain.on('toggle-menu-bar', () => {
     openSettingsMenu();
@@ -845,34 +677,6 @@ ipcMain.handle('get-action-metadata', async () => {
 
 ipcMain.handle('reload-keybinds', async () => {
     return keybinds.initializeKeybinds(CONFIG_DIR);
-});
-
-ipcMain.handle('read-bookmarks', async () => {
-    try {
-        if (!fs.existsSync(BOOKMARKS_PATH)) fs.writeFileSync(BOOKMARKS_PATH, JSON.stringify([]), 'utf-8');
-        return JSON.parse(fs.readFileSync(BOOKMARKS_PATH, 'utf-8'));
-    } catch (err) { return []; }
-});
-
-ipcMain.handle('save-bookmarks', async (event, data) => {
-    try {
-        fs.writeFileSync(BOOKMARKS_PATH, JSON.stringify(data, null, 4), 'utf-8');
-        return true;
-    } catch (err) { return false; }
-});
-
-ipcMain.handle('read-quickmarks', async () => {
-    try {
-        if (!fs.existsSync(QUICKMARKS_PATH)) fs.writeFileSync(QUICKMARKS_PATH, JSON.stringify({}), 'utf-8');
-        return JSON.parse(fs.readFileSync(QUICKMARKS_PATH, 'utf-8'));
-    } catch (err) { return {}; }
-});
-
-ipcMain.handle('save-quickmarks', async (event, data) => {
-    try {
-        fs.writeFileSync(QUICKMARKS_PATH, JSON.stringify(data, null, 4), 'utf-8');
-        return true;
-    } catch (err) { return false; }
 });
 
 ipcMain.on('execute-terminal-command', (event, commandStr) => {
