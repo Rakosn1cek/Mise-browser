@@ -88,13 +88,22 @@ export function getPdfViewerUrl(targetUrl) {
 
 export function extractOriginalUrl(url) {
     if (!url || typeof url !== 'string') return url || '';
-    if (url.includes('/assets/pdfjs/viewer.html') && url.includes('file=')) {
-        try {
-            const parsed = new URL(url);
-            const fileParam = parsed.searchParams.get('file');
-            if (fileParam) return fileParam;
-        } catch (e) {}
-    }
+    try {
+        const parsed = new URL(url);
+        if (parsed.protocol === 'file:') {
+            let localViewerPath = '';
+            if (typeof window !== 'undefined' && typeof window.miseAPI?.getPdfViewerPath === 'function') {
+                const raw = window.miseAPI.getPdfViewerPath();
+                if (typeof raw === 'string') {
+                    localViewerPath = raw.startsWith('file:') ? new URL(raw).pathname : raw;
+                }
+            }
+            if (localViewerPath && parsed.pathname === localViewerPath) {
+                const fileParam = parsed.searchParams.get('file');
+                if (fileParam) return fileParam;
+            }
+        }
+    } catch (e) {}
     return url;
 }
 

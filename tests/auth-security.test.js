@@ -172,4 +172,49 @@ console.log('Running Mise authentication & network security tests...');
     console.log('✓ onHeadersReceived PDF viewer redirection verified');
 }
 
+// 6. Test extractOriginalUrl spoofing protection for local PDF viewer
+{
+    const { extractOriginalUrl } = require('../modules/utils.js');
+    const localViewerPath = 'file://' + path.join(__dirname, '..', 'assets', 'pdfjs', 'viewer.html');
+
+    const origWindow = global.window;
+    global.window = {
+        miseAPI: {
+            getPdfViewerPath: () => localViewerPath
+        }
+    };
+
+    try {
+        // Test real local viewer URL unwrapped
+        const realTarget = 'https://example.com/document.pdf';
+        const realLocalViewerUrl = `${localViewerPath}?file=${encodeURIComponent(realTarget)}`;
+        assert.strictEqual(
+            extractOriginalUrl(realLocalViewerUrl),
+            realTarget,
+            'Real local PDF viewer URL must be unwrapped'
+        );
+
+        // Test evil.com URL not unwrapped
+        const evilUrl = 'https://evil.com/assets/pdfjs/viewer.html?file=https://accounts.google.com/';
+        assert.strictEqual(
+            extractOriginalUrl(evilUrl),
+            evilUrl,
+            'Evil.com PDF viewer URL must not be unwrapped'
+        );
+
+        // Test malformed URL
+        const malformedUrl = 'http://:not-a-valid-url';
+        assert.strictEqual(
+            extractOriginalUrl(malformedUrl),
+            malformedUrl,
+            'Malformed URL must not throw and should return unchanged'
+        );
+
+        console.log('✓ extractOriginalUrl local viewer validation and spoofing guard verified');
+    } finally {
+        global.window = origWindow;
+    }
+}
+
 console.log('\nAll authentication & network security tests passed successfully!\n');
+
