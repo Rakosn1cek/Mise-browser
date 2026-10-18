@@ -105,86 +105,77 @@ function generateScriptToken(scriptId, pageHostname = '', connects = [], grants 
     return token;
 }
 
+const blockedIPList = new nodeNet.BlockList();
+// IPv4 restricted subnets
+blockedIPList.addSubnet('0.0.0.0', 8, 'ipv4');
+blockedIPList.addSubnet('10.0.0.0', 8, 'ipv4');
+blockedIPList.addSubnet('100.64.0.0', 10, 'ipv4');
+blockedIPList.addSubnet('127.0.0.0', 8, 'ipv4');
+blockedIPList.addSubnet('169.254.0.0', 16, 'ipv4');
+blockedIPList.addSubnet('172.16.0.0', 12, 'ipv4');
+blockedIPList.addSubnet('192.168.0.0', 16, 'ipv4');
+
+// IPv6 restricted subnets
+blockedIPList.addSubnet('::1', 128, 'ipv6');
+blockedIPList.addSubnet('::', 128, 'ipv6');
+blockedIPList.addSubnet('fc00::', 7, 'ipv6');
+blockedIPList.addSubnet('fe80::', 10, 'ipv6');
+blockedIPList.addSubnet('64:ff9b::', 96, 'ipv6');
+blockedIPList.addSubnet('2002::', 16, 'ipv6');
+
+function normaliseIPAddress(ip) {
+    if (!ip || typeof ip !== 'string') return '';
+    let clean = ip.trim();
+    if (clean.includes('://')) {
+        try {
+            clean = new URL(clean).hostname;
+        } catch {
+            return '';
+        }
+    }
+    clean = clean.replace(/^\[|\]$/g, '').trim().toLowerCase();
+
+    // Normalise decimal or integer IP representation
+    if (/^\d+$/.test(clean)) {
+        try {
+            clean = new URL(`http://${clean}`).hostname;
+        } catch {
+            return '';
+        }
+    }
+
+    // Normalise IPv4-mapped dotted format (e.g. ::ffff:127.0.0.1)
+    if (clean.startsWith('::ffff:') && nodeNet.isIPv4(clean.slice(7))) {
+        return clean.slice(7);
+    }
+
+    // Normalise IPv4-compatible dotted format (e.g. ::127.0.0.1)
+    if (clean.startsWith('::') && !clean.startsWith('::ffff:') && nodeNet.isIPv4(clean.slice(2))) {
+        return clean.slice(2);
+    }
+
+    // Normalise IPv4-mapped or IPv4-compatible hex format (e.g. ::ffff:7f00:1 or ::7f00:1)
+    const hexMatch = clean.match(/^(?:::ffff:|::)([0-9a-f]{1,4}):([0-9a-f]{1,4})$/);
+    if (hexMatch) {
+        const high = parseInt(hexMatch[1], 16);
+        const low = parseInt(hexMatch[2], 16);
+        return `${(high >> 8) & 255}.${high & 255}.${(low >> 8) & 255}.${low & 255}`;
+    }
+
+    return clean;
+}
+
 function isPrivateOrBlockedIP(ip) {
     if (!ip || typeof ip !== 'string') return true;
-    const cleanIp = ip.replace(/^\[|\]$/g, '').trim().toLowerCase();
-
-    // Check IPv4-mapped IPv6 addresses (e.g. ::ffff:127.0.0.1)
-    if (cleanIp.startsWith('::ffff:')) {
-        const remaining = cleanIp.slice(7);
-        if (nodeNet.isIPv4(remaining)) {
-            return isPrivateOrBlockedIP(remaining);
-        }
-    }
+    const cleanIp = normaliseIPAddress(ip);
+    if (!cleanIp) return true;
 
     if (nodeNet.isIPv4(cleanIp)) {
-        const parts = cleanIp.split('.').map(p => parseInt(p, 10));
-        if (parts.length !== 4 || parts.some(p => isNaN(p) || p < 0 || p > 255)) {
-            return true;
-        }
-        const [a, b, c, d] = parts;
-
-        // 0.0.0.0/8 (Current network / default route)
-        if (a === 0) return true;
-        // 10.0.0.0/8 (Private Class A)
-        if (a === 10) return true;
-        // 127.0.0.0/8 (Loopback)
-        if (a === 127) return true;
-        // 100.64.0.0/10 (Shared address space / Carrier-grade NAT)
-        if (a === 100 && (b >= 64 && b <= 127)) return true;
-        // 169.254.0.0/16 (Link-local / Cloud metadata)
-        if (a === 169 && b === 254) return true;
-        // 172.16.0.0/12 (Private Class B)
-        if (a === 172 && (b >= 16 && b <= 31)) return true;
-        // 192.0.0.0/24 (IETF assignments)
-        if (a === 192 && b === 0 && c === 0) return true;
-        // 192.0.2.0/24 (TEST-NET-1)
-        if (a === 192 && b === 0 && c === 2) return true;
-        // 192.168.0.0/16 (Private Class C)
-        if (a === 192 && b === 168) return true;
-        // 198.18.0.0/15 (Network benchmark testing)
-        if (a === 198 && (b === 18 || b === 19)) return true;
-        // 198.51.100.0/24 (TEST-NET-2)
-        if (a === 198 && b === 51 && c === 100) return true;
-        // 203.0.113.0/24 (TEST-NET-3)
-        if (a === 203 && b === 0 && c === 113) return true;
-        // 224.0.0.0/4 (Multicast)
-        if (a >= 224 && a <= 239) return true;
-        // 240.0.0.0/4 (Reserved / Broadcast)
-        if (a >= 240) return true;
-
-        return false;
+        return blockedIPList.check(cleanIp, 'ipv4');
     }
-
     if (nodeNet.isIPv6(cleanIp)) {
-        // Loopback and unspecified
-        if (cleanIp === '::1' || cleanIp === '::' || cleanIp === '0:0:0:0:0:0:0:1' || cleanIp === '0:0:0:0:0:0:0:0') {
-            return true;
-        }
-        // Unique Local Address (ULA: fc00::/7)
-        if (cleanIp.startsWith('fc') || cleanIp.startsWith('fd')) {
-            return true;
-        }
-        // Link-local (fe80::/10)
-        if (/^fe[89ab][0-9a-f]/i.test(cleanIp) || cleanIp.startsWith('fe80:')) {
-            return true;
-        }
-        // Multicast (ff00::/8)
-        if (cleanIp.startsWith('ff')) {
-            return true;
-        }
-        // Documentation prefix (2001:db8::/32)
-        if (cleanIp.startsWith('2001:db8:') || cleanIp === '2001:db8::') {
-            return true;
-        }
-        // Discard prefix (100::/64)
-        if (cleanIp.startsWith('100::')) {
-            return true;
-        }
-
-        return false;
+        return blockedIPList.check(cleanIp, 'ipv6');
     }
-
     return true;
 }
 
@@ -340,7 +331,15 @@ function hasStorageGrant(tokenData) {
 }
 
 function createPinnedDispatcher(targetValidation) {
-    if (UndiciAgent && targetValidation && targetValidation.pinnedIp && !nodeNet.isIP(targetValidation.hostname)) {
+    if (targetValidation && targetValidation.pinnedIp && !nodeNet.isIP(targetValidation.hostname)) {
+        if (!UndiciAgent) {
+            try {
+                UndiciAgent = require('undici').Agent;
+            } catch {}
+        }
+        if (!UndiciAgent) {
+            throw new Error('DNS pinning failed: undici is not available');
+        }
         return new UndiciAgent({
             connect: {
                 lookup: (hostname, opts, cb) => {
@@ -1073,5 +1072,6 @@ module.exports = {
     executeGmXmlHttpRequest,
     isPrivateOrBlockedIP,
     isHostAllowed,
-    validateRequestDestination
+    validateRequestDestination,
+    createPinnedDispatcher
 };
