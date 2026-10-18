@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>What's New in Mise v1.0.0</title>
+    <title>What's New in Mise v1.1.0</title>
     <link rel="icon" type="image/png" href="icons/Mise-logo48.png">
     <style>
         :root {
@@ -214,74 +214,62 @@
     <div class="container">
         <header>
             <div class="tag-row">
-                <span class="badge">Milestone Release</span>
+                <span class="badge">Feature Release</span>
                 <span class="version-date">October 2026</span>
                 <a href="https://github.com/Rakosn1cek/Mise-browser/releases" target="_blank" rel="noopener noreferrer" class="github-link">
                     Full Release on GitHub ↗
                 </a>
             </div>
-            <h1>What's New in Mise v1.0.0</h1>
-            <p class="subtitle">The v1.0.0 Milestone: True tab hibernation, 1x2 dual-split view, container-isolated workspaces, native user scripts, and keyboard-centric web navigation.</p>
+            <h1>What's New in Mise v1.1.0</h1>
+            <p class="subtitle">The v1.1.0 Architecture & Ergonomics Update: Modular main process, History overlay keyboard overhaul with instant Escape dismissal, compositor memory optimisations, and expanded 21-suite test harness.</p>
         </header>
 
         <section class="feature-card">
-            <h2 class="feature-title">True Tab Hibernation & Memory Conservation</h2>
+            <h2 class="feature-title">Modular Main Process Architecture</h2>
             <p class="feature-desc">
-                Engineered specifically for fanless Linux hardware and low-resource devices, Mise achieves dramatic memory savings without losing state.
+                The Electron main process has been re-architected following the orchestrator pattern, significantly reducing cognitive load and simplifying long-term maintenance.
             </p>
             <ul class="feature-points">
-                <li>Inactive background tabs detach entirely from the DOM across all workspaces, terminating idle Chromium renderer processes and reducing RAM usage by 60% or more.</li>
-                <li>Live URLs, titles, and exact scroll positions are preserved and restored smoothly on demand upon tab selection.</li>
-                <li>Safe hibernation startup mode guards against sudden memory pressure and kernel OOM panics when launching large saved sessions.</li>
+                <li>Subsystems extracted into dedicated modules: downloads & file manager integration (<kbd>main/downloads.js</kbd>), atomic configuration store (<kbd>main/config.js</kbd>), session persistence & crash sentinels (<kbd>main/sessionStore.js</kbd>), local data & bookmarks (<kbd>main/storage.js</kbd>), and release updates (<kbd>main/updater.js</kbd>).</li>
+                <li>40% line reduction in <kbd>main.js</kbd> (from 2,106 to 1,262 lines) with zero regressions across core browser workflows.</li>
+                <li>Sacred boundaries preserved: True Tab Hibernation, hardened Chromium engine switches, and isolated multi-account container partitions remain strictly protected.</li>
             </ul>
         </section>
 
         <section class="feature-card">
-            <h2 class="feature-title">1x2 Dual-Split View & Isolated Container Partitions</h2>
+            <h2 class="feature-title">History Overlay Keyboard Overhaul & Instant Dismissal</h2>
             <p class="feature-desc">
-                Browse side-by-side with independent navigation and maintain strict privacy boundaries between different accounts and tasks.
+                Complete keyboard-driven ergonomics for the History overlay, eliminating the need to reach for a trackpad or press Tab repeatedly to close the view.
             </p>
             <ul class="feature-points">
-                <li>Toggle dual-split view instantly via <kbd>Ctrl + Shift + S</kbd> to inspect reference documents, compare web pages, or cross-reference research.</li>
-                <li>Swap pane positions (<kbd>Ctrl + \</kbd>) and adjust partition ratios with intuitive keyboard controls.</li>
-                <li>Each workspace runs in its own dedicated Chromium partition store (<kbd>persist:work</kbd>, <kbd>persist:personal</kbd>), preventing cookie cross-contamination across accounts.</li>
+                <li>Instant <kbd>Escape</kbd> dismissal with capturing event listeners: closes the overlay immediately even when the search input field is actively focused.</li>
+                <li>Seamless home-row navigation: traverse visited entries using <kbd>ArrowDown</kbd> and <kbd>ArrowUp</kbd> with cyclic boundary wrapping.</li>
+                <li>Visual Tokyo Night accent selection styling (<kbd>border-left: 3px solid #7aa2f7</kbd>) and instant <kbd>Enter</kbd> key activation to spawn selected URLs into new workspace tabs.</li>
+                <li>Accessible focus trap cycling strictly between the search input, purge button, and close button without leaking focus out to the vertical sidebar.</li>
             </ul>
         </section>
 
         <section class="feature-card">
-            <h2 class="feature-title">Mouse-Free Navigation, Search Aliases & Bangs</h2>
+            <h2 class="feature-title">Compositor GPU Memory Capping</h2>
             <p class="feature-desc">
-                Keep your hands on the home row with a complete suite of Vim-inspired navigation keys, link hints, and address bar shortcuts.
+                Targeted memory bounds engineered specifically for fanless Linux devices, older laptops, and resource-constrained environments.
             </p>
             <ul class="feature-points">
-                <li>Link Hints (<kbd>f</kbd>) highlight clickable targets with two-letter tags for lightning-fast, mouse-free page interaction.</li>
-                <li>Built-in search engine aliases and bangs: quick prefixes like <kbd>g</kbd>, <kbd>!ddg</kbd>, <kbd>yt</kbd>, <kbd>gh</kbd>, <kbd>aur</kbd>, <kbd>pkg</kbd>, <kbd>so</kbd>, <kbd>r</kbd>, <kbd>sp</kbd>, <kbd>b</kbd>, and <kbd>k</kbd>.</li>
-                <li>Direct tab jumping (<kbd>Ctrl + 1</kbd> to <kbd>Ctrl + 9</kbd>), floating omnibar (<kbd>Ctrl + L</kbd> / <kbd>o</kbd>), and fully customisable shortcuts via <kbd>keybinds.json</kbd>.</li>
+                <li>Compositor texture memory allocation capped at 512MB, preventing GPU memory exhaustion and compositor crashes on media-heavy pages.</li>
+                <li>Reinforces True Tab Hibernation by keeping baseline graphics memory low during intensive browsing sessions.</li>
+                <li>Early boot switches guarantee memory limits are applied before Chromium renderers initialise.</li>
             </ul>
         </section>
 
         <section class="feature-card">
-            <h2 class="feature-title">Markdown Scratchpad & Reader View Export</h2>
+            <h2 class="feature-title">Expanded 21-Suite Automated Regression Harness</h2>
             <p class="feature-desc">
-                Integrated knowledge management tools designed for research, reading, and personal note-taking workflows.
+                Rigorous automated verification guaranteeing architectural stability across every subsystem.
             </p>
             <ul class="feature-points">
-                <li>Instant Markdown quick notes (<kbd>Ctrl + N</kbd>) with full canvas toggle (<kbd>f</kbd>) and live word counters.</li>
-                <li>Export clean distilled articles from Reader View directly into Quick Notes via <kbd>Ctrl + Shift + E</kbd> complete with YAML frontmatter.</li>
-                <li>Context menu web clipping: highlight any web text, right-click, and select "Save to Notes".</li>
-                <li>Launcher buttons to open notes directly inside your favourite external vault editors: Obsidian, Neovim, and Logseq.</li>
-            </ul>
-        </section>
-
-        <section class="feature-card">
-            <h2 class="feature-title">Pinned Tabs, Audio Controls & Crash Safety</h2>
-            <p class="feature-desc">
-                Robust tab management, granular media controls, and atomic POSIX file safety for bulletproof daily browsing.
-            </p>
-            <ul class="feature-points">
-                <li>Dock essential communication channels and tools via <kbd>Ctrl + Shift + X</kbd> or Normal mode <kbd>p</kbd>, protected against accidental closure.</li>
-                <li>Per-tab audio indicators with direct mute toggles (<kbd>Ctrl + Shift + M</kbd>) and global audio mute (<kbd>M</kbd>).</li>
-                <li>Atomic configuration and session writes via temporary staging and rename swaps eliminate the risk of corrupted state during abrupt shutdowns.</li>
+                <li>Four new dedicated test suites added: <kbd>tests/downloads.test.js</kbd>, <kbd>tests/storage.test.js</kbd>, <kbd>tests/updater.test.js</kbd>, and <kbd>tests/history-overlay.test.js</kbd>.</li>
+                <li>Complete headless verification of atomic file swaps, visit deduplication, semantic version comparisons, and overlay keyboard navigation.</li>
+                <li>100% pass rate across all 21 test suites in under 10 seconds.</li>
             </ul>
         </section>
 

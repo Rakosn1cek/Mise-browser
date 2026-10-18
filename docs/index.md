@@ -6,7 +6,7 @@ hero:
   text: Keyboard-First, Isolated Web Browser
   tagline: Engineered for fanless Linux and focused workflows. True tab hibernation, side-by-side dual split view, isolated multi-account containers, and zero mouse dependency.
   image:
-    src: /logo.png?v=1.0.0
+    src: /logo.png?v=1.1.0
     alt: Mise Browser Logo
   actions:
     - theme: brand
