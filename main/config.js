@@ -140,16 +140,27 @@ function registerConfigIpc(ipcMain, hooks = {}) {
 
     ipcMain.handle('update-browser-settings', async (event, newCfg) => {
         try {
+            const before = loadBrowserConfig();
             const res = updateBrowserConfig(newCfg);
             if (!res.success) return false;
             const merged = res.config;
-            if (Array.isArray(merged.trusted_domains) && typeof hooks.onTrustedDomainsChange === 'function') {
+            const payload = newCfg || {};
+            if (Object.prototype.hasOwnProperty.call(payload, 'trusted_domains') &&
+                JSON.stringify(before.trusted_domains) !== JSON.stringify(merged.trusted_domains) &&
+                Array.isArray(merged.trusted_domains) &&
+                typeof hooks.onTrustedDomainsChange === 'function') {
                 hooks.onTrustedDomainsChange(merged.trusted_domains);
             }
-            if (merged.spellchecker_language !== undefined && typeof hooks.onSpellcheckerChange === 'function') {
+            if (Object.prototype.hasOwnProperty.call(payload, 'spellchecker_language') &&
+                JSON.stringify(before.spellchecker_language) !== JSON.stringify(merged.spellchecker_language) &&
+                merged.spellchecker_language !== undefined &&
+                typeof hooks.onSpellcheckerChange === 'function') {
                 hooks.onSpellcheckerChange(merged.spellchecker_language);
             }
-            if (merged.enable_diagnostics !== undefined && typeof hooks.onDiagnosticsChange === 'function') {
+            if (Object.prototype.hasOwnProperty.call(payload, 'enable_diagnostics') &&
+                JSON.stringify(before.enable_diagnostics) !== JSON.stringify(merged.enable_diagnostics) &&
+                merged.enable_diagnostics !== undefined &&
+                typeof hooks.onDiagnosticsChange === 'function') {
                 hooks.onDiagnosticsChange(merged.enable_diagnostics);
             }
             return true;

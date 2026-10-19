@@ -807,8 +807,7 @@ export function attachShieldToggleListener(tabLi, webview) {
             domains.push(host);
         }
 
-        cfg.trusted_domains = domains;
-        await window.miseAPI.updateBrowserSettings(cfg);
+        await window.miseAPI.updateBrowserSettings({ trusted_domains: domains });
 
         updateTabShieldStatus(tabLi, currentUrl, domains);
         webview.reload();

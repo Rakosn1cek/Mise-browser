@@ -1132,12 +1132,8 @@ function toggleWebviewTheme() {
 
     if (webviewThemeSaveTimer) clearTimeout(webviewThemeSaveTimer);
     webviewThemeSaveTimer = setTimeout(() => {
-        if (window.miseAPI && typeof window.miseAPI.getBrowserSettings === 'function') {
-            window.miseAPI.getBrowserSettings().then((cfg) => {
-                const currentCfg = cfg || {};
-                currentCfg.webview_theme = currentWebviewTheme;
-                return window.miseAPI.updateBrowserSettings(currentCfg);
-            }).catch(() => {});
+        if (window.miseAPI && typeof window.miseAPI.updateBrowserSettings === 'function') {
+            window.miseAPI.updateBrowserSettings({ webview_theme: currentWebviewTheme }).catch(() => {});
         }
     }, 400);
 }
@@ -1167,12 +1163,8 @@ function toggleInterfaceTheme() {
     }
     
     // Persist setting to disk asynchronously in the background without blocking the UI
-    if (window.miseAPI && typeof window.miseAPI.getBrowserSettings === 'function') {
-        window.miseAPI.getBrowserSettings().then((cfg) => {
-            const currentCfg = cfg || {};
-            currentCfg.theme = newTheme;
-            return window.miseAPI.updateBrowserSettings(currentCfg);
-        }).catch(() => {});
+    if (window.miseAPI && typeof window.miseAPI.updateBrowserSettings === 'function') {
+        window.miseAPI.updateBrowserSettings({ theme: newTheme }).catch(() => {});
     }
 }
 
@@ -1269,11 +1261,9 @@ export async function toggleSidebarPin() {
     const isCurrentlyPinned = document.body.classList.contains('sidebar-pinned');
     const newAutoCollapse = isCurrentlyPinned;
     applySidebarMode(newAutoCollapse);
-    if (window.miseAPI && typeof window.miseAPI.getBrowserSettings === 'function') {
+    if (window.miseAPI && typeof window.miseAPI.updateBrowserSettings === 'function') {
         try {
-            const cfg = (await window.miseAPI.getBrowserSettings()) || {};
-            cfg.sidebar_auto_collapse = newAutoCollapse;
-            await window.miseAPI.updateBrowserSettings(cfg);
+            await window.miseAPI.updateBrowserSettings({ sidebar_auto_collapse: newAutoCollapse });
         } catch (e) {}
     }
 }

@@ -700,8 +700,7 @@ function buildSettingsSubmenu(cfg) {
             type: 'checkbox',
             checked: cfg.disable_gpu,
             click: (menuItem) => {
-                cfg.disable_gpu = menuItem.checked;
-                saveBrowserConfig(cfg);
+                saveBrowserConfig({ disable_gpu: menuItem.checked });
             }
         },
         {
@@ -709,8 +708,7 @@ function buildSettingsSubmenu(cfg) {
             type: 'checkbox',
             checked: cfg.background_throttling,
             click: (menuItem) => {
-                cfg.background_throttling = menuItem.checked;
-                saveBrowserConfig(cfg);
+                saveBrowserConfig({ background_throttling: menuItem.checked });
             }
         },
         { type: 'separator' },
@@ -721,8 +719,7 @@ function buildSettingsSubmenu(cfg) {
                 type: 'radio',
                 checked: cfg.process_limit === num,
                 click: () => {
-                    cfg.process_limit = num;
-                    saveBrowserConfig(cfg);
+                    saveBrowserConfig({ process_limit: num });
                 }
             }))
         },
@@ -740,9 +737,7 @@ function buildSettingsSubmenu(cfg) {
                 type: 'radio',
                 checked: (cfg.tab_sleep_timeout_minutes ?? 15) === opt.minutes,
                 click: () => {
-                    cfg.tab_sleep_timeout_minutes = opt.minutes;
-                    if (!fs.existsSync(CONFIG_DIR)) fs.mkdirSync(CONFIG_DIR, { recursive: true });
-                    writeConfigFile(cfg);
+                    updateBrowserConfig({ tab_sleep_timeout_minutes: opt.minutes });
                 }
             }))
         },
@@ -752,9 +747,7 @@ function buildSettingsSubmenu(cfg) {
             type: 'checkbox',
             checked: cfg.sidebar_auto_collapse !== false,
             click: (menuItem) => {
-                cfg.sidebar_auto_collapse = menuItem.checked;
-                if (!fs.existsSync(CONFIG_DIR)) fs.mkdirSync(CONFIG_DIR, { recursive: true });
-                writeConfigFile(cfg);
+                updateBrowserConfig({ sidebar_auto_collapse: menuItem.checked });
                 if (mainWindow && !mainWindow.isDestroyed()) {
                     mainWindow.webContents.send('master-shortcut', 'toggle-sidebar-collapse-mode', menuItem.checked);
                 }
@@ -765,9 +758,7 @@ function buildSettingsSubmenu(cfg) {
             type: 'checkbox',
             checked: !!cfg.show_window_controls,
             click: (menuItem) => {
-                cfg.show_window_controls = menuItem.checked;
-                if (!fs.existsSync(CONFIG_DIR)) fs.mkdirSync(CONFIG_DIR, { recursive: true });
-                writeConfigFile(cfg);
+                updateBrowserConfig({ show_window_controls: menuItem.checked });
                 if (mainWindow && !mainWindow.isDestroyed()) {
                     mainWindow.webContents.send('master-shortcut', 'toggle-window-controls', menuItem.checked);
                 }
