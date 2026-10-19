@@ -132,9 +132,94 @@ try {
         console.log('✓ Private workspace pinning and sort precedence verified');
     }
 
+    // 5. Verify case-insensitive partition resolution in modules/utils.js and main.js parity
+    {
+        const testCases = ['Private', 'private', 'PRIVATE', '  Private  ', '  private  '];
+        for (const tc of testCases) {
+            assert.strictEqual(
+                getWorkspacePartition(tc),
+                'MisePrivateProfile',
+                `utils getWorkspacePartition("${tc}") must map to MisePrivateProfile`
+            );
+        }
+
+        // Verify main.js contains the matching getWorkspacePartition logic
+        const mainJsContent = fs.readFileSync(path.join(__dirname, '../main.js'), 'utf8');
+        assert(
+            mainJsContent.includes("if (String(workspaceName).trim().toLowerCase() === 'private') return 'MisePrivateProfile';"),
+            'main.js getWorkspacePartition must map Private case-insensitively to MisePrivateProfile'
+        );
+        assert(
+            !mainJsContent.includes('privateBrowsingEnabled'),
+            'main.js must not retain obsolete privateBrowsingEnabled variable'
+        );
+        console.log('✓ Case-insensitive partition mapping and main.js parity verified');
+    }
+
+    // 6. Verify readCurrentSession always sanitises sessions and never restores into Private
+    {
+        const taintedSessionFile = path.join(tmpDir, 'tainted-session.json');
+        const taintedData = {
+            current_workspace: 'Private',
+            workspaces: {
+                'Private': ['https://leak-test.org'],
+                'Workspace 1': ['https://duckduckgo.com']
+            },
+            tab_titles: {
+                'Private': ['Leak Test']
+            }
+        };
+        fs.writeFileSync(taintedSessionFile, JSON.stringify(taintedData, null, 2), 'utf8');
+
+        const loaded = sessionStore.readCurrentSession({ sessionPath: taintedSessionFile });
+        assert.strictEqual(loaded.current_workspace, 'Workspace 1', 'readCurrentSession must never restore into Private');
+        assert.strictEqual(loaded.workspaces['Private'], undefined, 'readCurrentSession must filter out Private workspace');
+        assert.strictEqual(loaded.tab_titles['Private'], undefined, 'readCurrentSession must filter out Private tab titles');
+        console.log('✓ readCurrentSession sanitises on read and prevents booting into Private workspace');
+    }
+
+    // 7. Verify dashboard name collisions and reservation guards
+    {
+        const dashboardSource = fs.readFileSync(path.join(__dirname, '../modules/overlays/dashboard.js'), 'utf8');
+        assert(
+            dashboardSource.includes("if (String(oldName).trim().toLowerCase() === 'private') return;"),
+            'renameWorkspace must reject renaming Private workspace'
+        );
+        assert(
+            dashboardSource.includes("trimmed.toLowerCase() === 'private'"),
+            'renameWorkspace must reject renaming any workspace to Private'
+        );
+        assert(
+            dashboardSource.includes("if (String(wsName).trim().toLowerCase() === 'private') return;"),
+            'deleteWorkspace must reject deleting Private workspace'
+        );
+        assert(
+            dashboardSource.includes("name.toLowerCase() === 'private'"),
+            'processWorkspaceCreation must reject creating a workspace named Private'
+        );
+        console.log('✓ Dashboard workspace name reservation and collision guards verified');
+    }
+
+    // 8. Verify isTargetPrivateDomain no longer hardcodes external domains
+    {
+        const { isTargetPrivateDomain } = require('../modules/utils.js');
+        assert.strictEqual(
+            isTargetPrivateDomain('https://news.ycombinator.com'),
+            false,
+            'External domains must not be routed into private partition from normal workspaces'
+        );
+        assert.strictEqual(
+            isTargetPrivateDomain('https://accounts.google.com/signin?mise_test_auth=1'),
+            true,
+            'Explicit test auth query flag must be recognised'
+        );
+        console.log('✓ isTargetPrivateDomain domain routing verified');
+    }
+
     console.log('All permanent Private workspace regression tests passed successfully!');
 } finally {
     try {
         fs.rmSync(tmpDir, { recursive: true, force: true });
     } catch (e) {}
 }
+

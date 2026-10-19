@@ -6,6 +6,7 @@ import {
     isTargetScript, 
     getActiveWebview, 
     focusActiveWebview,
+    getWorkspacePartition,
     isTargetPrivateDomain 
 } from './modules/utils.js';
 import { 
@@ -328,6 +329,15 @@ async function initializeBrowser() {
     if (!state.sessionState.workspaces) state.sessionState.workspaces = {};
     if (!state.sessionState.workspaces['Private']) {
         state.sessionState.workspaces['Private'] = [];
+    }
+
+    // Never restore into Private workspace on application launch
+    if (!state.sessionState.current_workspace || state.sessionState.current_workspace === 'Private') {
+        const remaining = Object.keys(state.sessionState.workspaces).filter(k => k !== 'Private');
+        state.sessionState.current_workspace = remaining.length > 0 ? remaining[0] : 'Workspace 1';
+        if (!state.sessionState.workspaces[state.sessionState.current_workspace]) {
+            state.sessionState.workspaces[state.sessionState.current_workspace] = ['https://duckduckgo.com'];
+        }
     }
     
     // Check crash recovery sentinel
@@ -1054,7 +1064,7 @@ async function executeSurgicalCookieWipe() {
     const currentIdx = Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem);
     const urlStr = state.sessionState.workspaces[currentWS][currentIdx] || "";
     
-    const isTargetPrivate = state.globalPrivateModeActive || isTargetPrivateDomain(urlStr);
+    const isTargetPrivate = currentWS === 'Private' || getWorkspacePartition(currentWS) === 'MisePrivateProfile' || state.globalPrivateModeActive || isTargetPrivateDomain(urlStr);
     await window.miseAPI.clearDomainCookies({ urlStr, isPrivate: isTargetPrivate, workspace: currentWS });
     
     window.miseAllowWebviewFocus = true;
@@ -1063,7 +1073,8 @@ async function executeSurgicalCookieWipe() {
 
 async function executeGlobalCacheWipe() {
     const currentWS = state.sessionState.current_workspace;
-    await window.miseAPI.clearActiveCache({ isPrivate: state.globalPrivateModeActive, workspace: currentWS });
+    const isTargetPrivate = currentWS === 'Private' || getWorkspacePartition(currentWS) === 'MisePrivateProfile' || state.globalPrivateModeActive;
+    await window.miseAPI.clearActiveCache({ isPrivate: isTargetPrivate, workspace: currentWS });
     
     window.miseAllowWebviewFocus = true;
     focusActiveWebview();

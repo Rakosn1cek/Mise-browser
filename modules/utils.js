@@ -58,7 +58,7 @@ export function focusActiveWebview() {
 // Generates a filesystem-safe persistent container partition string for a workspace
 export function getWorkspacePartition(workspaceName) {
     if (!workspaceName) return 'persist:default';
-    if (workspaceName === 'Private') return 'MisePrivateProfile';
+    if (String(workspaceName).trim().toLowerCase() === 'private') return 'MisePrivateProfile';
     const clean = String(workspaceName).trim().toLowerCase().replace(/[^a-z0-9_-]/gi, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
     return `persist:${clean || 'default'}`;
 }
@@ -124,7 +124,6 @@ export function isMatchingDomain(url, targetDomain) {
 // Checks whether a URL matches domains designated for isolated private sessions
 export function isTargetPrivateDomain(url) {
     if (!url || typeof url !== 'string') return false;
-    if (url.includes('mise_test_auth=1')) return true;
-    return isMatchingDomain(url, 'ycombinator.com');
+    return url.includes('mise_test_auth=1');
 }
 

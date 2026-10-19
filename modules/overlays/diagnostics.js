@@ -61,7 +61,7 @@ function gatherCurrentSessionStats() {
         activeWebviews,
         hibernatedTabs,
         splitActive: !!state.splitStates[state.sessionState.current_workspace]?.isSplit,
-        privateBrowsingActive: !!state.globalPrivateModeActive
+        privateBrowsingActive: (state.sessionState.current_workspace === 'Private') || !!state.globalPrivateModeActive
     };
 }
 

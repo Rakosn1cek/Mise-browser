@@ -158,7 +158,7 @@ export function updatePartitionBadge(workspaceName, isPrivate) {
     if (!partitionBadgeEl) partitionBadgeEl = document.getElementById('StatusBarPartition');
     if (!partitionBadgeEl) return;
 
-    const privateProfile = isPrivate || state.globalPrivateModeActive;
+    const privateProfile = isPrivate || workspaceName === 'Private' || getWorkspacePartition(workspaceName) === 'MisePrivateProfile' || state.globalPrivateModeActive;
     const ws = privateProfile ? null : workspaceName || state.sessionState.current_workspace || 'Workspace 1';
     const key = privateProfile ? 'private' : `workspace:${ws}`;
     if (key === lastPartitionKey) return;
@@ -308,7 +308,7 @@ export function handleGuestHintsState(isActive, wsName, tabIdx) {
 
 export function updateStatusBarFromActiveView() {
     const currentWS = state.sessionState.current_workspace;
-    const isPrivate = !!state.globalPrivateModeActive;
+    const isPrivate = currentWS === 'Private' || getWorkspacePartition(currentWS) === 'MisePrivateProfile' || !!state.globalPrivateModeActive;
     updatePartitionBadge(currentWS, isPrivate);
 
     const activeListItem = document.querySelector('#TabList li.selected');

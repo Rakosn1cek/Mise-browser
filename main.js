@@ -133,7 +133,6 @@ function initializeEngineSwitches() {
 initializeEngineSwitches();
 
 let mainWindow;
-let privateBrowsingEnabled = false;
 
 // URL queue and readiness tracking for external link dispatch
 let isRendererReady = false;
@@ -206,6 +205,7 @@ let globalNotificationsEnabled = true;
 // Generates a filesystem-safe persistent container partition string for a workspace
 function getWorkspacePartition(workspaceName) {
     if (!workspaceName) return 'persist:default';
+    if (String(workspaceName).trim().toLowerCase() === 'private') return 'MisePrivateProfile';
     const clean = String(workspaceName).trim().toLowerCase().replace(/[^a-z0-9_-]/gi, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
     return `persist:${clean || 'default'}`;
 }
@@ -827,12 +827,6 @@ function handleAppAction(action, sourceWebContents) {
         } else {
             mainWindow.webContents.send('master-shortcut', 'reload-active-tab');
         }
-        return;
-    }
-
-    if (action === 'toggle-private-mode') {
-        privateBrowsingEnabled = !privateBrowsingEnabled;
-        mainWindow.webContents.send('master-shortcut', 'toggle-private-mode', privateBrowsingEnabled);
         return;
     }
 

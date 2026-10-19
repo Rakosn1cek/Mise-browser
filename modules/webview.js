@@ -112,7 +112,7 @@ export function createWebView(url, currentWS, idx) {
     webview.setAttribute('preload', window.miseAPI.getWebviewPreloadPath());
     webview.setAttribute('allowpopups', '');
     
-    if (state.globalPrivateModeActive || isTargetPrivateDomain(url)) {
+    if (getWorkspacePartition(currentWS) === 'MisePrivateProfile' || state.globalPrivateModeActive || isTargetPrivateDomain(url)) {
         webview.setAttribute('partition', 'MisePrivateProfile');
     } else {
         webview.setAttribute('partition', getWorkspacePartition(currentWS));

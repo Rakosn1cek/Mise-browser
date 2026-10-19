@@ -885,7 +885,7 @@ export async function syncPreferencesUI() {
     if (themeToggle) themeToggle.checked = document.body.classList.contains('dark-mode');
 
     const privateToggle = document.getElementById('setting-private-toggle');
-    if (privateToggle) privateToggle.checked = !!state.globalPrivateModeActive;
+    if (privateToggle) privateToggle.checked = (state.sessionState?.current_workspace === 'Private');
 
     syncVisualSettingsInputs(cfg);
 
@@ -1190,10 +1190,11 @@ export function setupPreferencesListeners() {
 
     const privateToggle = document.getElementById('setting-private-toggle');
     if (privateToggle) {
-        privateToggle.onchange = (e) => {
-            state.globalPrivateModeActive = e.target.checked;
-            if (window.handlePrivateBrowsingStateShift) {
-                window.handlePrivateBrowsingStateShift(state.globalPrivateModeActive);
+        privateToggle.onchange = () => {
+            if (typeof window.togglePrivateWorkspace === 'function') {
+                window.togglePrivateWorkspace();
+            } else if (typeof window.handlePrivateBrowsingStateShift === 'function') {
+                window.handlePrivateBrowsingStateShift();
             }
         };
     }

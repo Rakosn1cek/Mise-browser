@@ -98,18 +98,21 @@ To achieve true privacy, we had to eliminate the mutable toggle entirely and mak
 
 Instead of flipping existing workspaces back and forth, we introduced a permanent, dedicated **Private** workspace:
 
-* In `modules/utils.js`, `getWorkspacePartition('Private')` maps immutably to the volatile partition `MisePrivateProfile`:
+* **Dual-Process Partition Parity**: In both `modules/utils.js` and `main.js`, `getWorkspacePartition` maps any case variation of `private` immutably to the volatile partition `MisePrivateProfile`:
 
 ```javascript
 export function getWorkspacePartition(workspaceName) {
     if (!workspaceName) return 'persist:default';
-    if (workspaceName === 'Private') return 'MisePrivateProfile';
+    if (String(workspaceName).trim().toLowerCase() === 'private') return 'MisePrivateProfile';
     const clean = String(workspaceName).trim().toLowerCase().replace(/[^a-z0-9_-]/gi, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
     return `persist:${clean || 'default'}`;
 }
 ```
 
-* In the Workspace Dashboard (`modules/overlays/dashboard.js`), the `Private` workspace is pinned to the very top of the tree, styled with a shield icon and protected from accidental deletion or renaming.
+> [!IMPORTANT]
+> **The `persist:` Partition Trap**: In Electron, if the main process lacks this partition mapping, IPC handlers (such as cookie and cache wipes) default to `persist:private`. Chromium then silently creates a physical directory under `~/.config/mise-browser/Partitions/private/`, persisting cookies and logins across restarts! Both processes must resolve the partition without the `persist:` prefix to remain 100% in-memory.
+
+* **Namespace Reservation**: In the Workspace Dashboard (`modules/overlays/dashboard.js`), `Private` is pinned to the very top with a shield icon. Renaming or deleting it is strictly forbidden, and creating or renaming standard workspaces to `private` is rejected to eliminate namespace collisions.
 
 ### 2. Guarding Main Process History and URL Sanitisation
 
@@ -127,25 +130,39 @@ webContents.on('did-navigate', (navEvent, url) => {
 
 In `main/storage.js`, we introduced `isRecordableHistoryUrl()` to ensure only valid `http:` and `https:` URLs under 4,096 characters are recorded, eliminating data URIs, local file paths, and malformed strings.
 
-### 3. Atomic Session Persistence Scrubbing
+### 3. Atomic Session Persistence Scrubbing and Cold Boot Protection
 
-In `main/sessionStore.js`, before flushing session state to disk, `sanitizeSessionForDisk()` strips the `Private` workspace and all associated tab titles, sleeping states, and favicons:
+In `main/sessionStore.js`, before flushing session state to disk, `sanitizeSessionForDisk()` strips the `Private` workspace and all associated tab titles, sleeping states, favicons, pinned states, and dark reader flags:
 
 ```javascript
 function sanitizeSessionForDisk(sessionData) {
     if (!sessionData || typeof sessionData !== 'object') return sessionData;
     const clone = JSON.parse(JSON.stringify(sessionData));
-    if (clone.workspaces && clone.workspaces['Private']) {
-        delete clone.workspaces['Private'];
+    const isPrivateWS = (k) => String(k).trim().toLowerCase() === 'private';
+
+    for (const key of ['workspaces', 'tab_titles', 'tab_favicons', 'tab_sleep_states', 'tab_dark_reader', 'tab_pinned']) {
+        if (clone[key] && typeof clone[key] === 'object') {
+            for (const ws of Object.keys(clone[key])) {
+                if (isPrivateWS(ws)) {
+                    delete clone[key][ws];
+                }
+            }
+        }
     }
-    if (clone.current_workspace === 'Private') {
+
+    if (isPrivateWS(clone.current_workspace)) {
         const remaining = Object.keys(clone.workspaces || {});
         clone.current_workspace = remaining.length > 0 ? remaining[0] : 'Workspace 1';
+        if (!clone.workspaces || remaining.length === 0) {
+            clone.workspaces = { 'Workspace 1': ['https://duckduckgo.com'] };
+        }
     }
     return clone;
 }
 ```
 
+* **Cold Boot Fallback**: When Mise closes while `Private` is active, `sanitizeSessionForDisk()` resets `current_workspace` to `Workspace 1`.
+* **Read-Time Sanitisation**: `readCurrentSession()` passes loaded payloads through `sanitizeSessionForDisk()` on boot, and `initializeBrowser()` in `renderer.js` provides a third defence layer ensuring Mise never restores directly into Private mode.
 When Mise closes, all trace of the Private workspace is discarded. Upon relaunch, `Private` initialises cleanly in memory.
 
 ### 4. Plugging the Favicon Leak
@@ -190,3 +207,5 @@ Pressing `Ctrl + Shift + P` no longer mutates the active workspace. Instead, it 
 1. **Process Isolation Must Be Structural, Not Modal**: Flipping flags on shared mutable objects inevitably causes state leaks. Creating an isolated, permanent workspace container provides clear architectural boundaries that cannot be accidentally bypassed.
 2. **Beware the Host Window in Electron**: Untrusted content running in guest webviews can easily leak data if the host application window fetches assets (such as favicons or images) through its default session.
 3. **Automate Boundary Verification**: Adding automated regression tests for session sanitisation and URL logging guarantees that future refactors cannot re-introduce silent leaks to disk.
+4. **Synchronise Container Partitioning Across Processes**: In Electron, session partition mapping must be strictly consistent between renderer and main processes. A mismatch where the main process prefixes `persist:` can silently create persistent disk directories under `Partitions/`, destroying volatile in-memory isolation.
+

@@ -29,9 +29,9 @@ export function toggleDashboardView() {
 }
 
 export function renameWorkspace(oldName, newName) {
-    if (oldName === 'Private') return;
+    if (String(oldName).trim().toLowerCase() === 'private') return;
     const trimmed = newName ? newName.trim() : '';
-    if (!trimmed || trimmed === oldName || state.sessionState.workspaces[trimmed]) return;
+    if (!trimmed || trimmed.toLowerCase() === 'private' || trimmed === oldName || state.sessionState.workspaces[trimmed]) return;
 
     // Migrate workspace tabs and references
     state.sessionState.workspaces[trimmed] = state.sessionState.workspaces[oldName];
@@ -91,7 +91,7 @@ export function renameWorkspace(oldName, newName) {
 }
 
 export function deleteWorkspace(wsName) {
-    if (wsName === 'Private') return;
+    if (String(wsName).trim().toLowerCase() === 'private') return;
     const totalWorkspaces = Object.keys(state.sessionState.workspaces);
     if (totalWorkspaces.length <= 1) return;
 
@@ -401,7 +401,10 @@ export function hideWorkspaceInputDialog() {
 export function processWorkspaceCreation() {
     const input = document.getElementById('NewWorkspaceTitleInput');
     const name = input.value.trim();
-    if (!name) return;
+    if (!name || name.toLowerCase() === 'private') {
+        hideWorkspaceInputDialog();
+        return;
+    }
 
     if (!state.sessionState.workspaces[name]) {
         state.sessionState.workspaces[name] = [];
