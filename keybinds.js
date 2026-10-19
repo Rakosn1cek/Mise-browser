@@ -61,7 +61,7 @@ const ACTION_METADATA = {
     'focus-webview': { label: 'Focus Active Webview', category: 'Navigation & Workspaces' },
     'trigger-hints': { label: 'Toggle Link Hints Overlay', category: 'Web Interaction' },
     'toggle-help': { label: 'Toggle Preferences / Help', category: 'System' },
-    'toggle-private-mode': { label: 'Toggle Private Browsing Mode', category: 'System' },
+    'toggle-private-mode': { label: 'Switch to / from Private Workspace', category: 'Navigation & Workspaces' },
     'toggle-palette': { label: 'Toggle Command Palette', category: 'Navigation & Workspaces' },
     'toggle-find': { label: 'Find In Page', category: 'Web Interaction' },
     'toggle-devtools': { label: 'Toggle Active Webview DevTools', category: 'Web Interaction' },

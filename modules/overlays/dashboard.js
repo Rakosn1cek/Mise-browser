@@ -29,6 +29,7 @@ export function toggleDashboardView() {
 }
 
 export function renameWorkspace(oldName, newName) {
+    if (oldName === 'Private') return;
     const trimmed = newName ? newName.trim() : '';
     if (!trimmed || trimmed === oldName || state.sessionState.workspaces[trimmed]) return;
 
@@ -90,6 +91,7 @@ export function renameWorkspace(oldName, newName) {
 }
 
 export function deleteWorkspace(wsName) {
+    if (wsName === 'Private') return;
     const totalWorkspaces = Object.keys(state.sessionState.workspaces);
     if (totalWorkspaces.length <= 1) return;
 
@@ -123,9 +125,19 @@ export function buildDashboardTree() {
     container.innerHTML = '';
     state.dashboardItems = [];
 
-    const wsKeys = Object.keys(state.sessionState.workspaces);
+    if (!state.sessionState.workspaces) state.sessionState.workspaces = {};
+    if (!state.sessionState.workspaces['Private']) {
+        state.sessionState.workspaces['Private'] = [];
+    }
+
+    const wsKeys = Object.keys(state.sessionState.workspaces).sort((a, b) => {
+        if (a === 'Private') return -1;
+        if (b === 'Private') return 1;
+        return a.localeCompare(b);
+    });
 
     wsKeys.forEach((wsName) => {
+        const isPrivate = wsName === 'Private';
         const node = document.createElement('div');
         node.className = 'workspace-tree-node';
 
@@ -136,7 +148,11 @@ export function buildDashboardTree() {
         headerContainer.style.justifyContent = 'space-between';
 
         const titleSpan = document.createElement('span');
-        titleSpan.textContent = wsName + (wsName === state.sessionState.current_workspace ? ' (Active)' : '');
+        if (isPrivate) {
+            titleSpan.innerHTML = '<i class="fa-solid fa-shield-halved" style="margin-right: 6px; color: #f7768e;"></i>Private' + (wsName === state.sessionState.current_workspace ? ' (Active)' : '');
+        } else {
+            titleSpan.textContent = wsName + (wsName === state.sessionState.current_workspace ? ' (Active)' : '');
+        }
         titleSpan.style.flex = '1';
         titleSpan.style.cursor = 'pointer';
 
@@ -144,91 +160,94 @@ export function buildDashboardTree() {
         actionsDiv.style.display = 'flex';
         actionsDiv.style.gap = '6px';
 
-        // Trigger inline edit mode
-        const activateRenameMode = () => {
-            const input = document.createElement('input');
-            input.type = 'text';
-            input.value = wsName;
-            input.className = 'dashboard-rename-input';
-            input.style.flex = '1';
-            input.style.background = 'var(--bg-main)';
-            input.style.color = 'var(--text)';
-            input.style.border = '1px solid var(--accent)';
-            input.style.borderRadius = '3px';
-            input.style.padding = '2px 6px';
-            input.style.fontSize = '14px';
-            input.style.outline = 'none';
+        if (!isPrivate) {
+            // Trigger inline edit mode
+            const activateRenameMode = () => {
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.value = wsName;
+                input.className = 'dashboard-rename-input';
+                input.style.flex = '1';
+                input.style.background = 'var(--bg-main)';
+                input.style.color = 'var(--text)';
+                input.style.border = '1px solid var(--accent)';
+                input.style.borderRadius = '3px';
+                input.style.padding = '2px 6px';
+                input.style.fontSize = '14px';
+                input.style.outline = 'none';
 
-            let saved = false;
-            const submitRename = () => {
-                if (saved) return;
-                saved = true;
-                const val = input.value.trim();
-                if (val && val !== wsName) {
-                    renameWorkspace(wsName, val);
-                } else {
-                    buildDashboardTree();
-                }
+                let saved = false;
+                const submitRename = () => {
+                    if (saved) return;
+                    saved = true;
+                    const val = input.value.trim();
+                    if (val && val !== wsName) {
+                        renameWorkspace(wsName, val);
+                    } else {
+                        buildDashboardTree();
+                    }
+                };
+
+                input.addEventListener('keydown', (ie) => {
+                    ie.stopPropagation();
+                    if (ie.key === 'Enter') {
+                        submitRename();
+                    } else if (ie.key === 'Escape') {
+                        saved = true;
+                        buildDashboardTree();
+                    }
+                });
+
+                input.addEventListener('blur', submitRename);
+
+                headerContainer.replaceChild(input, titleSpan);
+                input.focus();
+                input.select();
             };
 
-            input.addEventListener('keydown', (ie) => {
-                ie.stopPropagation();
-                if (ie.key === 'Enter') {
-                    submitRename();
-                } else if (ie.key === 'Escape') {
-                    saved = true;
-                    buildDashboardTree();
-                }
-            });
-
-            input.addEventListener('blur', submitRename);
-
-            headerContainer.replaceChild(input, titleSpan);
-            input.focus();
-            input.select();
-        };
-
-        // Dedicated Rename Button
-        const renameBtn = document.createElement('button');
-        renameBtn.className = 'nav-icon-button';
-        renameBtn.innerHTML = '<i class="fa-solid fa-pen-to-square"></i>';
-        renameBtn.title = 'Rename Workspace';
-        renameBtn.style.width = '24px';
-        renameBtn.style.height = '24px';
-        renameBtn.style.fontSize = '11px';
-        renameBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            activateRenameMode();
-        });
-        actionsDiv.appendChild(renameBtn);
-
-        // Dedicated Delete Button
-        if (wsKeys.length > 1) {
-            const deleteBtn = document.createElement('button');
-            deleteBtn.className = 'nav-icon-button';
-            deleteBtn.innerHTML = '<i class="fa-solid fa-trash-can"></i>';
-            deleteBtn.title = 'Delete Workspace';
-            deleteBtn.style.width = '24px';
-            deleteBtn.style.height = '24px';
-            deleteBtn.style.fontSize = '11px';
-            deleteBtn.addEventListener('click', (e) => {
+            // Dedicated Rename Button
+            const renameBtn = document.createElement('button');
+            renameBtn.className = 'nav-icon-button';
+            renameBtn.innerHTML = '<i class="fa-solid fa-pen-to-square"></i>';
+            renameBtn.title = 'Rename Workspace';
+            renameBtn.style.width = '24px';
+            renameBtn.style.height = '24px';
+            renameBtn.style.fontSize = '11px';
+            renameBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                deleteWorkspace(wsName);
+                activateRenameMode();
             });
-            actionsDiv.appendChild(deleteBtn);
+            actionsDiv.appendChild(renameBtn);
+
+            // Dedicated Delete Button
+            if (wsKeys.length > 1) {
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'nav-icon-button';
+                deleteBtn.innerHTML = '<i class="fa-solid fa-trash-can"></i>';
+                deleteBtn.title = 'Delete Workspace';
+                deleteBtn.style.width = '24px';
+                deleteBtn.style.height = '24px';
+                deleteBtn.style.fontSize = '11px';
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    deleteWorkspace(wsName);
+                });
+                actionsDiv.appendChild(deleteBtn);
+            }
         }
 
         const containerTag = document.createElement('span');
         containerTag.className = 'workspace-container-tag';
-        containerTag.textContent = getWorkspacePartition(wsName).replace('persist:', '');
+        const partitionName = getWorkspacePartition(wsName);
+        containerTag.textContent = isPrivate ? 'volatile' : partitionName.replace('persist:', '');
         containerTag.style.fontSize = '11px';
         containerTag.style.fontFamily = 'monospace';
-        containerTag.style.color = 'var(--accent)';
-        containerTag.style.background = 'rgba(255,255,255,0.06)';
+        containerTag.style.color = isPrivate ? '#f7768e' : 'var(--accent)';
+        containerTag.style.background = isPrivate ? 'rgba(247, 118, 142, 0.12)' : 'rgba(255,255,255,0.06)';
         containerTag.style.padding = '1px 6px';
         containerTag.style.borderRadius = '3px';
         containerTag.style.marginRight = '8px';
-        containerTag.title = `Container Partition: ${getWorkspacePartition(wsName)}`;
+        containerTag.title = isPrivate ? 'Volatile partition: MisePrivateProfile' : `Container Partition: ${partitionName}`;
 
         headerContainer.appendChild(titleSpan);
         headerContainer.appendChild(containerTag);

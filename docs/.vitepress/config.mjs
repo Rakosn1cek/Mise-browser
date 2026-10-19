@@ -43,6 +43,7 @@ export default defineConfig({
       {
         text: 'Engineering Chronicles',
         items: [
+          { text: 'Leak-Proof Private Workspace', link: '/blog/the-anatomy-of-a-leak-proof-private-workspace' },
           { text: 'Taming the Main Process', link: '/blog/taming-the-electron-main-process' },
           { text: 'The Awakening Cascade', link: '/blog/tab-traversal-awakening-cascade' },
           { text: 'Dark Reader Dilemma', link: '/blog/dark-reader-navigation-persistence' },

@@ -177,6 +177,7 @@ window.applyThemeVisuals = applyThemeVisuals;
 window.togglePreferencesView = togglePreferencesView;
 window.toggleHistoryOverlay = toggleHistoryOverlay;
 window.handlePrivateBrowsingStateShift = handlePrivateBrowsingStateShift;
+window.togglePrivateWorkspace = togglePrivateWorkspace;
 window.executeSurgicalCookieWipe = executeSurgicalCookieWipe;
 window.executeGlobalCacheWipe = executeGlobalCacheWipe;
 window.toggleDiagnosticsView = toggleDiagnosticsView;
@@ -324,6 +325,10 @@ let findActive = false;
 
 async function initializeBrowser() {
     state.sessionState = await window.miseAPI.getSession();
+    if (!state.sessionState.workspaces) state.sessionState.workspaces = {};
+    if (!state.sessionState.workspaces['Private']) {
+        state.sessionState.workspaces['Private'] = [];
+    }
     
     // Check crash recovery sentinel
     let isCrashRecovery = false;
@@ -705,8 +710,7 @@ function setupEventListeners() {
             case 'go-forward':
             case 'go-forward-signal': navigateFrameForward(); break;
             case 'toggle-private-mode': {
-                state.globalPrivateModeActive = args[0];
-                handlePrivateBrowsingStateShift(state.globalPrivateModeActive);
+                togglePrivateWorkspace();
                 break;
             }
             case 'hibernate-inactive-tabs': hibernateInactiveTabs(); break;
@@ -1009,23 +1013,37 @@ function setupEventListeners() {
     loadBookmarksAndQuickmarks();
 }
 
-function handlePrivateBrowsingStateShift(isPrivate) {
-    const sidebar = document.getElementById('Sidebar');
-    if (isPrivate) {
-        sidebar.style.borderRight = '2px solid #ff5555';
-    } else {
-        sidebar.style.borderRight = '1px solid var(--border)';
+let previousNonPrivateWorkspace = 'Workspace 1';
+
+export function togglePrivateWorkspace() {
+    if (!state.sessionState.workspaces) state.sessionState.workspaces = {};
+    if (!state.sessionState.workspaces['Private']) {
+        state.sessionState.workspaces['Private'] = [];
     }
-    
+
     const currentWS = state.sessionState.current_workspace;
-    if (state.activeViewsCache[currentWS]) {
-        state.activeViewsCache[currentWS].forEach(wv => destroyGuestWebview(wv));
-        state.activeViewsCache[currentWS] = [];
+    if (currentWS === 'Private') {
+        const target = (previousNonPrivateWorkspace && previousNonPrivateWorkspace !== 'Private' && state.sessionState.workspaces[previousNonPrivateWorkspace])
+            ? previousNonPrivateWorkspace
+            : Object.keys(state.sessionState.workspaces).find(k => k !== 'Private') || 'Workspace 1';
+        state.sessionState.current_workspace = target;
+    } else {
+        previousNonPrivateWorkspace = currentWS;
+        state.sessionState.current_workspace = 'Private';
     }
-    
-    const activeListItem = document.querySelector('#TabList li.selected');
-    const currentIdx = activeListItem ? Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem) : 0;
-    renderWorkspaceUI(currentIdx);
+
+    window.miseAPI.saveSession(state.sessionState);
+
+    const container = document.getElementById('webview-container');
+    if (container) {
+        const allWebviews = container.querySelectorAll('webview');
+        allWebviews.forEach(wv => wv.style.display = 'none');
+    }
+    renderWorkspaceUI(0);
+}
+
+function handlePrivateBrowsingStateShift() {
+    togglePrivateWorkspace();
 }
 
 async function executeSurgicalCookieWipe() {

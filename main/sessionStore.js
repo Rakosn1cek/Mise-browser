@@ -53,6 +53,37 @@ function getPendingSessionData() {
     return pendingSessionData;
 }
 
+function sanitizeSessionForDisk(sessionData) {
+    if (!sessionData || typeof sessionData !== 'object') return sessionData;
+    const clone = JSON.parse(JSON.stringify(sessionData));
+    if (clone.workspaces && clone.workspaces['Private']) {
+        delete clone.workspaces['Private'];
+    }
+    if (clone.tab_titles && clone.tab_titles['Private']) {
+        delete clone.tab_titles['Private'];
+    }
+    if (clone.tab_favicons && clone.tab_favicons['Private']) {
+        delete clone.tab_favicons['Private'];
+    }
+    if (clone.tab_sleep_states && clone.tab_sleep_states['Private']) {
+        delete clone.tab_sleep_states['Private'];
+    }
+    if (clone.tab_dark_reader && clone.tab_dark_reader['Private']) {
+        delete clone.tab_dark_reader['Private'];
+    }
+    if (clone.tab_pinned && clone.tab_pinned['Private']) {
+        delete clone.tab_pinned['Private'];
+    }
+    if (clone.current_workspace === 'Private') {
+        const remaining = Object.keys(clone.workspaces || {});
+        clone.current_workspace = remaining.length > 0 ? remaining[0] : 'Workspace 1';
+        if (!clone.workspaces || remaining.length === 0) {
+            clone.workspaces = { 'Workspace 1': ['https://duckduckgo.com'] };
+        }
+    }
+    return clone;
+}
+
 function flushSessionToDisk(customPaths = {}) {
     const targetSessionPath = customPaths.sessionPath || sessionPath;
     const targetBackupPath = customPaths.sessionBackupPath || sessionBackupPath;
@@ -66,7 +97,7 @@ function flushSessionToDisk(customPaths = {}) {
         const dir = path.dirname(targetSessionPath);
         if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
-        const serialized = JSON.stringify(pendingSessionData, null, 4);
+        const serialized = JSON.stringify(sanitizeSessionForDisk(pendingSessionData), null, 4);
         const tempPath = targetSessionPath + '.tmp';
 
         // Write to temporary file first
@@ -158,6 +189,7 @@ module.exports = {
     isCrashRecoveryState,
     setCrashRecoveryState,
     getPendingSessionData,
+    sanitizeSessionForDisk,
     flushSessionToDisk,
     scheduleSessionSave,
     readCurrentSession,

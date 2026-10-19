@@ -972,8 +972,12 @@ app.on('web-contents-created', (event, webContents) => {
     if (webContents.getType() === 'webview') {
         webContents.setMaxListeners(30);
 
+        const isPrivate = webContents.session === session.fromPartition('MisePrivateProfile');
+
         webContents.on('did-navigate', (navEvent, url) => {
-            logVisit(webContents.getTitle(), url);
+            if (!isPrivate) {
+                logVisit(webContents.getTitle(), url);
+            }
             if (url) {
                 try {
                     const parsedUrl = new URL(url);
@@ -988,7 +992,9 @@ app.on('web-contents-created', (event, webContents) => {
         });
 
         webContents.on('did-navigate-in-page', (navEvent, url) => {
-            logVisit(webContents.getTitle(), url);
+            if (!isPrivate) {
+                logVisit(webContents.getTitle(), url);
+            }
         });
 
         webContents.on('context-menu', (contextEvent, params) => {

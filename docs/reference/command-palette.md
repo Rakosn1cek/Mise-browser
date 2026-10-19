@@ -102,7 +102,7 @@ The Command Centre gives you rapid, searchable access to all Mise operations, in
 | Command Title | Shortcut | Action ID | Description |
 | :--- | :--- | :--- | :--- |
 | **Open Preferences** | `Ctrl+H` | `toggle-help` | Full-page settings view for GPU switches, memory caps, and themes. |
-| **Toggle Private Browsing Mode** | `Ctrl+Shift+P` | `toggle-private-mode` | Switches session to in-memory non-persistent partition. |
+| **Switch to Private Workspace** | `Ctrl+Shift+P` | `toggle-private-mode` | Switches to the isolated Private workspace with volatile in-memory storage. |
 | **Open Diagnostics & Health Hub** | — | `open-diagnostics` | View local system health, runtime memory breakdown, and sanitised logs. |
 | **Toggle Diagnostics Recording** | — | `toggle-diagnostics-recording` | Toggles local in-memory event recording for reproduction and bug reports. |
 | **Check for Updates** | — | — | Checks GitHub Releases ledger for newer Mise versions. |

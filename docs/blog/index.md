@@ -22,6 +22,14 @@ Deep dives into the most challenging bugs, feature failures, and architectural l
 
 Each chronicle follows the development anatomy: **Problem** → **Attempted Solution** → **The Bug / Fail** → **The Architectural Fix**.
 
+### [The Anatomy of a Leak-Proof Private Workspace: When Toggling State Shatters Process Isolation](./the-anatomy-of-a-leak-proof-private-workspace.md)
+
+Why toggling private mode across persistent workspaces was an architectural hazard, how remote favicon lookups leaked host requests, and how a dedicated volatile workspace restored true privacy.
+
+`Privacy` · `Chromium Partitions` · `Process Isolation` · `Session Security` · `Electron`
+
+---
+
 ### [From 2,000 Lines of Spaghetti to Clean Orchestration: Taming the Electron Main Process](./taming-the-electron-main-process.md)
 
 How rapid prototyping turned `main.js` into a 2,100-line monolith, why shared mutable scope threatens browser stability, and how a disciplined six-phase modularisation protocol reduced technical debt without breaking tab hibernation or session state.

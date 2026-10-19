@@ -14,13 +14,14 @@ Mise integrates an in-process network request blocker powered by Ghostery's bloc
 
 ---
 
-## Global Private Browsing (`Ctrl + Shift + P`)
+## Permanent Private Workspace (`Ctrl + Shift + P`)
 
 For volatile browsing sessions where no trace should remain:
 
-- Press **Ctrl + Shift + P** to toggle Private Browsing Mode.
-- All new navigation routes through an in-memory profile partition (`MisePrivateProfile`).
-- Cookies, cache files, and site storage created during private mode are wiped completely when the session ends or when the browser closes.
+- Press **Ctrl + Shift + P** to switch directly to the permanent **Private** workspace (or return to your previous active workspace).
+- All navigation inside the Private workspace routes through an isolated, in-memory partition (`MisePrivateProfile`).
+- The canvas and sidebar apply a gentle Tokyo Night pale red background tint via CSS `color-mix`, giving clear visual feedback without harsh colours.
+- Browsing history, remote favicon lookups, cookies, cache files, and web storage are completely omitted from disk writes and flushed when the browser exits.
 
 ---
 

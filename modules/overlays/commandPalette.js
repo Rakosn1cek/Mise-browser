@@ -623,19 +623,21 @@ export const COMMAND_DEFINITIONS = [
     },
     {
         id: 'toggle-private-mode',
-        title: 'Toggle Private Browsing Mode',
-        desc: 'Switch session partition to in-memory non-persistent storage',
-        details: 'Switches the session state to an isolated in-memory partition where cookies, cache, and history are discarded upon exit.',
-        tip: 'Press Ctrl+Shift+P for ephemeral research sessions that leave no trace on disk.',
-        category: 'Preferences & System',
+        title: 'Switch to Private Workspace',
+        desc: 'Jump into dedicated volatile in-memory workspace',
+        details: 'Switches to the isolated Private workspace where cookies, cache, and history are kept in volatile memory and purged upon exit.',
+        tip: 'Press Ctrl+Shift+P to jump directly into the Private workspace.',
+        category: 'Navigation & Workspaces',
         icon: 'fa-solid fa-user-secret',
         actionId: 'toggle-private-mode',
         shortcut: 'Ctrl+Shift+P',
         keywords: ['private', 'incognito', 'privacy', 'partition'],
         action: () => {
-            const next = !state.globalPrivateModeActive;
-            state.globalPrivateModeActive = next;
-            if (window.handlePrivateBrowsingStateShift) window.handlePrivateBrowsingStateShift(next);
+            if (typeof window.togglePrivateWorkspace === 'function') {
+                window.togglePrivateWorkspace();
+            } else if (window.handlePrivateBrowsingStateShift) {
+                window.handlePrivateBrowsingStateShift();
+            }
         }
     },
     {

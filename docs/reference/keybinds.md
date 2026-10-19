@@ -25,7 +25,7 @@ All keyboard shortcuts in Mise Browser are fully customisable via `~/.config/mis
 | **Ctrl + W** | `focus-webview` | Moves focus directly into the active web page |
 | **Ctrl + Shift + Z** | `toggle-zen-mode` | Toggles sidebar expansion or pin mode |
 | **Ctrl + P** | `toggle-palette` | Opens the Command Palette |
-| **Ctrl + Shift + P** | `toggle-private-mode`| Toggles volatile in-memory private browsing mode |
+| **Ctrl + Shift + P** | `toggle-private-mode`| Switches focus to or from the permanent Private workspace |
 | **Ctrl + H** | `toggle-help` | Opens the Preferences and settings overlay |
 | **Ctrl + N** | `toggle-notes` | Opens the Markdown quick-notes overlay |
 | **Ctrl + Shift + B** | `toggle-bookmarks` | Opens the Bookmarks and Quickmarks overlay |

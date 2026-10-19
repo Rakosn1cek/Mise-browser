@@ -23,6 +23,18 @@ In Mise, every workspace is automatically assigned its own dedicated, persistent
 
 ---
 
+## The Permanent Private Workspace (`Ctrl + Shift + P`)
+
+Alongside your persistent workspaces, Mise includes a dedicated, permanent **Private** workspace:
+
+- **Strict Volatile Isolation**: The `Private` workspace is bound directly to the volatile Chromium partition `MisePrivateProfile`. Cookies, web storage, and cache are kept strictly in memory and discarded upon exit.
+- **Pinned Dashboard Placement**: In the Workspace Dashboard (`Ctrl + Shift + W`), the `Private` workspace is pinned to the top of the tree, badged with a shield icon and protected from accidental deletion or renaming.
+- **Visual Identity**: The active private workspace applies a subtle Tokyo Night rose background tint via CSS `color-mix` across the canvas and sidebar, providing immediate visual feedback without bright or jarring colours.
+- **Zero Disk Footprint**: When `session.json` is flushed to disk, the `Private` workspace and all associated tab URLs, titles, and sleep states are completely filtered out.
+- **Instant Keyboard Toggle**: Press **Ctrl + Shift + P** at any moment to switch directly into the Private workspace, or return to your previous active workspace when pressed again.
+
+---
+
 ## The Workspace Dashboard (`Ctrl + Shift + W`)
 
 The Workspace Dashboard provides a structural tree view of all open tabs across your entire session:

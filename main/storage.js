@@ -64,8 +64,20 @@ function scheduleHistoryFlush(delayMs = 4000, targetPath = historyPath) {
     }, delayMs);
 }
 
+function isRecordableHistoryUrl(url) {
+    if (typeof url !== 'string' || url.length === 0 || url.length > 4096) {
+        return false;
+    }
+    try {
+        const parsed = new URL(url);
+        return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+    } catch {
+        return false;
+    }
+}
+
 function logVisit(title, url, maxItems = MAX_HISTORY_ITEMS, targetPath = historyPath) {
-    if (!url || url === 'about:blank' || url.startsWith('file://')) return;
+    if (!isRecordableHistoryUrl(url)) return;
 
     const history = getHistoryCache(targetPath);
     if (history.length > 0 && history[0].url === url) return;
@@ -286,6 +298,7 @@ module.exports = {
     QUICKMARKS_PATH,
     historyPath,
     MAX_HISTORY_ITEMS,
+    isRecordableHistoryUrl,
     getHistoryCache,
     setInMemoryHistory,
     flushHistoryToDisk,

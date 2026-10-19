@@ -161,6 +161,7 @@ export function createWebView(url, currentWS, idx) {
     }, listenerOptions);
 
     webview.addEventListener('page-favicon-updated', (e) => {
+        if (webview.getAttribute('partition') === 'MisePrivateProfile') return;
         if (e.favicons && e.favicons.length > 0) {
             const iconUrl = e.favicons[0];
             const liveIdx = getLiveTabIndex(webview, currentWS, idx);
@@ -838,6 +839,10 @@ export function getFaviconUrl(urlStr) {
 
 export function renderWorkspaceUI(targetTabToFocus = null) {
     const currentWS = state.sessionState.current_workspace;
+    const isPrivateWS = getWorkspacePartition(currentWS) === 'MisePrivateProfile';
+    if (typeof document !== 'undefined' && document.body) {
+        document.body.classList.toggle('workspace-private', isPrivateWS);
+    }
     const wsLabel = document.getElementById('WorkspaceLabel');
     if (wsLabel) {
         wsLabel.textContent = currentWS;
@@ -845,7 +850,7 @@ export function renderWorkspaceUI(targetTabToFocus = null) {
     }
     const wsBadge = document.getElementById('WorkspaceBadge');
     if (wsBadge) {
-        wsBadge.textContent = getWorkspaceBadgeText(currentWS);
+        wsBadge.textContent = isPrivateWS ? 'PR' : getWorkspaceBadgeText(currentWS);
         wsBadge.title = `Workspace: ${currentWS} (Container: ${getWorkspacePartition(currentWS)})`;
     }
     const wsHeader = document.getElementById('WorkspaceHeader');
@@ -962,7 +967,8 @@ export function renderWorkspaceUI(targetTabToFocus = null) {
             favWrapper.appendChild(indexBadge);
         }
 
-        const initialFav = cachedFavicon || getFaviconUrl(url);
+        const isPrivateProfile = getWorkspacePartition(currentWS) === 'MisePrivateProfile';
+        const initialFav = isPrivateProfile ? null : (cachedFavicon || getFaviconUrl(url));
         if (initialFav) {
             favImg.src = initialFav;
             favImg.onload = () => {

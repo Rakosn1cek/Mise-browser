@@ -58,6 +58,7 @@ export function focusActiveWebview() {
 // Generates a filesystem-safe persistent container partition string for a workspace
 export function getWorkspacePartition(workspaceName) {
     if (!workspaceName) return 'persist:default';
+    if (workspaceName === 'Private') return 'MisePrivateProfile';
     const clean = String(workspaceName).trim().toLowerCase().replace(/[^a-z0-9_-]/gi, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
     return `persist:${clean || 'default'}`;
 }

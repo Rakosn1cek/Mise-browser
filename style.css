@@ -255,6 +255,31 @@ body.sidebar-auto-collapse #Sidebar:not(:hover):not(.expanded):not(:focus-within
     transition: margin 0.2s ease, border-color 0.2s ease;
 }
 
+/* Private workspace subtle Tokyo Night rose styling */
+body.workspace-private {
+    --bg-main: color-mix(in srgb, #f7768e 6%, #1a1b26);
+    --bg-sidebar: color-mix(in srgb, #f7768e 8%, #16161e);
+}
+
+body.light-mode.workspace-private {
+    --bg-main: color-mix(in srgb, #f7768e 8%, #f2f4f8);
+    --bg-sidebar: color-mix(in srgb, #f7768e 10%, #e6e9ef);
+}
+
+body.workspace-private #Sidebar {
+    border-right: 1px solid color-mix(in srgb, #f7768e 35%, var(--border));
+}
+
+body.workspace-private #WorkspaceBadge {
+    background: color-mix(in srgb, #f7768e 18%, var(--bg-sidebar));
+    border-color: #f7768e;
+    color: #f7768e;
+}
+
+body.workspace-private #WorkspaceHeader:hover {
+    background: color-mix(in srgb, #f7768e 15%, var(--bg-sidebar));
+}
+
 #WorkspaceLabel {
     color: var(--text);
     font-weight: bold;
