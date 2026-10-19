@@ -1003,13 +1003,13 @@ app.on('web-contents-created', (event, webContents) => {
             };
 
             const openLinkTab = (url) => {
-                if (mainWindow && mainWindow.webContents) {
+                if (security.isSafeTabUrl(url) && mainWindow && mainWindow.webContents) {
                     mainWindow.webContents.send('master-shortcut', 'spawn-tab-with-url', url);
                 }
             };
 
             const openLinkInSplit = (url) => {
-                if (mainWindow && mainWindow.webContents) {
+                if (security.isSafeTabUrl(url) && mainWindow && mainWindow.webContents) {
                     mainWindow.webContents.send('master-shortcut', 'open-link-in-split', url);
                 }
             };
@@ -1184,8 +1184,20 @@ app.on('web-contents-created', (event, webContents) => {
 
         webContents.setWindowOpenHandler((details) => {
             if (details.url && details.url !== 'about:blank') {
-                if (mainWindow && mainWindow.webContents) {
-                    mainWindow.webContents.send('master-shortcut', 'spawn-tab-with-url', details.url);
+                if (security.isSafeTabUrl(details.url)) {
+                    if (mainWindow && mainWindow.webContents) {
+                        mainWindow.webContents.send('master-shortcut', 'spawn-tab-with-url', details.url);
+                    }
+                } else {
+                    let scheme = 'unknown';
+                    try {
+                        scheme = new URL(details.url).protocol;
+                    } catch (e) {
+                        if (typeof details.url === 'string') {
+                            scheme = details.url.split(':')[0] || 'unknown';
+                        }
+                    }
+                    diagnostics.logEvent('warn', 'navigation', 'Blocked popup URL', { scheme });
                 }
             }
             return { action: 'deny' };
@@ -1248,7 +1260,9 @@ if (gotSingleInstanceLock) {
             mainWindow.show();
             mainWindow.focus();
         }
-        dispatchTabUrl(url);
+        if (security.isSafeTabUrl(url)) {
+            dispatchTabUrl(url);
+        }
     });
 
     app.on('before-quit', () => {

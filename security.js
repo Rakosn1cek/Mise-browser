@@ -442,6 +442,14 @@ function validatePdfAccess(token, targetUrl, senderUrl) {
     }
 }
 
+function isSafeTabUrl(url) {
+    if (typeof url !== 'string' || url.length === 0 || url.length > 16384) return false;
+    try {
+        const p = new URL(url);
+        return p.protocol === 'http:' || p.protocol === 'https:';
+    } catch (e) { return false; }
+}
+
 module.exports = {
     decidePermission,
     hardenSession,
@@ -455,5 +463,6 @@ module.exports = {
     isGoogleSignInRequest,
     attachNetworkHandlers,
     mintPdfViewerUrl,
-    validatePdfAccess
+    validatePdfAccess,
+    isSafeTabUrl
 };
