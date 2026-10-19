@@ -128,6 +128,29 @@ function applySpellcheckerLanguage(targetSession, languageCode) {
     }
 }
 
+const ALLOWED = [
+    'fullscreen',
+    'clipboard-sanitized-write',
+    'pointerLock',
+    'keyboardLock',
+    'storage-access',
+    'top-level-storage-access',
+    'speaker-selection'
+];
+
+function decidePermission(permission, { trusted, notificationsEnabled } = {}) {
+    if (trusted === true) {
+        return true;
+    }
+    if (permission === 'notifications') {
+        return Boolean(notificationsEnabled);
+    }
+    if (ALLOWED.includes(permission)) {
+        return true;
+    }
+    return false;
+}
+
 function hardenSession(targetSession, spellLang = 'en-GB') {
     applySpellcheckerLanguage(targetSession, spellLang);
     initialiseAdblocker(targetSession);
@@ -136,54 +159,6 @@ function hardenSession(targetSession, spellLang = 'en-GB') {
     if (typeof targetSession.setWebRTCIPHandlingPolicy === 'function') {
         targetSession.setWebRTCIPHandlingPolicy('default_public_interface_only');
     }
-
-    // Kept restricted permissions, but removed 'notifications' so the main toggle handles it
-    const blockedPermissions = ['media', 'geolocation', 'midiSysex', 'audio', 'video'];
-
-    targetSession.setPermissionRequestHandler((webContents, permission, callback) => {
-        let hostname = '';
-        try { hostname = new URL(webContents.getURL()).hostname; } catch (e) {}
-
-        if (isTrustedDomain(hostname)) {
-            return callback(true);
-        }
-        if (permission === 'clipboard-read') {
-            return callback(false);
-        }
-        if (permission === 'clipboard-sanitized-write') {
-            return callback(true);
-        }
-        if (permission === 'notifications') {
-            // Respect the global toggle state if defined, or grant
-            return callback(true);
-        }
-        if (blockedPermissions.includes(permission)) {
-            return callback(false);
-        }
-        callback(true);
-    });
-
-    targetSession.setPermissionCheckHandler((webContents, permission, origin) => {
-        let hostname = '';
-        try { hostname = new URL(origin).hostname; } catch (e) {}
-
-        if (isTrustedDomain(hostname)) {
-            return true;
-        }
-        if (permission === 'clipboard-read') {
-            return false;
-        }
-        if (permission === 'clipboard-sanitized-write') {
-            return true;
-        }
-        if (permission === 'notifications') {
-            return true;
-        }
-        if (blockedPermissions.includes(permission)) {
-            return false;
-        }
-        return true;
-    });
 
     attachNetworkHandlers(targetSession);
 
@@ -468,6 +443,7 @@ function validatePdfAccess(token, targetUrl, senderUrl) {
 }
 
 module.exports = {
+    decidePermission,
     hardenSession,
     hardenWebviewPreferences,
     setTrustedDomains,

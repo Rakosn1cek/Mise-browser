@@ -247,25 +247,32 @@ function configureAndHardenSession(targetSession) {
 }
 
 function configureSessionPermissions(targetSession) {
-    const blockedPermissions = ['media', 'geolocation', 'midiSysex', 'audio', 'video'];
-
     targetSession.setPermissionRequestHandler((webContents, permission, callback) => {
         let hostname = '';
         try { hostname = new URL(webContents.getURL()).hostname; } catch (e) {}
-        if (security.isTrustedDomain(hostname)) return callback(true);
-        if (permission === 'notifications') return callback(globalNotificationsEnabled);
-        if (permission === 'clipboard-read' || permission === 'clipboard-sanitized-write') return callback(true);
-        if (blockedPermissions.includes(permission)) return callback(false);
-        callback(true);
+        const trusted = security.isTrustedDomain(hostname);
+        const allowed = security.decidePermission(permission, {
+            trusted,
+            notificationsEnabled: globalNotificationsEnabled
+        });
+        if (!allowed) {
+            diagnostics.logEvent('warn', 'permissions', 'Denied permission', { permission, hostname });
+        }
+        callback(allowed);
     });
 
     targetSession.setPermissionCheckHandler((webContents, permission, origin) => {
         let hostname = '';
         try { hostname = new URL(origin).hostname; } catch (e) {}
-        if (security.isTrustedDomain(hostname)) return true;
-        if (permission === 'notifications') return globalNotificationsEnabled;
-        if (permission === 'clipboard-read' || permission === 'clipboard-sanitized-write') return true;
-        return !blockedPermissions.includes(permission);
+        const trusted = security.isTrustedDomain(hostname);
+        const allowed = security.decidePermission(permission, {
+            trusted,
+            notificationsEnabled: globalNotificationsEnabled
+        });
+        if (!allowed) {
+            diagnostics.logEvent('warn', 'permissions', 'Denied permission', { permission, hostname });
+        }
+        return allowed;
     });
 }
 
