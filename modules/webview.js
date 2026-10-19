@@ -13,6 +13,8 @@ import {
 import { buildUserScriptWrapper } from './userScriptShim.js';
 import { reapplyWebviewDarkReader } from './darkReader.js';
 import { exportArticleToNotes, exportArticleToExternalApp, openNotesInExternalApp } from './overlays/notes.js';
+import { originOf, sanitizeSnapshot, attachSnapshot, snapshotForRestore } from './sleepSnapshot.js';
+
 
 export function applyCSSThemeToView() {
     // Intentionally no-op to preserve native website themes
@@ -1743,9 +1745,8 @@ export function wakeTab(currentWS, idx) {
 
     const sleepRecord = state.tabSleepStates[currentWS]?.[idx];
     const targetUrl = sleepRecord?.url || urls[idx];
-    const scrollX = sleepRecord?.scrollX || 0;
-    const scrollY = sleepRecord?.scrollY || 0;
-    const savedSessionStorage = sleepRecord?.sessionStorage || null;
+    const scrollX = Number(sleepRecord?.scrollX) || 0;
+    const scrollY = Number(sleepRecord?.scrollY) || 0;
 
     const container = document.getElementById('webview-container');
     const webview = createWebView(targetUrl, currentWS, idx);
@@ -1753,12 +1754,13 @@ export function wakeTab(currentWS, idx) {
         webview.__miseDarkReaderEnabled = true;
     }
 
-    if (savedSessionStorage || scrollX > 0 || scrollY > 0) {
+    if (sleepRecord?.sessionSnapshot || scrollX > 0 || scrollY > 0) {
         const restoreState = () => {
-            if (savedSessionStorage) {
+            const restoredSession = snapshotForRestore(sleepRecord, webview.getURL());
+            if (typeof restoredSession === 'string') {
                 webview.executeJavaScript(`(function() {
                     try {
-                        const data = JSON.parse(${JSON.stringify(savedSessionStorage)});
+                        const data = JSON.parse(${JSON.stringify(restoredSession)});
                         for (const k in data) {
                             if (!window.sessionStorage.getItem(k)) {
                                 window.sessionStorage.setItem(k, data[k]);
@@ -1839,8 +1841,10 @@ export async function hibernateTab(currentWS, idx) {
     let scrollY = 0;
     let finalUrl = urls[idx];
     let finalTitle = state.activeTitlesCache[currentWS]?.[idx] || 'Tab';
-    let savedSessionStorage = null;
     let isDarkReader = false;
+    let originBefore = null;
+    let originAfter = null;
+    let rawSession = null;
 
     if (webview) {
         isDarkReader = !!webview.__miseDarkReaderEnabled;
@@ -1856,7 +1860,11 @@ export async function hibernateTab(currentWS, idx) {
         } catch (err) {}
 
         try {
-            const rawSession = await webview.executeJavaScript(`(function() {
+            originBefore = originOf(webview.getURL());
+        } catch (err) {}
+
+        try {
+            rawSession = await webview.executeJavaScript(`(function() {
                 try {
                     const data = {};
                     for (let i = 0; i < window.sessionStorage.length; i++) {
@@ -1868,9 +1876,10 @@ export async function hibernateTab(currentWS, idx) {
                     return null;
                 }
             })()`);
-            if (rawSession && rawSession !== '{}') {
-                savedSessionStorage = rawSession;
-            }
+        } catch (err) {}
+
+        try {
+            originAfter = originOf(webview.getURL());
         } catch (err) {}
 
         try {
@@ -1900,15 +1909,21 @@ export async function hibernateTab(currentWS, idx) {
     }
 
     if (!state.tabSleepStates[currentWS]) state.tabSleepStates[currentWS] = [];
-    state.tabSleepStates[currentWS][idx] = {
+    const sleepRecord = {
         url: finalUrl,
         title: finalTitle,
         scrollX,
         scrollY,
-        sessionStorage: savedSessionStorage,
         darkReader: isDarkReader,
         hibernatedAt: Date.now()
     };
+    if (originBefore && originBefore === originAfter) {
+        const sanitizedData = sanitizeSnapshot(rawSession);
+        if (sanitizedData !== null) {
+            attachSnapshot(sleepRecord, originBefore, sanitizedData);
+        }
+    }
+    state.tabSleepStates[currentWS][idx] = sleepRecord;
 
     if (currentWS === state.sessionState.current_workspace) {
         updateTabSleepUI(idx, true);

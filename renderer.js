@@ -349,6 +349,16 @@ async function initializeBrowser() {
     }
 
     if (state.sessionState.tab_sleep_states && !isCrashRecovery) {
+        Object.keys(state.sessionState.tab_sleep_states).forEach(ws => {
+            const records = state.sessionState.tab_sleep_states[ws];
+            if (Array.isArray(records)) {
+                records.forEach(rec => {
+                    if (rec && typeof rec === 'object') {
+                        delete rec.sessionStorage;
+                    }
+                });
+            }
+        });
         state.tabSleepStates = { ...state.sessionState.tab_sleep_states };
         // Initialise any awake background tabs as sleeping on boot to conserve memory
         Object.keys(state.sessionState.workspaces || {}).forEach(ws => {
@@ -385,7 +395,6 @@ async function initializeBrowser() {
                         title: prev?.title || state.activeTitlesCache[ws]?.[i] || u,
                         scrollX: prev?.scrollX || 0,
                         scrollY: prev?.scrollY || 0,
-                        sessionStorage: prev?.sessionStorage || null,
                         darkReader: prev?.darkReader || !!state.tabDarkReaderStates?.[ws]?.[i],
                         hibernatedAt: Date.now()
                     };
