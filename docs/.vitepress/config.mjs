@@ -43,6 +43,7 @@ export default defineConfig({
       {
         text: 'Engineering Chronicles',
         items: [
+          { text: 'The Silent Truncation Trap', link: '/blog/the-silent-truncation-trap' },
           { text: 'Leak-Proof Private Workspace', link: '/blog/the-anatomy-of-a-leak-proof-private-workspace' },
           { text: 'Taming the Main Process', link: '/blog/taming-the-electron-main-process' },
           { text: 'The Awakening Cascade', link: '/blog/tab-traversal-awakening-cascade' },

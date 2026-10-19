@@ -22,6 +22,14 @@ Deep dives into the most challenging bugs, feature failures, and architectural l
 
 Each chronicle follows the development anatomy: **Problem** → **Attempted Solution** → **The Bug / Fail** → **The Architectural Fix**.
 
+### [The Silent Truncation Trap: How Mid-Write Crashes and Naive Fallbacks Destroyed User Data](./the-silent-truncation-trap.md)
+
+Why direct synchronous file writes and silent default fallbacks caused catastrophic data loss, and how atomic filesystem guarantees and corrupt file snapshotting resolved it.
+
+`Data Integrity` · `Filesystem Architecture` · `Crash Resilience` · `Storage Security` · `Electron`
+
+---
+
 ### [The Anatomy of a Leak-Proof Private Workspace: When Toggling State Shatters Process Isolation](./the-anatomy-of-a-leak-proof-private-workspace.md)
 
 Why toggling private mode across persistent workspaces was an architectural hazard, how remote favicon lookups leaked host requests, and how a dedicated volatile workspace restored true privacy.

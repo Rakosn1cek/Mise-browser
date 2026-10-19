@@ -8,7 +8,8 @@ console.log('Running Mise storage & local data regression tests...');
 
 const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'mise-storage-test-'));
 
-try {
+async function runTests() {
+    try {
     // 1. Verify Bookmarks read and write
     {
         const testBookmarksPath = path.join(tmpDir, 'bookmarks.json');
@@ -147,9 +148,137 @@ try {
         console.log('✓ History atomic disk flush and purge verified');
     }
 
+    // 7. Verify Corrupt file handling and backup persistence
+    {
+        const testBookmarksPath = path.join(tmpDir, 'corrupt-bookmarks.json');
+        const testQuickmarksPath = path.join(tmpDir, 'corrupt-quickmarks.json');
+        const testHistoryPath = path.join(tmpDir, 'corrupt-history.json');
+
+        // Bookmarks: "{broken"
+        fs.writeFileSync(testBookmarksPath, '{broken', 'utf8');
+        const bookmarksFallback = storage.readBookmarks(testBookmarksPath);
+        assert.deepStrictEqual(bookmarksFallback, [], 'Corrupt bookmarks must return empty array');
+        const bookmarkBackups = fs.readdirSync(tmpDir).filter((name) => name.startsWith('corrupt-bookmarks.json.corrupt-'));
+        assert.strictEqual(bookmarkBackups.length, 1, 'Corrupt bookmarks backup must exist');
+        assert.strictEqual(fs.readFileSync(path.join(tmpDir, bookmarkBackups[0]), 'utf8'), '{broken');
+
+        // Second read creates NO second copy
+        const bookmarksSecondRead = storage.readBookmarks(testBookmarksPath);
+        assert.deepStrictEqual(bookmarksSecondRead, []);
+        const bookmarkBackupsAfterSecond = fs.readdirSync(tmpDir).filter((name) => name.startsWith('corrupt-bookmarks.json.corrupt-'));
+        assert.strictEqual(bookmarkBackupsAfterSecond.length, 1, 'Reading unchanged corrupt bookmarks again must not duplicate backup');
+
+        // saveBookmarks writes valid JSON, corrupt copy still exists
+        const saveOk = storage.saveBookmarks([{ id: 'b1', title: 'Test', url: 'https://example.com' }], testBookmarksPath);
+        assert.strictEqual(saveOk, true, 'saveBookmarks must succeed');
+        assert.strictEqual(fs.readdirSync(tmpDir).filter((name) => name.startsWith('corrupt-bookmarks.json.corrupt-')).length, 1, 'Corrupt backup must still exist after valid save');
+
+        // Quickmarks: valid-JSON-but-wrong-type "[]"
+        fs.writeFileSync(testQuickmarksPath, '[]', 'utf8');
+        const quickmarksFallback = storage.readQuickmarks(testQuickmarksPath);
+        assert.deepStrictEqual(quickmarksFallback, {}, 'Invalid quickmarks type must return empty object');
+        const quickmarkBackups = fs.readdirSync(tmpDir).filter((name) => name.startsWith('corrupt-quickmarks.json.corrupt-'));
+        assert.strictEqual(quickmarkBackups.length, 1, 'Quickmarks corrupt backup must exist');
+        assert.strictEqual(fs.readFileSync(path.join(tmpDir, quickmarkBackups[0]), 'utf8'), '[]');
+
+        // Second read creates NO second copy
+        const quickmarksSecondRead = storage.readQuickmarks(testQuickmarksPath);
+        assert.deepStrictEqual(quickmarksSecondRead, {});
+        assert.strictEqual(fs.readdirSync(tmpDir).filter((name) => name.startsWith('corrupt-quickmarks.json.corrupt-')).length, 1);
+
+        // saveQuickmarks writes valid JSON, corrupt copy still exists
+        const saveQmOk = storage.saveQuickmarks({ x: 'https://example.org' }, testQuickmarksPath);
+        assert.strictEqual(saveQmOk, true);
+        assert.strictEqual(fs.readdirSync(tmpDir).filter((name) => name.startsWith('corrupt-quickmarks.json.corrupt-')).length, 1);
+
+        // History: "{broken" via getHistoryCache(targetPath)
+        fs.writeFileSync(testHistoryPath, '{broken', 'utf8');
+        storage.setInMemoryHistory(null);
+        const historyFallback = storage.getHistoryCache(testHistoryPath);
+        assert.deepStrictEqual(historyFallback, [], 'Corrupt history must return empty array');
+        const historyBackups = fs.readdirSync(tmpDir).filter((name) => name.startsWith('corrupt-history.json.corrupt-'));
+        assert.strictEqual(historyBackups.length, 1, 'Corrupt history backup must exist');
+        assert.strictEqual(fs.readFileSync(path.join(tmpDir, historyBackups[0]), 'utf8'), '{broken');
+
+        // Second read creates NO second copy
+        storage.setInMemoryHistory(null);
+        const historySecondRead = storage.getHistoryCache(testHistoryPath);
+        assert.deepStrictEqual(historySecondRead, []);
+        assert.strictEqual(fs.readdirSync(tmpDir).filter((name) => name.startsWith('corrupt-history.json.corrupt-')).length, 1);
+
+        console.log('✓ Corrupt file detection, recovery, and backup deduplication verified');
+    }
+
+    // 8. Verify storage validators and byte-identical preservation on rejection
+    {
+        const valBmPath = path.join(tmpDir, 'val-bookmarks.json');
+        const valQmPath = path.join(tmpDir, 'val-quickmarks.json');
+        const valNotesPath = path.join(tmpDir, 'val-notes.md');
+
+        // Seed with valid files
+        storage.saveBookmarks([{ id: 'orig', title: 'Original', url: 'https://original.com' }], valBmPath);
+        storage.saveQuickmarks({ o: 'https://original.com' }, valQmPath);
+        storage.saveNotes('Original notes text', valNotesPath);
+
+        const bmBefore = fs.readFileSync(valBmPath);
+        const qmBefore = fs.readFileSync(valQmPath);
+        const notesBefore = fs.readFileSync(valNotesPath);
+
+        // Invalid types must return false and leave file byte-identical
+        assert.strictEqual(storage.saveBookmarks({}, valBmPath), false, 'saveBookmarks({}) must return false');
+        assert.deepStrictEqual(fs.readFileSync(valBmPath), bmBefore, 'Bookmarks file must remain byte-identical');
+
+        assert.strictEqual(storage.saveQuickmarks([], valQmPath), false, 'saveQuickmarks([]) must return false');
+        assert.deepStrictEqual(fs.readFileSync(valQmPath), qmBefore, 'Quickmarks file must remain byte-identical');
+
+        assert.strictEqual(storage.saveNotes(123, valNotesPath), false, 'saveNotes(123) must return false');
+        assert.deepStrictEqual(fs.readFileSync(valNotesPath), notesBefore, 'Notes file must remain byte-identical');
+
+        // Oversized content (> 5 MB) must return false and leave file byte-identical
+        const oversizedString = 'x'.repeat(5 * 1024 * 1024 + 1);
+        assert.strictEqual(storage.saveNotes(oversizedString, valNotesPath), false, 'saveNotes with > 5 MB must return false');
+        assert.deepStrictEqual(fs.readFileSync(valNotesPath), notesBefore, 'Notes file must remain byte-identical on oversized content');
+
+        const oversizedBookmarks = [{ data: 'x'.repeat(5 * 1024 * 1024) }];
+        assert.strictEqual(storage.saveBookmarks(oversizedBookmarks, valBmPath), false, 'Oversized bookmarks must return false');
+        assert.deepStrictEqual(fs.readFileSync(valBmPath), bmBefore, 'Bookmarks file must remain byte-identical on oversized payload');
+
+        console.log('✓ Storage validators and byte-identical preservation on rejection verified');
+    }
+
+    // 9. Verify external commands read config from custom targetConfigDir
+    {
+        const customConfigDir = path.join(tmpDir, 'custom-config-dir');
+        fs.mkdirSync(customConfigDir, { recursive: true });
+        const customConfigPath = path.join(customConfigDir, 'config.json');
+        fs.writeFileSync(customConfigPath, JSON.stringify({
+            external_notes_command: 'harmless-dummy-editor -f'
+        }, null, 4), 'utf8');
+
+        const notesRes = await storage.openNotesInExternalApp(null, customConfigDir);
+        assert.strictEqual(notesRes.success, true, 'openNotesInExternalApp must succeed');
+        assert.strictEqual(notesRes.app, 'harmless-dummy-editor', 'Command binary must match custom config');
+
+        const exportRes = await storage.exportArticleToExternal({
+            title: 'Sample Article',
+            markdown: '# Sample Content'
+        }, customConfigDir);
+        assert.strictEqual(exportRes.success, true, 'exportArticleToExternal must succeed');
+        assert.strictEqual(exportRes.app, 'harmless-dummy-editor', 'Export command binary must match custom config');
+        assert(fs.existsSync(exportRes.path), 'Exported clipping file must exist on disk');
+
+        console.log('✓ openNotesInExternalApp and exportArticleToExternal custom config paths verified');
+    }
+
     console.log('All storage & local data regression tests passed successfully!');
 } finally {
     try {
         fs.rmSync(tmpDir, { recursive: true, force: true });
     } catch (e) {}
 }
+}
+
+runTests().catch((err) => {
+    console.error(err);
+    process.exit(1);
+});

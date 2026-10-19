@@ -86,6 +86,12 @@ function loadBrowserConfig(targetDir = CONFIG_DIR, targetPath = CONFIG_PATH) {
             }
         };
     } catch (e) {
+        try {
+            if (fs.existsSync(targetPath)) {
+                const { backupCorruptFile } = require('./atomicFile');
+                backupCorruptFile(targetPath);
+            }
+        } catch (_) {}
         return { ...DEFAULT_CONFIG };
     }
 }

@@ -13,6 +13,7 @@ const shell = (electronModule && electronModule.shell) ? electronModule.shell : 
 };
 
 const config = require('./config');
+const { atomicWriteFileSync, readJsonFileOrBackup } = require('./atomicFile');
 const CONFIG_DIR = config.CONFIG_DIR;
 
 const NOTES_PATH = path.join(CONFIG_DIR, 'notes.md');
@@ -20,18 +21,19 @@ const BOOKMARKS_PATH = path.join(CONFIG_DIR, 'bookmarks.json');
 const QUICKMARKS_PATH = path.join(CONFIG_DIR, 'quickmarks.json');
 const historyPath = path.join(CONFIG_DIR, 'history.json');
 const MAX_HISTORY_ITEMS = 500;
+const MAX_STORAGE_SIZE = 5 * 1024 * 1024;
 
 let inMemoryHistory = null;
 let historyFlushTimer = null;
 
+function isPlainObject(val) {
+    return typeof val === 'object' && val !== null && !Array.isArray(val);
+}
+
 function getHistoryCache(targetPath = historyPath) {
     if (inMemoryHistory === null) {
         try {
-            if (fs.existsSync(targetPath)) {
-                inMemoryHistory = JSON.parse(fs.readFileSync(targetPath, 'utf8'));
-            } else {
-                inMemoryHistory = [];
-            }
+            inMemoryHistory = readJsonFileOrBackup(targetPath, Array.isArray, () => []);
         } catch (err) {
             inMemoryHistory = [];
         }
@@ -40,7 +42,7 @@ function getHistoryCache(targetPath = historyPath) {
 }
 
 function setInMemoryHistory(list) {
-    inMemoryHistory = Array.isArray(list) ? list : [];
+    inMemoryHistory = Array.isArray(list) ? list : (list === null ? null : []);
 }
 
 function flushHistoryToDisk(targetPath = historyPath) {
@@ -50,9 +52,7 @@ function flushHistoryToDisk(targetPath = historyPath) {
     }
     if (inMemoryHistory === null) return;
     try {
-        const dir = path.dirname(targetPath);
-        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-        fs.writeFileSync(targetPath, JSON.stringify(inMemoryHistory, null, 4), 'utf8');
+        atomicWriteFileSync(targetPath, JSON.stringify(inMemoryHistory, null, 4));
     } catch (err) {}
 }
 
@@ -114,7 +114,7 @@ function purgeHistory(targetPath = historyPath) {
             historyFlushTimer = null;
         }
         if (fs.existsSync(targetPath)) {
-            fs.writeFileSync(targetPath, JSON.stringify([], null, 4), 'utf8');
+            atomicWriteFileSync(targetPath, JSON.stringify([], null, 4));
         }
         return true;
     } catch (err) {
@@ -124,10 +124,11 @@ function purgeHistory(targetPath = historyPath) {
 
 function readBookmarks(targetPath = BOOKMARKS_PATH) {
     try {
-        const dir = path.dirname(targetPath);
-        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-        if (!fs.existsSync(targetPath)) fs.writeFileSync(targetPath, JSON.stringify([]), 'utf-8');
-        return JSON.parse(fs.readFileSync(targetPath, 'utf-8'));
+        if (!fs.existsSync(targetPath)) {
+            atomicWriteFileSync(targetPath, JSON.stringify([]));
+            return [];
+        }
+        return readJsonFileOrBackup(targetPath, Array.isArray, () => []);
     } catch (err) {
         return [];
     }
@@ -135,9 +136,10 @@ function readBookmarks(targetPath = BOOKMARKS_PATH) {
 
 function saveBookmarks(data, targetPath = BOOKMARKS_PATH) {
     try {
-        const dir = path.dirname(targetPath);
-        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-        fs.writeFileSync(targetPath, JSON.stringify(data, null, 4), 'utf-8');
+        if (!Array.isArray(data)) return false;
+        const serialized = JSON.stringify(data, null, 4);
+        if (typeof serialized !== 'string' || serialized.length > MAX_STORAGE_SIZE) return false;
+        atomicWriteFileSync(targetPath, serialized);
         return true;
     } catch (err) {
         return false;
@@ -146,10 +148,11 @@ function saveBookmarks(data, targetPath = BOOKMARKS_PATH) {
 
 function readQuickmarks(targetPath = QUICKMARKS_PATH) {
     try {
-        const dir = path.dirname(targetPath);
-        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-        if (!fs.existsSync(targetPath)) fs.writeFileSync(targetPath, JSON.stringify({}), 'utf-8');
-        return JSON.parse(fs.readFileSync(targetPath, 'utf-8'));
+        if (!fs.existsSync(targetPath)) {
+            atomicWriteFileSync(targetPath, JSON.stringify({}));
+            return {};
+        }
+        return readJsonFileOrBackup(targetPath, isPlainObject, () => ({}));
     } catch (err) {
         return {};
     }
@@ -157,9 +160,10 @@ function readQuickmarks(targetPath = QUICKMARKS_PATH) {
 
 function saveQuickmarks(data, targetPath = QUICKMARKS_PATH) {
     try {
-        const dir = path.dirname(targetPath);
-        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-        fs.writeFileSync(targetPath, JSON.stringify(data, null, 4), 'utf-8');
+        if (!isPlainObject(data)) return false;
+        const serialized = JSON.stringify(data, null, 4);
+        if (typeof serialized !== 'string' || serialized.length > MAX_STORAGE_SIZE) return false;
+        atomicWriteFileSync(targetPath, serialized);
         return true;
     } catch (err) {
         return false;
@@ -168,9 +172,10 @@ function saveQuickmarks(data, targetPath = QUICKMARKS_PATH) {
 
 function readNotes(targetPath = NOTES_PATH) {
     try {
-        const dir = path.dirname(targetPath);
-        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-        if (!fs.existsSync(targetPath)) fs.writeFileSync(targetPath, '', 'utf-8');
+        if (!fs.existsSync(targetPath)) {
+            atomicWriteFileSync(targetPath, '');
+            return '';
+        }
         return fs.readFileSync(targetPath, 'utf-8');
     } catch (err) {
         return '';
@@ -179,9 +184,8 @@ function readNotes(targetPath = NOTES_PATH) {
 
 function saveNotes(content, targetPath = NOTES_PATH) {
     try {
-        const dir = path.dirname(targetPath);
-        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-        fs.writeFileSync(targetPath, content, 'utf-8');
+        if (typeof content !== 'string' || content.length > MAX_STORAGE_SIZE) return false;
+        atomicWriteFileSync(targetPath, content);
         return true;
     } catch (err) {
         return false;
@@ -190,12 +194,10 @@ function saveNotes(content, targetPath = NOTES_PATH) {
 
 async function openNotesInExternalApp(customPath, targetConfigDir = CONFIG_DIR) {
     try {
-        const cfg = config.loadBrowserConfig(path.join(targetConfigDir, 'config.json'));
+        const cfg = config.loadBrowserConfig(targetConfigDir, path.join(targetConfigDir, 'config.json'));
         const targetPath = customPath || NOTES_PATH;
         if (!fs.existsSync(targetPath)) {
-            const dir = path.dirname(targetPath);
-            if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-            fs.writeFileSync(targetPath, '', 'utf-8');
+            atomicWriteFileSync(targetPath, '');
         }
         const cmd = (cfg.external_notes_command || '').trim();
         if (cmd) {
@@ -204,6 +206,7 @@ async function openNotesInExternalApp(customPath, targetConfigDir = CONFIG_DIR) 
                 detached: true,
                 stdio: 'ignore'
             });
+            proc.on('error', () => {});
             proc.unref();
             return { success: true, app: tokens[0] };
         } else {
@@ -217,7 +220,7 @@ async function openNotesInExternalApp(customPath, targetConfigDir = CONFIG_DIR) 
 
 async function exportArticleToExternal({ title, markdown } = {}, targetConfigDir = CONFIG_DIR) {
     try {
-        const cfg = config.loadBrowserConfig(path.join(targetConfigDir, 'config.json'));
+        const cfg = config.loadBrowserConfig(targetConfigDir, path.join(targetConfigDir, 'config.json'));
         const clippingsDir = path.join(targetConfigDir, 'clippings');
         if (!fs.existsSync(clippingsDir)) fs.mkdirSync(clippingsDir, { recursive: true });
 
@@ -230,7 +233,7 @@ async function exportArticleToExternal({ title, markdown } = {}, targetConfigDir
         const filename = `${safeTitle}_${timestamp}.md`;
         const targetPath = path.join(clippingsDir, filename);
 
-        fs.writeFileSync(targetPath, markdown || '', 'utf-8');
+        atomicWriteFileSync(targetPath, markdown || '');
 
         const cmd = (cfg.external_notes_command || '').trim();
         if (cmd) {
@@ -239,6 +242,7 @@ async function exportArticleToExternal({ title, markdown } = {}, targetConfigDir
                 detached: true,
                 stdio: 'ignore'
             });
+            proc.on('error', () => {});
             proc.unref();
             return { success: true, path: targetPath, app: tokens[0] };
         } else {

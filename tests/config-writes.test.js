@@ -45,4 +45,32 @@ const configSource = fs.readFileSync(path.join(__dirname, '..', 'main', 'config.
     }
 }
 
+// 3. Corrupt config handling: loadBrowserConfig returns defaults and preserves corrupt copy
+{
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'mise-config-corrupt-'));
+    const testConfigPath = path.join(tmpDir, 'config.json');
+
+    try {
+        fs.writeFileSync(testConfigPath, '{bad-json-payload', 'utf8');
+
+        const loaded = config.loadBrowserConfig(tmpDir, testConfigPath);
+        assert.strictEqual(loaded.theme, 'dark', 'Must return default config on corrupt file');
+        assert.strictEqual(loaded.spellchecker_language, 'en-GB', 'Must return default spellchecker language');
+
+        const corruptBackups = fs.readdirSync(tmpDir).filter((name) => name.startsWith('config.json.corrupt-'));
+        assert.strictEqual(corruptBackups.length, 1, 'Corrupt config must leave a .corrupt-* copy');
+        assert.strictEqual(fs.readFileSync(path.join(tmpDir, corruptBackups[0]), 'utf8'), '{bad-json-payload', 'Backup must contain exact corrupt payload');
+
+        // Reading again on unchanged corrupt file must not duplicate backup
+        const loadedAgain = config.loadBrowserConfig(tmpDir, testConfigPath);
+        assert.strictEqual(loadedAgain.theme, 'dark');
+        const corruptBackupsAgain = fs.readdirSync(tmpDir).filter((name) => name.startsWith('config.json.corrupt-'));
+        assert.strictEqual(corruptBackupsAgain.length, 1, 'Repeat load on unchanged corrupt config must not duplicate backup');
+
+        console.log('✓ Corrupt config recovery and backup preservation verified');
+    } finally {
+        fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+}
+
 console.log('All config write safety tests passed.\n');
