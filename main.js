@@ -38,7 +38,8 @@ const {
     loadBrowserConfig,
     saveBrowserConfig,
     writeConfigFile,
-    updateBrowserConfig
+    updateBrowserConfig,
+    restartApp
 } = config;
 
 const sessionStore = require('./main/sessionStore');
@@ -800,7 +801,7 @@ function buildSettingsSubmenu(cfg) {
         },
         {
             label: 'Restart Browser Now',
-            click: () => { app.relaunch(); app.exit(0); }
+            click: () => restartApp()
         }
     ];
 }

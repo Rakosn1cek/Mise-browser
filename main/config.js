@@ -90,14 +90,20 @@ function loadBrowserConfig(targetDir = CONFIG_DIR, targetPath = CONFIG_PATH) {
     }
 }
 
+function restartApp(appRef = app) {
+    if (appRef && typeof appRef.relaunch === 'function' && typeof appRef.quit === 'function') {
+        appRef.relaunch();
+        appRef.quit();
+        return true;
+    }
+    return false;
+}
+
 function saveBrowserConfig(cfg, targetDir = CONFIG_DIR, targetPath = CONFIG_PATH) {
     try {
         const merged = { ...loadBrowserConfig(targetDir, targetPath), ...cfg };
         writeConfigFile(merged, targetPath);
-        if (app && typeof app.relaunch === 'function' && typeof app.exit === 'function') {
-            app.relaunch();
-            app.exit(0);
-        }
+        restartApp();
         return true;
     } catch (e) {
         return false;
@@ -157,5 +163,6 @@ module.exports = {
     loadBrowserConfig,
     saveBrowserConfig,
     updateBrowserConfig,
-    registerConfigIpc
+    registerConfigIpc,
+    restartApp
 };
