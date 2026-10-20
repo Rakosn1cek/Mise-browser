@@ -2,7 +2,7 @@
 
 Mise Browser treats security as a core architectural foundation. This document outlines supported versions, release cadence, security architecture, and procedures for reporting vulnerabilities.
 
----
+***
 
 ## 1. Supported Versions & Update Cadence
 
@@ -16,7 +16,7 @@ Mise tracks upstream Electron and Chromium releases and audits dependencies twic
 | **Development (`main` branch)** | Best effort | Evaluated and resolved in upcoming releases |
 | **Prior releases** | No | Unsupported; please upgrade to the latest release |
 
----
+***
 
 ## 2. Reporting a Vulnerability
 
@@ -31,7 +31,7 @@ The maintainer appreciates the efforts of security researchers and users who rep
   * Operating system, architecture, and exact Mise Browser release version.
 * **Response Timeline:** The maintainer aims to acknowledge reports within 48 hours and provide a remediation timeline within 7 calendar days.
 
----
+***
 
 ## 3. Security Architecture & Threat Model
 
@@ -42,6 +42,8 @@ Mise Browser is designed with multiple defence-in-depth layers:
 * **Zero Node Integration in Webviews:** All `<webview>` elements run with `nodeIntegration: false`, `nodeIntegrationInSubFrames: false`, and `sandbox: true`.
 * **Remote Module Disabled:** Electron's deprecated `enableRemoteModule` is strictly disabled across all windows and webviews.
 * **Preload API Boundary:** Communication between web pages and the main process occurs exclusively through a minimal, vetted `contextBridge` whitelist in `preload.js`.
+* **Main Shell Navigation Lock:** Top-level navigation of the main application window is strictly locked to the local `index.html` interface via `will-navigate` listeners. Any attempt to navigate the primary shell to external or remote URLs is cancelled, and unmanaged popup windows are denied unconditionally via `setWindowOpenHandler`.
+* **Guest Webview Navigation & Scheme Guards:** Guest `<webview>` instances are monitored globally through `app.on('web-contents-created')`. Navigations are strictly limited by `will-navigate` and `new-window` handlers to safe protocols (`http:`, `https:`, `about:blank`, or bundled local assets). Dangerous schemes such as `file:`, `javascript:`, and unauthorised custom protocols are rejected.
 
 ### B. Workspace Container Partitions
 * Each workspace operates inside a dedicated, isolated Chromium session partition (`persist:mise_ws_<workspace>`).
@@ -62,6 +64,8 @@ Mise Browser is designed with multiple defence-in-depth layers:
 
 ### F. Session & Data Storage Architecture
 * **Transparent Plaintext User Data:** Configuration (`config.json`), keybindings (`keybinds.json`), workspaces (`session.json`), history (`history.json`), bookmarks (`bookmarks.json`), and notes (`notes.md`) are stored in transparent, human-readable JSON and Markdown files under `~/.config/mise-browser/`, protected by standard user-only filesystem permissions (`0600`/`0700`). Users retain full ownership to inspect, edit, or back up files using standard tools.
+* **Path Traversal Containment:** Local filesystem integrations, including opening Markdown notes in external editors, enforce strict path resolution confined to the application configuration directory (`resolveSafeNotesPath`). File paths supplied by renderer IPC requests are stripped or rejected to prevent directory traversal.
+* **Prototype Pollution Prevention:** Userscript key-value storage (`GM_setValue` and `GM_getValue`) operates on isolated, null-prototype dictionaries (`Object.create(null)`). Storage keys are validated against prototype pollution targets (`__proto__`, `constructor`, `prototype`), and persisted objects are sanitised before saving to disk.
 * **OS Keyring Cookie Encryption:** Persistent workspace partitions isolate cookies and web caches per container. Sensitive session tokens written by Chromium are encrypted at rest using `safeStorage`, which binds encryption keys directly to the host operating system's credential keyring (`libsecret` / GNOME Keyring / KWallet on Linux, Apple Keychain on macOS, and DPAPI on Windows).
 * **Zero Cloud Synchronisation:** No remote telemetry, no cloud profile syncing, and zero analytics.
 * **Surgical Cookie Clearing:** Dedicated cache controls allow wiping tracking tokens for specific domains without invalidating sessions in unrelated tabs.
@@ -71,7 +75,7 @@ Mise Browser is designed with multiple defence-in-depth layers:
 * **Elimination of Malware Targets:** Browser-bundled password vaults (such as Chromium's `Login Data` file) represent the primary attack target for infostealers and credential extraction malware. By omitting internal password storage entirely, Mise removes this high-value vulnerability surface.
 * **User Autonomy & External Tools:** Users retain full discretion to employ their preferred dedicated password managers (such as Pass, KeePassXC, Bitwarden, or system keychains) outside the browser's execution perimeter.
 
----
+***
 
 ## 4. Responsible Disclosure Commitment
 

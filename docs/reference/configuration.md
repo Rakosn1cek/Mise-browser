@@ -90,7 +90,7 @@ Controls hardware switches, process limits, privacy whitelists, and search prefe
   - **`overlay_opacity`**: Modal and overlay translucency percentage (50% to 100%) for Command Palette, Notes, and Preferences.
 - **`enable_diagnostics`**: When `true`, enables local in-memory diagnostic ring buffer recording for auditing and issue reproduction (OFF by default for zero telemetry).
 - **`trusted_domains`**: Array of domains exempted from tracker blocking and fingerprint spoofing.
-- **`external_notes_command`**: Optional command or executable used to open notes and clippings (e.g. `obsidian`, `logseq`, `code`, `nvim`). When empty, uses system default Markdown handler.
+- **`external_notes_command`**: Optional command or executable used to open notes and clippings (e.g. `obsidian`, `logseq`, `code`, `nvim`). When empty, uses system default Markdown handler. Path resolution is strictly confined to the application configuration directory, safeguarding against directory traversal.
 - **`custom_search_aliases`**: Key-value map of custom search prefixes and URL templates (with `%s` query placeholder). Typing `<alias> <query>` in the address bar (such as `aur hyprland` or `gh mise`) bypasses fallback engines and routes queries straight to the destination. Users can configure, override, or extend default built-ins directly in Preferences.
 
 ---

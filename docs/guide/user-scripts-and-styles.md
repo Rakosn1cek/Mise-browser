@@ -178,7 +178,7 @@ GM_xmlhttpRequest({
 
 ### Isolated Per-Script Storage
 
-Values saved with `GM_setValue` are stored in isolated JSON files under `~/.config/mise-browser/script-storage/`:
+Values saved with `GM_setValue` and retrieved via `GM_getValue` are stored in isolated JSON files under `~/.config/mise-browser/script-storage/`:
 
 ```javascript
 // Check stored user preference with fallback default
@@ -188,7 +188,13 @@ const viewMode = GM_getValue('view_mode', 'compact');
 GM_setValue('view_mode', 'expanded');
 ```
 
----
+#### Storage Hardening & Prototype Pollution Defence
+To ensure untrusted page scripts cannot compromise runtime integrity, the storage mechanism enforces three layers of protection:
+* **Null-Prototype Storage Dictionaries**: In-memory script storage stores are initialised using `Object.create(null)` rather than plain object literals, eliminating inherited `Object.prototype` properties.
+* **Storage Key Validation**: All keys passed to `GM_setValue`, `GM_getValue`, and `GM_deleteValue` are validated against strict security rules. Dangerous property names such as `__proto__`, `constructor`, and `prototype` are rejected immediately.
+* **Sanitised Disk Persistence**: Stored dictionaries are filtered and sanitised before serialisation to disk, preventing prototype-polluting payloads from persisting across browser restarts.
+
+***
 
 ## Writing User Styles (`.user.css`)
 
