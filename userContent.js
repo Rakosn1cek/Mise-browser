@@ -41,19 +41,40 @@ function getScriptStoragePath(scriptId) {
     return path.join(storageDir, `${cleanId}.json`);
 }
 
+function isValidStorageKey(key) {
+    if (typeof key !== 'string' && typeof key !== 'number') return false;
+    const strKey = String(key);
+    if (strKey.length === 0 || strKey.length > 1024) return false;
+    if (strKey === '__proto__' || strKey === 'constructor' || strKey === 'prototype') return false;
+    return true;
+}
+
+function sanitizeStorageObject(rawObj) {
+    const clean = Object.create(null);
+    if (rawObj && typeof rawObj === 'object' && !Array.isArray(rawObj)) {
+        for (const [k, v] of Object.entries(rawObj)) {
+            if (isValidStorageKey(k)) {
+                clean[k] = v;
+            }
+        }
+    }
+    return clean;
+}
+
 function loadScriptStorage(scriptId) {
     const cleanId = sanitizeScriptId(scriptId);
     if (scriptStorageCache.has(cleanId)) {
         return scriptStorageCache.get(cleanId);
     }
     const filePath = getScriptStoragePath(cleanId);
-    let data = {};
+    let data = Object.create(null);
     try {
         if (fs.existsSync(filePath)) {
-            data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+            const raw = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+            data = sanitizeStorageObject(raw);
         }
     } catch (e) {
-        data = {};
+        data = Object.create(null);
     }
     scriptStorageCache.set(cleanId, data);
     return data;
@@ -61,25 +82,30 @@ function loadScriptStorage(scriptId) {
 
 function saveScriptStorage(scriptId, store) {
     const cleanId = sanitizeScriptId(scriptId);
-    scriptStorageCache.set(cleanId, store);
+    const cleanStore = sanitizeStorageObject(store);
+    scriptStorageCache.set(cleanId, cleanStore);
     try {
         if (!fs.existsSync(storageDir)) {
             fs.mkdirSync(storageDir, { recursive: true });
         }
         const filePath = getScriptStoragePath(cleanId);
-        fs.writeFileSync(filePath, JSON.stringify(store, null, 2), 'utf8');
+        fs.writeFileSync(filePath, JSON.stringify(cleanStore, null, 2), 'utf8');
     } catch (err) {
         console.error(`Failed to save script storage for ${cleanId}:`, err);
     }
 }
 
 function setScriptValue(scriptId, key, value) {
+    if (!isValidStorageKey(key)) {
+        throw new Error(`Invalid or forbidden userscript storage key: ${key}`);
+    }
     const store = loadScriptStorage(scriptId);
     store[String(key)] = value;
     saveScriptStorage(scriptId, store);
 }
 
 function deleteScriptValue(scriptId, key) {
+    if (!isValidStorageKey(key)) return;
     const store = loadScriptStorage(scriptId);
     delete store[String(key)];
     saveScriptStorage(scriptId, store);
@@ -1159,6 +1185,9 @@ function initializeUserContent(configDir, mainWindow) {
         if (!hasStorageGrant(tokenData)) {
             throw new Error('Permission denied: userscript does not declare storage @grant');
         }
+        if (!isValidStorageKey(key)) {
+            throw new Error('Permission denied: invalid or forbidden storage key');
+        }
         setScriptValue(scriptId, key, value);
         return true;
     });
@@ -1175,6 +1204,9 @@ function initializeUserContent(configDir, mainWindow) {
         }
         if (!hasStorageGrant(tokenData)) {
             throw new Error('Permission denied: userscript does not declare storage @grant');
+        }
+        if (!isValidStorageKey(key)) {
+            return true;
         }
         deleteScriptValue(scriptId, key);
         return true;
@@ -1204,6 +1236,8 @@ module.exports = {
     getMatchingUserContent,
     loadScriptStorage,
     saveScriptStorage,
+    isValidStorageKey,
+    sanitizeStorageObject,
     setScriptValue,
     deleteScriptValue,
     generateScriptToken,
