@@ -1002,6 +1002,32 @@ app.on('web-contents-created', (event, webContents) => {
 
         const isPrivate = webContents.session === session.fromPartition('MisePrivateProfile');
 
+        webContents.on('will-navigate', (navEvent, navigationUrl) => {
+            if (!navigationUrl || typeof navigationUrl !== 'string') {
+                navEvent.preventDefault();
+                return;
+            }
+
+            if (navigationUrl === 'about:blank') return;
+
+            if (security.isSafeTabUrl(navigationUrl)) return;
+
+            // Allow local application asset pages (such as vendored PDF viewer and welcome documentation)
+            try {
+                const parsed = new URL(navigationUrl);
+                if (parsed.protocol === 'file:') {
+                    const targetFilePath = path.resolve(decodeURIComponent(parsed.pathname));
+                    const allowedAssetsDir = path.resolve(__dirname, 'assets');
+                    if (targetFilePath.startsWith(allowedAssetsDir + path.sep)) {
+                        return;
+                    }
+                }
+            } catch (e) {}
+
+            navEvent.preventDefault();
+            diagnostics.logEvent('warn', 'navigation', 'Blocked unsafe webview navigation', { url: navigationUrl });
+        });
+
         webContents.on('did-navigate', (navEvent, url) => {
             if (!isPrivate) {
                 logVisit(webContents.getTitle(), url);
