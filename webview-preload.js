@@ -35,9 +35,12 @@ try {
     const isViewerPage = (function() {
         try {
             if (window.location.protocol !== 'file:') return false;
-            const pathname = window.location.pathname || '';
-            const normalised = pathname.replace(/\\/g, '/');
-            return normalised.endsWith('/assets/pdfjs/viewer.html');
+            const canonicalViewerUrl = ipcRenderer.sendSync('get-pdf-viewer-path');
+            if (!canonicalViewerUrl || typeof canonicalViewerUrl !== 'string') return false;
+
+            const currentUrl = new URL(window.location.href);
+            const targetUrl = new URL(canonicalViewerUrl);
+            return currentUrl.protocol === 'file:' && currentUrl.pathname === targetUrl.pathname;
         } catch (e) {
             return false;
         }
