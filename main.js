@@ -872,6 +872,35 @@ function createWindow() {
 
     security.setTrustedDomains(loadBrowserConfig().trusted_domains || []);
 
+    // Guard main window from navigating away from application shell
+    const appIndexPath = path.resolve(__dirname, 'index.html');
+    mainWindow.webContents.on('will-navigate', (event, navigationUrl) => {
+        let isAppIndex = false;
+        try {
+            const parsed = new URL(navigationUrl);
+            if (parsed.protocol === 'file:') {
+                const targetFilePath = path.resolve(decodeURIComponent(parsed.pathname));
+                if (targetFilePath === appIndexPath) {
+                    isAppIndex = true;
+                }
+            }
+        } catch (e) {}
+
+        if (isAppIndex) return;
+
+        event.preventDefault();
+        if (security.isSafeTabUrl(navigationUrl) && mainWindow && !mainWindow.isDestroyed() && mainWindow.webContents) {
+            mainWindow.webContents.send('master-shortcut', 'spawn-tab-with-url', navigationUrl);
+        }
+    });
+
+    mainWindow.webContents.setWindowOpenHandler((details) => {
+        if (details.url && security.isSafeTabUrl(details.url) && mainWindow && !mainWindow.isDestroyed() && mainWindow.webContents) {
+            mainWindow.webContents.send('master-shortcut', 'spawn-tab-with-url', details.url);
+        }
+        return { action: 'deny' };
+    });
+
     mainWindow.loadFile('index.html');
 
     mainWindow.on('close', () => {
