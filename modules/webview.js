@@ -1,5 +1,5 @@
 import { state } from './state.js';
-import { getActiveWebview, focusActiveWebview, getWorkspacePartition, isDarkMode, isPdfUrl, getPdfViewerUrl, extractOriginalUrl, isTargetPrivateDomain } from './utils.js';
+import { getActiveWebview, focusActiveWebview, getWorkspacePartition, isDarkMode, isPdfUrl, getPdfViewerUrl, extractOriginalUrl, isTargetPrivateDomain, isSafeTabUrl } from './utils.js';
 import { isSplitActive, applySplitLayout, handleSplitTabSelection, handleTabRemovalInSplit, getSplitState } from './splitView.js';
 import { 
     setTargetUrl, 
@@ -259,6 +259,9 @@ export function createWebView(url, currentWS, idx) {
     webview.addEventListener('new-window', (e) => {
         e.preventDefault();
         const targetUrl = e.url;
+        if (!isSafeTabUrl(targetUrl)) {
+            return;
+        }
         const inheritsDarkReader = !!webview.__miseDarkReaderEnabled;
         
         if (!state.sessionState.workspaces[currentWS]) {

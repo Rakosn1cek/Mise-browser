@@ -127,3 +127,14 @@ export function isTargetPrivateDomain(url) {
     return url.includes('mise_test_auth=1');
 }
 
+// Validates whether a tab URL has a safe web scheme (http or https) and valid length
+export function isSafeTabUrl(url) {
+    if (typeof url !== 'string' || url.length === 0 || url.length > 16384) return false;
+    try {
+        const p = new URL(url);
+        return p.protocol === 'http:' || p.protocol === 'https:';
+    } catch (e) {
+        return false;
+    }
+}
+
