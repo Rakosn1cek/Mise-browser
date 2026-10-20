@@ -6,7 +6,7 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-const { shell, ipcMain, net } = require('electron');
+const { app, shell, ipcMain, net } = require('electron');
 const dns = require('dns');
 const nodeNet = require('net');
 const crypto = require('crypto');
@@ -351,58 +351,177 @@ function createPinnedDispatcher(targetValidation) {
     return null;
 }
 
-async function executeGmXmlHttpRequest(details, tokenData = null) {
+function removeHeadersCaseInsensitive(headers, namesToRemove) {
+    if (!headers || typeof headers !== 'object') return;
+    const lowerNames = namesToRemove.map(n => n.toLowerCase());
+    for (const key of Object.keys(headers)) {
+        if (lowerNames.includes(key.toLowerCase())) {
+            delete headers[key];
+        }
+    }
+}
+
+function filterCrossOriginHeaders(headers) {
+    const sensitive = ['authorization', 'cookie', 'proxy-authorization'];
+    const filtered = {};
+    for (const [key, value] of Object.entries(headers || {})) {
+        if (!sensitive.includes(key.toLowerCase())) {
+            filtered[key] = value;
+        }
+    }
+    return filtered;
+}
+
+async function readBoundedResponseBody(res, maxResponseBytes, controller) {
+    const clHeader = res.headers && typeof res.headers.get === 'function'
+        ? res.headers.get('content-length')
+        : (res.headers && res.headers['content-length']);
+
+    if (clHeader !== null && clHeader !== undefined && String(clHeader).trim() !== '') {
+        const contentLength = Number(clHeader);
+        if (!isNaN(contentLength) && contentLength > maxResponseBytes) {
+            if (controller && typeof controller.abort === 'function') {
+                controller.abort();
+            }
+            throw new Error('Response exceeds size limit');
+        }
+    }
+
+    if (res.body && typeof res.body.getReader === 'function') {
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+        let text = '';
+        let bytesRead = 0;
+        try {
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) {
+                    break;
+                }
+                if (value) {
+                    const chunkLength = (value && typeof value.byteLength === 'number')
+                        ? value.byteLength
+                        : ((value && value.length) || 0);
+                    bytesRead += chunkLength;
+                    if (bytesRead > maxResponseBytes) {
+                        if (controller && typeof controller.abort === 'function') {
+                            controller.abort();
+                        }
+                        try {
+                            await reader.cancel();
+                        } catch {}
+                        throw new Error('Response exceeds size limit');
+                    }
+                    text += decoder.decode(value, { stream: true });
+                }
+            }
+            text += decoder.decode();
+            return text;
+        } catch (err) {
+            try {
+                await reader.cancel();
+            } catch {}
+            throw err;
+        }
+    }
+
+    if (typeof res.text === 'function') {
+        const text = await res.text();
+        const byteLength = Buffer.byteLength(text, 'utf-8');
+        if (byteLength > maxResponseBytes || text.length > maxResponseBytes) {
+            if (controller && typeof controller.abort === 'function') {
+                controller.abort();
+            }
+            throw new Error('Response exceeds size limit');
+        }
+        return text;
+    }
+
+    return '';
+}
+
+async function executeGmXmlHttpRequest(details, tokenData = null, deps = {}) {
     if (!details || typeof details !== 'object' || !details.url) {
         throw new Error('Valid URL is required for GM_xmlhttpRequest');
     }
 
-    let currentUrl = details.url;
-    let validated = await validateRequestDestination(currentUrl, tokenData);
+    const method = String(details.method || 'GET').toUpperCase();
+    const ALLOWED_METHODS = ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'];
+    if (!ALLOWED_METHODS.includes(method)) {
+        throw new Error('Unsupported HTTP method');
+    }
 
-    const method = (details.method || 'GET').toUpperCase();
-    const timeout = Number(details.timeout) || 30000;
+    let bodyData = undefined;
+    if (details.data !== undefined && details.data !== null) {
+        const serialized = typeof details.data === 'object' ? JSON.stringify(details.data) : String(details.data);
+        if (serialized.length > 5 * 1024 * 1024) {
+            throw new Error('Request body too large');
+        }
+        if (method !== 'GET' && method !== 'HEAD') {
+            bodyData = serialized;
+        }
+    }
+
+    let rawTimeout = Number(details.timeout);
+    if (details.timeout === undefined || details.timeout === null || isNaN(rawTimeout)) {
+        rawTimeout = 30000;
+    }
+    const timeout = Math.min(Math.max(rawTimeout, 1000), 120000);
+
+    const actualDeps = deps || {};
+    const fetchFn = actualDeps.fetchFn || ((typeof globalThis.fetch === 'function')
+        ? globalThis.fetch
+        : ((net && typeof net.fetch === 'function') ? net.fetch : null));
+    const validate = actualDeps.validate || validateRequestDestination;
+    const createDispatcher = actualDeps.createDispatcher || createPinnedDispatcher;
+    const setTimeoutFn = actualDeps.setTimeoutFn || setTimeout;
+    const maxResponseBytes = typeof actualDeps.maxResponseBytes === 'number'
+        ? actualDeps.maxResponseBytes
+        : 10 * 1024 * 1024;
+
+    if (!fetchFn) {
+        throw new Error('No fetch implementation available in runtime');
+    }
 
     const headers = Object.assign({}, details.headers || {});
-    if (!headers['User-Agent'] && !headers['user-agent']) {
-        headers['User-Agent'] = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36';
+    const hasUserAgent = Object.keys(headers).some(k => k.toLowerCase() === 'user-agent');
+    if (!hasUserAgent) {
+        headers['User-Agent'] = actualDeps.userAgent
+            || (app && app.userAgentFallback)
+            || 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36';
     }
 
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeout);
+    const timer = setTimeoutFn(() => controller.abort(), timeout);
 
     const init = {
         method,
         headers,
         signal: controller.signal
     };
-
-    if (details.data && method !== 'GET' && method !== 'HEAD') {
-        init.body = typeof details.data === 'object' ? JSON.stringify(details.data) : String(details.data);
+    if (bodyData !== undefined) {
+        init.body = bodyData;
     }
 
-    const fetchFn = (typeof globalThis.fetch === 'function')
-        ? globalThis.fetch
-        : ((net && typeof net.fetch === 'function') ? net.fetch : null);
-
-    if (!fetchFn) {
-        clearTimeout(timer);
-        throw new Error('No fetch implementation available in runtime');
-    }
-
+    let currentUrl = details.url;
     const isManualRedirect = (details.redirect === 'manual' || details.redirect === 'error');
     const maxRedirects = 5;
     let redirectCount = 0;
     let activeDispatcher = null;
 
     try {
+        let validated = await validate(currentUrl, tokenData);
         let res;
         while (true) {
-            const reqInit = Object.assign({}, init, { redirect: 'manual' });
+            const reqInit = Object.assign({}, init, {
+                headers: Object.assign({}, init.headers),
+                redirect: 'manual'
+            });
             if (activeDispatcher && typeof activeDispatcher.destroy === 'function') {
                 activeDispatcher.destroy();
                 activeDispatcher = null;
             }
-            activeDispatcher = createPinnedDispatcher(validated);
+            activeDispatcher = createDispatcher(validated);
             if (activeDispatcher) {
                 reqInit.dispatcher = activeDispatcher;
             }
@@ -417,7 +536,7 @@ async function executeGmXmlHttpRequest(details, tokenData = null) {
                 if (!isManualRedirect) {
                     const locationHeader = res.headers && typeof res.headers.get === 'function'
                         ? res.headers.get('location')
-                        : null;
+                        : (res.headers && res.headers.location);
 
                     if (locationHeader) {
                         if (redirectCount >= maxRedirects) {
@@ -425,12 +544,25 @@ async function executeGmXmlHttpRequest(details, tokenData = null) {
                         }
                         redirectCount++;
                         const nextUrl = new URL(locationHeader, currentUrl).href;
-                        validated = await validateRequestDestination(nextUrl, tokenData);
-                        currentUrl = nextUrl;
-                        if (res.status === 303 || (res.status === 302 && init.method === 'POST')) {
+                        validated = await validate(nextUrl, tokenData);
+
+                        if (new URL(nextUrl).origin !== new URL(currentUrl).origin) {
+                            init.headers = filterCrossOriginHeaders(init.headers);
+                        }
+
+                        if (res.status === 303) {
+                            if (init.method !== 'HEAD') {
+                                init.method = 'GET';
+                            }
+                            delete init.body;
+                            removeHeadersCaseInsensitive(init.headers, ['content-type', 'content-length', 'transfer-encoding']);
+                        } else if ((res.status === 301 || res.status === 302) && init.method === 'POST') {
                             init.method = 'GET';
                             delete init.body;
+                            removeHeadersCaseInsensitive(init.headers, ['content-type', 'content-length', 'transfer-encoding']);
                         }
+
+                        currentUrl = nextUrl;
                         continue;
                     }
                 }
@@ -438,14 +570,16 @@ async function executeGmXmlHttpRequest(details, tokenData = null) {
             break;
         }
 
-        clearTimeout(timer);
-
-        const responseText = await res.text();
+        const responseText = await readBoundedResponseBody(res, maxResponseBytes, controller);
         let responseHeaders = '';
         if (res.headers && typeof res.headers.forEach === 'function') {
             res.headers.forEach((val, key) => {
                 responseHeaders += `${key}: ${val}\r\n`;
             });
+        } else if (res.headers && typeof res.headers === 'object') {
+            for (const [key, val] of Object.entries(res.headers)) {
+                responseHeaders += `${key}: ${val}\r\n`;
+            }
         }
 
         return {
@@ -457,7 +591,6 @@ async function executeGmXmlHttpRequest(details, tokenData = null) {
             finalUrl: currentUrl
         };
     } catch (err) {
-        clearTimeout(timer);
         const isTimeout = err.name === 'AbortError' || err.code === 'ETIMEDOUT';
         throw {
             isTimeout,
@@ -466,6 +599,11 @@ async function executeGmXmlHttpRequest(details, tokenData = null) {
             statusText: isTimeout ? 'Timeout' : 'Error'
         };
     } finally {
+        if (timer !== null) {
+            try {
+                clearTimeout(timer);
+            } catch {}
+        }
         if (activeDispatcher && typeof activeDispatcher.destroy === 'function') {
             activeDispatcher.destroy();
             activeDispatcher = null;
