@@ -1309,7 +1309,11 @@ if (gotSingleInstanceLock) {
             mainWindow.focus();
 
             const incomingUrls = extractUrlsFromArgs(commandLine);
-            incomingUrls.forEach(url => dispatchTabUrl(url));
+            incomingUrls.forEach(url => {
+                if (security.isSafeTabUrl(url)) {
+                    dispatchTabUrl(url);
+                }
+            });
         }
     });
 
