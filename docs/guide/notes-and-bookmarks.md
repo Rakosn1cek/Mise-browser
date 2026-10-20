@@ -14,6 +14,7 @@ Mise includes an integrated, expansive scratchpad overlay for taking notes along
 - **Expansive Layout & Fullscreen**: Generous, readable dimensions with a dedicated toggle button to expand into a distraction-free full canvas view.
 - **Live Statistics**: Real-time word counter and character display in the header.
 - **Markdown Preview**: Instant toggle between raw Markdown editing and formatted preview, complete with headings, lists, quotes, code blocks, thematic rules, and clickable links.
+- **Sanitised Hyperlink Security**: Clickable links in Markdown notes strictly enforce safe web schemes (`http://` and `https://`). Local file paths, pseudo-protocols, and script schemes are stripped from generated links to prevent arbitrary file access or navigation escapes.
 - **Instant Persistence**: All notes are automatically saved to:
   ```text
   ~/.config/mise-browser/notes.md

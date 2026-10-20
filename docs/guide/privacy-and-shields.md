@@ -59,3 +59,12 @@ When debugging web applications or purging lingering sessions:
 1. Open **Preferences** (**F1** or **Ctrl + H**) and navigate to **Privacy & Protection**.
 2. **Clear Site Cookies**: Surgically deletes cookies specifically matching the active tab's domain without logging you out of unrelated sites in other tabs.
 3. **Clear Cache**: Flushes the local Chromium disk and memory cache.
+
+***
+
+## Zero Remote Asset Leakage & Bundled Dependencies
+
+Mise guarantees complete network silence on startup:
+
+- **Local Asset Bundling**: All icons, stylesheets, and webfonts are bundled locally inside the application package. No third-party CDN connections (such as Cloudflare or Google Fonts) are initiated when opening the browser.
+- **Strict Content Security Policy**: The application shell enforces a strict Content Security Policy (`default-src 'self'`), blocking unauthorised external script, style, or object injections.
