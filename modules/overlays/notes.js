@@ -1,5 +1,5 @@
 import { state } from '../state.js';
-import { escapeHtml, focusActiveWebview } from '../utils.js';
+import { escapeHtml, focusActiveWebview, isSafeTabUrl } from '../utils.js';
 import { spawnTabWithUrl } from '../webview.js';
 
 let notesSaveTimeout = null;
@@ -26,8 +26,14 @@ export function parseMarkdownToHtml(text) {
     html = html.replace(/^> (.*$)/gim, '<blockquote>$1</blockquote>');
     html = html.replace(/^\- (.*$)/gim, '<li>$1</li>');
 
-    // Hyperlinks [label](url)
-    html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+    // Hyperlinks [label](url) - strictly allow safe http and https schemes
+    html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, label, rawUrl) => {
+        const trimmed = (rawUrl || '').trim();
+        if (/^https?:\/\//i.test(trimmed) && isSafeTabUrl(trimmed)) {
+            return `<a href="${trimmed}" target="_blank" rel="noopener noreferrer">${label}</a>`;
+        }
+        return label;
+    });
 
     html = html.replace(/\n/g, '<br>');
     html = html.replace(/<\/blockquote><br><blockquote>/g, '<br>');
@@ -471,8 +477,10 @@ export function setupNotesListeners() {
             const link = e.target.closest('a');
             if (link && link.href) {
                 e.preventDefault();
-                spawnTabWithUrl(link.href);
-                toggleNotesOverlay();
+                if (isSafeTabUrl(link.href)) {
+                    spawnTabWithUrl(link.href);
+                    toggleNotesOverlay();
+                }
             } else {
                 mdView.focus();
             }
