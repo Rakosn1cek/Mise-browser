@@ -192,10 +192,23 @@ function saveNotes(content, targetPath = NOTES_PATH) {
     }
 }
 
+function resolveSafeNotesPath(customPath, targetConfigDir = CONFIG_DIR) {
+    const defaultNotes = path.join(targetConfigDir, 'notes.md');
+    if (!customPath || typeof customPath !== 'string') {
+        return defaultNotes;
+    }
+    const resolvedPath = path.resolve(targetConfigDir, customPath);
+    const resolvedDir = path.resolve(targetConfigDir);
+    if (resolvedPath === defaultNotes || resolvedPath.startsWith(resolvedDir + path.sep)) {
+        return resolvedPath;
+    }
+    return defaultNotes;
+}
+
 async function openNotesInExternalApp(customPath, targetConfigDir = CONFIG_DIR) {
     try {
         const cfg = config.loadBrowserConfig(targetConfigDir, path.join(targetConfigDir, 'config.json'));
-        const targetPath = customPath || NOTES_PATH;
+        const targetPath = resolveSafeNotesPath(customPath, targetConfigDir);
         if (!fs.existsSync(targetPath)) {
             atomicWriteFileSync(targetPath, '');
         }
@@ -263,8 +276,8 @@ function registerStorageIpc(ipcMain) {
         return saveNotes(content);
     });
 
-    ipcMain.handle('open-notes-in-external-app', async (event, customPath) => {
-        return openNotesInExternalApp(customPath);
+    ipcMain.handle('open-notes-in-external-app', async () => {
+        return openNotesInExternalApp();
     });
 
     ipcMain.handle('export-article-to-external', async (event, data) => {
@@ -316,6 +329,7 @@ module.exports = {
     saveQuickmarks,
     readNotes,
     saveNotes,
+    resolveSafeNotesPath,
     openNotesInExternalApp,
     exportArticleToExternal,
     registerStorageIpc
