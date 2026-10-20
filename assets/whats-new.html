@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-GB">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,6 +15,8 @@
             --accent-dim: rgba(122, 162, 247, 0.12);
             --border: #24283b;
             --border-hover: #414868;
+            --kbd-bg: #24283b;
+            --kbd-border: #414868;
         }
 
         * {
@@ -31,6 +33,7 @@
             padding: 40px 20px 80px 20px;
             display: flex;
             justify-content: center;
+            overflow-x: hidden;
         }
 
         .container {
@@ -38,13 +41,13 @@
             width: 100%;
             display: flex;
             flex-direction: column;
-            gap: 28px;
+            gap: 24px;
         }
 
         header {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 12px;
             padding-bottom: 20px;
             border-bottom: 1px solid var(--border);
         }
@@ -53,6 +56,7 @@
             display: flex;
             align-items: center;
             gap: 10px;
+            flex-wrap: wrap;
         }
 
         .badge {
@@ -88,10 +92,102 @@
             opacity: 0.85;
         }
 
+        .title-group {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .title-group img {
+            width: 40px;
+            height: 40px;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-main);
+            letter-spacing: -0.5px;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        .feature-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            transition: border-color 0.15s ease;
+            overflow-wrap: break-word;
+            word-break: break-word;
+        }
+
+        .feature-card:hover {
+            border-color: var(--border-hover);
+        }
+
+        .feature-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .feature-desc {
+            font-size: 13.5px;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        .feature-points {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 0;
+            margin: 4px 0 0 0;
+        }
+
+        .feature-points li {
+            position: relative;
+            padding-left: 18px;
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        .feature-points li::before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            top: 0;
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        footer {
+            margin-top: 10px;
+            padding: 20px 24px;
+            background-color: var(--bg-card);
+            border: 1px dashed var(--border);
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
         .footer-left {
             display: flex;
             align-items: center;
-            gap: 16px;
+            gap: 14px;
             flex-wrap: wrap;
         }
 
@@ -115,79 +211,6 @@
             color: #ffffff;
         }
 
-        h1 {
-            font-size: 28px;
-            font-weight: 700;
-            color: var(--text-main);
-        }
-
-        .subtitle {
-            font-size: 14px;
-            color: var(--text-muted);
-        }
-
-        .feature-card {
-            background-color: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 22px 24px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            transition: border-color 0.15s ease;
-        }
-
-        .feature-card:hover {
-            border-color: var(--border-hover);
-        }
-
-        .feature-title {
-            font-size: 16px;
-            font-weight: 600;
-            color: var(--text-main);
-        }
-
-        .feature-desc {
-            font-size: 13px;
-            color: var(--text-muted);
-            line-height: 1.6;
-        }
-
-        .feature-points {
-            list-style: none;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            padding-left: 4px;
-        }
-
-        .feature-points li {
-            font-size: 13px;
-            color: var(--text-muted);
-            display: flex;
-            align-items: baseline;
-            gap: 8px;
-        }
-
-        .feature-points li::before {
-            content: "•";
-            color: var(--accent);
-            font-weight: bold;
-        }
-
-        footer {
-            margin-top: 10px;
-            padding: 20px 24px;
-            background-color: var(--bg-card);
-            border: 1px dashed var(--border);
-            border-radius: 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 14px;
-        }
-
         .footer-note {
             font-size: 12px;
             color: var(--text-muted);
@@ -195,18 +218,22 @@
 
         .footer-shortcuts {
             display: flex;
-            gap: 12px;
+            gap: 14px;
             flex-wrap: wrap;
         }
 
         kbd {
-            background-color: var(--bg-main);
-            border: 1px solid var(--border);
+            background-color: var(--kbd-bg);
+            border: 1px solid var(--kbd-border);
             border-radius: 4px;
             padding: 2px 6px;
             font-size: 11px;
+            font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
             color: var(--accent);
-            font-family: inherit;
+            word-break: break-word;
+            display: inline-block;
+            vertical-align: baseline;
+            line-height: 1.3;
         }
     </style>
 </head>
@@ -220,7 +247,10 @@
                     Full Release on GitHub ↗
                 </a>
             </div>
-            <h1>What's New in Mise v1.1.0</h1>
+            <div class="title-group">
+                <img src="icons/Mise-logo48.png" alt="Mise Logo">
+                <h1>What's New in Mise v1.1.0</h1>
+            </div>
             <p class="subtitle">The v1.1.0 Architecture & Ergonomics Update: Modular main process, History overlay keyboard overhaul with instant Escape dismissal, compositor memory optimisations, and expanded 21-suite test harness.</p>
         </header>
 
