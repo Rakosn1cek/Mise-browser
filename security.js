@@ -461,6 +461,7 @@ async function initialiseAdblocker(targetSession) {
 }
 
 function hardenWebviewPreferences(webPreferences) {
+    if (!webPreferences || typeof webPreferences !== 'object') return;
     webPreferences.webgl = true;
     webPreferences.accelerated2dCanvas = true;
     webPreferences.experimentalFeatures = false;
@@ -468,7 +469,50 @@ function hardenWebviewPreferences(webPreferences) {
     webPreferences.contextIsolation = true;
     webPreferences.nodeIntegration = false;
     webPreferences.nodeIntegrationInSubFrames = false;
-    webPreferences.enableRemoteModule = false;
+    webPreferences.webSecurity = true;
+    webPreferences.allowRunningInsecureContent = false;
+    webPreferences.nodeIntegrationInWorker = false;
+    webPreferences.webviewTag = false;
+    delete webPreferences.preloadURL;
+}
+
+function prepareWebviewAttach(webPreferences, params, options) {
+    const { preloadPath } = options || {};
+
+    if (webPreferences && typeof webPreferences === 'object') {
+        hardenWebviewPreferences(webPreferences);
+        webPreferences.preload = preloadPath;
+    } else {
+        hardenWebviewPreferences(webPreferences);
+    }
+
+    if (params && typeof params === 'object' && 'preload' in params) {
+        params.preload = preloadPath;
+    }
+
+    const partition = (webPreferences && webPreferences.partition) || (params && params.partition);
+    if (typeof partition !== 'string' || !/^(persist:)?[A-Za-z0-9_-]{1,200}$/.test(partition)) {
+        return { allowed: false, reason: 'partition' };
+    }
+
+    const src = params && params.src;
+    if (src !== undefined && src !== null && src !== '') {
+        if (typeof src !== 'string') {
+            return { allowed: false, reason: 'src' };
+        }
+        if (src !== 'about:blank') {
+            try {
+                const parsed = new URL(src);
+                if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:' && parsed.protocol !== 'file:') {
+                    return { allowed: false, reason: 'src' };
+                }
+            } catch (e) {
+                return { allowed: false, reason: 'src' };
+            }
+        }
+    }
+
+    return { allowed: true, reason: '' };
 }
 
 async function clearGoogleAuthCookies(targetSession) {
@@ -573,6 +617,7 @@ module.exports = {
     decidePermission,
     hardenSession,
     hardenWebviewPreferences,
+    prepareWebviewAttach,
     setTrustedDomains,
     normalizeTrustedDomains,
     isTrustedDomain,

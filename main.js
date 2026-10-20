@@ -839,6 +839,7 @@ function createWindow() {
         autoHideMenuBar: false,
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
+            sandbox: true,
             contextIsolation: true,
             nodeIntegration: false,
             webviewTag: true
@@ -931,7 +932,14 @@ function createWindow() {
     userContent.initializeUserContent(CONFIG_DIR, mainWindow);
 
     mainWindow.webContents.on('will-attach-webview', (event, webPreferences, params) => {
-        security.hardenWebviewPreferences(webPreferences);
+        const attachDecision = security.prepareWebviewAttach(webPreferences, params, {
+            preloadPath: path.join(__dirname, 'webview-preload.js')
+        });
+        if (!attachDecision.allowed) {
+            event.preventDefault();
+            diagnostics.logEvent('warn', 'security', 'Blocked webview attach', { reason: attachDecision.reason });
+            return;
+        }
         const partitionStr = (webPreferences && webPreferences.partition) || (params && params.partition);
         if (partitionStr) {
             configureAndHardenSession(session.fromPartition(partitionStr));
