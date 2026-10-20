@@ -80,6 +80,8 @@ if (isTrustedDomain(hostname)) {
 
 With the domain trusted, `webview-preload.js` skips its farbling pass entirely there, so Google's sign-in engine sees a genuine, internally consistent browser profile.
 
+> *Later refinement: Built-in Google authentication hosts (`isGoogleInfraHost`) are kept strictly separated from user-configured trusted domains (`isUserTrustedDomain`). While auth infrastructure bypasses header spoofing and fingerprint farbling so login checks pass, it receives no silent permission grants (such as microphone or camera), and domains hosting user-published content (like `sites.google.com`) are explicitly excluded from the built-in bypass.*
+
 ### C. Clean Up After a Rejection, Automatically
 
 To stop a single rejection from locking a partition out permanently, any `rrk=46` rejection now triggers an automatic cookie purge:

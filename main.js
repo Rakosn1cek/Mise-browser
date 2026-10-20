@@ -248,10 +248,13 @@ function configureAndHardenSession(targetSession) {
 }
 
 function configureSessionPermissions(targetSession) {
-    targetSession.setPermissionRequestHandler((webContents, permission, callback) => {
+    targetSession.setPermissionRequestHandler((webContents, permission, callback, details) => {
         let hostname = '';
         try { hostname = new URL(webContents.getURL()).hostname; } catch (e) {}
-        const trusted = security.isTrustedDomain(hostname);
+        const requestingUrl = (details && details.requestingUrl) || webContents.getURL();
+        const topLevelUrl = webContents.getURL();
+        const isMainFrame = !details || details.isMainFrame !== false;
+        const trusted = security.isPermissionTrustedRequest({ requestingUrl, topLevelUrl, isMainFrame });
         const allowed = security.decidePermission(permission, {
             trusted,
             notificationsEnabled: globalNotificationsEnabled
@@ -262,10 +265,13 @@ function configureSessionPermissions(targetSession) {
         callback(allowed);
     });
 
-    targetSession.setPermissionCheckHandler((webContents, permission, origin) => {
+    targetSession.setPermissionCheckHandler((webContents, permission, requestingOrigin, details) => {
         let hostname = '';
-        try { hostname = new URL(origin).hostname; } catch (e) {}
-        const trusted = security.isTrustedDomain(hostname);
+        try { hostname = new URL(requestingOrigin).hostname; } catch (e) {}
+        const requestingUrl = (details && details.requestingUrl) || requestingOrigin;
+        const topLevelUrl = (details && details.embeddingOrigin) || (webContents && webContents.getURL()) || requestingOrigin;
+        const isMainFrame = !details || details.isMainFrame !== false;
+        const trusted = security.isPermissionTrustedRequest({ requestingUrl, topLevelUrl, isMainFrame });
         const allowed = security.decidePermission(permission, {
             trusted,
             notificationsEnabled: globalNotificationsEnabled

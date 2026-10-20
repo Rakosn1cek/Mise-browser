@@ -31,11 +31,13 @@ const GOOGLE_AUTH_DOMAINS = [
     'google.com',
     'google.co.uk',
     'gstatic.com',
-    'googleapis.com',
-    'googleusercontent.com',
     'gvt1.com',
     'recaptcha.net',
     'youtube.com'
+];
+
+const GOOGLE_UGC_HOSTS = [
+    'sites.google.com'
 ];
 
 // Google's sign-in serves Electron a lighter flow that it accepts, but sends the
@@ -68,20 +70,137 @@ function isGoogleSignInRequest(details) {
     }
 }
 
-function isTrustedDomain(hostname) {
-    if (!hostname) return false;
-    const host = String(hostname).toLowerCase().split(':')[0];
+const PUBLIC_SUFFIX_BLOCKLIST = new Set([
+    'co.uk',
+    'org.uk',
+    'ac.uk',
+    'gov.uk',
+    'me.uk',
+    'com.au',
+    'net.au',
+    'org.au',
+    'co.jp',
+    'co.nz',
+    'co.in',
+    'co.za',
+    'com.br',
+    'com.cn',
+    'com.mx',
+    'com.tr',
+    'github.io',
+    'gitlab.io',
+    'blogspot.com',
+    'herokuapp.com',
+    'appspot.com',
+    'pages.dev',
+    'netlify.app',
+    'vercel.app',
+    'web.app',
+    'firebaseapp.com',
+    'azurewebsites.net',
+    'cloudfront.net',
+    'amazonaws.com',
+    'workers.dev'
+]);
 
-    // Core authentication endpoints are always trusted to ensure uninterrupted account login
-    if (GOOGLE_AUTH_DOMAINS.some(gd => host === gd || host.endsWith('.' + gd))) {
-        return true;
+const DOMAIN_FORMAT_REGEX = /^(?=.{1,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9-]{2,63}$/;
+
+function normalizeHostname(hostname) {
+    if (!hostname && hostname !== 0) return '';
+    let host = String(hostname).toLowerCase().trim();
+    const colonCount = (host.match(/:/g) || []).length;
+    if (colonCount === 1) {
+        host = host.split(':')[0];
+    }
+    if (host.endsWith('.')) {
+        host = host.slice(0, -1);
+    }
+    return host;
+}
+
+function isUserTrustedDomain(hostname) {
+    const host = normalizeHostname(hostname);
+    if (!host) return false;
+    return trustedDomains.some(entry => host === entry || host.endsWith('.' + entry));
+}
+
+function isGoogleInfraHost(hostname) {
+    const host = normalizeHostname(hostname);
+    if (!host) return false;
+    if (GOOGLE_UGC_HOSTS.some(ugc => host === ugc || host.endsWith('.' + ugc))) {
+        return false;
+    }
+    return GOOGLE_AUTH_DOMAINS.some(gd => host === gd || host.endsWith('.' + gd));
+}
+
+function isTrustedDomain(hostname) {
+    const host = normalizeHostname(hostname);
+    if (!host) return false;
+    return isGoogleInfraHost(host) || isUserTrustedDomain(host);
+}
+
+function isPermissionTrustedRequest(options) {
+    if (!options || typeof options !== 'object') {
+        return false;
+    }
+    const { requestingUrl, topLevelUrl, isMainFrame } = options;
+    if (!requestingUrl || !topLevelUrl) {
+        return false;
+    }
+    let reqHost = '';
+    let topHost = '';
+    try {
+        reqHost = new URL(requestingUrl).hostname;
+        topHost = new URL(topLevelUrl).hostname;
+    } catch (_) {
+        return false;
+    }
+    if (!reqHost || !topHost) {
+        return false;
+    }
+    if (!isUserTrustedDomain(reqHost)) {
+        return false;
+    }
+    if (isMainFrame === false && !isUserTrustedDomain(topHost)) {
+        return false;
+    }
+    return true;
+}
+
+function normalizeTrustedDomains(list) {
+    if (!Array.isArray(list)) {
+        return [];
+    }
+    const result = [];
+    const seen = new Set();
+    let droppedCount = 0;
+
+    for (const entry of list) {
+        if (entry === null || entry === undefined) {
+            droppedCount++;
+            continue;
+        }
+        let domain = String(entry).trim().toLowerCase();
+        if (domain.endsWith('.')) {
+            domain = domain.slice(0, -1);
+        }
+        if (!DOMAIN_FORMAT_REGEX.test(domain) || PUBLIC_SUFFIX_BLOCKLIST.has(domain)) {
+            droppedCount++;
+            continue;
+        }
+        if (seen.has(domain)) {
+            droppedCount++;
+            continue;
+        }
+        seen.add(domain);
+        result.push(domain);
     }
 
-    return trustedDomains.some(entry => {
-        const domain = String(entry || '').toLowerCase().trim();
-        if (!domain) return false;
-        return host === domain || host.endsWith('.' + domain);
-    });
+    if (droppedCount > 0) {
+        console.warn(`Dropped ${droppedCount} invalid or duplicate trusted domain entries.`);
+    }
+
+    return result;
 }
 
 function buildExceptionFilters(domains) {
@@ -265,7 +384,7 @@ async function applyTrustedDomainExceptions() {
 }
 
 function setTrustedDomains(domains) {
-    const clean = Array.isArray(domains) ? domains.filter(Boolean) : [];
+    const clean = normalizeTrustedDomains(domains);
     if (trustedDomains.length === clean.length && trustedDomains.every((d, i) => d === clean[i])) {
         return;
     }
@@ -455,7 +574,11 @@ module.exports = {
     hardenSession,
     hardenWebviewPreferences,
     setTrustedDomains,
+    normalizeTrustedDomains,
     isTrustedDomain,
+    isUserTrustedDomain,
+    isGoogleInfraHost,
+    isPermissionTrustedRequest,
     applySpellcheckerLanguage,
     clearGoogleAuthCookies,
     setGoogleSignInUserAgent,
