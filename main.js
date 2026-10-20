@@ -936,7 +936,7 @@ function createWindow() {
         // Check for updates in background after startup
         setTimeout(async () => {
             try {
-                const updateInfo = await checkAppUpdates(false);
+                const updateInfo = await updater.checkAppUpdates(false);
                 if (updateInfo && updateInfo.updateAvailable && mainWindow && !mainWindow.isDestroyed()) {
                     mainWindow.webContents.send('update-available', updateInfo);
                 }
