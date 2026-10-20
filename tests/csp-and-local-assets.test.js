@@ -12,14 +12,12 @@ console.log('Running Mise Content Security Policy and local asset regression tes
     const indexPath = path.join(__dirname, '../index.html');
     const indexSource = fs.readFileSync(indexPath, 'utf8');
 
-    // Remote CDN dependencies must not be present
-    assert(
-        !indexSource.includes('cdnjs.cloudflare.com'),
-        'index.html must not reference cdnjs.cloudflare.com'
-    );
-    assert(
-        !indexSource.includes('https://cdnjs'),
-        'index.html must not include external cdnjs links'
+    // Remote CDN dependencies must not be present: all link and script tags must use local paths
+    const remoteAssetMatches = indexSource.match(/<(?:link|script)[^>]+(?:href|src)=["']https?:\/\/[^"']+/gi);
+    assert.equal(
+        remoteAssetMatches,
+        null,
+        'index.html must not load remote stylesheet or script assets'
     );
 
     // Verify local FontAwesome stylesheet link
