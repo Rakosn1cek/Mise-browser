@@ -288,7 +288,29 @@ export async function triggerUpdateCheck(manual = false) {
     try {
         if (window.miseAPI && typeof window.miseAPI.checkForUpdates === 'function') {
             const result = await window.miseAPI.checkForUpdates(manual);
-            if (result && result.updateAvailable) {
+            if (result && result.error) {
+                if (checkBtn) checkBtn.textContent = 'Check Failed';
+                if (manual) {
+                    const banner = document.getElementById('UpdateNotificationBanner');
+                    const textEl = document.getElementById('UpdateNotificationText');
+                    const actionBtn = document.getElementById('UpdateActionBtn');
+                    if (banner && textEl) {
+                        textEl.textContent = `Update check failed: ${result.error}`;
+                        banner.style.display = 'flex';
+                        if (actionBtn) actionBtn.style.display = 'none';
+                        setTimeout(() => {
+                            banner.style.display = 'none';
+                        }, 6000);
+                    }
+                }
+                if (window.miseAPI && typeof window.miseAPI.logDiagnosticsEvent === 'function') {
+                    window.miseAPI.logDiagnosticsEvent({
+                        level: 'warn',
+                        category: 'updater',
+                        message: `Update check failed: ${result.error}`
+                    });
+                }
+            } else if (result && result.updateAvailable) {
                 displayUpdateNotification(result);
                 if (checkBtn) checkBtn.textContent = 'Update Available';
             } else {
@@ -310,6 +332,27 @@ export async function triggerUpdateCheck(manual = false) {
         }
     } catch (err) {
         if (checkBtn) checkBtn.textContent = 'Check Failed';
+        const errorMsg = err?.message || 'Network error encountered';
+        if (manual) {
+            const banner = document.getElementById('UpdateNotificationBanner');
+            const textEl = document.getElementById('UpdateNotificationText');
+            const actionBtn = document.getElementById('UpdateActionBtn');
+            if (banner && textEl) {
+                textEl.textContent = `Update check failed: ${errorMsg}`;
+                banner.style.display = 'flex';
+                if (actionBtn) actionBtn.style.display = 'none';
+                setTimeout(() => {
+                    banner.style.display = 'none';
+                }, 6000);
+            }
+        }
+        if (window.miseAPI && typeof window.miseAPI.logDiagnosticsEvent === 'function') {
+            window.miseAPI.logDiagnosticsEvent({
+                level: 'warn',
+                category: 'updater',
+                message: `Update check failed: ${errorMsg}`
+            });
+        }
     } finally {
         setTimeout(() => {
             if (checkBtn) {
