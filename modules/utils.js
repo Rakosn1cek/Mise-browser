@@ -122,9 +122,8 @@ export function isMatchingDomain(url, targetDomain) {
 }
 
 // Checks whether a URL matches domains designated for isolated private sessions
-export function isTargetPrivateDomain(url) {
-    if (!url || typeof url !== 'string') return false;
-    return url.includes('mise_test_auth=1');
+export function isTargetPrivateDomain(_url) {
+    return false;
 }
 
 // Validates whether a tab URL has a safe web scheme (http or https) and valid length

@@ -200,7 +200,7 @@ try {
         console.log('✓ Dashboard workspace name reservation and collision guards verified');
     }
 
-    // 8. Verify isTargetPrivateDomain no longer hardcodes external domains
+    // 8. Verify isTargetPrivateDomain returns false without external domain or test hook routing
     {
         const { isTargetPrivateDomain } = require('../modules/utils.js');
         assert.strictEqual(
@@ -210,10 +210,20 @@ try {
         );
         assert.strictEqual(
             isTargetPrivateDomain('https://accounts.google.com/signin?mise_test_auth=1'),
-            true,
-            'Explicit test auth query flag must be recognised'
+            false,
+            'Test hooks must not route into private partition from normal workspaces'
         );
-        console.log('✓ isTargetPrivateDomain domain routing verified');
+        assert.strictEqual(
+            isTargetPrivateDomain('https://example.com'),
+            false,
+            'Standard URLs must not be routed into private partition from normal workspaces'
+        );
+        assert.strictEqual(
+            isTargetPrivateDomain(null),
+            false,
+            'Null input must safely return false'
+        );
+        console.log('✓ isTargetPrivateDomain consistently returns false without routing leakage');
     }
 
     console.log('All permanent Private workspace regression tests passed successfully!');
