@@ -140,6 +140,7 @@ blockedIPList.addSubnet('127.0.0.0', 8, 'ipv4');
 blockedIPList.addSubnet('169.254.0.0', 16, 'ipv4');
 blockedIPList.addSubnet('172.16.0.0', 12, 'ipv4');
 blockedIPList.addSubnet('192.168.0.0', 16, 'ipv4');
+for (const [a, p] of [['192.0.0.0',24],['192.0.2.0',24],['198.18.0.0',15],['198.51.100.0',24],['203.0.113.0',24],['224.0.0.0',4],['240.0.0.0',4]]) blockedIPList.addSubnet(a, p, 'ipv4');
 
 // IPv6 restricted subnets
 blockedIPList.addSubnet('::1', 128, 'ipv6');
@@ -148,6 +149,7 @@ blockedIPList.addSubnet('fc00::', 7, 'ipv6');
 blockedIPList.addSubnet('fe80::', 10, 'ipv6');
 blockedIPList.addSubnet('64:ff9b::', 96, 'ipv6');
 blockedIPList.addSubnet('2002::', 16, 'ipv6');
+for (const [a, p] of [['ff00::',8],['2001:db8::',32],['100::',64],['fec0::',10],['2001::',32],['::ffff:0:0:0',96]]) blockedIPList.addSubnet(a, p, 'ipv6');
 
 function normaliseIPAddress(ip) {
     if (!ip || typeof ip !== 'string') return '';

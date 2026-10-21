@@ -17,7 +17,20 @@ console.log('Running Mise userscript IP filtering and SSRF regression tests...')
         '10.1.2.3',
         '192.168.1.1',
         '[::1]',
-        'http://2130706433/'
+        'http://2130706433/',
+        '192.0.0.1',
+        '192.0.2.1',
+        '198.18.0.1',
+        '198.51.100.1',
+        '203.0.113.1',
+        '224.0.0.1',
+        '240.0.0.1',
+        'ff02::1',
+        '2001:db8::1',
+        '100::1',
+        'fec0::1',
+        '2001::1',
+        '::ffff:0:0:1'
     ];
 
     for (const addr of blockedAddresses) {
