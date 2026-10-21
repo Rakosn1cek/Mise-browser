@@ -1,11 +1,16 @@
 import { state } from '../state.js';
 import { getWorkspacePartition } from '../utils.js';
+import { destroyGuestWebview } from '../webview.js';
 
 export function openTransientShareModal(targetUrl) {
     const overlay = document.getElementById('ShareModalOverlay');
     const container = document.getElementById('ShareModalWebviewContainer');
     if (!overlay || !container || !targetUrl) return;
 
+    const existingWebview = container.querySelector('webview');
+    if (existingWebview) {
+        destroyGuestWebview(existingWebview);
+    }
     container.innerHTML = '';
 
     const webview = document.createElement('webview');
@@ -35,6 +40,10 @@ export function openTransientShareModal(targetUrl) {
 
     const closeModal = () => {
         overlay.style.display = 'none';
+        const modalWebview = container.querySelector('webview') || webview;
+        if (modalWebview) {
+            destroyGuestWebview(modalWebview);
+        }
         container.innerHTML = '';
         window.removeEventListener('keydown', handleEsc);
     };
