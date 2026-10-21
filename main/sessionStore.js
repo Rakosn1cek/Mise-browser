@@ -6,6 +6,7 @@ const diagnostics = require('../diagnostics');
 const CONFIG_DIR = config.CONFIG_DIR;
 const sessionPath = path.join(CONFIG_DIR, 'session.json');
 const sessionBackupPath = path.join(CONFIG_DIR, 'session.json.bak');
+const sessionSuspectPath = path.join(CONFIG_DIR, 'session.suspect.json');
 const sentinelPath = path.join(CONFIG_DIR, 'session_sentinel.json');
 
 let isCrashRecovery = false;
@@ -78,9 +79,84 @@ function sanitizeSessionForDisk(sessionData) {
     return clone;
 }
 
+function countSessionTabs(sessionData) {
+    let total = 0;
+    let blank = 0;
+    if (sessionData && typeof sessionData === 'object' && sessionData.workspaces && typeof sessionData.workspaces === 'object') {
+        for (const ws of Object.keys(sessionData.workspaces)) {
+            const tabs = sessionData.workspaces[ws];
+            if (Array.isArray(tabs)) {
+                for (const url of tabs) {
+                    total++;
+                    if (!url || typeof url !== 'string' || !url.trim() || url.trim() === 'about:blank') {
+                        blank++;
+                    }
+                }
+            }
+        }
+    }
+    return { total, blank };
+}
+
+function formatSnapshotTimestamp(date = new Date()) {
+    const pad = (n) => String(n).padStart(2, '0');
+    const yyyy = date.getFullYear();
+    const mm = pad(date.getMonth() + 1);
+    const dd = pad(date.getDate());
+    const hh = pad(date.getHours());
+    const min = pad(date.getMinutes());
+    const ss = pad(date.getSeconds());
+    return `${yyyy}${mm}${dd}-${hh}${min}${ss}`;
+}
+
+function parseSnapshotTimestamp(filename) {
+    const match = filename.match(/^session\.snap-(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2})\.json$/);
+    if (!match) return null;
+    const [, yyyy, mm, dd, hh, min, ss] = match;
+    return new Date(Number(yyyy), Number(mm) - 1, Number(dd), Number(hh), Number(min), Number(ss)).getTime();
+}
+
+function maybeCreateSnapshot(targetDir, sourceFilePath, sessionObj) {
+    if (!fs.existsSync(sourceFilePath)) return;
+    const counts = countSessionTabs(sessionObj);
+    if (counts.total === 0 || (counts.blank / counts.total) >= 0.5) return;
+    if (typeof fs.readdirSync !== 'function') return;
+
+    try {
+        const existingSnapshots = fs.readdirSync(targetDir)
+            .filter(f => /^session\.snap-\d{8}-\d{6}\.json$/.test(f))
+            .sort();
+
+        const now = Date.now();
+        if (existingSnapshots.length > 0) {
+            const newest = existingSnapshots[existingSnapshots.length - 1];
+            const newestTime = parseSnapshotTimestamp(newest);
+            if (newestTime !== null && (now - newestTime) < 10 * 60 * 1000) {
+                return;
+            }
+        }
+
+        const snapName = `session.snap-${formatSnapshotTimestamp(new Date(now))}.json`;
+        const snapPath = path.join(targetDir, snapName);
+        fs.copyFileSync(sourceFilePath, snapPath);
+
+        existingSnapshots.push(snapName);
+        existingSnapshots.sort();
+        if (existingSnapshots.length > 10) {
+            const toDelete = existingSnapshots.slice(0, existingSnapshots.length - 10);
+            for (const file of toDelete) {
+                if (typeof fs.unlinkSync === 'function') {
+                    try { fs.unlinkSync(path.join(targetDir, file)); } catch (e) {}
+                }
+            }
+        }
+    } catch (e) {}
+}
+
 function flushSessionToDisk(customPaths = {}) {
     const targetSessionPath = customPaths.sessionPath || sessionPath;
     const targetBackupPath = customPaths.sessionBackupPath || sessionBackupPath;
+    const targetSuspectPath = customPaths.sessionSuspectPath || path.join(path.dirname(targetSessionPath), 'session.suspect.json');
 
     if (sessionFlushTimer) {
         clearTimeout(sessionFlushTimer);
@@ -91,21 +167,57 @@ function flushSessionToDisk(customPaths = {}) {
         const dir = path.dirname(targetSessionPath);
         if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
-        const serialized = JSON.stringify(sanitizeSessionForDisk(pendingSessionData), null, 4);
+        // Read existing session file before writing
+        let existingSession = null;
+        if (fs.existsSync(targetSessionPath) && typeof fs.readFileSync === 'function') {
+            try {
+                const raw = fs.readFileSync(targetSessionPath, 'utf8');
+                existingSession = JSON.parse(raw);
+            } catch (e) {
+                existingSession = null;
+            }
+        }
+
+        const sanitizedNew = sanitizeSessionForDisk(pendingSessionData);
+        const newCounts = countSessionTabs(sanitizedNew);
+        const existingCounts = countSessionTabs(existingSession);
+
+        const isNewSuspect = newCounts.blank >= 3 && newCounts.total > 0 && (newCounts.blank / newCounts.total) >= 0.5;
+        const isExistingHealthy = existingSession !== null && existingCounts.total > 0 && (existingCounts.blank / existingCounts.total) <= 0.2;
+
+        if (isNewSuspect && isExistingHealthy) {
+            fs.writeFileSync(targetSuspectPath, JSON.stringify(sanitizedNew, null, 4), 'utf8');
+            diagnostics.logEvent('warn', 'session', 'Suspect session write intercepted with excessive blank tabs', {
+                newTotalTabs: newCounts.total,
+                newBlankTabs: newCounts.blank,
+                existingTotalTabs: existingCounts.total,
+                existingBlankTabs: existingCounts.blank
+            });
+            pendingSessionData = null;
+            return true;
+        }
+
+        const serialized = JSON.stringify(sanitizedNew, null, 4);
         const tempPath = targetSessionPath + '.tmp';
 
         // Write to temporary file first
         fs.writeFileSync(tempPath, serialized, 'utf8');
 
-        // Rotate existing valid session to backup before overwriting
-        if (fs.existsSync(targetSessionPath)) {
+        // Rotate existing valid session to backup only if it parses and is not mostly blank
+        const isExistingParsableAndNotMostlyBlank = existingSession !== null && existingCounts.total > 0 && (existingCounts.blank / existingCounts.total) < 0.5;
+        if (fs.existsSync(targetSessionPath) && isExistingParsableAndNotMostlyBlank) {
             try {
                 fs.copyFileSync(targetSessionPath, targetBackupPath);
             } catch (copyErr) {}
+            maybeCreateSnapshot(dir, targetSessionPath, existingSession);
         }
 
         // Atomically rename temporary file to destination
         fs.renameSync(tempPath, targetSessionPath);
+
+        // Keep initial snapshot if no snapshots exist yet
+        maybeCreateSnapshot(dir, targetSessionPath, sanitizedNew);
+
         pendingSessionData = null;
         return true;
     } catch (err) {
@@ -177,6 +289,7 @@ function registerSessionIpc(ipcMain) {
 module.exports = {
     sessionPath,
     sessionBackupPath,
+    sessionSuspectPath,
     sentinelPath,
     checkAndInitializeSentinel,
     markSentinelState,

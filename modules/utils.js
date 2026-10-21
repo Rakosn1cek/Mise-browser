@@ -137,3 +137,15 @@ export function isSafeTabUrl(url) {
     }
 }
 
+// Validates whether a tab URL is persistable (http, https, or file scheme)
+export function isPersistableTabUrl(url) {
+    if (typeof url !== 'string' || url.length === 0 || url.length > 16384) return false;
+    try {
+        const p = new URL(url);
+        return p.protocol === 'http:' || p.protocol === 'https:' || p.protocol === 'file:';
+    } catch (e) {
+        return false;
+    }
+}
+
+

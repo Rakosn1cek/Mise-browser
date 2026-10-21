@@ -1,5 +1,5 @@
 import { state } from './state.js';
-import { getActiveWebview, focusActiveWebview, getWorkspacePartition, isDarkMode, isPdfUrl, getPdfViewerUrl, extractOriginalUrl, isTargetPrivateDomain, isSafeTabUrl } from './utils.js';
+import { getActiveWebview, focusActiveWebview, getWorkspacePartition, isDarkMode, isPdfUrl, getPdfViewerUrl, extractOriginalUrl, isTargetPrivateDomain, isSafeTabUrl, isPersistableTabUrl } from './utils.js';
 import { isSplitActive, applySplitLayout, handleSplitTabSelection, handleTabRemovalInSplit, getSplitState } from './splitView.js';
 import { 
     setTargetUrl, 
@@ -197,8 +197,10 @@ export function createWebView(url, currentWS, idx) {
 
         const cleanUrl = extractOriginalUrl(e.url);
         if (state.sessionState.workspaces[currentWS] && state.sessionState.workspaces[currentWS][liveIdx] !== undefined) {
-            state.sessionState.workspaces[currentWS][liveIdx] = cleanUrl;
-            window.miseAPI.saveSession(state.sessionState);
+            if (isPersistableTabUrl(cleanUrl)) {
+                state.sessionState.workspaces[currentWS][liveIdx] = cleanUrl;
+                window.miseAPI.saveSession(state.sessionState);
+            }
         }
         if (!state.tabActivityTimestamps[currentWS]) state.tabActivityTimestamps[currentWS] = [];
         state.tabActivityTimestamps[currentWS][liveIdx] = Date.now();
@@ -222,8 +224,10 @@ export function createWebView(url, currentWS, idx) {
 
         const cleanUrl = extractOriginalUrl(e.url);
         if (state.sessionState.workspaces[currentWS] && state.sessionState.workspaces[currentWS][liveIdx] !== undefined) {
-            state.sessionState.workspaces[currentWS][liveIdx] = cleanUrl;
-            window.miseAPI.saveSession(state.sessionState);
+            if (isPersistableTabUrl(cleanUrl)) {
+                state.sessionState.workspaces[currentWS][liveIdx] = cleanUrl;
+                window.miseAPI.saveSession(state.sessionState);
+            }
         }
         if (!state.tabActivityTimestamps[currentWS]) state.tabActivityTimestamps[currentWS] = [];
         state.tabActivityTimestamps[currentWS][liveIdx] = Date.now();
