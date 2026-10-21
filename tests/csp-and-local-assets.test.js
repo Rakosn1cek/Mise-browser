@@ -37,6 +37,7 @@ console.log('Running Mise Content Security Policy and local asset regression tes
     assert(cspDirectives.includes("script-src 'self'"), 'CSP must specify script-src strictly to self');
     assert(cspDirectives.includes("object-src 'none'"), 'CSP must forbid object embeddings via object-src none');
     assert(cspDirectives.includes("base-uri 'none'"), 'CSP must restrict base-uri to none');
+    assert(cspDirectives.includes("form-action 'none'"), 'CSP must restrict form actions to none');
     assert(cspDirectives.includes("font-src 'self'"), 'CSP must permit local font sources');
 
     console.log('✓ index.html Content Security Policy and local asset link verified');
