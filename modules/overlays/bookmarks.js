@@ -1,5 +1,5 @@
 import { state } from '../state.js';
-import { escapeHtml, focusActiveWebview, getActiveWebview } from '../utils.js';
+import { escapeHtml, focusActiveWebview, getActiveWebview, isSafeTabUrl } from '../utils.js';
 import { renderWorkspaceUI, switchTabFocus, spawnTabWithUrl, spawnNewBlankTab, handleTabRemoval } from '../webview.js';
 
 export async function loadBookmarksAndQuickmarks() {
@@ -42,14 +42,17 @@ export function promptQuickmark(mode) {
             const url = activeWv.getURL();
             const title = activeWv.getTitle() || url;
 
-            state.quickmarks[key] = { url, title };
-            if (window.miseAPI && typeof window.miseAPI.saveQuickmarks === 'function') {
-                window.miseAPI.saveQuickmarks(state.quickmarks);
+            if (isSafeTabUrl(url)) {
+                state.quickmarks[key] = { url, title };
+                if (window.miseAPI && typeof window.miseAPI.saveQuickmarks === 'function') {
+                    window.miseAPI.saveQuickmarks(state.quickmarks);
+                }
             }
             focusActiveWebview();
         } else if (state.quickmarkMode === 'jump') {
-            if (state.quickmarks[key]) {
-                spawnTabWithUrl(state.quickmarks[key].url);
+            const entry = state.quickmarks[key];
+            if (entry && isSafeTabUrl(entry.url)) {
+                spawnTabWithUrl(entry.url);
             } else {
                 focusActiveWebview();
             }
@@ -185,7 +188,9 @@ export function renderBookmarksList(filterText = '') {
 
             itemEl.addEventListener('click', (e) => {
                 if (e.target.closest('.bookmark-delete-btn')) return;
-                spawnTabWithUrl(qm.url);
+                if (isSafeTabUrl(qm.url)) {
+                    spawnTabWithUrl(qm.url);
+                }
                 if (state.bookmarksActive) {
                     toggleBookmarksOverlay();
                 }
@@ -233,7 +238,9 @@ export function renderBookmarksList(filterText = '') {
 
             itemEl.addEventListener('click', (e) => {
                 if (e.target.closest('.bookmark-delete-btn')) return;
-                spawnTabWithUrl(bm.url);
+                if (isSafeTabUrl(bm.url)) {
+                    spawnTabWithUrl(bm.url);
+                }
                 if (state.bookmarksActive) {
                     toggleBookmarksOverlay();
                 }
@@ -424,7 +431,7 @@ export function handleBookmarkKeyNavigation(e) {
         if (currentCache.length > 0) {
             let selIdx = state.bookmarkActiveColumn === 'quickmarks' ? state.quickmarkSelectionIdx : state.bookmarkSelectionIdx;
             const targetItem = currentCache[selIdx];
-            if (targetItem && targetItem.url) {
+            if (targetItem && targetItem.url && isSafeTabUrl(targetItem.url)) {
                 spawnTabWithUrl(targetItem.url);
                 if (state.bookmarksActive) {
                     toggleBookmarksOverlay();
