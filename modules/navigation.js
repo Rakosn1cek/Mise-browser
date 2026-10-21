@@ -57,6 +57,19 @@ export function extractDdgBang(query) {
 }
 
 function applyTargetUrl(targetUrl) {
+    if (!targetUrl || typeof targetUrl !== 'string') return;
+
+    if ((targetUrl.startsWith('file:') || targetUrl.startsWith('/')) && !isPdfUrl(targetUrl)) {
+        if (typeof setTargetUrl === 'function') {
+            setTargetUrl('Local file access restricted to PDF documents.', 4000);
+        }
+        hideSuggestions();
+        const addressBar = document.getElementById('WideAddressBar');
+        if (addressBar) addressBar.style.display = 'none';
+        focusActiveWebview();
+        return;
+    }
+
     const currentWS = state.sessionState.current_workspace;
     const activeListItem = document.querySelector('#TabList li.selected');
     if (!activeListItem) return;
@@ -161,9 +174,20 @@ export async function handleNavigation(input) {
     }
 
     if (!targetUrl) {
-        targetUrl = trimmedInput;
         if (trimmedInput.startsWith('/') || trimmedInput.startsWith('file://')) {
-            targetUrl = trimmedInput.startsWith('/') ? 'file://' + trimmedInput : trimmedInput;
+            const candidateUrl = trimmedInput.startsWith('/') ? 'file://' + trimmedInput : trimmedInput;
+            if (isPdfUrl(candidateUrl)) {
+                targetUrl = candidateUrl;
+            } else {
+                if (typeof setTargetUrl === 'function') {
+                    setTargetUrl('Local file access restricted to PDF documents.', 4000);
+                }
+                hideSuggestions();
+                const addressBar = document.getElementById('WideAddressBar');
+                if (addressBar) addressBar.style.display = 'none';
+                focusActiveWebview();
+                return;
+            }
         } else if (!trimmedInput.startsWith('http://') && !trimmedInput.startsWith('https://')) {
             if (trimmedInput.includes('.') && !trimmedInput.includes(' ')) {
                 targetUrl = `https://${trimmedInput}`;
@@ -179,6 +203,8 @@ export async function handleNavigation(input) {
                 }
                 targetUrl = formatSearchUrl(trimmedInput, searchTemplate);
             }
+        } else {
+            targetUrl = trimmedInput;
         }
     }
 
