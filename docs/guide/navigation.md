@@ -26,6 +26,7 @@ Press **Ctrl + L** at any time to open the floating, high-contrast address overl
 - **Direct Calculator**: Type any arithmetic expression (e.g. `240 * 1.2`, `15% of 200`, `sqrt(144)`) to compute the answer live in the dropdown. Press **Enter** to copy the answer to your clipboard, or press the **Down Arrow** or **Tab** to put the result into the address bar and continue calculating.
 - **DuckDuckGo Bangs**: Type any DuckDuckGo bang (e.g. `!w Arch Linux`, `!gh MiseBrowser`, `!yt ambient`) to route directly to thousands of external search destinations.
 - **Workspace Switching**: Type `ws` followed by a workspace name (e.g. `ws work`) to switch workspaces instantly from the address bar.
+- **Local File Containment**: Entering local file paths (starting with `/` or `file://`) is strictly restricted to valid PDF documents, automatically mediating them through the offline PDF viewer. Navigation to arbitrary local file paths is blocked with a status bar alert to protect system security.
 - Press **Escape** to hide the address bar and return focus directly to the active web page.
 
 ---

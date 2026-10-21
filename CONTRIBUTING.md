@@ -61,7 +61,7 @@ Please use the structured GitHub issue forms to report problems:
 
 Contributions must follow these conventions:
 
-* **Language & Runtime:** Pure JavaScript. Frontend browser modules in `modules/` use standard ES modules. Node.js backend processes (`main.js`, `preload.js`, `security.js`, `keybinds.js`) use standard CommonJS.
+* **Language & Runtime:** Pure JavaScript. Frontend browser modules in `modules/` use standard ES modules, cleanly partitioned by an isolated `modules/package.json` (`"type": "module"` boundary) for warning-free testing. Node.js backend processes (`main.js`, `preload.js`, `security.js`, `keybinds.js`) use standard CommonJS.
 * **UK English:** All code comments, documentation, user-facing text, and issue messages must use British English spelling (e.g. `colour`, `customise`, `initialise`, `behaviour`, `optimise`, `sanitised`).
 * **Concise Code Notes:** Keep notes within code human-readable, purposeful, and concise. Avoid redundant commentary restating self-explanatory logic.
 * **Text Formatting:** Do not use double dashes in text, comments, or documentation files.

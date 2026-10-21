@@ -23,6 +23,7 @@ When you select a script or run command within Mise:
 
 2. **Decoupled Clipboard Staging**:
    - Rather than executing the script directly in a background shell process or passing it blindly to a child process, Mise stages the command onto your system clipboard.
+   - To eliminate clipboard pastejacking risks where newline characters trigger immediate command execution upon pasting into a shell, Mise sanitises all terminal command strings via `security.sanitiseTerminalCommand`. All line breaks (`\r\n`, `\n`, `\r`) and null bytes are neutralised into spaces, trailing whitespace is trimmed, and payload length is bounded to 4096 characters.
    - If risky patterns are detected, Mise prefixes the staged clipboard text with `oversight` to trigger the external scanner if present.
    - Mise then spawns a fresh, unmanaged, empty terminal instance.
 
