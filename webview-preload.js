@@ -10,13 +10,43 @@ window.addEventListener('mise-reader-closed', () => {
     try { ipcRenderer.sendToHost('reader-view-toggled', { active: false }); } catch (err) {}
 });
 
-window.addEventListener('mise-reader-export-notes', (e) => {
-    try { ipcRenderer.sendToHost('reader-export-notes', e.detail); } catch (err) {}
-});
+window.addEventListener('click', (e) => {
+    if (!e || !e.isTrusted) return;
+    const overlay = document.getElementById('mise-reader-overlay');
+    if (!overlay) return;
 
-window.addEventListener('mise-reader-export-external', (e) => {
-    try { ipcRenderer.sendToHost('reader-export-external', e.detail); } catch (err) {}
-});
+    const path = typeof e.composedPath === 'function' ? e.composedPath() : [];
+    const isInsideOverlay = path.includes(overlay) || overlay.contains(e.target);
+    if (!isInsideOverlay) return;
+
+    let targetType = null;
+    for (const el of path) {
+        if (el === overlay) break;
+        if (!el || !el.classList) continue;
+        if (el.classList.contains('export-notes-btn')) {
+            targetType = 'notes';
+            break;
+        }
+        if (el.classList.contains('export-external-btn')) {
+            targetType = 'external';
+            break;
+        }
+    }
+
+    if (!targetType && e.target && typeof e.target.closest === 'function') {
+        const btn = e.target.closest('.export-notes-btn, .export-external-btn');
+        if (btn && (overlay.contains(btn) || (overlay.shadowRoot && overlay.shadowRoot.contains(btn)))) {
+            if (btn.classList.contains('export-notes-btn')) targetType = 'notes';
+            else if (btn.classList.contains('export-external-btn')) targetType = 'external';
+        }
+    }
+
+    if (targetType) {
+        try {
+            ipcRenderer.sendToHost('reader-export-request', targetType);
+        } catch (err) {}
+    }
+}, true);
 
 // Expose minimal, secure GM bridge for userscript execution
 try {

@@ -233,9 +233,25 @@ async function openNotesInExternalApp(customPath, targetConfigDir = CONFIG_DIR) 
 
 async function exportArticleToExternal({ title, markdown } = {}, targetConfigDir = CONFIG_DIR) {
     try {
-        const cfg = config.loadBrowserConfig(targetConfigDir, path.join(targetConfigDir, 'config.json'));
+        const mdString = typeof markdown === 'string' ? markdown : (markdown === undefined ? '' : null);
+        if (mdString === null) {
+            return { success: false, error: 'Invalid markdown payload' };
+        }
+        if (Buffer.byteLength(mdString, 'utf8') > 1024 * 1024) {
+            return { success: false, error: 'Markdown content exceeds 1 MB limit' };
+        }
+
         const clippingsDir = path.join(targetConfigDir, 'clippings');
-        if (!fs.existsSync(clippingsDir)) fs.mkdirSync(clippingsDir, { recursive: true });
+        if (fs.existsSync(clippingsDir)) {
+            const existingFiles = fs.readdirSync(clippingsDir);
+            if (existingFiles.length >= 200) {
+                return { success: false, error: 'Clippings directory file limit reached (200 files maximum)' };
+            }
+        } else {
+            fs.mkdirSync(clippingsDir, { recursive: true });
+        }
+
+        const cfg = config.loadBrowserConfig(targetConfigDir, path.join(targetConfigDir, 'config.json'));
 
         const safeTitle = (title || 'article')
             .replace(/[^a-zA-Z0-9_\-\u00C0-\u017F ]/g, '')
@@ -246,7 +262,7 @@ async function exportArticleToExternal({ title, markdown } = {}, targetConfigDir
         const filename = `${safeTitle}_${timestamp}.md`;
         const targetPath = path.join(clippingsDir, filename);
 
-        atomicWriteFileSync(targetPath, markdown || '');
+        atomicWriteFileSync(targetPath, mdString);
 
         const cmd = (cfg.external_notes_command || '').trim();
         if (cmd) {

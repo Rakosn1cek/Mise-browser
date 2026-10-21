@@ -442,10 +442,8 @@ export function createWebView(url, currentWS, idx) {
             } else {
                 setTargetUrl('Reader View Closed', 2000);
             }
-        } else if (e.channel === 'reader-export-notes') {
-            exportArticleToNotes(e.args[0]);
-        } else if (e.channel === 'reader-export-external') {
-            exportArticleToExternalApp(e.args[0]);
+        } else if (e.channel === 'reader-export-request') {
+            handleReaderExportRequest(webview, e.args[0]);
         } else if (e.channel === 'normal-mode-action') {
             const action = e.args[0];
             const extra = e.args[1];
@@ -596,36 +594,67 @@ export async function toggleReaderViewOnActiveTab() {
     }
 }
 
+const READER_EXTRACT_SCRIPT = `(function() {
+    var overlay = document.getElementById('mise-reader-overlay');
+    if (overlay && overlay.shadowRoot) {
+        var title = overlay.shadowRoot.querySelector('.article-title')?.textContent || document.title;
+        var byline = overlay.shadowRoot.querySelector('.article-byline')?.textContent || '';
+        var body = overlay.shadowRoot.querySelector('.article-body')?.innerText || '';
+        var pill = overlay.shadowRoot.querySelector('.article-domain-pill')?.textContent || window.location.hostname;
+        return {
+            isReader: true,
+            title: title,
+            byline: byline,
+            url: window.location.href,
+            siteName: pill,
+            textContent: body
+        };
+    }
+    var selected = window.getSelection() ? window.getSelection().toString() : '';
+    return {
+        isReader: false,
+        title: document.title,
+        url: window.location.href,
+        siteName: window.location.hostname,
+        textContent: selected || ''
+    };
+})()`;
+
+export async function handleReaderExportRequest(webview, exportType) {
+    if (!webview || !webview.__miseReaderActive) return;
+    if (exportType !== 'notes' && exportType !== 'external') return;
+
+    const now = Date.now();
+    if (webview.__lastReaderExportTime && (now - webview.__lastReaderExportTime < 2000)) {
+        return;
+    }
+    webview.__lastReaderExportTime = now;
+
+    if (typeof webview.executeJavaScript !== 'function') return;
+    try {
+        const articleData = await webview.executeJavaScript(READER_EXTRACT_SCRIPT, false);
+        if (!articleData) return;
+        if (typeof articleData.title !== 'string' || typeof articleData.textContent !== 'string') {
+            return;
+        }
+        articleData.title = articleData.title.slice(0, 300);
+        articleData.textContent = articleData.textContent.slice(0, 200000);
+
+        if (exportType === 'notes') {
+            await exportArticleToNotes(articleData);
+        } else if (exportType === 'external') {
+            await exportArticleToExternalApp(articleData);
+        }
+    } catch (err) {
+        console.error('Failed to export reader article:', err);
+    }
+}
+
 export async function exportActiveTabToNotes() {
     const activeWv = getActiveWebview();
     if (!activeWv || typeof activeWv.executeJavaScript !== 'function') return;
     try {
-        const extractScript = `(function() {
-            var overlay = document.getElementById('mise-reader-overlay');
-            if (overlay && overlay.shadowRoot) {
-                var title = overlay.shadowRoot.querySelector('.article-title')?.textContent || document.title;
-                var byline = overlay.shadowRoot.querySelector('.article-byline')?.textContent || '';
-                var body = overlay.shadowRoot.querySelector('.article-body')?.innerText || '';
-                var pill = overlay.shadowRoot.querySelector('.article-domain-pill')?.textContent || window.location.hostname;
-                return {
-                    isReader: true,
-                    title: title,
-                    byline: byline,
-                    url: window.location.href,
-                    siteName: pill,
-                    textContent: body
-                };
-            }
-            var selected = window.getSelection() ? window.getSelection().toString() : '';
-            return {
-                isReader: false,
-                title: document.title,
-                url: window.location.href,
-                siteName: window.location.hostname,
-                textContent: selected || ''
-            };
-        })()`;
-        const articleData = await activeWv.executeJavaScript(extractScript, false);
+        const articleData = await activeWv.executeJavaScript(READER_EXTRACT_SCRIPT, false);
         if (articleData) {
             await exportArticleToNotes(articleData);
         }
@@ -638,32 +667,7 @@ export async function exportActiveTabToExternal() {
     const activeWv = getActiveWebview();
     if (!activeWv || typeof activeWv.executeJavaScript !== 'function') return;
     try {
-        const extractScript = `(function() {
-            var overlay = document.getElementById('mise-reader-overlay');
-            if (overlay && overlay.shadowRoot) {
-                var title = overlay.shadowRoot.querySelector('.article-title')?.textContent || document.title;
-                var byline = overlay.shadowRoot.querySelector('.article-byline')?.textContent || '';
-                var body = overlay.shadowRoot.querySelector('.article-body')?.innerText || '';
-                var pill = overlay.shadowRoot.querySelector('.article-domain-pill')?.textContent || window.location.hostname;
-                return {
-                    isReader: true,
-                    title: title,
-                    byline: byline,
-                    url: window.location.href,
-                    siteName: pill,
-                    textContent: body
-                };
-            }
-            var selected = window.getSelection() ? window.getSelection().toString() : '';
-            return {
-                isReader: false,
-                title: document.title,
-                url: window.location.href,
-                siteName: window.location.hostname,
-                textContent: selected || ''
-            };
-        })()`;
-        const articleData = await activeWv.executeJavaScript(extractScript, false);
+        const articleData = await activeWv.executeJavaScript(READER_EXTRACT_SCRIPT, false);
         if (articleData) {
             await exportArticleToExternalApp(articleData);
         }
