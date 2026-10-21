@@ -613,6 +613,14 @@ function isSafeTabUrl(url) {
     } catch (e) { return false; }
 }
 
+function sanitiseTerminalCommand(commandStr, maxLength = 4096) {
+    if (typeof commandStr !== 'string') return '';
+    const clean = commandStr.replace(/[\0\r\n]+/g, ' ').trim();
+    if (!clean) return '';
+    const limit = Number.isInteger(maxLength) && maxLength > 0 ? maxLength : 4096;
+    return clean.slice(0, limit).trim();
+}
+
 module.exports = {
     decidePermission,
     hardenSession,
@@ -632,5 +640,6 @@ module.exports = {
     attachNetworkHandlers,
     mintPdfViewerUrl,
     validatePdfAccess,
-    isSafeTabUrl
+    isSafeTabUrl,
+    sanitiseTerminalCommand
 };

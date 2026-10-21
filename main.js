@@ -600,9 +600,10 @@ ipcMain.handle('reload-keybinds', async () => {
 });
 
 ipcMain.on('execute-terminal-command', (event, commandStr) => {
-    if (!commandStr || !commandStr.trim()) return;
+    const sanitised = security.sanitiseTerminalCommand(commandStr);
+    if (!sanitised) return;
 
-    clipboard.writeText(commandStr);
+    clipboard.writeText(sanitised);
 
     const platform = process.platform;
     if (platform === 'linux') {
