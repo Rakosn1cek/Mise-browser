@@ -193,4 +193,27 @@ console.log('Running Mise guest webview lifecycle and teardown regression tests.
     console.log('✓ All 17 createWebView event listeners wired with AbortController signal');
 }
 
+// 6. Verify getFaviconUrl returns null to eliminate external favicon queries
+{
+    const webviewSource = fs.readFileSync(path.join(__dirname, '../modules/webview.js'), 'utf8');
+    assert(webviewSource.includes('export function getFaviconUrl'), 'getFaviconUrl must be exported');
+    assert(!webviewSource.includes('google.com/s2/favicons'), 'modules/webview.js must not query Google favicon service');
+
+    const fnStart = webviewSource.indexOf('export function getFaviconUrl');
+    const fnEnd = webviewSource.indexOf('export function renderWorkspaceUI');
+    assert(fnStart !== -1 && fnEnd !== -1, 'Function boundaries for getFaviconUrl must exist');
+
+    const fnCode = webviewSource.slice(fnStart, fnEnd).replace('export function getFaviconUrl', 'function getFaviconUrl');
+    const runner = new Function(fnCode + '\nreturn getFaviconUrl;');
+    const getFaviconUrl = runner();
+
+    assert.equal(getFaviconUrl('https://example.com'), null, 'getFaviconUrl must return null for HTTP URLs');
+    assert.equal(getFaviconUrl('https://google.com'), null, 'getFaviconUrl must return null for HTTPS URLs');
+    assert.equal(getFaviconUrl(''), null, 'getFaviconUrl must return null for empty string');
+    assert.equal(getFaviconUrl(null), null, 'getFaviconUrl must return null for null input');
+    assert.equal(getFaviconUrl(undefined), null, 'getFaviconUrl must return null for undefined input');
+
+    console.log('✓ getFaviconUrl returns null to eliminate external favicon query leakage');
+}
+
 console.log('All guest webview lifecycle and teardown regression tests passed successfully!');

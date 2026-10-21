@@ -828,14 +828,8 @@ export function getWorkspaceBadgeText(wsName) {
     return wsName.slice(0, 2).toUpperCase();
 }
 
-export function getFaviconUrl(urlStr) {
-    if (!urlStr) return null;
-    try {
-        const parsed = new URL(urlStr);
-        if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
-            return `https://www.google.com/s2/favicons?domain=${parsed.hostname}&sz=32`;
-        }
-    } catch (e) {}
+export function getFaviconUrl(_urlStr) {
+    // Return null to avoid leaking domains to external favicon services
     return null;
 }
 
