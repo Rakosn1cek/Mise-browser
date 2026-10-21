@@ -2105,7 +2105,7 @@ Readability.prototype = {
 
   /**
    * Remove the style attribute on every e and under.
-   * TODO: Test if getElementsByTagName(*) is faster.
+   * Upstream Mozilla Readability note: test whether getElementsByTagName(*) is faster.
    *
    * @param Element
    * @return void
@@ -2465,7 +2465,7 @@ Readability.prototype = {
     // Traverse backwards so we can remove nodes at the same time
     // without effecting the traversal.
     //
-    // TODO: Consider taking into account original contentScore here.
+    // Upstream Mozilla Readability note: consider taking into account original contentScore here.
     this._removeNodes(this._getAllNodesWithTag(e, [tag]), function (node) {
       // First check if this node IS data table, in which case don't remove it.
       var isDataTable = function (t) {
