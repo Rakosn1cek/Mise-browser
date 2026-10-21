@@ -32,8 +32,9 @@ The Bookmarks overlay allows you to manage saved links with full keyboard naviga
 - Press **Ctrl + Shift + B** to toggle the Bookmarks Manager.
 - **Add Bookmark**: Press **Ctrl + Shift + A** while viewing any page to save the current URL into your bookmarks collection.
 - **Fuzzy Search**: Start typing inside the overlay to filter bookmarks dynamically.
-- **Open Bookmark**: Use the arrow keys to highlight a bookmark and press **Enter** to open it.
+- **Open Bookmark**: Use the arrow keys to highlight a bookmark and press **Enter** to open it (targets are validated against safe web protocols before opening).
 - **Delete Bookmark**: Highlight a bookmark and press **Delete** to remove it from your collection.
+- **Safety Validation**: Bookmark links are strictly validated against `isSafeTabUrl`. Disallowed protocols (such as `file:`, `javascript:`, or `data:`) are rejected to prevent unmediated local file loading.
 - Bookmarks are stored in:
   ```text
   ~/.config/mise-browser/bookmarks.json
@@ -55,6 +56,7 @@ Quickmarks provide instantaneous, single-key bookmarking inspired by Vim and win
 - From anywhere in the browser, press **Ctrl + J**.
 - Press the assigned letter key (e.g. `g`).
 - Mise instantly navigates your active tab to the bound URL.
+- **Safety Validation**: Both quickmark assignment and jump navigation enforce strict `isSafeTabUrl` checks. Only safe `http:` and `https:` URLs are stored or opened, preventing dangerous local schemes (`file:`, `javascript:`, `about:blank`) from being persisted or spawned into tabs.
 
 Quickmarks are saved in:
 ```text
