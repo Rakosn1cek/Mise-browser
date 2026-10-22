@@ -3320,9 +3320,16 @@ if (typeof module === "object") {
         var bodyContent = document.createElement('div');
         bodyContent.className = 'article-body';
 
-        var tempDiv = document.createElement('div');
-        tempDiv.innerHTML = article.content || '';
-        bodyContent.innerHTML = sanitizeArticleContent(tempDiv, baseUri);
+        // Parse untrusted content in an inert DOM context to prevent script triggers and speculative prefetching
+        var rootNode;
+        if (typeof DOMParser !== 'undefined') {
+            var parsedDoc = new DOMParser().parseFromString(article.content || '', 'text/html');
+            rootNode = parsedDoc && parsedDoc.body ? parsedDoc.body : document.createElement('div');
+        } else {
+            rootNode = document.createElement('div');
+            rootNode.innerHTML = article.content || '';
+        }
+        bodyContent.innerHTML = sanitizeArticleContent(rootNode, baseUri);
 
         container.appendChild(header);
         container.appendChild(bodyContent);
