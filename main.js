@@ -1,4 +1,11 @@
 const { app, BrowserWindow, ipcMain, session, Menu, MenuItem, nativeTheme, Notification, clipboard, shell, webContents, dialog, net } = require('electron');
+const { installIpcGuard, GUEST_CHANNELS } = require('./main/ipcGuard');
+
+installIpcGuard(ipcMain, {
+    getMainWindow: () => mainWindow,
+    guestChannels: GUEST_CHANNELS
+});
+
 const path = require('path');
 const fs = require('fs');
 const { exec, spawn, execSync, spawnSync } = require('child_process');
