@@ -2,7 +2,7 @@
 // Status and mode bar controller for link target previews, connection security, container partition badges, and modal states
 
 import { state } from './state.js';
-import { getWorkspacePartition } from './utils.js';
+import { escapeHtml, getWorkspacePartition } from './utils.js';
 import { isSplitActive, getSplitState } from './splitView.js';
 import { updateDarkReaderButtonUI, isWebviewDarkReaderActive } from './darkReader.js';
 
@@ -143,7 +143,8 @@ export function updateSecurityStatus(url) {
             securityBadgeEl.title = `Local file: ${parsed.pathname}`;
         } else {
             const proto = parsed.protocol.replace(':', '').toUpperCase();
-            securityBadgeEl.innerHTML = `<i class="fa-solid fa-globe"></i><span class="status-badge-text">${proto}</span>`;
+            const safeProto = typeof escapeHtml === 'function' ? escapeHtml(proto) : proto;
+            securityBadgeEl.innerHTML = `<i class="fa-solid fa-globe"></i><span class="status-badge-text">${safeProto}</span>`;
             securityBadgeEl.className = 'status-badge status-badge-security security-neutral';
             securityBadgeEl.title = `Protocol: ${parsed.protocol}`;
         }
@@ -172,7 +173,8 @@ export function updatePartitionBadge(workspaceName, isPrivate) {
     }
 
     const partitionStr = getWorkspacePartition(ws);
-    partitionBadgeEl.innerHTML = `<i class="fa-solid fa-box-archive"></i><span class="status-badge-text">${ws}</span>`;
+    const safeWs = typeof escapeHtml === 'function' ? escapeHtml(ws) : ws;
+    partitionBadgeEl.innerHTML = `<i class="fa-solid fa-box-archive"></i><span class="status-badge-text">${safeWs}</span>`;
     partitionBadgeEl.className = 'status-badge status-badge-partition partition-container';
     partitionBadgeEl.title = `Container partition: ${partitionStr} (Click to manage workspaces)`;
 }

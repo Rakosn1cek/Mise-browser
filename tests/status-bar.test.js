@@ -5,6 +5,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const { escapeHtml } = require('../modules/utils.js');
 
 console.log('Running Mise status bar throttling and accessibility regression tests...');
 
@@ -37,6 +38,7 @@ const mockState = {
 
 const context = {
     URL,
+    escapeHtml,
     document: {
         getElementById: id => elements[id],
         querySelector: () => null,
@@ -96,5 +98,11 @@ assert.match(elements.StatusBarPartition.innerHTML, /Private Profile/);
 context.updatePartitionBadge('Workspace 2', true);
 assert.equal(htmlWrites.partition, 3, 'Repeated private partition call is throttled');
 
+// 7. Partition badge HTML escaping guard
+context.updatePartitionBadge('Workspace <img src=x onerror=alert(1)>', false);
+assert.match(elements.StatusBarPartition.innerHTML, /Workspace &lt;img src=x onerror=alert\(1\)&gt;/);
+assert.doesNotMatch(elements.StatusBarPartition.innerHTML, /<img/);
+
 console.log('✓ Security and partition badge updates suppress redundant DOM operations');
+console.log('✓ Status bar badges safely escape special HTML characters');
 console.log('All status bar throttling regression tests passed successfully!');
