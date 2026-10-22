@@ -19,7 +19,7 @@ Mise includes an integrated, expansive scratchpad overlay for taking notes along
   ```text
   ~/.config/mise-browser/notes.md
   ```
-- **Export from Reader View (`Ctrl + Shift + E`)**: Distilled Reader View articles and web clippings can be appended straight into Quick Notes with a single click or keyboard shortcut.
+- **Export from Reader View (`Ctrl + Shift + E`)**: Distilled Reader View articles and web clippings can be appended straight into Quick Notes with a single click or keyboard shortcut. Reader View exports enforce trusted click gating (`event.isTrusted` on overlay buttons), throttle requests to once every 2 seconds per webview, extract article content host-side with string bounds (300 character title, 200,000 character body), reject files exceeding 1 MB, and cap clippings at 200 files to prevent storage exhaustion.
 - **Right-Click Text Clipping**: Highlight any text passage on a web page or in a document and right-click to choose **Save to Notes**. The snippet is formatted into a clean Markdown blockquote with source citation and timestamp, and appended directly to `notes.md`.
 - **External Note-Taking Integration**: Click the **External** button in the notes header to open `notes.md` in your preferred desktop note application (Obsidian, Logseq, Neovim, VS Code) or system default Markdown editor. Custom launch commands can be configured in Preferences. External editor launches strictly resolve paths within the application configuration directory, preventing directory traversal and safeguarding local filesystem boundaries.
 

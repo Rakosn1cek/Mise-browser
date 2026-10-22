@@ -67,4 +67,4 @@ When debugging web applications or purging lingering sessions:
 Mise guarantees complete network silence on startup:
 
 - **Local Asset Bundling**: All icons, stylesheets, and webfonts are bundled locally inside the application package. No third-party CDN connections (such as Cloudflare or Google Fonts) are initiated when opening the browser.
-- **Strict Content Security Policy**: The application shell enforces a strict Content Security Policy (`default-src 'self'`), blocking unauthorised external script, style, or object injections.
+- **Strict Content Security Policy**: The application shell enforces a strict Content Security Policy (`default-src 'self'`, `form-action 'none'`), blocking unauthorised external script, style, form submission, or object injections.

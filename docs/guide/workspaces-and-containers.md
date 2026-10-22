@@ -53,7 +53,7 @@ The Workspace Dashboard provides a structural tree view of all open tabs across 
 
 ---
 
-## Session Persistence
+## Session Persistence & Snapshot Rotation
 
 Your workspace layout, active tabs, titles, container assignments, and sleeping states are saved continuously to:
 
@@ -62,3 +62,12 @@ Your workspace layout, active tabs, titles, container assignments, and sleeping 
 ```
 
 If the browser closes or restarts, your complete environment is restored exactly as you left it.
+
+### Persistence Integrity & Backup Rotation
+
+To protect your browsing session from crash corruption or transient navigation states:
+
+- **Scheme Validation (`isPersistableTabUrl`)**: Only safe web and local file URLs (`http:`, `https:`, and `file:`) are written to session storage. Transient blank pages (`about:blank`) or error pages during mid-flight navigation are prevented from overwriting active tab state.
+- **Suspect Blank Session Quarantine**: If a write payload contains an empty workspace tree or missing active tab definitions, Mise quarantines the suspect state to `session.suspect.json` rather than overwriting `session.json`, protecting your active tabs from corruption.
+- **Non-Blank Backup Rotation**: The atomic backup file (`session.json.bak`) is updated solely on verified, non-blank session flushes.
+- **Timestamped Recovery Snapshots**: Mise automatically creates timestamped session snapshots (`session.snap-YYYYMMDD-HHMMSS.json`), rate-limited to at most one snapshot per 10 minutes and retaining the 10 most recent snapshots for point-in-time recovery.

@@ -226,3 +226,15 @@ Mise includes an in-engine DOM distiller powered by Mozilla Readability to strip
   * **Reading Width**: Narrow (620px), Medium (760px), or Wide (940px).
 * **Reading Metrics**: Header estimates word count and reading time based on typical reading velocity.
 
+***
+
+## Native Downloads Shelf (`Ctrl + Shift + D`)
+
+Manage ongoing and completed file downloads directly within the application without leaving your active tab:
+
+* **Download Shelf Toggle**: Press **Ctrl + Shift + D** to display or hide the bottom downloads drawer.
+* **Live Progress & Speed**: Displays active transfers, download velocity, percentage completion, and elapsed time with visual progress indicators.
+* **Tracked Path Containment**: Opening or revealing downloads via IPC handlers (`open-download`, `reveal-download`) is strictly restricted to canonical realpaths of tracked active and recent downloads. Untracked or arbitrary renderer-supplied paths are rejected.
+* **Dangerous Extension Safeguards**: Downloaded files matching dangerous executable or script extensions (`.exe`, `.msi`, `.bat`, `.cmd`, `.com`, `.scr`, `.ps1`, `.vbs`, `.js`, `.jse`, `.wsf`, `.lnk`, `.jar`, `.sh`, `.run`, `.appimage`, `.desktop`, `.command`, `.app`, `.dmg`, `.pkg`, `.deb`, `.rpm`) are identified case-insensitively. Opening a dangerous file automatically diverts from direct execution to revealing the file safely inside the system file manager.
+* **Non-Blocking File Manager Integration**: File manager discovery and revelation utilise asynchronous, non-blocking execution with timeouts over D-Bus (`org.freedesktop.FileManager1`) and XDG desktop configurations, ensuring the browser UI never freezes during disk or process operations.
+
