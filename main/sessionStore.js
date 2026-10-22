@@ -320,6 +320,38 @@ function registerSessionIpc(ipcMain) {
     });
 
     ipcMain.handle('save-session', async (event, sessionData) => {
+        if (!sessionData || typeof sessionData !== 'object' || Array.isArray(sessionData)) {
+            return false;
+        }
+
+        let serialized;
+        try {
+            serialized = JSON.stringify(sessionData);
+        } catch (e) {
+            return false;
+        }
+
+        if (!serialized || serialized.length > 5 * 1024 * 1024) {
+            return false;
+        }
+
+        if (typeof sessionData.current_workspace !== 'string' || sessionData.current_workspace.length > 200) {
+            return false;
+        }
+
+        if (!sessionData.workspaces || typeof sessionData.workspaces !== 'object' || Array.isArray(sessionData.workspaces)) {
+            return false;
+        }
+
+        for (const wsTabs of Object.values(sessionData.workspaces)) {
+            if (!Array.isArray(wsTabs)) return false;
+            for (const url of wsTabs) {
+                if (typeof url !== 'string' || url.length > 16384) {
+                    return false;
+                }
+            }
+        }
+
         return scheduleSessionSave(sessionData);
     });
 }

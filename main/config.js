@@ -1,6 +1,6 @@
 const path = require('path');
 const fs = require('fs');
-const { app } = require('electron');
+const { app, dialog } = require('electron');
 
 const DEFAULT_THEME_COLORS = {
     dark: {
@@ -128,23 +128,252 @@ function updateBrowserConfig(newCfg, targetDir = CONFIG_DIR, targetPath = CONFIG
     }
 }
 
+function isValidHttpUrlTemplate(val) {
+    if (typeof val !== 'string' || val.length > 2048) return false;
+    try {
+        const dummy = val.replace(/%s/g, 'query');
+        const parsed = new URL(dummy);
+        return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+    } catch (e) {
+        return false;
+    }
+}
+
+function validateThemeColors(tc) {
+    if (!tc || typeof tc !== 'object' || Array.isArray(tc)) return false;
+    const modes = Object.keys(tc);
+    if (modes.length === 0) return false;
+    const allowedModes = new Set(['dark', 'light']);
+    const hexRegex = /^#[0-9a-fA-F]{6}$/;
+    const colorKeys = new Set(['accent', 'bg_main', 'bg_sidebar', 'text']);
+    const opacityKeys = new Set(['sidebar_opacity', 'overlay_opacity']);
+
+    for (const mode of modes) {
+        if (!allowedModes.has(mode)) return false;
+        const modeObj = tc[mode];
+        if (!modeObj || typeof modeObj !== 'object' || Array.isArray(modeObj)) return false;
+        const props = Object.keys(modeObj);
+        for (const prop of props) {
+            const val = modeObj[prop];
+            if (colorKeys.has(prop)) {
+                if (typeof val !== 'string' || !hexRegex.test(val)) return false;
+            } else if (opacityKeys.has(prop)) {
+                if (!Number.isInteger(val) || val < 0 || val > 100) return false;
+            } else {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+function validateCustomSearchAliases(aliases) {
+    if (!aliases || typeof aliases !== 'object' || Array.isArray(aliases)) return false;
+    const entries = Object.entries(aliases);
+    if (entries.length > 100) return false;
+    const aliasKeyRegex = /^[A-Za-z0-9_-]{1,16}$/;
+    for (const [key, val] of entries) {
+        if (!aliasKeyRegex.test(key)) return false;
+        if (!isValidHttpUrlTemplate(val)) return false;
+    }
+    return true;
+}
+
+function validateConfigPatch(patch) {
+    const clean = {};
+    const rejected = [];
+
+    if (!patch || typeof patch !== 'object' || Array.isArray(patch)) {
+        return { clean, rejected };
+    }
+
+    const defaultKeys = new Set(Object.keys(DEFAULT_CONFIG));
+
+    for (const key of Object.keys(patch)) {
+        if (!defaultKeys.has(key)) {
+            rejected.push(key);
+            continue;
+        }
+
+        const val = patch[key];
+
+        if (key === 'external_notes_command') {
+            rejected.push(key);
+            continue;
+        }
+
+        switch (key) {
+            case 'disable_gpu':
+            case 'background_throttling':
+            case 'sidebar_auto_collapse':
+            case 'show_status_bar':
+            case 'show_clock':
+            case 'enable_diagnostics':
+            case 'show_window_controls': {
+                if (typeof val === 'boolean') {
+                    clean[key] = val;
+                } else {
+                    rejected.push(key);
+                }
+                break;
+            }
+
+            case 'process_limit': {
+                if (Number.isInteger(val) && val >= 1 && val <= 16) {
+                    clean[key] = val;
+                } else {
+                    rejected.push(key);
+                }
+                break;
+            }
+
+            case 'tab_sleep_timeout_minutes': {
+                if (Number.isInteger(val) && val >= 0 && val <= 1440) {
+                    clean[key] = val;
+                } else {
+                    rejected.push(key);
+                }
+                break;
+            }
+
+            case 'theme':
+            case 'webview_theme': {
+                if (val === 'dark' || val === 'light') {
+                    clean[key] = val;
+                } else {
+                    rejected.push(key);
+                }
+                break;
+            }
+
+            case 'clock_format': {
+                if (val === 'datetime' || val === 'time' || val === 'seconds') {
+                    clean[key] = val;
+                } else {
+                    rejected.push(key);
+                }
+                break;
+            }
+
+            case 'email_handler': {
+                if (val === 'system' || isValidHttpUrlTemplate(val)) {
+                    clean[key] = val;
+                } else {
+                    rejected.push(key);
+                }
+                break;
+            }
+
+            case 'spellchecker_language': {
+                if (typeof val === 'string' && /^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$/.test(val)) {
+                    clean[key] = val;
+                } else {
+                    rejected.push(key);
+                }
+                break;
+            }
+
+            case 'last_seen_version': {
+                if (val === null || (typeof val === 'string' && val.length <= 32)) {
+                    clean[key] = val;
+                } else {
+                    rejected.push(key);
+                }
+                break;
+            }
+
+            case 'search_engine': {
+                if (typeof val === 'string' && val.includes('%s') && isValidHttpUrlTemplate(val)) {
+                    clean[key] = val;
+                } else {
+                    rejected.push(key);
+                }
+                break;
+            }
+
+            case 'trusted_domains': {
+                if (Array.isArray(val) && val.length <= 200 && val.every(d => typeof d === 'string' && d.length <= 253)) {
+                    clean[key] = [...val];
+                } else {
+                    rejected.push(key);
+                }
+                break;
+            }
+
+            case 'theme_colors': {
+                if (validateThemeColors(val)) {
+                    clean[key] = val;
+                } else {
+                    rejected.push(key);
+                }
+                break;
+            }
+
+            case 'custom_search_aliases': {
+                if (validateCustomSearchAliases(val)) {
+                    clean[key] = val;
+                } else {
+                    rejected.push(key);
+                }
+                break;
+            }
+
+            default:
+                rejected.push(key);
+                break;
+        }
+    }
+
+    return { clean, rejected };
+}
+
+async function handleExternalNotesPrompt(patch, clean, dialogRef) {
+    if (patch && typeof patch === 'object' && Object.prototype.hasOwnProperty.call(patch, 'external_notes_command')) {
+        const rawCmd = patch.external_notes_command;
+        if (typeof rawCmd === 'string' && rawCmd.trim().length > 0) {
+            if (dialogRef && typeof dialogRef.showMessageBox === 'function') {
+                const result = await dialogRef.showMessageBox({
+                    type: 'warning',
+                    buttons: ['Cancel', 'Allow'],
+                    message: `Allow external application command: ${rawCmd}`
+                });
+                if (result && (result.response === 1 || result === 1)) {
+                    clean.external_notes_command = rawCmd;
+                }
+            }
+        } else if (rawCmd === '') {
+            clean.external_notes_command = '';
+        }
+    }
+}
+
 function registerConfigIpc(ipcMain, hooks = {}) {
     ipcMain.handle('get-browser-settings', async () => {
         return loadBrowserConfig();
     });
 
     ipcMain.handle('save-browser-settings', async (event, newCfg) => {
-        saveBrowserConfig(newCfg);
+        const { clean, rejected } = validateConfigPatch(newCfg);
+        if (rejected.length > 0) {
+            console.warn('Rejected configuration keys:', rejected);
+        }
+        await handleExternalNotesPrompt(newCfg, clean, hooks.dialog || dialog);
+        saveBrowserConfig(clean);
         return true;
     });
 
     ipcMain.handle('update-browser-settings', async (event, newCfg) => {
         try {
             const before = loadBrowserConfig();
-            const res = updateBrowserConfig(newCfg);
+            const { clean, rejected } = validateConfigPatch(newCfg);
+            if (rejected.length > 0) {
+                console.warn('Rejected configuration keys:', rejected);
+            }
+            await handleExternalNotesPrompt(newCfg, clean, hooks.dialog || dialog);
+            const res = updateBrowserConfig(clean);
             if (!res.success) return false;
             const merged = res.config;
-            const payload = newCfg || {};
+            const payload = clean || {};
             if (Object.prototype.hasOwnProperty.call(payload, 'trusted_domains') &&
                 JSON.stringify(before.trusted_domains) !== JSON.stringify(merged.trusted_domains) &&
                 Array.isArray(merged.trusted_domains) &&
@@ -181,5 +410,6 @@ module.exports = {
     saveBrowserConfig,
     updateBrowserConfig,
     registerConfigIpc,
-    restartApp
+    restartApp,
+    validateConfigPatch
 };
