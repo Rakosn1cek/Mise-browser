@@ -55,6 +55,12 @@ export function focusActiveWebview() {
     }
 }
 
+// Validates whether a workspace name is reserved by the browser system
+export function isReservedWorkspaceName(workspaceName) {
+    if (!workspaceName || typeof workspaceName !== 'string') return false;
+    return workspaceName.trim().toLowerCase() === 'private';
+}
+
 // Generates a filesystem-safe persistent container partition string for a workspace
 export function getWorkspacePartition(workspaceName) {
     if (!workspaceName) return 'persist:default';

@@ -54,6 +54,42 @@ function getPendingSessionData() {
     return pendingSessionData;
 }
 
+function isReservedWorkspaceName(workspaceName) {
+    if (!workspaceName || typeof workspaceName !== 'string') return false;
+    return workspaceName.trim().toLowerCase() === 'private';
+}
+
+function migrateLegacyPrivateWorkspace(sessionData) {
+    if (!sessionData || typeof sessionData !== 'object') return sessionData;
+    if (!sessionData.workspaces || typeof sessionData.workspaces !== 'object') return sessionData;
+
+    const legacyKeys = Object.keys(sessionData.workspaces).filter(k => isReservedWorkspaceName(k));
+    if (legacyKeys.length === 0) return sessionData;
+
+    for (const oldKey of legacyKeys) {
+        let targetName = 'Private (old)';
+        let counter = 2;
+        while (sessionData.workspaces[targetName]) {
+            targetName = `Private (old ${counter})`;
+            counter++;
+        }
+
+        // Migrate tab URLs
+        sessionData.workspaces[targetName] = sessionData.workspaces[oldKey];
+        delete sessionData.workspaces[oldKey];
+
+        // Migrate tab metadata collections
+        for (const metaKey of ['tab_titles', 'tab_favicons', 'tab_sleep_states', 'tab_dark_reader', 'tab_pinned']) {
+            if (sessionData[metaKey] && typeof sessionData[metaKey] === 'object' && sessionData[metaKey][oldKey]) {
+                sessionData[metaKey][targetName] = sessionData[metaKey][oldKey];
+                delete sessionData[metaKey][oldKey];
+            }
+        }
+    }
+
+    return sessionData;
+}
+
 function sanitizeSessionForDisk(sessionData) {
     if (!sessionData || typeof sessionData !== 'object') return sessionData;
     const clone = JSON.parse(JSON.stringify(sessionData));
@@ -249,7 +285,8 @@ function readCurrentSession(customPaths = {}) {
             const raw = fs.readFileSync(targetSessionPath, 'utf8');
             const parsed = JSON.parse(raw);
             if (parsed && typeof parsed === 'object') {
-                return sanitizeSessionForDisk(parsed);
+                const migrated = migrateLegacyPrivateWorkspace(parsed);
+                return sanitizeSessionForDisk(migrated);
             }
         }
     } catch (err) {
@@ -262,7 +299,8 @@ function readCurrentSession(customPaths = {}) {
             const parsedBackup = JSON.parse(rawBackup);
             if (parsedBackup && typeof parsedBackup === 'object') {
                 diagnostics.logEvent('info', 'session', 'Successfully recovered session from backup copy');
-                return sanitizeSessionForDisk(parsedBackup);
+                const migratedBackup = migrateLegacyPrivateWorkspace(parsedBackup);
+                return sanitizeSessionForDisk(migratedBackup);
             }
         }
     } catch (backupErr) {
@@ -296,6 +334,8 @@ module.exports = {
     isCrashRecoveryState,
     setCrashRecoveryState,
     getPendingSessionData,
+    isReservedWorkspaceName,
+    migrateLegacyPrivateWorkspace,
     sanitizeSessionForDisk,
     flushSessionToDisk,
     scheduleSessionSave,

@@ -31,6 +31,8 @@ Alongside your persistent workspaces, Mise includes a dedicated, permanent **Pri
 - **Pinned Dashboard Placement**: In the Workspace Dashboard (`Ctrl + Shift + W`), the `Private` workspace is pinned to the top of the tree, badged with a shield icon and protected from accidental deletion or renaming.
 - **Visual Identity**: The active private workspace applies a subtle Tokyo Night rose background tint via CSS `color-mix` across the canvas and sidebar, providing immediate visual feedback without bright or jarring colours.
 - **Zero Disk Footprint**: When `session.json` is flushed to disk, the `Private` workspace and all associated tab URLs, titles, and sleep states are completely filtered out.
+- **Reserved System Namespace**: Names matching `private` (case-insensitive) are strictly reserved. Attempting to create or rename a persistent workspace to any variation of `private` is rejected to eliminate partition collisions.
+- **Legacy Session Migration**: When upgrading from pre-refactor releases of Mise where a persistent workspace was named "Private", Mise automatically migrates those tabs and metadata to "Private (old)" during session ingestion, guaranteeing that user tabs are never lost.
 - **Instant Keyboard Toggle**: Press **Ctrl + Shift + P** at any moment to switch directly into the Private workspace, or return to your previous active workspace when pressed again.
 
 ---

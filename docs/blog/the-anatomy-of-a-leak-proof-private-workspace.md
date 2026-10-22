@@ -112,7 +112,7 @@ export function getWorkspacePartition(workspaceName) {
 > [!IMPORTANT]
 > **The `persist:` Partition Trap**: In Electron, if the main process lacks this partition mapping, IPC handlers (such as cookie and cache wipes) default to `persist:private`. Chromium then silently creates a physical directory under `~/.config/mise-browser/Partitions/private/`, persisting cookies and logins across restarts! Both processes must resolve the partition without the `persist:` prefix to remain 100% in-memory.
 
-* **Namespace Reservation**: In the Workspace Dashboard (`modules/overlays/dashboard.js`), `Private` is pinned to the very top with a shield icon. Renaming or deleting it is strictly forbidden, and creating or renaming standard workspaces to `private` is rejected to eliminate namespace collisions.
+* **Namespace Reservation**: Both processes enforce workspace reservation via `isReservedWorkspaceName()`. In the Workspace Dashboard (`modules/overlays/dashboard.js`), `Private` is pinned to the very top with a shield icon. Renaming or deleting it is strictly forbidden, and creating or renaming standard workspaces to `private` (case-insensitive) is rejected to eliminate namespace collisions.
 
 ### 2. Guarding Main Process History and URL Sanitisation
 
@@ -162,7 +162,7 @@ function sanitizeSessionForDisk(sessionData) {
 ```
 
 * **Cold Boot Fallback**: When Mise closes while `Private` is active, `sanitizeSessionForDisk()` resets `current_workspace` to `Workspace 1`.
-* **Read-Time Sanitisation**: `readCurrentSession()` passes loaded payloads through `sanitizeSessionForDisk()` on boot, and `initializeBrowser()` in `renderer.js` provides a third defence layer ensuring Mise never restores directly into Private mode.
+* **Read-Time Sanitisation & Legacy Migration**: `readCurrentSession()` passes loaded payloads through `sanitizeSessionForDisk()` on boot, and `initializeBrowser()` in `renderer.js` provides a third defence layer ensuring Mise never restores directly into Private mode. Crucially, before sanitisation occurs, `readCurrentSession()` invokes `migrateLegacyPrivateWorkspace()`. If an older session created prior to the permanent Private workspace refactor contains a persistent workspace named "Private", it is seamlessly migrated to "Private (old)" along with all tab URLs, favicons, titles, and sleep states, eliminating silent data loss for upgrading users.
 When Mise closes, all trace of the Private workspace is discarded. Upon relaunch, `Private` initialises cleanly in memory.
 
 ### 4. Plugging the Favicon Leak

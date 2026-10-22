@@ -175,7 +175,9 @@ try {
         assert.strictEqual(loaded.current_workspace, 'Workspace 1', 'readCurrentSession must never restore into Private');
         assert.strictEqual(loaded.workspaces['Private'], undefined, 'readCurrentSession must filter out Private workspace');
         assert.strictEqual(loaded.tab_titles['Private'], undefined, 'readCurrentSession must filter out Private tab titles');
-        console.log('✓ readCurrentSession sanitises on read and prevents booting into Private workspace');
+        assert.deepStrictEqual(loaded.workspaces['Private (old)'], ['https://leak-test.org'], 'Legacy Private tabs must be preserved in Private (old)');
+        assert.deepStrictEqual(loaded.tab_titles['Private (old)'], ['Leak Test'], 'Legacy Private tab titles must be preserved in Private (old)');
+        console.log('✓ readCurrentSession sanitises on read, migrates legacy tabs, and prevents booting into Private workspace');
     }
 
     // 7. Verify dashboard name collisions and reservation guards
@@ -224,6 +226,65 @@ try {
             'Null input must safely return false'
         );
         console.log('✓ isTargetPrivateDomain consistently returns false without routing leakage');
+    }
+
+    // 9. Verify isReservedWorkspaceName helper in utils and sessionStore
+    {
+        const { isReservedWorkspaceName: utilsIsReserved } = require('../modules/utils.js');
+        const sessionStoreIsReserved = sessionStore.isReservedWorkspaceName;
+
+        const reservedCandidates = ['Private', 'private', 'PRIVATE', '  Private  ', '  private\t'];
+        for (const candidate of reservedCandidates) {
+            assert.strictEqual(utilsIsReserved(candidate), true, `utils isReservedWorkspaceName("${candidate}") must return true`);
+            assert.strictEqual(sessionStoreIsReserved(candidate), true, `sessionStore isReservedWorkspaceName("${candidate}") must return true`);
+        }
+
+        const safeCandidates = ['Workspace 1', 'Work', 'Private (old)', 'Privacy', 'Not Private', '', null, undefined, 42];
+        for (const candidate of safeCandidates) {
+            assert.strictEqual(utilsIsReserved(candidate), false, `utils isReservedWorkspaceName("${candidate}") must return false`);
+            assert.strictEqual(sessionStoreIsReserved(candidate), false, `sessionStore isReservedWorkspaceName("${candidate}") must return false`);
+        }
+        console.log('✓ isReservedWorkspaceName helper validation across utils and sessionStore verified');
+    }
+
+    // 10. Verify legacy Private workspace migration with collisions and full metadata transfer
+    {
+        const legacySession = {
+            current_workspace: 'Private',
+            workspaces: {
+                'Private (old)': ['https://already-migrated.org'],
+                'private': ['https://ancient-session.org/page1', 'https://ancient-session.org/page2'],
+                'Workspace 1': ['https://duckduckgo.com']
+            },
+            tab_titles: {
+                'private': ['Ancient 1', 'Ancient 2']
+            },
+            tab_favicons: {
+                'private': ['https://ancient-session.org/favicon.ico', null]
+            },
+            tab_sleep_states: {
+                'private': [null, null]
+            },
+            tab_dark_reader: {
+                'private': [true, false]
+            },
+            tab_pinned: {
+                'private': [true, false]
+            }
+        };
+
+        const migrated = sessionStore.migrateLegacyPrivateWorkspace(legacySession);
+        assert.strictEqual(migrated.workspaces['private'], undefined, 'Legacy lowercase private key must be removed');
+        assert.deepStrictEqual(migrated.workspaces['Private (old 2)'], [
+            'https://ancient-session.org/page1',
+            'https://ancient-session.org/page2'
+        ], 'Collision must allocate Private (old 2)');
+        assert.deepStrictEqual(migrated.tab_titles['Private (old 2)'], ['Ancient 1', 'Ancient 2'], 'Tab titles must migrate cleanly');
+        assert.deepStrictEqual(migrated.tab_favicons['Private (old 2)'], ['https://ancient-session.org/favicon.ico', null], 'Favicons must migrate cleanly');
+        assert.deepStrictEqual(migrated.tab_dark_reader['Private (old 2)'], [true, false], 'Dark reader flags must migrate cleanly');
+        assert.deepStrictEqual(migrated.tab_pinned['Private (old 2)'], [true, false], 'Pinned tab flags must migrate cleanly');
+
+        console.log('✓ migrateLegacyPrivateWorkspace collision resolution and metadata transfer verified');
     }
 
     console.log('All permanent Private workspace regression tests passed successfully!');
