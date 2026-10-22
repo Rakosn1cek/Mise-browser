@@ -4,16 +4,20 @@ Mise Browser treats security as a core architectural foundation. This document o
 
 ***
 
-## Supported Versions & Update Cadence
+## Supported Versions & Release Cadence
 
 Security updates and critical patches are actively maintained for the latest stable release. Because Mise Browser operates on a continuous release cycle without legacy long-term support branches, security fixes are not backported to older releases.
 
-Mise tracks upstream Electron and Chromium releases and audits dependencies twice weekly. Upstream Electron and Chromium security patches are evaluated, integrated, and released as soon as they become available. Each release announcement and tagged milestone explicitly lists its corresponding Electron and Chromium runtime versions.
+Starting from version 1.2.0, Mise adheres to a structured release workflow:
+
+* **Weekly Release Cycle:** Routine bug fixes, UI improvements, and feature additions accumulate on the `dev` branch throughout the week. Following comprehensive local verification, these changes are merged into `main` and released in weekly batches on Sunday nights.
+* **Emergency Security Hotfixes:** Critical security vulnerabilities bypass the weekly schedule entirely. They are remediated immediately, merged directly into `main`, and published as expedited patch releases (e.g. `v1.2.1`) to ensure automated package builds deploy without delay.
+* **Upstream Tracking:** Mise tracks upstream Electron and Chromium releases and audits dependencies twice weekly. Upstream Electron and Chromium security patches are evaluated, integrated, and released promptly. Each release announcement and tagged milestone explicitly lists its corresponding Electron and Chromium runtime versions.
 
 | Version | Supported | Notes |
 | :--- | :--- | :--- |
-| **Latest stable release** | Yes | Actively maintained with upstream security updates and bug fixes |
-| **Development (`main` branch)** | Best effort | Evaluated and resolved in upcoming releases |
+| **Latest stable release (`main`)** | Yes | Actively maintained with upstream security updates and bug fixes |
+| **Development (`dev` branch)** | Best effort | Active development workshop evaluated and merged in weekly Sunday batches |
 | **Prior releases** | No | Unsupported; please upgrade to the latest release |
 
 ***
