@@ -1,11 +1,61 @@
 const path = require('path');
 const fs = require('fs');
-const { spawn, spawnSync, execSync } = require('child_process');
-const { shell } = require('electron');
+const { spawn, execFile } = require('child_process');
+
+let electronShell = null;
+try {
+    const electron = require('electron');
+    if (electron && typeof electron === 'object' && electron.shell) {
+        electronShell = electron.shell;
+    }
+} catch (e) {}
 
 const activeDownloads = new Map();
 const recentDownloads = [];
 const MAX_RECENT_DOWNLOADS = 20;
+
+const DANGEROUS_EXTENSIONS = new Set([
+    '.exe', '.msi', '.bat', '.cmd', '.com', '.scr', '.ps1', '.vbs',
+    '.js', '.jse', '.wsf', '.lnk', '.jar', '.sh', '.run', '.appimage',
+    '.desktop', '.command', '.app', '.dmg', '.pkg', '.deb', '.rpm'
+]);
+
+const trackedRealpaths = new Set();
+
+function isDangerousExtension(filePath) {
+    if (!filePath || typeof filePath !== 'string') return false;
+    const ext = path.extname(filePath).toLowerCase();
+    return DANGEROUS_EXTENSIONS.has(ext);
+}
+
+function getTrackedRealpaths() {
+    trackedRealpaths.clear();
+    for (const entry of activeDownloads.values()) {
+        const p = entry && entry.savePath;
+        if (p && typeof p === 'string') {
+            try {
+                trackedRealpaths.add(fs.realpathSync(p));
+            } catch (e) {
+                try {
+                    trackedRealpaths.add(path.resolve(p));
+                } catch (err) {}
+            }
+        }
+    }
+    for (const entry of recentDownloads) {
+        const p = entry && entry.savePath;
+        if (p && typeof p === 'string') {
+            try {
+                trackedRealpaths.add(fs.realpathSync(p));
+            } catch (e) {
+                try {
+                    trackedRealpaths.add(path.resolve(p));
+                } catch (err) {}
+            }
+        }
+    }
+    return trackedRealpaths;
+}
 
 function getDesktopSearchDirectories() {
     const home = process.env.HOME || '';
@@ -53,18 +103,40 @@ function parseDesktopExec(execLine, targetPath) {
 }
 
 function hasDbusFileManager() {
-    try {
-        const res = spawnSync('busctl', ['status', 'org.freedesktop.FileManager1'], {
-            timeout: 500,
-            stdio: 'ignore'
-        });
-        return res.status === 0;
-    } catch (e) {
-        return false;
-    }
+    return new Promise((resolve) => {
+        try {
+            execFile('busctl', ['status', 'org.freedesktop.FileManager1'], {
+                timeout: 500,
+                stdio: 'ignore'
+            }, (error) => {
+                resolve(!error);
+            });
+        } catch (e) {
+            resolve(false);
+        }
+    });
 }
 
-function revealInFileManager(filePath) {
+function queryDefaultFileManager() {
+    return new Promise((resolve) => {
+        try {
+            execFile('xdg-mime', ['query', 'default', 'inode/directory'], {
+                encoding: 'utf8',
+                timeout: 1000
+            }, (error, stdout) => {
+                if (error || !stdout) {
+                    resolve('');
+                    return;
+                }
+                resolve(stdout.trim().split('\n')[0].trim());
+            });
+        } catch (e) {
+            resolve('');
+        }
+    });
+}
+
+async function revealInFileManager(filePath, options = {}) {
     if (!filePath || typeof filePath !== 'string') return false;
     if (!fs.existsSync(filePath)) return false;
 
@@ -73,32 +145,43 @@ function revealInFileManager(filePath) {
         targetPath = fs.realpathSync(filePath);
     } catch (e) {}
 
-    if (hasDbusFileManager()) {
+    if (typeof options.onReveal === 'function') {
         try {
-            shell.showItemInFolder(targetPath);
+            options.onReveal(targetPath);
+            return true;
+        } catch (e) {
+            return false;
+        }
+    }
+
+    const shellApi = (options && options.shell) || electronShell;
+    const spawnFn = (options && options.spawn) || spawn;
+
+    const hasDbus = typeof options.hasDbus === 'boolean' ? options.hasDbus : await hasDbusFileManager();
+    if (hasDbus && shellApi && typeof shellApi.showItemInFolder === 'function') {
+        try {
+            shellApi.showItemInFolder(targetPath);
             return true;
         } catch (e) {}
     }
 
     try {
-        const xdgOutput = execSync('xdg-mime query default inode/directory', {
-            encoding: 'utf8',
-            timeout: 1000
-        }).trim().split('\n')[0].trim();
-
+        const xdgOutput = await queryDefaultFileManager();
         if (xdgOutput) {
             const desktopFile = findDesktopFile(xdgOutput);
             if (desktopFile) {
-                const content = fs.readFileSync(desktopFile, 'utf8');
+                const content = await fs.promises.readFile(desktopFile, 'utf8');
                 const execMatch = content.match(/^Exec=(.*)$/m);
                 if (execMatch && execMatch[1]) {
                     const cmdArgs = parseDesktopExec(execMatch[1], targetPath);
                     if (cmdArgs.length > 0) {
-                        const child = spawn(cmdArgs[0], cmdArgs.slice(1), {
+                        const child = spawnFn(cmdArgs[0], cmdArgs.slice(1), {
                             detached: true,
                             stdio: 'ignore'
                         });
-                        child.unref();
+                        if (child && typeof child.unref === 'function') {
+                            child.unref();
+                        }
                         return true;
                     }
                 }
@@ -106,12 +189,15 @@ function revealInFileManager(filePath) {
         }
     } catch (e) {}
 
-    try {
-        shell.showItemInFolder(targetPath);
-        return true;
-    } catch (e) {
-        return false;
+    if (shellApi && typeof shellApi.showItemInFolder === 'function') {
+        try {
+            shellApi.showItemInFolder(targetPath);
+            return true;
+        } catch (e) {
+            return false;
+        }
     }
+    return false;
 }
 
 function getDisplayName(savePath, fallbackName) {
@@ -179,6 +265,7 @@ function configureDownloads(targetSession, options = {}) {
             savePath: item.getSavePath(),
             startTime: Date.now()
         });
+        getTrackedRealpaths();
 
         function notifyStarted() {
             if (startedNotified) return;
@@ -212,6 +299,7 @@ function configureDownloads(targetSession, options = {}) {
                 tracked.state = state;
                 tracked.savePath = savePath;
                 tracked.filename = displayName;
+                getTrackedRealpaths();
             }
 
             if (!startedNotified && (received > 0 || savePath)) {
@@ -297,6 +385,7 @@ function configureDownloads(targetSession, options = {}) {
             if (recentDownloads.length > MAX_RECENT_DOWNLOADS) {
                 recentDownloads.pop();
             }
+            getTrackedRealpaths();
 
             const win = typeof getMainWindow === 'function' ? getMainWindow() : null;
             if (win && !win.isDestroyed()) {
@@ -312,7 +401,8 @@ function configureDownloads(targetSession, options = {}) {
 }
 
 function registerDownloadIpc(ipcMain, options = {}) {
-    const { sendNotification } = options;
+    const { sendNotification, shell: shellOverride } = options;
+    const shellApi = shellOverride || electronShell;
 
     ipcMain.handle('cancel-download', (event, id) => {
         const entry = activeDownloads.get(id);
@@ -337,9 +427,22 @@ function registerDownloadIpc(ipcMain, options = {}) {
                 return false;
             }
             let targetPath = filePath;
-            try { targetPath = fs.realpathSync(filePath); } catch (e) {}
-            const err = await shell.openPath(targetPath);
-            return !err;
+            try { targetPath = fs.realpathSync(filePath); } catch (e) { return false; }
+
+            const tracked = getTrackedRealpaths();
+            if (!tracked.has(targetPath)) {
+                return false;
+            }
+
+            if (isDangerousExtension(targetPath) || isDangerousExtension(filePath)) {
+                return await revealInFileManager(targetPath, options);
+            }
+
+            if (shellApi && typeof shellApi.openPath === 'function') {
+                const err = await shellApi.openPath(targetPath);
+                return !err;
+            }
+            return false;
         } catch (e) {
             return false;
         }
@@ -354,7 +457,15 @@ function registerDownloadIpc(ipcMain, options = {}) {
                 }
                 return false;
             }
-            return revealInFileManager(filePath);
+            let targetPath = filePath;
+            try { targetPath = fs.realpathSync(filePath); } catch (e) { return false; }
+
+            const tracked = getTrackedRealpaths();
+            if (!tracked.has(targetPath)) {
+                return false;
+            }
+
+            return await revealInFileManager(targetPath, options);
         } catch (e) {
             return false;
         }
@@ -385,6 +496,9 @@ module.exports = {
     parseDesktopExec,
     hasDbusFileManager,
     getDisplayName,
+    isDangerousExtension,
+    getTrackedRealpaths,
+    trackedRealpaths,
     activeDownloads,
     recentDownloads
 };
