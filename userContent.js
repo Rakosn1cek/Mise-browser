@@ -10,6 +10,7 @@ const { app, shell, ipcMain, net } = require('electron');
 const dns = require('dns');
 const nodeNet = require('net');
 const crypto = require('crypto');
+const atomicFile = require('./main/atomicFile');
 let UndiciAgent = null;
 try {
     UndiciAgent = require('undici').Agent;
@@ -30,6 +31,12 @@ let debounceTimerScripts = null;
 let debounceTimerStyles = null;
 
 const scriptStorageCache = new Map();
+const storageDebounceTimers = new Map();
+const MAX_STORAGE_VALUE_CHARS = 1048576;
+const MAX_STORAGE_KEYS = 1000;
+const MAX_STORAGE_TOTAL_CHARS = 5 * 1024 * 1024;
+const STORAGE_DEBOUNCE_MS = 500;
+let beforeQuitRegistered = false;
 const activeTokens = new Map();
 const TOKEN_IDLE_MS = 6 * 60 * 60 * 1000;
 const MAX_TOKENS = 2000;
@@ -70,21 +77,22 @@ function loadScriptStorage(scriptId) {
         return scriptStorageCache.get(cleanId);
     }
     const filePath = getScriptStoragePath(cleanId);
-    let data = Object.create(null);
-    try {
-        if (fs.existsSync(filePath)) {
-            const raw = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-            data = sanitizeStorageObject(raw);
-        }
-    } catch (e) {
-        data = Object.create(null);
-    }
+    const raw = atomicFile.readJsonFileOrBackup(
+        filePath,
+        (val) => val !== null && typeof val === 'object' && !Array.isArray(val),
+        () => Object.create(null)
+    );
+    const data = sanitizeStorageObject(raw);
     scriptStorageCache.set(cleanId, data);
     return data;
 }
 
 function saveScriptStorage(scriptId, store) {
     const cleanId = sanitizeScriptId(scriptId);
+    if (storageDebounceTimers.has(cleanId)) {
+        clearTimeout(storageDebounceTimers.get(cleanId));
+        storageDebounceTimers.delete(cleanId);
+    }
     const cleanStore = sanitizeStorageObject(store);
     scriptStorageCache.set(cleanId, cleanStore);
     try {
@@ -92,26 +100,119 @@ function saveScriptStorage(scriptId, store) {
             fs.mkdirSync(storageDir, { recursive: true });
         }
         const filePath = getScriptStoragePath(cleanId);
-        fs.writeFileSync(filePath, JSON.stringify(cleanStore, null, 2), 'utf8');
+        atomicFile.atomicWriteFileSync(filePath, JSON.stringify(cleanStore, null, 2), { mode: 0o600 });
     } catch (err) {
         console.error(`Failed to save script storage for ${cleanId}:`, err);
     }
 }
 
-function setScriptValue(scriptId, key, value) {
+function scheduleDeferredSave(cleanId, store) {
+    if (storageDebounceTimers.has(cleanId)) {
+        clearTimeout(storageDebounceTimers.get(cleanId));
+    }
+    const timer = setTimeout(() => {
+        storageDebounceTimers.delete(cleanId);
+        saveScriptStorage(cleanId, store);
+    }, STORAGE_DEBOUNCE_MS);
+    if (typeof timer.unref === 'function') {
+        timer.unref();
+    }
+    storageDebounceTimers.set(cleanId, timer);
+}
+
+function flushScriptStorage(scriptId) {
+    if (scriptId !== undefined) {
+        const cleanId = sanitizeScriptId(scriptId);
+        const timer = storageDebounceTimers.get(cleanId);
+        if (timer) {
+            clearTimeout(timer);
+            storageDebounceTimers.delete(cleanId);
+            const store = scriptStorageCache.get(cleanId) || loadScriptStorage(cleanId);
+            saveScriptStorage(cleanId, store);
+        }
+        return;
+    }
+    const pendingIds = Array.from(storageDebounceTimers.keys());
+    for (const cleanId of pendingIds) {
+        const timer = storageDebounceTimers.get(cleanId);
+        if (timer) {
+            clearTimeout(timer);
+            storageDebounceTimers.delete(cleanId);
+        }
+        const store = scriptStorageCache.get(cleanId) || loadScriptStorage(cleanId);
+        saveScriptStorage(cleanId, store);
+    }
+}
+
+function setScriptValue(scriptId, key, value, { defer = false } = {}) {
     if (!isValidStorageKey(key)) {
         throw new Error(`Invalid or forbidden userscript storage key: ${key}`);
     }
-    const store = loadScriptStorage(scriptId);
-    store[String(key)] = value;
-    saveScriptStorage(scriptId, store);
+
+    let serializedValue;
+    try {
+        serializedValue = JSON.stringify(value);
+        if (typeof serializedValue !== 'string') {
+            throw new Error('Unsupported storage value');
+        }
+    } catch (_) {
+        throw new Error('Unsupported storage value');
+    }
+
+    if (serializedValue.length > MAX_STORAGE_VALUE_CHARS) {
+        throw new Error('Storage quota exceeded');
+    }
+
+    const cleanId = sanitizeScriptId(scriptId);
+    const store = loadScriptStorage(cleanId);
+    const strKey = String(key);
+    const hadKey = Object.prototype.hasOwnProperty.call(store, strKey);
+
+    if (!hadKey && Object.keys(store).length >= MAX_STORAGE_KEYS) {
+        throw new Error('Storage quota exceeded');
+    }
+
+    const prevValue = store[strKey];
+    store[strKey] = value;
+
+    let serializedStore;
+    try {
+        serializedStore = JSON.stringify(store, null, 2);
+    } catch (_) {
+        if (hadKey) {
+            store[strKey] = prevValue;
+        } else {
+            delete store[strKey];
+        }
+        throw new Error('Unsupported storage value');
+    }
+
+    if (typeof serializedStore !== 'string' || serializedStore.length > MAX_STORAGE_TOTAL_CHARS) {
+        if (hadKey) {
+            store[strKey] = prevValue;
+        } else {
+            delete store[strKey];
+        }
+        throw new Error('Storage quota exceeded');
+    }
+
+    if (defer) {
+        scheduleDeferredSave(cleanId, store);
+    } else {
+        saveScriptStorage(cleanId, store);
+    }
 }
 
-function deleteScriptValue(scriptId, key) {
+function deleteScriptValue(scriptId, key, { defer = false } = {}) {
     if (!isValidStorageKey(key)) return;
-    const store = loadScriptStorage(scriptId);
+    const cleanId = sanitizeScriptId(scriptId);
+    const store = loadScriptStorage(cleanId);
     delete store[String(key)];
-    saveScriptStorage(scriptId, store);
+    if (defer) {
+        scheduleDeferredSave(cleanId, store);
+    } else {
+        saveScriptStorage(cleanId, store);
+    }
 }
 
 function generateScriptToken(scriptId, pageHostname = '', connects = [], grants = [], pageOrigin = undefined) {
@@ -1229,6 +1330,13 @@ function initializeUserContent(configDir, mainWindow) {
     reloadStyles();
     setupWatchers();
 
+    if (!beforeQuitRegistered && app && typeof app.on === 'function') {
+        app.on('before-quit', () => {
+            flushScriptStorage();
+        });
+        beforeQuitRegistered = true;
+    }
+
     ipcMain.handle('get-user-content-for-url', (event, url) => {
         return getMatchingUserContent(url);
     });
@@ -1290,7 +1398,7 @@ function initializeUserContent(configDir, mainWindow) {
         if (!isValidStorageKey(key)) {
             throw new Error('Permission denied: invalid or forbidden storage key');
         }
-        setScriptValue(scriptId, key, value);
+        setScriptValue(scriptId, key, value, { defer: true });
         return true;
     });
 
@@ -1310,7 +1418,7 @@ function initializeUserContent(configDir, mainWindow) {
         if (!isValidStorageKey(key)) {
             return true;
         }
-        deleteScriptValue(scriptId, key);
+        deleteScriptValue(scriptId, key, { defer: true });
         return true;
     });
 
@@ -1342,6 +1450,7 @@ module.exports = {
     sanitizeStorageObject,
     setScriptValue,
     deleteScriptValue,
+    flushScriptStorage,
     generateScriptToken,
     revokeTokensForSender,
     validateTokenSender,
@@ -1350,6 +1459,10 @@ module.exports = {
     isHostAllowed,
     validateRequestDestination,
     createPinnedDispatcher,
+    __test_setStorageDir: (dir) => { storageDir = dir; },
+    __test_getStorageDir: () => storageDir,
+    __test_storageCache: scriptStorageCache,
+    __test_storageDebounceTimers: storageDebounceTimers,
     __test_activeTokens: activeTokens,
     __test_TOKEN_IDLE_MS: TOKEN_IDLE_MS,
     __test_MAX_TOKENS: MAX_TOKENS,

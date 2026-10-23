@@ -106,4 +106,8 @@ const { isValidStorageKey, sanitizeStorageObject, setScriptValue, loadScriptStor
     console.log('✓ sanitizeStorageObject strips forbidden keys from parsed payloads');
 }
 
-console.log('All userscript storage prototype pollution security tests passed successfully!');
+console.log('All userscript storage prototype pollution security tests passed successfully!\n');
+
+// 5. Run storage quota, deferral, and recovery limits test suite
+const { execFileSync } = require('child_process');
+execFileSync(process.execPath, [path.join(__dirname, 'userscript-storage-limits.test.js')], { stdio: 'inherit' });
