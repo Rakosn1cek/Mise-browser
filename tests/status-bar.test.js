@@ -105,4 +105,22 @@ assert.doesNotMatch(elements.StatusBarPartition.innerHTML, /<img/);
 
 console.log('✓ Security and partition badge updates suppress redundant DOM operations');
 console.log('✓ Status bar badges safely escape special HTML characters');
+
+// 8. Stacking order verification: auto-collapsed and extended sidebar sits above status bar
+{
+    const cssContent = fs.readFileSync(path.join(__dirname, '../style.css'), 'utf8');
+
+    const sidebarMatch = cssContent.match(/body\.sidebar-auto-collapse\s+#Sidebar\s*\{[^}]*?z-index:\s*(\d+)/);
+    assert(sidebarMatch, 'body.sidebar-auto-collapse #Sidebar must define a numeric z-index');
+    const sidebarZIndex = parseInt(sidebarMatch[1], 10);
+
+    const statusBarMatch = cssContent.match(/\.status-bar\s*\{[^}]*?z-index:\s*(\d+)/);
+    assert(statusBarMatch, '.status-bar must define a numeric z-index');
+    const statusBarZIndex = parseInt(statusBarMatch[1], 10);
+
+    assert(sidebarZIndex > statusBarZIndex, `Auto-collapse sidebar z-index (${sidebarZIndex}) must be higher than status-bar z-index (${statusBarZIndex}) to prevent covering bottom controls`);
+
+    console.log('✓ Sidebar stacking order over status bar verified');
+}
+
 console.log('All status bar throttling regression tests passed successfully!');

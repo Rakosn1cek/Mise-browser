@@ -63,7 +63,7 @@ body.sidebar-auto-collapse #Sidebar {
     left: 0;
     bottom: 0;
     height: 100vh;
-    z-index: 90;
+    z-index: 150;
     padding: 6px 3px;
     overflow-x: hidden;
     overflow-y: hidden;
@@ -3153,7 +3153,7 @@ body.light-mode .download-action-btn:hover {
     justify-content: space-between;
     padding: 0 10px;
     gap: 10px;
-    z-index: 95;
+    z-index: 30;
     flex-shrink: 0;
     box-sizing: border-box;
     font-size: 11px;
