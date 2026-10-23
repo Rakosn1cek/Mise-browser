@@ -14,6 +14,7 @@ const elements = {
     StatusBar: { style: {} },
     StatusBarMode: { style: {}, classList: { add() {}, remove() {} }, addEventListener() {} },
     StatusBarUrl: { style: {} },
+    WideAddressBar: { value: '', style: {} },
     StatusBarSecurity: {
         style: {},
         get innerHTML() { return this._html || ''; },

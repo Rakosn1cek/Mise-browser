@@ -15,7 +15,7 @@ Mise Browser **does not collect, transmit, sell, or monitor any personal data or
 * **Zero External CDN Dependencies:** The application chrome and user interface do not load assets, stylesheets, or webfonts from remote CDNs or third-party servers. All styling, icons, and interface fonts are bundled locally within the application package, preventing third-party IP tracking on startup and guaranteeing full offline functionality.
 * **No Remote Crash Reports:** The browser does not transmit crash traces, memory dumps, or error logs to any remote server.
 * **No Profiling or Phone-Home:** The application binary never phones home to track user identity, IP history, or usage statistics. To keep you informed of critical security patches, Mise performs an anonymous HTTPS query directly to the public GitHub Releases API (`api.github.com`) once every 24 hours. This query transmits zero personal identifiers, browsing data, search tokens, or system fingerprints. Update check errors (such as network timeouts or rate limits) are reported transparently in the user interface and logged only to local in-memory diagnostic buffers without external reporting.
-* **No Search Interception:** Search queries entered into the floating address bar or Command Palette route directly and exclusively to your chosen search engine (defaulting to DuckDuckGo).
+* **No Search Interception:** Search queries entered into the status bar address bar or Command Palette route directly and exclusively to your chosen search engine (defaulting to DuckDuckGo).
 
 ---
 

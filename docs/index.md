@@ -30,7 +30,7 @@ features:
   - title: Multi-Account Containers
     details: Every workspace runs inside an isolated persistent Chromium partition. Run multiple corporate and personal logins simultaneously with zero cookie cross-contamination.
   - title: Mouse-Free Navigation
-    details: Full Vim-inspired link hints (f), quickmark speed-dial (go), floating omnibar, and granular shortcut remapping in keybinds.json.
+    details: Full Vim-inspired link hints (f), quickmark speed-dial (go), status bar omnibar, and granular shortcut remapping in keybinds.json.
   - title: Native Privacy Shields
     details: Built-in Ghostery request filtering stops trackers, cryptominers, and analytics at the network layer. Trusted domains bypass fingerprint farbling on banking portals.
   - title: Clipboard-Mediated Oversight
@@ -70,7 +70,7 @@ Keep your hands on the home row. Every major workflow is reachable via concise, 
 | `Ctrl + \` | Swap Panes | Swap active page and split page positions |
 | `Ctrl + 1` to `9` | Tab Jump | Jump directly to tabs 1 through 9 |
 | `Ctrl + Shift + W` | Workspace Dashboard | Visualise, transfer tabs, and manage isolated containers |
-| `Ctrl + L` / `o` | Omnibar | Open floating address bar with search engine aliases |
+| `Ctrl + L` / `o` | Omnibar | Focus status bar address bar with search engine aliases |
 | `Ctrl + Shift + H` | History Overlay | Search, reopen, or purge visited history records |
 | `Ctrl + N` | Scratchpad | Open Markdown quick-notes scratchpad |
 | `Ctrl + Shift + P` | Private Window | Open zero-trace volatile browsing container |

@@ -128,6 +128,7 @@ console.log('Running Mise address bar local file navigation guard tests...');
                         get display() { return addressBarDisplay; },
                         set display(val) { addressBarDisplay = val; }
                     },
+                    blur() { addressBarDisplay = 'none'; },
                     value: ''
                 };
             }
@@ -152,6 +153,7 @@ console.log('Running Mise address bar local file navigation guard tests...');
     const strippedSource = navSource
         .replace(/import\s+[^;]+;\s*/g, '')
         .replace('export const POPULAR_BANGS', 'const POPULAR_BANGS')
+        .replace('export function dismissAddressBar', 'function dismissAddressBar')
         .replace('export function extractDdgBang', 'function extractDdgBang')
         .replace('export function displayAddressOverlay', 'function displayAddressOverlay')
         .replace('export async function handleNavigation', 'async function handleNavigation')

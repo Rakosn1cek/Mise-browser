@@ -52,7 +52,7 @@ const DEFAULT_KEYBINDS = {
 const ACTION_METADATA = {
     'toggle-menu-bar': { label: 'Toggle Mise Settings (Menu Bar)', category: 'System' },
     'spawn-tab': { label: 'New Blank Tab', category: 'Navigation & Workspaces' },
-    'toggle-address': { label: 'Toggle Floating Address Bar', category: 'Navigation & Workspaces' },
+    'toggle-address': { label: 'Focus Address Bar (Status Bar)', category: 'Navigation & Workspaces' },
     'toggle-dashboard': { label: 'Toggle Workspace Dashboard', category: 'Navigation & Workspaces' },
     'reload-active-tab': { label: 'Reload Active Tab', category: 'Navigation & Workspaces' },
     'remove-tab': { label: 'Close Current Tab', category: 'Navigation & Workspaces' },

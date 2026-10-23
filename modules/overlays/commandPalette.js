@@ -27,9 +27,9 @@ export const COMMAND_DEFINITIONS = [
     },
     {
         id: 'toggle-address',
-        title: 'Toggle Floating Address Bar',
-        desc: 'Open floating address bar for URL entry and search engine aliases',
-        details: 'Displays the modal address bar supporting direct URL routing, query auto-completion, and bang search engine aliases such as !w for Wikipedia.',
+        title: 'Focus Status Bar Address Bar',
+        desc: 'Focus centered status bar address bar for URL entry and search engine aliases',
+        details: 'Focuses the centered status bar address bar supporting direct URL routing, upward query auto-completion, and bang search engine aliases such as !w for Wikipedia.',
         tip: 'Type ! to browse active search aliases or paste raw URLs to navigate instantly.',
         category: 'Tabs & Navigation',
         icon: 'fa-solid fa-compass',

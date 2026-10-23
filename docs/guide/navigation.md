@@ -17,17 +17,17 @@ Link Hints allow you to click any link, button, or input field on a web page usi
 
 ---
 
-## Floating Address Bar (`Ctrl + L`)
+## Status Bar Address Bar (`Ctrl + L` / `o`)
 
-Press **Ctrl + L** at any time to open the floating, high-contrast address overlay:
+Press **Ctrl + L** or **o** at any time to focus the centered address bar fixed in the bottom status bar:
 
 - **Direct Navigation**: Type any full or partial URL and press **Enter**.
-- **Live Search Autocomplete**: As you type, Mise queries your browsing history and active bookmarks live. Use the **Up** and **Down** arrow keys to select a suggestion and press **Enter**.
-- **Direct Calculator**: Type any arithmetic expression (e.g. `240 * 1.2`, `15% of 200`, `sqrt(144)`) to compute the answer live in the dropdown. Press **Enter** to copy the answer to your clipboard, or press the **Down Arrow** or **Tab** to put the result into the address bar and continue calculating.
+- **Live Search Autocomplete**: As you type, Mise queries your browsing history and active bookmarks live. Use the **Up** and **Down** arrow keys to select a suggestion and press **Enter**. Suggestions expand smoothly upwards above the status bar.
+- **Direct Calculator**: Type any arithmetic expression (e.g. `240 * 1.2`, `15% of 200`, `sqrt(144)`) to compute the answer live in the upward dropdown menu. Press **Enter** to copy the answer to your clipboard, or press the **Down Arrow** or **Tab** to put the result into the address bar and continue calculating.
 - **DuckDuckGo Bangs**: Type any DuckDuckGo bang (e.g. `!w Arch Linux`, `!gh MiseBrowser`, `!yt ambient`) to route directly to thousands of external search destinations.
 - **Workspace Switching**: Type `ws` followed by a workspace name (e.g. `ws work`) to switch workspaces instantly from the address bar.
 - **Local File Containment**: Entering local file paths (starting with `/` or `file://`) is strictly restricted to valid PDF documents, automatically mediating them through the offline PDF viewer. Navigation to arbitrary local file paths is blocked with a status bar alert to protect system security.
-- Press **Escape** to hide the address bar and return focus directly to the active web page.
+- Press **Escape** to blur the address bar, dismiss suggestions, and return focus directly to the active web page.
 
 ---
 
@@ -35,7 +35,7 @@ Press **Ctrl + L** at any time to open the floating, high-contrast address overl
 
 ![DuckDuckGo Bangs and Address Bar Calculator](/screenshots/preferences-5.webp)
 
-Mise supports over 13,500 DuckDuckGo bangs directly from the floating address bar. Bangs route queries directly to the target website:
+Mise supports over 13,500 DuckDuckGo bangs directly from the status bar address bar. Bangs route queries directly to the target website:
 
 * `!w Arch Linux`: Redirects directly to the Arch Linux article on Wikipedia.
 * `!gh MiseBrowser`: Redirects directly to GitHub repository search.
@@ -49,7 +49,7 @@ Popular bangs display rich destination badges in the autocomplete dropdown. You 
 
 ## Custom Search Aliases & Shorthand Bangs
 
-In addition to DuckDuckGo bangs, Mise includes native search engine prefixes that execute instantly without redirect delays. Prefix any query with an alias in the floating address bar (**Ctrl + L**):
+In addition to DuckDuckGo bangs, Mise includes native search engine prefixes that execute instantly without redirect delays. Prefix any query with an alias in the status bar address bar (**Ctrl + L** or **o**):
 
 * `g <query>`: Google
 * `ddg <query>`: DuckDuckGo
@@ -159,7 +159,7 @@ Mise Browser provides a Vim-inspired modal navigation engine that frees you from
 | `G` | Jump to Bottom | Smooth scroll to bottom of page |
 | `t` | New Tab | Opens a new tab with default search engine |
 | `x` | Close Tab | Closes the current active tab |
-| `o` | Address Bar | Opens floating address overlay for navigation |
+| `o` | Address Bar | Focuses centered status bar address bar |
 | `r` | Reload | Reloads active tab |
 | `R` | Force Reload | Reloads active tab ignoring cache |
 | `H` | History Back | Navigates back in page history |

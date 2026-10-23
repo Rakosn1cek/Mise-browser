@@ -14,7 +14,7 @@ All keyboard shortcuts in Mise Browser are fully customisable via `~/.config/mis
 | :--- | :--- | :--- |
 | **F1** | `toggle-menu-bar` | Toggles the Mise Settings and Menu Bar |
 | **Ctrl + T** | `spawn-tab` | Opens a new blank tab (defaults to configured search engine) |
-| **Ctrl + L** | `toggle-address` | Opens the floating address bar overlay |
+| **Ctrl + L** | `toggle-address` | Focuses the centered status bar address bar |
 | **Ctrl + X** | `remove-tab` | Closes the currently active tab or selected dashboard node |
 | **Ctrl + Shift + W** | `toggle-dashboard` | Opens the Workspace Dashboard tree overlay |
 | **Ctrl + Shift + F** / **F3** | `toggle-find` | In-page text search overlay across active webview content |
@@ -72,7 +72,7 @@ When viewing web content without an active text field or prompt, Mise operates i
 | `G` | Jump to bottom of page |
 | `t` | Open new tab |
 | `x` | Close current tab |
-| `o` | Open floating address bar |
+| `o` | Focus status bar address bar |
 | `r` / `R` | Reload / Force reload current tab |
 | `H` / `L` | History back / History forward |
 | `/` | In-page text search |

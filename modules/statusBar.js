@@ -321,6 +321,11 @@ export function updateStatusBarFromActiveView() {
     updateSecurityStatus(activeUrl);
     setTargetUrl('');
 
+    const addressBar = document.getElementById('WideAddressBar');
+    if (addressBar && document.activeElement !== addressBar) {
+        addressBar.value = activeUrl || '';
+    }
+
     const activeWv = state.activeViewsCache[currentWS]?.[currentIdx];
     const mode = activeWv?.__miseKeyboardMode || {};
     isGuestInputFocused = !!mode.input;

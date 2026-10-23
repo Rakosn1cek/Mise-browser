@@ -55,11 +55,6 @@
         </div>
 
         <div id="right-content">
-            <div id="AddressBarContainer">
-                <input type="text" id="WideAddressBar" placeholder="Search, enter address, or type 'ws <name>'..." autocomplete="off">
-                <ul id="AddressSuggestions" style="display: none;"></ul>
-            </div>
-            
             <div id="webview-container">
                 <!-- Empty Workspace Welcome View -->
                 <div id="EmptyWorkspaceWelcome" style="display: none;">
@@ -554,7 +549,7 @@
                                     <div class="shortcuts-grid">
                                         <div class="shortcut-row" data-action="toggle-menu-bar"><span class="shortcut-desc">Toggle Mise Settings (Menu Bar)</span><span class="shortcut-key"><kbd class="shortcut-badge">F1</kbd></span></div>
                                         <div class="shortcut-row" data-action="spawn-tab"><span class="shortcut-desc">New DuckDuckGo Tab</span><span class="shortcut-key"><kbd class="shortcut-badge">Ctrl + T</kbd></span></div>
-                                        <div class="shortcut-row" data-action="toggle-address"><span class="shortcut-desc">Toggle Floating Address Bar</span><span class="shortcut-key"><kbd class="shortcut-badge">Ctrl + L</kbd></span></div>
+                                        <div class="shortcut-row" data-action="toggle-address"><span class="shortcut-desc">Focus Address Bar (Status Bar)</span><span class="shortcut-key"><kbd class="shortcut-badge">Ctrl + L</kbd><span class="shortcut-sep">/</span><kbd class="shortcut-badge">o</kbd></span></div>
                                         <div class="shortcut-row" data-action="remove-tab"><span class="shortcut-desc">Close Current Tab (or Node)</span><span class="shortcut-key"><kbd class="shortcut-badge">Ctrl + X</kbd></span></div>
                                         <div class="shortcut-row" data-action="toggle-dashboard"><span class="shortcut-desc">Toggle Workspace Dashboard</span><span class="shortcut-key"><kbd class="shortcut-badge">Ctrl + Shift + W</kbd></span></div>
                                         <div class="shortcut-row" data-action="toggle-find"><span class="shortcut-desc">Find In Page</span><span class="shortcut-key"><kbd class="shortcut-badge">Ctrl + Shift + F</kbd><span class="shortcut-sep">/</span><kbd class="shortcut-badge">F3</kbd></span></div>
@@ -762,6 +757,12 @@
                 <div class="status-bar-left">
                     <span id="StatusBarMode" class="status-badge status-badge-mode mode-normal" title="Current Browser Mode">NORMAL</span>
                     <span id="StatusBarUrl" class="status-target-url" title="Link Target Preview"></span>
+                </div>
+                <div class="status-bar-center">
+                    <div id="AddressBarContainer">
+                        <input type="text" id="WideAddressBar" placeholder="Search, enter address, or type 'ws <name>'..." autocomplete="off">
+                        <ul id="AddressSuggestions" style="display: none;"></ul>
+                    </div>
                 </div>
                 <div class="status-bar-right">
                     <span id="StatusBarSecurity" class="status-badge status-badge-security security-neutral" title="Connection Security State">

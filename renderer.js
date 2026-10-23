@@ -92,6 +92,7 @@ import {
 
 import { 
     displayAddressOverlay, 
+    dismissAddressBar,
     handleNavigation, 
     setupAddressBarAutocomplete, 
     renderSuggestions, 
@@ -662,8 +663,13 @@ function setupEventListeners() {
                 handleNavigation(addressBar.value.trim());
             }
         } else if (e.key === 'Escape') {
-            addressBar.style.display = 'none';
-            hideSuggestions();
+            dismissAddressBar(addressBar);
+            if (typeof updateStatusBarFromActiveView === 'function') {
+                updateStatusBarFromActiveView();
+            }
+            if (typeof focusActiveWebview === 'function') {
+                focusActiveWebview();
+            }
         }
     });
 
@@ -671,6 +677,20 @@ function setupEventListeners() {
         requestAnimationFrame(() => {
             addressBar.select();
         });
+    });
+
+    addressBar.addEventListener('blur', () => {
+        setTimeout(() => {
+            hideSuggestions();
+            const statusBar = document.getElementById('StatusBar');
+            if (statusBar && statusBar.dataset.temporarilyRevealed === 'true') {
+                statusBar.style.display = 'none';
+                delete statusBar.dataset.temporarilyRevealed;
+            }
+            if (typeof updateStatusBarFromActiveView === 'function') {
+                updateStatusBarFromActiveView();
+            }
+        }, 150);
     });
 	
     addressBar.addEventListener('mouseup', (e) => {

@@ -1231,8 +1231,11 @@ export function spawnTabWithUrl(url) {
         window.toggleDashboardView();
     }
     const addressBar = document.getElementById('WideAddressBar');
-    if (addressBar && addressBar.style.display !== 'none') {
-        addressBar.style.display = 'none';
+    if (addressBar) {
+        if (typeof addressBar.blur === 'function') addressBar.blur();
+        if (addressBar.style && addressBar.style.display === 'block') {
+            addressBar.style.display = 'none';
+        }
     }
     const bookmarksOverlay = document.getElementById('BookmarksOverlay');
     if (bookmarksOverlay && bookmarksOverlay.style.display !== 'none') {

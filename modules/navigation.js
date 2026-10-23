@@ -56,6 +56,22 @@ export function extractDdgBang(query) {
     return null;
 }
 
+export function dismissAddressBar(addressBar) {
+    if (!addressBar) addressBar = document.getElementById('WideAddressBar');
+    if (addressBar) {
+        if (typeof addressBar.blur === 'function') addressBar.blur();
+        if (addressBar.style && addressBar.style.display === 'block') {
+            addressBar.style.display = 'none';
+        }
+    }
+    hideSuggestions();
+    const statusBar = document.getElementById('StatusBar');
+    if (statusBar && statusBar.dataset.temporarilyRevealed === 'true') {
+        statusBar.style.display = 'none';
+        delete statusBar.dataset.temporarilyRevealed;
+    }
+}
+
 function applyTargetUrl(targetUrl) {
     if (!targetUrl || typeof targetUrl !== 'string') return;
 
@@ -63,9 +79,8 @@ function applyTargetUrl(targetUrl) {
         if (typeof setTargetUrl === 'function') {
             setTargetUrl('Local file access restricted to PDF documents.', 4000);
         }
-        hideSuggestions();
         const addressBar = document.getElementById('WideAddressBar');
-        if (addressBar) addressBar.style.display = 'none';
+        dismissAddressBar(addressBar);
         focusActiveWebview();
         return;
     }
@@ -87,16 +102,23 @@ function applyTargetUrl(targetUrl) {
         wakeTab(currentWS, currentIdx);
     }
 
-    hideSuggestions();
     const addressBar = document.getElementById('WideAddressBar');
-    if (addressBar) addressBar.style.display = 'none';
+    dismissAddressBar(addressBar);
 }
 
 export function displayAddressOverlay() {
     const addressBar = document.getElementById('WideAddressBar');
-    if (addressBar.style.display === 'block') {
-        addressBar.style.display = 'none';
-        hideSuggestions();
+    if (!addressBar) return;
+
+    const statusBar = document.getElementById('StatusBar');
+    if (statusBar && statusBar.style.display === 'none') {
+        statusBar.style.display = 'flex';
+        statusBar.dataset.temporarilyRevealed = 'true';
+    }
+
+    if (document.activeElement === addressBar || addressBar.style.display === 'block') {
+        dismissAddressBar(addressBar);
+        focusActiveWebview();
     } else {
         const currentWS = state.sessionState.current_workspace;
         const activeListItem = document.querySelector('#TabList li.selected');
@@ -107,11 +129,11 @@ export function displayAddressOverlay() {
             }
         }
         
-        addressBar.style.display = 'block';
-        
         requestAnimationFrame(() => {
             addressBar.focus();
-            addressBar.select();
+            if (typeof addressBar.select === 'function') {
+                addressBar.select();
+            }
         });
     }
 }
@@ -134,8 +156,7 @@ export async function handleNavigation(input) {
             alert(`Workspace "${targetWs}" does not exist.`);
         }
 
-        hideSuggestions();
-        document.getElementById('WideAddressBar').style.display = 'none';
+        dismissAddressBar();
         return;
     }
 
@@ -149,9 +170,8 @@ export async function handleNavigation(input) {
         const addressBar = document.getElementById('WideAddressBar');
         if (addressBar) {
             addressBar.value = String(calcResult);
-            addressBar.style.display = 'none';
         }
-        hideSuggestions();
+        dismissAddressBar(addressBar);
         focusActiveWebview();
         return;
     }
@@ -182,9 +202,8 @@ export async function handleNavigation(input) {
                 if (typeof setTargetUrl === 'function') {
                     setTargetUrl('Local file access restricted to PDF documents.', 4000);
                 }
-                hideSuggestions();
                 const addressBar = document.getElementById('WideAddressBar');
-                if (addressBar) addressBar.style.display = 'none';
+                dismissAddressBar(addressBar);
                 focusActiveWebview();
                 return;
             }
@@ -409,9 +428,8 @@ export async function selectSuggestion(item) {
         state.sessionState.current_workspace = targetWs;
         window.miseAPI.saveSession(state.sessionState);
         renderWorkspaceUI(0);
-        hideSuggestions();
         const addressBar = document.getElementById('WideAddressBar');
-        if (addressBar) addressBar.style.display = 'none';
+        dismissAddressBar(addressBar);
         return;
     }
 
@@ -423,9 +441,8 @@ export async function selectSuggestion(item) {
         const addressBar = document.getElementById('WideAddressBar');
         if (addressBar) {
             addressBar.value = String(item.value);
-            addressBar.style.display = 'none';
         }
-        hideSuggestions();
+        dismissAddressBar(addressBar);
         focusActiveWebview();
         return;
     }
