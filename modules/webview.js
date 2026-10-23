@@ -769,10 +769,13 @@ export async function reapplyActiveUserStyles() {
         if (!wv || typeof wv.getURL !== 'function' || typeof wv.insertCSS !== 'function') continue;
         const currentUrl = wv.getURL();
         if (!currentUrl || currentUrl.startsWith('about:') || currentUrl.startsWith('devtools:')) continue;
-        if (!window.miseAPI || typeof window.miseAPI.getUserContentForUrl !== 'function') continue;
+        const fetchStyles = (window.miseAPI && typeof window.miseAPI.getUserStylesForUrl === 'function')
+            ? window.miseAPI.getUserStylesForUrl
+            : (window.miseAPI && typeof window.miseAPI.getUserContentForUrl === 'function' ? window.miseAPI.getUserContentForUrl : null);
+        if (!fetchStyles) continue;
 
         try {
-            const content = await window.miseAPI.getUserContentForUrl(currentUrl);
+            const content = await fetchStyles(currentUrl);
             if (!content) continue;
 
             if (!wv.__miseInjectedCSSKeys) wv.__miseInjectedCSSKeys = [];

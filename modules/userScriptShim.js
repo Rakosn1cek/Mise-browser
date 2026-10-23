@@ -22,22 +22,47 @@ export function buildUserScriptWrapper(item, appVersion = '') {
     var __gm_setStorageValue = __gm_bridge && __gm_bridge.setStorageValue;
     var __gm_deleteStorageValue = __gm_bridge && __gm_bridge.deleteStorageValue;
 
-    if (!window.__miseInjectedScripts) {
+    var __gm_registry_key = Symbol.for('__miseInjectedScripts__');
+    var __gm_injected = null;
+    try {
+        __gm_injected = window[__gm_registry_key];
+    } catch (_) {}
+
+    if (!__gm_injected || !(__gm_injected instanceof Set) || !__gm_injected.__mise_valid__) {
+        __gm_injected = new Set();
         try {
-            Object.defineProperty(window, '__miseInjectedScripts', {
-                value: new Set(),
-                writable: true,
+            Object.defineProperty(__gm_injected, '__mise_valid__', {
+                value: true,
+                writable: false,
+                configurable: false,
+                enumerable: false
+            });
+            Object.defineProperty(window, __gm_registry_key, {
+                value: __gm_injected,
+                writable: false,
                 configurable: true,
                 enumerable: false
             });
         } catch (e) {
-            window.__miseInjectedScripts = new Set();
+            try { window[__gm_registry_key] = __gm_injected; } catch (_) {}
         }
     }
-    if (window.__miseInjectedScripts.has(__gm_script_id__)) {
+
+    try {
+        if (!window.__miseInjectedScripts || !(window.__miseInjectedScripts instanceof Set)) {
+            Object.defineProperty(window, '__miseInjectedScripts', {
+                value: __gm_injected,
+                writable: false,
+                configurable: true,
+                enumerable: false
+            });
+        }
+    } catch (_) {}
+
+    if (Set.prototype.has.call(__gm_injected, __gm_script_id__)) {
         return;
     }
-    window.__miseInjectedScripts.add(__gm_script_id__);
+    Set.prototype.add.call(__gm_injected, __gm_script_id__);
 
     var __gm_store = Object.assign({}, __gm_initial_storage__ || {});
     var __gm_listeners = new Map();

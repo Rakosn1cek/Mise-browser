@@ -3,6 +3,7 @@
 
 const assert = require('assert');
 const { EventEmitter } = require('events');
+const vm = require('vm');
 const userContent = require('../userContent.js');
 const { buildUserScriptWrapper } = require('../modules/userScriptShim.js');
 
@@ -10,9 +11,12 @@ const {
     generateScriptToken,
     validateTokenSender,
     revokeTokensForSender,
+    getMatchingUserStyles,
+    getMatchingUserContent,
     __test_activeTokens,
     __test_TOKEN_IDLE_MS,
-    __test_MAX_TOKENS
+    __test_MAX_TOKENS,
+    __test_setLoadedContent
 } = userContent;
 
 console.log('Running Mise userscript token lifecycle and bridge hardening tests...');
@@ -137,6 +141,14 @@ console.log('Running Mise userscript token lifecycle and bridge hardening tests.
         validateTokenSender(dataFrame, { sender: hostSender, senderFrame: null });
     }, /Authorisation failure: Sender frame mismatch/);
 
+    // Null senderFrame unconditionally rejected even when mainFrame is null or undefined
+    assert.throws(() => {
+        validateTokenSender(dataFrame, { sender: { id: 202, mainFrame: null, getURL: () => 'https://a.com/page' }, senderFrame: null });
+    }, /Authorisation failure: Sender frame mismatch/);
+    assert.throws(() => {
+        validateTokenSender(dataFrame, { sender: { id: 203, getURL: () => 'https://a.com/page' }, senderFrame: null });
+    }, /Authorisation failure: Sender frame mismatch/);
+
     // Undefined senderFrame rejected when mainFrame exists
     assert.throws(() => {
         validateTokenSender(dataFrame, { sender: hostSender, senderFrame: undefined });
@@ -229,6 +241,99 @@ console.log('Running Mise userscript token lifecycle and bridge hardening tests.
     assert(!output.includes('window.__miseGMBridge.deleteStorageValue('), 'No dynamic window lookup for deleteStorageValue');
 
     console.log('✓ Userscript wrapper one-time bridge capture verified');
+}
+
+// 6. Style-only queries do not mint userscript tokens
+{
+    __test_activeTokens.clear();
+
+    const mockScripts = [
+        {
+            name: 'Style Isolation Script',
+            filename: 'isolation.user.js',
+            code: 'console.log("isolated");',
+            meta: {
+                matches: ['https://example.com/*'],
+                includes: [],
+                excludes: [],
+                connects: [],
+                grants: [],
+                runAt: 'document-end'
+            }
+        }
+    ];
+
+    const mockStyles = [
+        {
+            name: 'Custom Theme',
+            filename: 'custom.user.css',
+            css: 'body { background: #1a1b26; }',
+            meta: {
+                hasMozDoc: false,
+                matches: ['https://example.com/*'],
+                includes: [],
+                excludes: []
+            }
+        }
+    ];
+
+    __test_setLoadedContent(mockScripts, mockStyles);
+
+    // Style-only query returns matched style but mints zero script tokens
+    const stylesResult = getMatchingUserStyles('https://example.com/page');
+    assert.strictEqual(stylesResult.styles.length, 1);
+    assert.strictEqual(stylesResult.styles[0].css, 'body { background: #1a1b26; }');
+    assert.strictEqual(stylesResult.scripts, undefined);
+    assert.strictEqual(__test_activeTokens.size, 0, 'getMatchingUserStyles must mint zero tokens');
+
+    // Full content query mints a token for the matching script
+    const contentResult = getMatchingUserContent('https://example.com/page');
+    assert.strictEqual(contentResult.styles.length, 1);
+    assert.strictEqual(contentResult.scripts.length, 1);
+    assert.strictEqual(__test_activeTokens.size, 1, 'getMatchingUserContent must mint a token for matching script');
+
+    // Reset loaded content
+    __test_setLoadedContent([], []);
+    __test_activeTokens.clear();
+
+    console.log('✓ Style-only queries extract CSS without minting userscript tokens');
+}
+
+// 7. Userscript injection registry tamper resistance
+{
+    const item = {
+        name: 'Tamper Resistance Test',
+        scriptId: 'tamper-proof-1',
+        code: 'window.executionCounter = (window.executionCounter || 0) + 1;'
+    };
+
+    const wrapperCode = buildUserScriptWrapper(item, '1.2.0');
+
+    // Scenario A: Page pre-populates window.__miseInjectedScripts with fake object
+    {
+        const sandbox = { console };
+        sandbox.window = sandbox;
+        sandbox.window.__miseInjectedScripts = { has: () => true };
+
+        vm.runInNewContext(wrapperCode, sandbox);
+        assert.strictEqual(sandbox.executionCounter, 1, 'Script must execute despite pre-populated window.__miseInjectedScripts');
+
+        // Subsequent injection of identical script ID must still be prevented
+        vm.runInNewContext(wrapperCode, sandbox);
+        assert.strictEqual(sandbox.executionCounter, 1, 'Duplicate injection must be prevented by internal registry');
+    }
+
+    // Scenario B: Page pre-populates Symbol.for registry with unbranded Set
+    {
+        const sandbox = { console };
+        sandbox.window = sandbox;
+        sandbox.window[Symbol.for('__miseInjectedScripts__')] = new Set(['tamper-proof-1']);
+
+        vm.runInNewContext(wrapperCode, sandbox);
+        assert.strictEqual(sandbox.executionCounter, 1, 'Script must execute despite pre-populated unbranded Set');
+    }
+
+    console.log('✓ Userscript registry tamper resistance verified');
 }
 
 console.log('All userscript token lifecycle and bridge hardening tests passed successfully!\n');

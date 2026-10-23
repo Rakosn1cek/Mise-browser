@@ -290,11 +290,15 @@ function validateTokenSender(tokenData, event) {
         throw new Error('Authorisation failure: Unable to verify GM token sender');
     }
 
+    if (event.senderFrame === null) {
+        throw new Error('Authorisation failure: Sender frame mismatch');
+    }
+
     if (event.sender.mainFrame !== undefined && event.sender.mainFrame !== null) {
         if (!event.senderFrame || event.senderFrame !== event.sender.mainFrame) {
             throw new Error('Authorisation failure: Sender frame mismatch');
         }
-    } else if (event.senderFrame !== undefined && event.senderFrame !== null) {
+    } else if (event.senderFrame !== undefined) {
         if (event.senderFrame !== event.sender.mainFrame) {
             throw new Error('Authorisation failure: Sender frame mismatch');
         }
@@ -1251,6 +1255,48 @@ body {
     }
 }
 
+function getMatchingUserStyles(targetUrl) {
+    if (!targetUrl || typeof targetUrl !== 'string') {
+        return { styles: [] };
+    }
+
+    let hostname = '';
+    try {
+        const parsed = new URL(targetUrl);
+        hostname = parsed.hostname.toLowerCase();
+    } catch {
+        return { styles: [] };
+    }
+
+    const matchingStyles = [];
+    for (const item of loadedStyles) {
+        if (item.meta && item.meta.hasMozDoc && Array.isArray(item.meta.sections) && item.meta.sections.length > 0) {
+            let combinedSectionCss = '';
+            for (const section of item.meta.sections) {
+                const matchesAny = section.conditions && section.conditions.some(cond => matchesMozDocCondition(targetUrl, hostname, cond));
+                if (matchesAny) {
+                    combinedSectionCss += section.css + '\n';
+                }
+            }
+            if (combinedSectionCss.trim()) {
+                matchingStyles.push({
+                    name: item.name,
+                    filename: item.filename,
+                    css: combinedSectionCss
+                });
+            }
+        } else if (item.meta && urlMatchesRule(targetUrl, item.meta)) {
+            matchingStyles.push({
+                name: item.name,
+                filename: item.filename,
+                css: item.css
+            });
+        }
+    }
+
+    return { styles: matchingStyles };
+}
+
 function getMatchingUserContent(targetUrl) {
     if (!targetUrl || typeof targetUrl !== 'string') {
         return { scripts: [], styles: [] };
@@ -1283,31 +1329,7 @@ function getMatchingUserContent(targetUrl) {
         }
     }
 
-    const matchingStyles = [];
-    for (const item of loadedStyles) {
-        if (item.meta.hasMozDoc && item.meta.sections.length > 0) {
-            let combinedSectionCss = '';
-            for (const section of item.meta.sections) {
-                const matchesAny = section.conditions.some(cond => matchesMozDocCondition(targetUrl, hostname, cond));
-                if (matchesAny) {
-                    combinedSectionCss += section.css + '\n';
-                }
-            }
-            if (combinedSectionCss.trim()) {
-                matchingStyles.push({
-                    name: item.name,
-                    filename: item.filename,
-                    css: combinedSectionCss
-                });
-            }
-        } else if (urlMatchesRule(targetUrl, item.meta)) {
-            matchingStyles.push({
-                name: item.name,
-                filename: item.filename,
-                css: item.css
-            });
-        }
-    }
+    const matchingStyles = getMatchingUserStyles(targetUrl).styles;
 
     return {
         scripts: matchingScripts,
@@ -1339,6 +1361,10 @@ function initializeUserContent(configDir, mainWindow) {
 
     ipcMain.handle('get-user-content-for-url', (event, url) => {
         return getMatchingUserContent(url);
+    });
+
+    ipcMain.handle('get-user-styles-for-url', (event, url) => {
+        return getMatchingUserStyles(url);
     });
 
     ipcMain.handle('reload-user-content', () => {
@@ -1444,6 +1470,7 @@ module.exports = {
     reloadScripts,
     reloadStyles,
     getMatchingUserContent,
+    getMatchingUserStyles,
     loadScriptStorage,
     saveScriptStorage,
     isValidStorageKey,
@@ -1466,5 +1493,9 @@ module.exports = {
     __test_activeTokens: activeTokens,
     __test_TOKEN_IDLE_MS: TOKEN_IDLE_MS,
     __test_MAX_TOKENS: MAX_TOKENS,
-    __test_wiredSenders: wiredSenders
+    __test_wiredSenders: wiredSenders,
+    __test_setLoadedContent: (scripts, styles) => {
+        if (Array.isArray(scripts)) loadedScripts = scripts;
+        if (Array.isArray(styles)) loadedStyles = styles;
+    }
 };

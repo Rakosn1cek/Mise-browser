@@ -65,6 +65,7 @@ contextBridge.exposeInMainWorld('miseAPI', {
     getActiveDownloads: () => ipcRenderer.invoke('get-active-downloads'),
     getAppVersion: () => ipcRenderer.invoke('get-app-version'),
     getUserContentForUrl: (url) => ipcRenderer.invoke('get-user-content-for-url', url),
+    getUserStylesForUrl: (url) => ipcRenderer.invoke('get-user-styles-for-url', url),
     reloadUserContent: () => ipcRenderer.invoke('reload-user-content'),
     openUserScriptsDir: () => ipcRenderer.invoke('open-user-scripts-dir'),
     openUserStylesDir: () => ipcRenderer.invoke('open-user-styles-dir'),
