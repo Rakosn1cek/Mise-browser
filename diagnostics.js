@@ -50,9 +50,17 @@ function sanitizeString(str) {
 /**
  * Recursively sanitises objects or arrays, omitting sensitive keys.
  */
-function sanitizeObject(obj, seen = new WeakSet()) {
+function sanitizeObject(obj, seen = new WeakSet(), depth = 0) {
     if (obj === null || typeof obj !== 'object') {
-        return typeof obj === 'string' ? sanitizeString(obj) : obj;
+        if (typeof obj === 'string') {
+            const sanitized = sanitizeString(obj);
+            return sanitized.length > 500 ? sanitized.slice(0, 500) : sanitized;
+        }
+        return obj;
+    }
+
+    if (depth >= 6) {
+        return '[TRUNCATED]';
     }
 
     if (seen.has(obj)) {
@@ -61,7 +69,7 @@ function sanitizeObject(obj, seen = new WeakSet()) {
     seen.add(obj);
 
     if (Array.isArray(obj)) {
-        return obj.map(item => sanitizeObject(item, seen));
+        return obj.slice(0, 50).map(item => sanitizeObject(item, seen, depth + 1));
     }
 
     const forbiddenKeys = new Set(['trusted_domains', 'cookies', 'headers', 'password', 'token', 'auth', 'secret']);
@@ -72,7 +80,7 @@ function sanitizeObject(obj, seen = new WeakSet()) {
             clean[key] = '[REDACTED]';
             continue;
         }
-        clean[key] = sanitizeObject(val, seen);
+        clean[key] = sanitizeObject(val, seen, depth + 1);
     }
 
     return clean;

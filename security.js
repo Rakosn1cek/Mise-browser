@@ -476,6 +476,10 @@ function hardenWebviewPreferences(webPreferences) {
     delete webPreferences.preloadURL;
 }
 
+function isValidPartitionName(name) {
+    return typeof name === 'string' && /^(persist:)?[A-Za-z0-9_-]{1,200}$/.test(name);
+}
+
 function prepareWebviewAttach(webPreferences, params, options) {
     const { preloadPath } = options || {};
 
@@ -491,7 +495,7 @@ function prepareWebviewAttach(webPreferences, params, options) {
     }
 
     const partition = (webPreferences && webPreferences.partition) || (params && params.partition);
-    if (typeof partition !== 'string' || !/^(persist:)?[A-Za-z0-9_-]{1,200}$/.test(partition)) {
+    if (!isValidPartitionName(partition)) {
         return { allowed: false, reason: 'partition' };
     }
 
@@ -622,6 +626,7 @@ function sanitiseTerminalCommand(commandStr, maxLength = 4096) {
 }
 
 module.exports = {
+    isValidPartitionName,
     decidePermission,
     hardenSession,
     hardenWebviewPreferences,

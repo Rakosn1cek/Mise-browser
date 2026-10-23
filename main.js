@@ -219,15 +219,30 @@ function getWorkspacePartition(workspaceName) {
 
 function getSessionForContext(context) {
     if (typeof context === 'string') {
+        if (!security.isValidPartitionName(context)) {
+            throw new Error('Invalid partition');
+        }
         return session.fromPartition(context);
     }
-    if (context && typeof context === 'object') {
+    if (context && typeof context === 'object' && !Array.isArray(context)) {
         if (context.isPrivate) return session.fromPartition('MisePrivateProfile');
-        if (context.partition) return session.fromPartition(context.partition);
-        if (context.workspace) return session.fromPartition(getWorkspacePartition(context.workspace));
+        if (context.partition !== undefined && context.partition !== null) {
+            if (!security.isValidPartitionName(context.partition)) {
+                throw new Error('Invalid partition');
+            }
+            return session.fromPartition(context.partition);
+        }
+        if (context.workspace !== undefined && context.workspace !== null) {
+            const part = getWorkspacePartition(context.workspace);
+            if (!security.isValidPartitionName(part)) {
+                throw new Error('Invalid partition');
+            }
+            return session.fromPartition(part);
+        }
     }
     if (context === true) return session.fromPartition('MisePrivateProfile');
-    return session.defaultSession;
+    if (context === undefined || context === null) return session.defaultSession;
+    throw new Error('Invalid partition');
 }
 
 const configuredSessions = new WeakSet();
@@ -304,7 +319,7 @@ downloads.registerDownloadIpc(ipcMain, {
 updater.registerUpdaterIpc(ipcMain, { app });
 
 ipcMain.handle('open-external', async (event, url) => {
-    if (!url || typeof url !== 'string') return false;
+    if (!url || typeof url !== 'string' || url.length > 2048) return false;
     try {
         const parsed = new URL(url);
         const allowedProtocols = ['http:', 'https:', 'obsidian:', 'logseq:', 'notes:', 'mailto:'];
@@ -318,9 +333,9 @@ ipcMain.handle('open-external', async (event, url) => {
 
 // IPC HANDLERS
 ipcMain.handle('flush-session-store', async (event, context) => {
-    flushSessionToDisk();
-    const targetSession = getSessionForContext(context);
     try {
+        const targetSession = getSessionForContext(context);
+        flushSessionToDisk();
         if (targetSession && targetSession.cookies) {
             await targetSession.cookies.flushStore();
             return true;
@@ -332,8 +347,8 @@ ipcMain.handle('flush-session-store', async (event, context) => {
 });
 
 ipcMain.handle('clear-active-cache', async (event, context) => {
-    const targetSession = getSessionForContext(context);
     try {
+        const targetSession = getSessionForContext(context);
         await targetSession.clearCache();
         await targetSession.clearStorageData({
             storages: ['cachestorage', 'serviceworkers', 'shadercache']
@@ -347,8 +362,9 @@ ipcMain.handle('clear-active-cache', async (event, context) => {
 });
 
 ipcMain.handle('clear-domain-cookies', async (event, data) => {
-    const targetSession = getSessionForContext(data);
     try {
+        if (!data || typeof data !== 'object') return false;
+        const targetSession = getSessionForContext(data);
         const parsed = new URL(data.urlStr);
         const cookies = await targetSession.cookies.get({ domain: parsed.hostname });
         
@@ -367,6 +383,9 @@ ipcMain.handle('clear-domain-cookies', async (event, data) => {
 });
 
 ipcMain.handle('get-workspace-partition', (event, name) => {
+    if (!security.isValidPartitionName(name)) {
+        return false;
+    }
     return getWorkspacePartition(name);
 });
 
@@ -668,9 +687,20 @@ ipcMain.handle('set-diagnostics-enabled', async (event, enabled) => {
 });
 
 ipcMain.handle('log-diagnostics-event', async (event, data) => {
-    if (data && typeof data === 'object') {
-        diagnostics.logEvent(data.level, data.category, data.message, data.details);
+    if (!data || typeof data !== 'object' || Array.isArray(data)) {
+        return false;
     }
+    const allowedLevels = ['info', 'warn', 'error'];
+    if (!allowedLevels.includes(data.level)) {
+        return false;
+    }
+    if (typeof data.category !== 'string' || data.category.length > 200) {
+        return false;
+    }
+    if (typeof data.message !== 'string' || data.message.length > 200) {
+        return false;
+    }
+    diagnostics.logEvent(data.level, data.category, data.message, data.details);
     return true;
 });
 
@@ -961,6 +991,11 @@ function createWindow() {
     });
 
     ipcMain.handle('clear-google-auth-cookies', async (event, partitionName) => {
+        if (partitionName !== undefined && partitionName !== null) {
+            if (!security.isValidPartitionName(partitionName)) {
+                return false;
+            }
+        }
         const targetSession = partitionName ? session.fromPartition(partitionName) : session.fromPartition('MisePrivateProfile');
         await security.clearGoogleAuthCookies(targetSession);
         return true;
@@ -984,6 +1019,9 @@ function createWindow() {
     });
 
     ipcMain.on('bubble-webview-key', (event, action) => {
+        if (typeof action !== 'string' || action.length > 64) return;
+        const metadata = keybinds.getActionMetadata();
+        if (!metadata || !Object.prototype.hasOwnProperty.call(metadata, action)) return;
         if (mainWindow && mainWindow.webContents) {
             mainWindow.webContents.send('master-shortcut', action);
         }
