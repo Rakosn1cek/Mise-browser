@@ -17,6 +17,11 @@ export function buildUserScriptWrapper(item, appVersion = '') {
     return `(function(__gm_token__, __gm_script_id__, __gm_initial_storage__, __gm_meta__, __gm_version__) {
     'use strict';
 
+    var __gm_bridge = window.__miseGMBridge;
+    var __gm_request = __gm_bridge && __gm_bridge.request;
+    var __gm_setStorageValue = __gm_bridge && __gm_bridge.setStorageValue;
+    var __gm_deleteStorageValue = __gm_bridge && __gm_bridge.deleteStorageValue;
+
     if (!window.__miseInjectedScripts) {
         try {
             Object.defineProperty(window, '__miseInjectedScripts', {
@@ -55,8 +60,8 @@ export function buildUserScriptWrapper(item, appVersion = '') {
                 try { listener.fn(k, oldVal, value, false); } catch (e) {}
             }
         }
-        if (window.__miseGMBridge && typeof window.__miseGMBridge.setStorageValue === 'function') {
-            window.__miseGMBridge.setStorageValue(__gm_token__, __gm_script_id__, k, value).catch(function() {});
+        if (__gm_setStorageValue && typeof __gm_setStorageValue === 'function') {
+            __gm_setStorageValue.call(__gm_bridge, __gm_token__, __gm_script_id__, k, value).catch(function() {});
         }
     };
 
@@ -71,8 +76,8 @@ export function buildUserScriptWrapper(item, appVersion = '') {
                 try { listener.fn(k, oldVal, undefined, false); } catch (e) {}
             }
         }
-        if (window.__miseGMBridge && typeof window.__miseGMBridge.deleteStorageValue === 'function') {
-            window.__miseGMBridge.deleteStorageValue(__gm_token__, __gm_script_id__, k).catch(function() {});
+        if (__gm_deleteStorageValue && typeof __gm_deleteStorageValue === 'function') {
+            __gm_deleteStorageValue.call(__gm_bridge, __gm_token__, __gm_script_id__, k).catch(function() {});
         }
     };
 
@@ -104,7 +109,7 @@ export function buildUserScriptWrapper(item, appVersion = '') {
             try { details.onreadystatechange({ readyState: 1 }); } catch (e) {}
         }
 
-        if (!window.__miseGMBridge || typeof window.__miseGMBridge.request !== 'function') {
+        if (!__gm_request || typeof __gm_request !== 'function') {
             var bridgeErr = { isTimeout: false, message: 'Mise GM bridge unavailable', status: 0, statusText: 'Error' };
             if (typeof details.onerror === 'function') details.onerror(bridgeErr);
             return { abort: function() {} };
@@ -118,7 +123,7 @@ export function buildUserScriptWrapper(item, appVersion = '') {
             timeout: Number(details.timeout) || 30000
         };
 
-        window.__miseGMBridge.request(__gm_token__, payload)
+        __gm_request.call(__gm_bridge, __gm_token__, payload)
             .then(function(res) {
                 if (isAborted) return;
 

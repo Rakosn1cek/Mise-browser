@@ -31,6 +31,9 @@ let debounceTimerStyles = null;
 
 const scriptStorageCache = new Map();
 const activeTokens = new Map();
+const TOKEN_IDLE_MS = 6 * 60 * 60 * 1000;
+const MAX_TOKENS = 2000;
+const wiredSenders = new WeakSet();
 
 function sanitizeScriptId(scriptId) {
     return String(scriptId || 'default').replace(/[^a-zA-Z0-9._-]/g, '_');
@@ -111,24 +114,151 @@ function deleteScriptValue(scriptId, key) {
     saveScriptStorage(scriptId, store);
 }
 
-function generateScriptToken(scriptId, pageHostname = '', connects = [], grants = []) {
-    const token = crypto.randomUUID();
-    activeTokens.set(token, {
-        scriptId: sanitizeScriptId(scriptId),
-        pageHostname: String(pageHostname || '').toLowerCase(),
-        connects: Array.isArray(connects) ? connects.map(c => String(c).trim()).filter(Boolean) : [],
-        grants: Array.isArray(grants) ? grants.map(g => String(g).trim()).filter(Boolean) : [],
-        createdAt: Date.now()
-    });
-    if (activeTokens.size > 5000) {
-        const now = Date.now();
-        for (const [tok, data] of activeTokens.entries()) {
-            if (now - data.createdAt > 24 * 60 * 60 * 1000) {
-                activeTokens.delete(tok);
+function generateScriptToken(scriptId, pageHostname = '', connects = [], grants = [], pageOrigin = undefined) {
+    const now = Date.now();
+    for (const [tok, data] of activeTokens.entries()) {
+        const lastUsed = data.lastUsedAt || data.createdAt || 0;
+        if (now - lastUsed > TOKEN_IDLE_MS) {
+            activeTokens.delete(tok);
+        }
+    }
+
+    if (activeTokens.size > MAX_TOKENS) {
+        for (const tok of activeTokens.keys()) {
+            activeTokens.delete(tok);
+            if (activeTokens.size <= 1500) {
+                break;
             }
         }
     }
+
+    const token = crypto.randomUUID();
+    activeTokens.set(token, {
+        token,
+        scriptId: sanitizeScriptId(scriptId),
+        pageHostname: String(pageHostname || '').toLowerCase(),
+        pageOrigin: pageOrigin !== undefined ? String(pageOrigin) : undefined,
+        connects: Array.isArray(connects) ? connects.map(c => String(c).trim()).filter(Boolean) : [],
+        grants: Array.isArray(grants) ? grants.map(g => String(g).trim()).filter(Boolean) : [],
+        createdAt: now,
+        lastUsedAt: now,
+        boundSenderId: null
+    });
+
+    if (activeTokens.size > MAX_TOKENS) {
+        for (const tok of activeTokens.keys()) {
+            activeTokens.delete(tok);
+            if (activeTokens.size <= 1500) {
+                break;
+            }
+        }
+    }
+
     return token;
+}
+
+function revokeTokensForSender(senderId) {
+    if (senderId === undefined || senderId === null) return;
+    for (const [tok, data] of activeTokens.entries()) {
+        if (data && data.boundSenderId === senderId) {
+            activeTokens.delete(tok);
+        }
+    }
+}
+
+function validateTokenSender(tokenData, event) {
+    if (!tokenData) {
+        throw new Error('Unauthorized: Invalid or expired GM token');
+    }
+    const now = Date.now();
+    if (tokenData.lastUsedAt && (now - tokenData.lastUsedAt > TOKEN_IDLE_MS)) {
+        if (tokenData.token) {
+            activeTokens.delete(tokenData.token);
+        } else {
+            for (const [tok, data] of activeTokens.entries()) {
+                if (data === tokenData) {
+                    activeTokens.delete(tok);
+                    break;
+                }
+            }
+        }
+        throw new Error('Unauthorized: Invalid or expired GM token');
+    }
+
+    if (!event || !event.sender) {
+        throw new Error('Authorisation failure: Unable to verify GM token sender');
+    }
+
+    if (event.sender.mainFrame !== undefined && event.sender.mainFrame !== null) {
+        if (!event.senderFrame || event.senderFrame !== event.sender.mainFrame) {
+            throw new Error('Authorisation failure: Sender frame mismatch');
+        }
+    } else if (event.senderFrame !== undefined && event.senderFrame !== null) {
+        if (event.senderFrame !== event.sender.mainFrame) {
+            throw new Error('Authorisation failure: Sender frame mismatch');
+        }
+    }
+
+    let senderUrl = '';
+    let senderHost = '';
+    let senderProtocol = '';
+    let senderOrigin = '';
+    try {
+        senderUrl = typeof event.sender.getURL === 'function' ? event.sender.getURL() : '';
+        if (senderUrl) {
+            const parsed = new URL(senderUrl);
+            senderHost = parsed.hostname.toLowerCase();
+            senderProtocol = parsed.protocol.toLowerCase();
+            senderOrigin = parsed.origin;
+        }
+    } catch (e) {}
+
+    if (typeof tokenData.pageOrigin === 'string') {
+        if (tokenData.pageOrigin === 'null') {
+            if (senderProtocol !== 'file:') {
+                throw new Error('Authorisation failure: Origin mismatch for GM token');
+            }
+        } else {
+            if (senderOrigin !== tokenData.pageOrigin) {
+                throw new Error('Authorisation failure: Origin mismatch for GM token');
+            }
+        }
+    } else {
+        const expectedHost = tokenData.pageHostname || '';
+        if (!expectedHost) {
+            if (senderProtocol !== 'file:' || senderHost !== '') {
+                throw new Error('Authorisation failure: Origin mismatch for GM token');
+            }
+        } else {
+            if (senderHost !== expectedHost && !senderHost.endsWith('.' + expectedHost)) {
+                throw new Error('Authorisation failure: Origin mismatch for GM token');
+            }
+        }
+    }
+
+    if (tokenData.boundSenderId === null || tokenData.boundSenderId === undefined) {
+        tokenData.boundSenderId = event.sender.id;
+    } else if (tokenData.boundSenderId !== event.sender.id) {
+        throw new Error('Authorisation failure: token bound to another webContents');
+    }
+
+    if (event.sender && typeof event.sender === 'object') {
+        if (!wiredSenders.has(event.sender)) {
+            wiredSenders.add(event.sender);
+            if (typeof event.sender.on === 'function') {
+                event.sender.on('did-navigate', () => {
+                    revokeTokensForSender(event.sender.id);
+                });
+            }
+            if (typeof event.sender.once === 'function') {
+                event.sender.once('destroyed', () => {
+                    revokeTokensForSender(event.sender.id);
+                });
+            }
+        }
+    }
+
+    tokenData.lastUsedAt = Date.now();
 }
 
 const blockedIPList = new nodeNet.BlockList();
@@ -1026,8 +1156,11 @@ function getMatchingUserContent(targetUrl) {
     }
 
     let hostname = '';
+    let pageOrigin = undefined;
     try {
-        hostname = new URL(targetUrl).hostname.toLowerCase();
+        const parsed = new URL(targetUrl);
+        hostname = parsed.hostname.toLowerCase();
+        pageOrigin = parsed.origin;
     } catch {
         return { scripts: [], styles: [] };
     }
@@ -1044,7 +1177,7 @@ function getMatchingUserContent(targetUrl) {
                 runAt: item.meta.runAt,
                 meta: item.meta,
                 storage: loadScriptStorage(scriptId),
-                token: generateScriptToken(scriptId, hostname, item.meta.connects, item.meta.grants)
+                token: generateScriptToken(scriptId, hostname, item.meta.connects, item.meta.grants, pageOrigin)
             });
         }
     }
@@ -1131,39 +1264,6 @@ function initializeUserContent(configDir, mainWindow) {
         };
     });
 
-    function validateTokenSender(tokenData, event) {
-        if (!tokenData || !event || !event.sender) {
-            throw new Error('Authorisation failure: Unable to verify GM token sender');
-        }
-
-        let senderUrl = '';
-        let senderHost = '';
-        let senderProtocol = '';
-        try {
-            senderUrl = event.sender.getURL();
-            if (senderUrl) {
-                const parsed = new URL(senderUrl);
-                senderHost = parsed.hostname.toLowerCase();
-                senderProtocol = parsed.protocol.toLowerCase();
-            }
-        } catch (e) {}
-
-        const expectedHost = tokenData.pageHostname || '';
-
-        // If token was minted for a local file context, sender must strictly be on file: protocol
-        if (!expectedHost) {
-            if (senderProtocol !== 'file:' || senderHost !== '') {
-                throw new Error('Authorisation failure: Origin mismatch for GM token');
-            }
-            return;
-        }
-
-        // For web origins, verify exact hostname match or subdomain match
-        if (senderHost !== expectedHost && !senderHost.endsWith('.' + expectedHost)) {
-            throw new Error('Authorisation failure: Origin mismatch for GM token');
-        }
-    }
-
     ipcMain.handle('gm-xmlhttprequest', async (event, payload) => {
         const { token, details } = payload || {};
         if (!token || !activeTokens.has(token)) {
@@ -1243,9 +1343,15 @@ module.exports = {
     setScriptValue,
     deleteScriptValue,
     generateScriptToken,
+    revokeTokensForSender,
+    validateTokenSender,
     executeGmXmlHttpRequest,
     isPrivateOrBlockedIP,
     isHostAllowed,
     validateRequestDestination,
-    createPinnedDispatcher
+    createPinnedDispatcher,
+    __test_activeTokens: activeTokens,
+    __test_TOKEN_IDLE_MS: TOKEN_IDLE_MS,
+    __test_MAX_TOKENS: MAX_TOKENS,
+    __test_wiredSenders: wiredSenders
 };
