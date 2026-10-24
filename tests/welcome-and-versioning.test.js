@@ -58,15 +58,22 @@ const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
     console.log('✓ First run welcome path IPC channels verified');
 }
 
-// 3. Verify Command Palette registration for welcome guide
+// 3. Verify Command Palette registration for welcome guide and community feedback
 {
     const commandPalettePath = path.join(rootDir, 'modules', 'overlays', 'commandPalette.js');
     const cpContent = fs.readFileSync(commandPalettePath, 'utf8');
 
     assert(cpContent.includes("id: 'show-welcome'"), 'Command Palette must register show-welcome command');
     assert(cpContent.includes("title: 'Show Welcome & Quick Start Guide'"), 'show-welcome must have human readable title');
+    assert(cpContent.includes("id: 'submit-feedback-or-report-bug'"), 'Command Palette must register submit-feedback-or-report-bug command');
+    assert(cpContent.includes("id: 'open-github-discussions'"), 'Command Palette must register open-github-discussions command');
 
-    console.log('✓ Command Palette welcome guide action verified');
+    const whatsNewPath = path.join(rootDir, 'assets', 'whats-new.html');
+    const whatsNewContent = fs.readFileSync(whatsNewPath, 'utf8');
+    assert(whatsNewContent.includes('Your Voice Shapes Mise'), "What's New must include the community feedback invitation card");
+    assert(whatsNewContent.includes('https://github.com/Rakosn1cek/Mise-browser/discussions'), "What's New must link to GitHub Discussions");
+
+    console.log('✓ Command Palette actions and What\'s New feedback section verified');
 }
 
 // 4. Verify userscript wrapper dynamic version injection

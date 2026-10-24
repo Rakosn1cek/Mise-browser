@@ -108,6 +108,8 @@ The Command Centre gives you rapid, searchable access to all Mise operations, in
 | **Check for Updates** | — | — | Checks GitHub Releases ledger for newer Mise versions. |
 | **Show Welcome & Quick Start Guide** | — | `show-welcome` | Opens the offline onboarding guide and keyboard cheat sheet. |
 | **Show What's New** | — | — | Opens offline release highlights and changelog for the active version. |
+| **Submit Feedback or Report Bug** | — | `submit-feedback-or-report-bug` | Opens GitHub Issues in a new tab to report bugs or submit feedback. |
+| **Open GitHub Discussions** | — | `open-github-discussions` | Opens GitHub Discussions in a new tab to share setups and ideas. |
 | **Test Clean Google Sign-In Flow** | — | `test-google-signin` | Launches Google Sign-In in a clean, volatile scratch partition to audit authentication health. |
 | **Toggle Colour Theme (Dark / Light)** | — | — | Swaps UI styling and webview shader inversion between dark and light. |
 | **Toggle Application Menu Bar** | `F1` | `toggle-menu-bar` | Shows or hides the native top window menu bar. |

@@ -774,6 +774,30 @@ export const COMMAND_DEFINITIONS = [
         actionId: 'toggle-diagnostics-recording',
         keywords: ['diagnostics', 'recording', 'telemetry', 'privacy', 'logs', 'debug'],
         action: () => window.toggleDiagnosticsRecording && window.toggleDiagnosticsRecording()
+    },
+    {
+        id: 'submit-feedback-or-report-bug',
+        title: 'Submit Feedback or Report Bug',
+        desc: 'Open GitHub Issues or Discussions in a new tab to report problems or share feedback',
+        details: 'Opens the official Mise GitHub repository in a new tab so you can report bugs, submit feedback, or ask questions in Discussions.',
+        tip: 'Mise has zero telemetry: your feedback directly shapes future releases.',
+        category: 'Preferences & System',
+        icon: 'fa-solid fa-comment-dots',
+        actionId: 'submit-feedback-or-report-bug',
+        keywords: ['feedback', 'bug', 'report', 'issue', 'github', 'discussion', 'support', 'help', 'suggest'],
+        action: () => spawnTabWithUrl('https://github.com/Rakosn1cek/Mise-browser/issues')
+    },
+    {
+        id: 'open-github-discussions',
+        title: 'Open GitHub Discussions',
+        desc: 'Join the community forum to share setups, ask questions, and suggest ideas',
+        details: 'Opens the official Mise GitHub Discussions forum in a new tab to converse with the developer and other users.',
+        tip: 'Share your Tokyo Night customisations, dotfiles, or workflow tips.',
+        category: 'Preferences & System',
+        icon: 'fa-solid fa-comments',
+        actionId: 'open-github-discussions',
+        keywords: ['discussions', 'forum', 'community', 'ideas', 'feedback', 'github', 'chat'],
+        action: () => spawnTabWithUrl('https://github.com/Rakosn1cek/Mise-browser/discussions')
     }
 ];
 
