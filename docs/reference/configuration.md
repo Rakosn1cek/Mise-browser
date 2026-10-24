@@ -70,7 +70,7 @@ Controls hardware switches, process limits, privacy whitelists, and search prefe
 - **`process_limit`**: Hard cap on Chromium renderer process forks (1 to 5).
 - **`tab_sleep_timeout_minutes`**: Inactivity timeout before background tabs detach and hibernate (5, 15, 30, 60, or 0 to disable).
 - **`sidebar_auto_collapse`**: When `true`, collapses the vertical sidebar into a 36px icon strip, expanding smoothly on hover or via shortcut.
-- **`show_status_bar`**: When `true`, displays the 22px footer status bar with modal state, real-time link hover preview, and TLS security status.
+- **`show_status_bar`**: When `true`, displays the 28px footer status bar with modal state, real-time link hover preview, centered address bar pill, and TLS security status.
 - **`show_clock`**: When `true`, displays a real-time clock and date widget in the status bar and sidebar for full screen browsing.
 - **`clock_format`**: Date and time display format: `12h` (e.g. 02:45 PM), `24h` (e.g. 14:45), `seconds` (e.g. 14:45:08), or `datetime` (e.g. 15 Oct, 14:45).
 - **`show_window_controls`**: When `true`, displays window action buttons (minimise, maximise/restore, close) at the top of the sidebar for desktop environments without native window decorations.
@@ -90,7 +90,7 @@ Controls hardware switches, process limits, privacy whitelists, and search prefe
   - **`overlay_opacity`**: Modal and overlay translucency percentage (50% to 100%) for Command Palette, Notes, and Preferences.
 - **`enable_diagnostics`**: When `true`, enables local in-memory diagnostic ring buffer recording for auditing and issue reproduction (OFF by default for zero telemetry).
 - **`trusted_domains`**: Array of domains exempted from tracker blocking and fingerprint spoofing.
-- **`external_notes_command`**: Optional command or executable used to open notes and clippings (e.g. `obsidian`, `logseq`, `code`, `nvim`). When empty, uses system default Markdown handler. Path resolution is strictly confined to the application configuration directory, safeguarding against directory traversal.
+- **`external_notes_command`**: Optional command or executable used to open notes and clippings (e.g. `obsidian`, `logseq`, `code`, `nvim`). When empty, uses system default Markdown handler. Path resolution is strictly confined to the application configuration directory, safeguarding against directory traversal. Modifying this setting via the interface or IPC triggers an interactive native confirmation prompt before persisting to disk.
 - **`custom_search_aliases`**: Key-value map of custom search prefixes and URL templates (with `%s` query placeholder). Typing `<alias> <query>` in the address bar (such as `aur hyprland` or `gh mise`) bypasses fallback engines and routes queries straight to the destination. Users can configure, override, or extend default built-ins directly in Preferences.
 
 ---
