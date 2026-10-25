@@ -71,7 +71,7 @@ const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
     const whatsNewPath = path.join(rootDir, 'assets', 'whats-new.html');
     const whatsNewContent = fs.readFileSync(whatsNewPath, 'utf8');
     assert(whatsNewContent.includes('Your Voice Shapes Mise'), "What's New must include the community feedback invitation card");
-    assert(whatsNewContent.includes('https://github.com/Rakosn1cek/Mise-browser/discussions'), "What's New must link to GitHub Discussions");
+    assert(whatsNewContent.includes('href="https://github.com/Rakosn1cek/Mise-browser/discussions"'), "What's New must link to GitHub Discussions");
 
     console.log('✓ Command Palette actions and What\'s New feedback section verified');
 }
