@@ -251,56 +251,57 @@
                 <img src="icons/Mise-logo48.png" alt="Mise Logo">
                 <h1>What's New in Mise v1.2.0</h1>
             </div>
-            <p class="subtitle">The v1.2.0 Security & Private Workspace Update: Permanent isolated Private workspace with zero disk persistence, four-phase security hardening overhaul, Electron v45.0.0 runtime modernisation, session snapshot rotation, and 52-suite test harness.</p>
+            <p class="subtitle">The v1.3.0 Centred Omnibar & Defence-in-Depth Update: Fixed status bar address bar with upward suggestions, rigorous IPC host sender verification across all handlers, hardened userscript bridge security and storage quotas, community feedback integration, and upstream dependency patches.</p>
         </header>
 
         <section class="feature-card">
-            <h2 class="feature-title">Permanent Isolated Private Workspace</h2>
+            <h2 class="feature-title">Fixed Centred Status Bar Address Bar</h2>
             <p class="feature-desc">
-                A built-in, dedicated Private workspace bound to volatile memory with complete data boundary isolation.
+                The Wide Address Bar is now natively integrated into the fixed 28px bottom status bar, preserving a 100% uncluttered browsing canvas.
             </p>
             <ul class="feature-points">
-                <li>Ephemeral session partition (<kbd>persist:workspace_private</kbd>) ensuring cookies, localStorage, and network caches are purged upon closure.</li>
-                <li>Zero disk persistence: private tabs, URLs, titles, and hibernation states are completely stripped from disk session flushes (<kbd>session.json</kbd>).</li>
-                <li>Instant toggle via keyboard shortcut (<kbd>Ctrl + Shift + P</kbd>) with subtle Tokyo Night rose theme accenting.</li>
-                <li>Automatic legacy workspace migration to "Private (old)" preventing tab loss from pre-existing profiles, alongside reserved system namespaces.</li>
+                <li>Relocated the omnibar directly into the status bar centre with responsive proportional sizing.</li>
+                <li>Upward suggestions pop-up overlay (<kbd>#AddressSuggestions</kbd>) presenting instant search aliases, quickmarks, and history completions.</li>
+                <li>Preserves full Vim normal mode shortcut integration: press <kbd>Ctrl + L</kbd> or <kbd>!</kbd> to focus and begin navigating immediately.</li>
+                <li>Refined border radii and auto-collapse sidebar stacking order ensuring smooth visual transitions.</li>
             </ul>
         </section>
 
         <section class="feature-card">
-            <h2 class="feature-title">Comprehensive Four-Phase Security Hardening</h2>
+            <h2 class="feature-title">IPC Defence-in-Depth & Host Sender Verification</h2>
             <p class="feature-desc">
-                Rigorous multi-layer defence-in-depth lockdown safeguarding userscript execution, guest webviews, and local system integration.
+                Comprehensive multi-layer isolation ensuring privileged main process capabilities cannot be invoked by untrusted guest webview content.
             </p>
             <ul class="feature-points">
-                <li>Userscript sandbox hardened with DNS pinning, <kbd>net.BlockList</kbd> protection against private and multicast subnets, payload bounding, and prototype pollution immunity.</li>
-                <li>Webview navigation locks: enforced <kbd>will-navigate</kbd>, <kbd>setWindowOpenHandler</kbd>, and <kbd>isSafeTabUrl</kbd> across guest and main windows.</li>
-                <li>Local filesystem protection: address bar local file access restricted strictly to genuine PDF viewing, and IPC download execution confined to tracked safe paths.</li>
-                <li>Safe content extraction: inert <kbd>DOMParser</kbd> context for Reader View distillation and sanitised Markdown hyperlink validation in Notes.</li>
+                <li>Strict host sender verification on all <kbd>ipcMain</kbd> handlers: requests originating from guest webview frames are actively intercepted and denied.</li>
+                <li>Input validation and bounding: diagnostics payloads bounded to depth 6 and capped strings to prevent memory exhaustion.</li>
+                <li>Configuration safety: partial configuration updates validated against strict schemas, rejecting unrecognised keys and malicious URL schemes.</li>
+                <li>Session persistence safeguards: session saving rejects malformed payloads and limits snapshot rotation.</li>
             </ul>
         </section>
 
         <section class="feature-card">
-            <h2 class="feature-title">Electron v45.0.0 Runtime Modernisation</h2>
+            <h2 class="feature-title">Hardened Userscript Sandbox & Storage Quotas</h2>
             <p class="feature-desc">
-                Updated core Electron and Chromium runtimes to stay ahead of upstream CVEs and leverage latest platform enhancements.
+                Engineered robust lifecycle protections and storage boundaries for local userscripts and user styles.
             </p>
             <ul class="feature-points">
-                <li>Upgraded runtime to Electron v45.0.0 with Chromium security patches, V8 optimisations, and improved memory efficiency.</li>
-                <li>Bundled FontAwesome locally to eliminate external font queries and enforce strict Content Security Policy (<kbd>form-action 'none'</kbd>).</li>
-                <li>Google favicon leak prevention: unresolvable favicons cleanly return null instead of querying third-party endpoints.</li>
+                <li>Dynamic token lifecycle: userscript API bridge tokens expire on idle and enforce capacity limits.</li>
+                <li>Strict sender binding: tokens are bound to the initial sender and main frame, revoking immediately upon navigation.</li>
+                <li>Storage safety: 1 MB persistent storage quota per script with atomic file persistence and write debouncing.</li>
+                <li>Style query isolation: CSS extractions proceed cleanly without minting unnecessary privileged userscript tokens.</li>
             </ul>
         </section>
 
         <section class="feature-card">
-            <h2 class="feature-title">Session Resilience & 52-Suite Test Harness</h2>
+            <h2 class="feature-title">Community Dialogue & Upstream Security Patches</h2>
             <p class="feature-desc">
-                Enhanced crash protection, atomic state updates, and massive expansion of automated regression verification.
+                Strengthened upstream dependencies and integrated community collaboration tools directly into the browser workflow.
             </p>
             <ul class="feature-points">
-                <li>Session snapshot rotation: automatic timestamped snapshots (<kbd>session.snap-*.json</kbd>) and suspect blank session quarantine (<kbd>session.suspect.json</kbd>).</li>
-                <li>Atomic partial configuration updates and deduplicated event hooks in <kbd>main/config.js</kbd>.</li>
-                <li>Expanded automated test harness to 52 dedicated suites verifying security sandboxes, lifecycle teardowns, and atomic writes with 100% pass rate.</li>
+                <li>Upgraded upstream dependencies: bumped <kbd>fast-uri</kbd> to 3.1.9 and <kbd>undici</kbd> to 7.30.1 and 6.29.1.</li>
+                <li>Command Palette integration: jump directly to GitHub Discussions or report issues via searchable commands in <kbd>Ctrl + P</kbd>.</li>
+                <li>All 56 automated test suites passing with 100% verification across security, UI, and storage modules.</li>
             </ul>
         </section>
 
