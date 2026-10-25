@@ -9,7 +9,7 @@
 Named after the Czech word for *"mission"*, Mise leverages the Chromium rendering engine wrapped inside a streamlined Electron framework to minimise system overhead while delivering a fast, isolated web experience without mouse dependency.
 
 📖 **Official Documentation**: [https://rakosn1cek.github.io/Mise-browser/](https://rakosn1cek.github.io/Mise-browser/)  
-📦 **Download Packages (v1.3.0)**: [GitHub Releases](https://github.com/Rakosn1cek/Mise-browser/releases/latest) • [Direct Package Links](#downloads)
+📦 **Download Packages (v1.3.0)**: [GitHub Releases](https://github.com/Rakosn1cek/Mise-browser/releases/latest) • [AUR Package](https://aur.archlinux.org/packages/mise-browser-bin) • [Direct Package Links](#downloads)
 
 ![Mise Browser Dual-Split View](docs/public/screenshots/split-view.webp)
 
@@ -49,6 +49,7 @@ Pre-built standalone binaries and packages are compiled and published for Linux,
 
 | Platform | Format | Architecture | Direct Download | Notes |
 | :--- | :--- | :--- | :--- | :--- |
+| **Arch Linux** | AUR | x86_64 | [mise-browser-bin](https://aur.archlinux.org/packages/mise-browser-bin) | Native Arch package (`yay -S mise-browser-bin`) |
 | **Linux** | AppImage | x64 | [Mise.Browser-1.3.0.AppImage](https://github.com/Rakosn1cek/Mise-browser/releases/download/v1.3.0/Mise.Browser-1.3.0.AppImage) | Portable executable (`chmod +x` and run) |
 | **Linux** | tar.gz | x64 | [mise-browser-1.3.0.tar.gz](https://github.com/Rakosn1cek/Mise-browser/releases/download/v1.3.0/mise-browser-1.3.0.tar.gz) | Standalone tarball archive |
 | **macOS** | DMG | Apple Silicon (arm64) | [Mise.Browser-1.3.0-arm64.dmg](https://github.com/Rakosn1cek/Mise-browser/releases/download/v1.3.0/Mise.Browser-1.3.0-arm64.dmg) | Drag and drop installer |
@@ -56,6 +57,14 @@ Pre-built standalone binaries and packages are compiled and published for Linux,
 | **Windows** | Setup EXE | x64 | [Mise.Browser.1.3.0.exe](https://github.com/Rakosn1cek/Mise-browser/releases/download/v1.3.0/Mise.Browser.1.3.0.exe) | NSIS desktop installer |
 | **Windows** | Portable EXE | x64 | [Mise.Browser.1.3.0.exe](https://github.com/Rakosn1cek/Mise-browser/releases/download/v1.3.0/Mise.Browser.1.3.0.exe) | Portable binary without installation |
 | **Integrity** | Checksums | All | [SHA256SUMS.txt](https://github.com/Rakosn1cek/Mise-browser/releases/download/v1.3.0/SHA256SUMS.txt) | Cryptographic SHA-256 hash list |
+
+### Arch Linux (AUR)
+
+```bash
+yay -S mise-browser-bin
+# or
+paru -S mise-browser-bin
+```
 
 ### Quick Run (Linux AppImage)
 

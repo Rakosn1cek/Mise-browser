@@ -80,12 +80,24 @@ Keep your hands on the home row. Every major workflow is reachable via concise, 
 
 ## Quick Start on Linux
 
+### Arch Linux (AUR)
+
+Install directly via your preferred AUR helper:
+
+```bash
+yay -S mise-browser-bin
+# or
+paru -S mise-browser-bin
+```
+
+### Standalone AppImage
+
 Download the self-contained Linux AppImage from GitHub Releases and run directly on any distribution:
 
 ```bash
 # Make executable and launch
-chmod +x Mise-*-x86_64.AppImage
-./Mise-*-x86_64.AppImage
+chmod +x Mise-*.AppImage
+./Mise-*.AppImage
 ```
 
 You can also compile directly from source:

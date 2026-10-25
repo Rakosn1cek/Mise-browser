@@ -8,6 +8,30 @@ Mise is designed to be efficient, modular, and easy to run across Linux, macOS, 
 
 Official releases and cryptographic checksums are published for every tagged version on the [GitHub Releases page](https://github.com/Rakosn1cek/Mise-browser/releases).
 
+### Arch Linux (AUR)
+
+Mise Browser is available on the Arch User Repository as `mise-browser-bin`.
+
+Install using your preferred AUR helper:
+
+```bash
+yay -S mise-browser-bin
+```
+
+Or with `paru`:
+
+```bash
+paru -S mise-browser-bin
+```
+
+Alternatively, build and install manually with `makepkg`:
+
+```bash
+git clone https://aur.archlinux.org/mise-browser-bin.git
+cd mise-browser-bin
+makepkg -si
+```
+
 ### Linux (Distro-Agnostic AppImage)
 
 The AppImage runs out of the box on Ubuntu, Debian, Fedora, Arch Linux, openSUSE, and any standard modern Linux distribution without package managers or root privileges.
@@ -67,6 +91,7 @@ Mise includes an integrated, zero-privilege update notification system that chec
 - **Automated Check**: Mise queries the GitHub Releases API shortly after startup. When a newer version is published, an update badge appears in the sidebar and Preferences view.
 - **Manual Check**: Run **Check for Updates** in the Command Centre (`Ctrl+P`) or click the **Check for Updates** button in Preferences (`Ctrl+H`).
 - **Applying Updates**:
+  - **Arch Linux (AUR)**: Update alongside system packages (`yay -Syu` or `paru`).
   - **Linux AppImage**: Download the latest `.AppImage` from GitHub Releases and replace your existing file.
   - **macOS / Windows**: Download and run the latest installer or portable executable.
   - **Source Installs**: Run `git pull && npm install` in your repository folder.
