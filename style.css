@@ -4175,5 +4175,34 @@ i.spinning {
     text-align: center;
 }
 
+/* Floating HUD Toast Notification */
+.mise-toast-notification {
+    position: fixed;
+    bottom: 38px;
+    left: 50%;
+    transform: translateX(-50%) translateY(8px);
+    background: var(--bg-sidebar);
+    color: var(--text);
+    border: 1px solid var(--accent);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+    padding: 7px 16px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 99999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.mise-toast-notification.visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+
 
 

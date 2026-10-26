@@ -1,5 +1,6 @@
 import { state } from '../state.js';
-import { focusActiveWebview, getActiveWebview, isTargetScript, isDarkMode, escapeHtml } from '../utils.js';
+import { focusActiveWebview, getActiveWebview, isTargetScript, isDarkMode, escapeHtml, showNotificationToast } from '../utils.js';
+import { setTargetUrl } from '../statusBar.js';
 import { renderWorkspaceUI, switchTabFocus, spawnTabWithUrl, spawnNewBlankTab, handleTabRemoval, hibernateInactiveTabs, wakeAllTabsInWorkspace } from '../webview.js';
 import { toggleBookmarksOverlay, promptQuickmark, addCurrentPageToBookmarks } from './bookmarks.js';
 import { syncVisualSettingsInputs, setupVisualSettingsListeners } from '../theme.js';
@@ -798,6 +799,90 @@ export const COMMAND_DEFINITIONS = [
         actionId: 'open-github-discussions',
         keywords: ['discussions', 'forum', 'community', 'ideas', 'feedback', 'github', 'chat'],
         action: () => spawnTabWithUrl('https://github.com/Rakosn1cek/Mise-browser/discussions')
+    },
+    {
+        id: 'webrtc-policy-balanced',
+        title: 'WebRTC: Set Policy to Balanced (Hide Local LAN IPs)',
+        desc: 'Default protection: binds to public interface only and shields internal LAN addresses',
+        details: 'Protects local network IP addresses from discovery whilst allowing standard public WebRTC calls.',
+        tip: 'Best balance for everyday browsing and video conferencing.',
+        category: 'Preferences & System',
+        icon: 'fa-solid fa-shield-halved',
+        actionId: 'webrtc-policy-balanced',
+        keywords: ['webrtc', 'balanced', 'default', 'privacy', 'hide', 'lan', 'ip'],
+        action: () => setWebRTCPolicy('default_public_interface_only')
+    },
+    {
+        id: 'webrtc-policy-strict',
+        title: 'WebRTC: Set Policy to Strict (Block Non-Proxied UDP)',
+        desc: 'VPN and Proxy Guard: blocks direct UDP queries to prevent IP address leaks',
+        details: 'Forces all WebRTC traffic through configured proxies and drops direct UDP candidate probes.',
+        tip: 'Essential when using commercial VPNs or SOCKS proxies.',
+        category: 'Preferences & System',
+        icon: 'fa-solid fa-lock',
+        actionId: 'webrtc-policy-strict',
+        keywords: ['webrtc', 'strict', 'proxy', 'vpn', 'leak', 'udp', 'block'],
+        action: () => setWebRTCPolicy('disable_non_proxied_udp')
+    },
+    {
+        id: 'webrtc-policy-disabled',
+        title: 'WebRTC: Set Policy to Disabled (Neutralise WebRTC APIs)',
+        desc: 'Maximum privacy: completely disables RTCPeerConnection and STUN probing',
+        details: 'Stubs out WebRTC constructors in untrusted guest frames so pages cannot initiate peer connections.',
+        tip: 'Completely eliminates WebRTC fingerprinting and socket connections.',
+        category: 'Preferences & System',
+        icon: 'fa-solid fa-ban',
+        actionId: 'webrtc-policy-disabled',
+        keywords: ['webrtc', 'disable', 'block', 'off', 'neutralise', 'kill'],
+        action: () => setWebRTCPolicy('disabled')
+    },
+    {
+        id: 'webrtc-policy-permissive',
+        title: 'WebRTC: Set Policy to Permissive (Standard Chromium)',
+        desc: 'Permits full peer discovery and local interface enumeration',
+        details: 'Restores default Chromium WebRTC behaviour with unrestricted network candidate probing.',
+        tip: 'Use only if troubleshooting legacy peer-to-peer applications.',
+        category: 'Preferences & System',
+        icon: 'fa-solid fa-globe',
+        actionId: 'webrtc-policy-permissive',
+        keywords: ['webrtc', 'permissive', 'standard', 'default', 'chromium', 'allow'],
+        action: () => setWebRTCPolicy('default')
+    },
+    {
+        id: 'cycle-webrtc-policy',
+        title: 'WebRTC: Cycle IP Handling Policy',
+        desc: 'Rotate between Balanced, Strict (Proxy/VPN), Disabled, and Permissive',
+        details: 'Cycles the WebRTC network interface binding and API availability policy immediately across all active browser sessions.',
+        tip: 'Use Strict or Disabled when routing through VPNs or proxies to prevent IP leaks.',
+        category: 'Preferences & System',
+        icon: 'fa-solid fa-arrows-rotate',
+        actionId: 'cycle-webrtc-policy',
+        keywords: ['webrtc', 'ip', 'leak', 'vpn', 'proxy', 'privacy', 'security', 'cycle', 'policy'],
+        action: () => cycleWebRTCPolicy()
+    },
+    {
+        id: 'toggle-webrtc-protection',
+        title: 'WebRTC: Toggle Protection (Balanced / Disabled)',
+        desc: 'Fast toggle between balanced protection and fully disabled WebRTC',
+        details: 'Toggles WebRTC peer connections off entirely or restores the balanced default public interface policy across active sessions.',
+        tip: 'Disabling WebRTC blocks RTCPeerConnection and STUN probing on untrusted websites.',
+        category: 'Preferences & System',
+        icon: 'fa-solid fa-user-shield',
+        actionId: 'toggle-webrtc-protection',
+        keywords: ['webrtc', 'disable', 'block', 'privacy', 'leak', 'stun', 'toggle', 'shield'],
+        action: () => toggleWebRTCProtection()
+    },
+    {
+        id: 'inspect-webrtc-status',
+        title: 'WebRTC: View Current Protection Posture',
+        desc: 'Display on-screen status badge showing active WebRTC IP policy',
+        details: 'Queries active configuration and displays the current WebRTC leak protection state in an on-screen toast.',
+        tip: 'Quickly verify your WebRTC posture without opening Preferences.',
+        category: 'Preferences & System',
+        icon: 'fa-solid fa-circle-info',
+        actionId: 'inspect-webrtc-status',
+        keywords: ['webrtc', 'status', 'check', 'info', 'view', 'current'],
+        action: () => inspectWebRTCStatus()
     }
 ];
 
@@ -853,6 +938,88 @@ function getRecentCommands() {
 
 let preferencesActive = false;
 
+const WEBRTC_LABELS = {
+    default_public_interface_only: 'Balanced: Hide Local LAN IPs',
+    disable_non_proxied_udp: 'Strict: Block Non-Proxied UDP',
+    disabled: 'Disabled: Neutralise WebRTC APIs',
+    default: 'Permissive: Standard Chromium'
+};
+
+export function getWebRTCReadableLabel(policy) {
+    return WEBRTC_LABELS[policy] || policy || 'Balanced: Hide Local LAN IPs';
+}
+
+export async function setWebRTCPolicy(targetPolicy) {
+    if (!window.miseAPI || typeof window.miseAPI.getBrowserSettings !== 'function') return null;
+    try {
+        const cfg = (await window.miseAPI.getBrowserSettings()) || {};
+        cfg.webrtc_policy = targetPolicy;
+        if (typeof window.miseAPI.updateBrowserSettings === 'function') {
+            await window.miseAPI.updateBrowserSettings(cfg);
+        }
+
+        const prefSelect = document.getElementById('setting-webrtc-policy');
+        if (prefSelect) prefSelect.value = targetPolicy;
+
+        const readable = getWebRTCReadableLabel(targetPolicy);
+        showNotificationToast(`WebRTC Policy: ${readable}`);
+        setTargetUrl(`WebRTC Policy: ${readable}`, 3500);
+
+        return targetPolicy;
+    } catch (err) {
+        console.error('Failed to set WebRTC policy:', err);
+        return null;
+    }
+}
+
+export async function inspectWebRTCStatus() {
+    if (!window.miseAPI || typeof window.miseAPI.getBrowserSettings !== 'function') return;
+    try {
+        const cfg = (await window.miseAPI.getBrowserSettings()) || {};
+        const currentPolicy = cfg.webrtc_policy || 'default_public_interface_only';
+        const readable = getWebRTCReadableLabel(currentPolicy);
+        showNotificationToast(`Active WebRTC Policy: ${readable}`);
+        setTargetUrl(`Active WebRTC Policy: ${readable}`, 4000);
+    } catch (err) {}
+}
+
+export async function cycleWebRTCPolicy() {
+    if (!window.miseAPI || typeof window.miseAPI.getBrowserSettings !== 'function') return null;
+    try {
+        const cfg = (await window.miseAPI.getBrowserSettings()) || {};
+        const currentPolicy = cfg.webrtc_policy || 'default_public_interface_only';
+        const policyCycle = [
+            'default_public_interface_only',
+            'disable_non_proxied_udp',
+            'disabled',
+            'default'
+        ];
+        const nextIndex = (policyCycle.indexOf(currentPolicy) + 1) % policyCycle.length;
+        const nextPolicy = policyCycle[nextIndex];
+
+        return await setWebRTCPolicy(nextPolicy);
+    } catch (err) {
+        console.error('Failed to cycle WebRTC policy:', err);
+        return null;
+    }
+}
+
+export async function toggleWebRTCProtection() {
+    if (!window.miseAPI || typeof window.miseAPI.getBrowserSettings !== 'function') return null;
+    try {
+        const cfg = (await window.miseAPI.getBrowserSettings()) || {};
+        const currentPolicy = cfg.webrtc_policy || 'default_public_interface_only';
+        const nextPolicy = currentPolicy === 'disabled'
+            ? 'default_public_interface_only'
+            : 'disabled';
+
+        return await setWebRTCPolicy(nextPolicy);
+    } catch (err) {
+        console.error('Failed to toggle WebRTC protection:', err);
+        return null;
+    }
+}
+
 export async function syncPreferencesUI() {
     if (!window.miseAPI || typeof window.miseAPI.getBrowserSettings !== 'function') return;
 
@@ -867,6 +1034,7 @@ export async function syncPreferencesUI() {
             const sleepSelect = document.getElementById('setting-sleep-timeout');
             const sidebarToggle = document.getElementById('setting-sidebar-collapse-toggle');
             const spellSelect = document.getElementById('setting-spellchecker-language');
+            const webrtcSelect = document.getElementById('setting-webrtc-policy');
 
             if (gpuToggle) gpuToggle.checked = !cfg.disable_gpu;
             if (throttleToggle) throttleToggle.checked = !!cfg.background_throttling;
@@ -875,6 +1043,7 @@ export async function syncPreferencesUI() {
             if (sleepSelect) sleepSelect.value = String(cfg.tab_sleep_timeout_minutes ?? 15);
             if (sidebarToggle) sidebarToggle.checked = cfg.sidebar_auto_collapse !== false;
             if (spellSelect) spellSelect.value = cfg.spellchecker_language || 'en-GB';
+            if (webrtcSelect) webrtcSelect.value = cfg.webrtc_policy || 'default_public_interface_only';
 
             const statusBarToggle = document.getElementById('setting-status-bar-toggle');
             if (statusBarToggle) statusBarToggle.checked = cfg.show_status_bar !== false;
@@ -1139,6 +1308,7 @@ export function setupPreferencesListeners() {
             const sleepSelect = document.getElementById('setting-sleep-timeout');
             const sidebarToggle = document.getElementById('setting-sidebar-collapse-toggle');
             const spellSelect = document.getElementById('setting-spellchecker-language');
+            const webrtcSelect = document.getElementById('setting-webrtc-policy');
             const windowControlsToggle = document.getElementById('setting-window-controls-toggle');
             const notesCmdField = document.getElementById('setting-notes-command');
 
@@ -1150,6 +1320,7 @@ export function setupPreferencesListeners() {
                 sidebar_auto_collapse: sidebarToggle ? sidebarToggle.checked : true,
                 email_handler: emailSelect ? emailSelect.value : 'system',
                 spellchecker_language: spellSelect ? spellSelect.value : 'en-GB',
+                webrtc_policy: webrtcSelect ? webrtcSelect.value : 'default_public_interface_only',
                 show_window_controls: windowControlsToggle ? windowControlsToggle.checked : false,
                 external_notes_command: notesCmdField ? notesCmdField.value.trim() : '',
                 custom_search_aliases: state.customSearchAliases || {}
@@ -1254,6 +1425,18 @@ export function setupPreferencesListeners() {
             if (window.miseAPI && typeof window.miseAPI.getBrowserSettings === 'function') {
                 const cfg = (await window.miseAPI.getBrowserSettings()) || {};
                 cfg.email_handler = handler;
+                await window.miseAPI.updateBrowserSettings(cfg);
+            }
+        };
+    }
+
+    const liveWebRTCSelect = document.getElementById('setting-webrtc-policy');
+    if (liveWebRTCSelect) {
+        liveWebRTCSelect.onchange = async () => {
+            const policy = liveWebRTCSelect.value;
+            if (window.miseAPI && typeof window.miseAPI.getBrowserSettings === 'function') {
+                const cfg = (await window.miseAPI.getBrowserSettings()) || {};
+                cfg.webrtc_policy = policy;
                 await window.miseAPI.updateBrowserSettings(cfg);
             }
         };

@@ -270,14 +270,27 @@ function decidePermission(permission, { trusted, notificationsEnabled } = {}) {
     return false;
 }
 
-function hardenSession(targetSession, spellLang = 'en-GB') {
+function applyWebRTCPolicy(targetSession, policy = 'default_public_interface_only') {
+    if (!targetSession || typeof targetSession.setWebRTCIPHandlingPolicy !== 'function') return;
+    const sessionPolicy = policy === 'disable_non_proxied_udp'
+        ? 'disable_non_proxied_udp'
+        : (policy === 'default' || policy === 'default_public_and_private_interfaces')
+            ? policy
+            : (policy === 'disabled' ? 'disable_non_proxied_udp' : 'default_public_interface_only');
+
+    try {
+        targetSession.setWebRTCIPHandlingPolicy(sessionPolicy);
+    } catch (err) {
+        console.error('Failed to configure WebRTC IP handling policy:', err);
+    }
+}
+
+function hardenSession(targetSession, spellLang = 'en-GB', webrtcPolicy = 'default_public_interface_only') {
     applySpellcheckerLanguage(targetSession, spellLang);
     initialiseAdblocker(targetSession);
 
-    // Prevent WebRTC from probing non-default local interfaces
-    if (typeof targetSession.setWebRTCIPHandlingPolicy === 'function') {
-        targetSession.setWebRTCIPHandlingPolicy('default_public_interface_only');
-    }
+    // Apply WebRTC IP handling policy
+    applyWebRTCPolicy(targetSession, webrtcPolicy);
 
     attachNetworkHandlers(targetSession);
 
@@ -638,6 +651,7 @@ module.exports = {
     isGoogleInfraHost,
     isPermissionTrustedRequest,
     applySpellcheckerLanguage,
+    applyWebRTCPolicy,
     clearGoogleAuthCookies,
     setGoogleSignInUserAgent,
     getGoogleSignInUserAgent,

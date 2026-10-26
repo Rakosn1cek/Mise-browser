@@ -28,6 +28,7 @@ const DEFAULT_CONFIG = {
     email_handler: 'system',
     search_engine: 'https://duckduckgo.com/?q=%s',
     spellchecker_language: 'en-GB',
+    webrtc_policy: 'default_public_interface_only',
     theme: 'dark',
     webview_theme: 'dark',
     trusted_domains: ['accounts.google.com'],
@@ -79,6 +80,7 @@ function loadBrowserConfig(targetDir = CONFIG_DIR, targetPath = CONFIG_PATH) {
             ...DEFAULT_CONFIG,
             ...parsed,
             spellchecker_language: parsed.spellchecker_language || 'en-GB',
+            webrtc_policy: parsed.webrtc_policy || 'default_public_interface_only',
             webview_theme: parsed.webview_theme || 'dark',
             theme_colors: {
                 dark: { ...DEFAULT_THEME_COLORS.dark, ...(parsed.theme_colors?.dark || {}) },
@@ -246,6 +248,21 @@ function validateConfigPatch(patch) {
                 break;
             }
 
+            case 'webrtc_policy': {
+                const validPolicies = new Set([
+                    'default_public_interface_only',
+                    'disable_non_proxied_udp',
+                    'disabled',
+                    'default'
+                ]);
+                if (typeof val === 'string' && validPolicies.has(val)) {
+                    clean[key] = val;
+                } else {
+                    rejected.push(key);
+                }
+                break;
+            }
+
             case 'clock_format': {
                 if (val === 'datetime' || val === 'time' || val === 'seconds') {
                     clean[key] = val;
@@ -391,6 +408,12 @@ function registerConfigIpc(ipcMain, hooks = {}) {
                 merged.enable_diagnostics !== undefined &&
                 typeof hooks.onDiagnosticsChange === 'function') {
                 hooks.onDiagnosticsChange(merged.enable_diagnostics);
+            }
+            if (Object.prototype.hasOwnProperty.call(payload, 'webrtc_policy') &&
+                JSON.stringify(before.webrtc_policy) !== JSON.stringify(merged.webrtc_policy) &&
+                merged.webrtc_policy !== undefined &&
+                typeof hooks.onWebRTCPolicyChange === 'function') {
+                hooks.onWebRTCPolicyChange(merged.webrtc_policy);
             }
             return true;
         } catch (e) {

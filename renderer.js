@@ -7,7 +7,8 @@ import {
     getActiveWebview, 
     focusActiveWebview,
     getWorkspacePartition,
-    isTargetPrivateDomain 
+    isTargetPrivateDomain,
+    showNotificationToast 
 } from './modules/utils.js';
 import { 
     applyThemeVisuals, 
@@ -61,7 +62,12 @@ import {
     filterPaletteCommands, 
     updatePaletteVisualSelection, 
     handlePaletteInputNavigation, 
-    executePaletteSelection 
+    executePaletteSelection,
+    cycleWebRTCPolicy,
+    toggleWebRTCProtection,
+    setWebRTCPolicy,
+    inspectWebRTCStatus,
+    getWebRTCReadableLabel
 } from './modules/overlays/commandPalette.js';
 
 import { 
@@ -185,6 +191,10 @@ window.executeGlobalCacheWipe = executeGlobalCacheWipe;
 window.toggleDiagnosticsView = toggleDiagnosticsView;
 window.closeDiagnosticsView = closeDiagnosticsView;
 window.toggleDiagnosticsRecording = toggleDiagnosticsRecording;
+window.cycleWebRTCPolicy = cycleWebRTCPolicy;
+window.toggleWebRTCProtection = toggleWebRTCProtection;
+window.setWebRTCPolicy = setWebRTCPolicy;
+window.inspectWebRTCStatus = inspectWebRTCStatus;
 window.toggleActiveDevTools = toggleActiveDevTools;
 window.toggleCommandPaletteView = toggleCommandPaletteView;
 window.closeCommandPalette = closeCommandPalette;
@@ -776,6 +786,22 @@ function setupEventListeners() {
             case 'open-diagnostics':
             case 'toggle-diagnostics': toggleDiagnosticsView(); break;
             case 'toggle-diagnostics-recording': toggleDiagnosticsRecording(); break;
+            case 'cycle-webrtc-policy': cycleWebRTCPolicy(); break;
+            case 'toggle-webrtc-protection': toggleWebRTCProtection(); break;
+            case 'webrtc-policy-balanced': setWebRTCPolicy('default_public_interface_only'); break;
+            case 'webrtc-policy-strict': setWebRTCPolicy('disable_non_proxied_udp'); break;
+            case 'webrtc-policy-disabled': setWebRTCPolicy('disabled'); break;
+            case 'webrtc-policy-permissive': setWebRTCPolicy('default'); break;
+            case 'inspect-webrtc-status': inspectWebRTCStatus(); break;
+            case 'webrtc-policy-changed': {
+                const policy = args[0];
+                const prefSelect = document.getElementById('setting-webrtc-policy');
+                if (prefSelect) prefSelect.value = policy;
+                const readable = getWebRTCReadableLabel(policy);
+                showNotificationToast(`WebRTC Policy: ${readable}`);
+                setTargetUrl(`WebRTC Policy: ${readable}`, 3500);
+                break;
+            }
             case 'toggle-dark-reader': toggleDarkReaderOnActiveTab(); break;
             case 'toggle-reader-view': toggleReaderViewOnActiveTab(); break;
             case 'go-back':

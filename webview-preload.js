@@ -94,11 +94,52 @@ try {
     isTrustedSite = false;
 }
 
+// Query WebRTC policy configured in browser settings
+let webrtcPolicy = 'default_public_interface_only';
+try {
+    webrtcPolicy = ipcRenderer.sendSync('get-webrtc-policy') || 'default_public_interface_only';
+} catch (e) {
+    webrtcPolicy = 'default_public_interface_only';
+}
+
 if (!isTrustedSite) {
+    let webrtcBlockScript = '';
+    if (webrtcPolicy === 'disabled') {
+        webrtcBlockScript = `
+        try {
+            const blockProp = function(prop) {
+                try {
+                    Object.defineProperty(window, prop, {
+                        get: function() { return undefined; },
+                        set: function() {},
+                        configurable: true
+                    });
+                } catch (_) {}
+            };
+            blockProp('RTCPeerConnection');
+            blockProp('webkitRTCPeerConnection');
+            blockProp('mozRTCPeerConnection');
+            blockProp('RTCSessionDescription');
+            blockProp('RTCIceCandidate');
+
+            if (navigator.mediaDevices) {
+                Object.defineProperty(navigator.mediaDevices, 'getUserMedia', {
+                    value: function() {
+                        return Promise.reject(new DOMException('WebRTC is disabled by user policy', 'NotAllowedError'));
+                    },
+                    writable: false,
+                    configurable: true
+                });
+            }
+        } catch (_) {}
+        `;
+    }
 
     const codeToInject = `(function() {
         if (window.__miseFingerprintPatchesApplied) return;
         window.__miseFingerprintPatchesApplied = true;
+
+        ${webrtcBlockScript}
 
         // Privacy signals
         Object.defineProperty(navigator, 'doNotTrack', { get: () => '1', configurable: true });

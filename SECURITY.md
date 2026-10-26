@@ -70,12 +70,17 @@ Mise Browser is designed with multiple defence-in-depth layers:
 * Sensitive hardware capabilities (microphone, camera, geolocation, and MIDI) are denied by default.
 * Web notifications require explicit user opt-in via the interface toggle button.
 
-### E. Native Request Filtering
+### E. WebRTC IP Handling & Leak Controls
+* **Anti-Leak Interface Binding:** To prevent STUN and ICE queries from leaking local LAN IP addresses or transmitting non-proxied UDP traffic outside of active VPN/proxy tunnels, Mise enforces configurable WebRTC IP handling policies across all browser sessions.
+* **Selectable Protection Levels:** Users can choose between Balanced (default public interface only), Strict / Proxy Safe (`disable_non_proxied_udp`), Disabled (neutralising `RTCPeerConnection`, `RTCSessionDescription`, and `RTCIceCandidate` on untrusted sites), and Permissive standard Chromium mode.
+* **Dynamic Hot-Reloading:** Changing the WebRTC policy in Preferences or cycling it via the Command Palette reconfigures active sessions in real time without requiring an application restart.
+
+### F. Native Request Filtering
 * Network requests are intercepted in-process via Ghostery's blocking engine before departing the local machine.
 * Known malicious hosts, tracking scripts, and cryptominers are dropped at the network interceptor layer.
 * **Userscript SSRF Network Protection:** Cross-origin `GM_xmlhttpRequest` calls dispatched by userscripts are inspected in the main process and validated against an expanded IP blocklist covering loopback (`127.0.0.0/8`, `::1`), private subnets (`10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`), link-local endpoints (`169.254.0.0/16`, `fe80::/10`), unique local IPv6 (`fc00::/7`), carrier-grade NAT (`100.64.0.0/10`), benchmark subnets (`198.18.0.0/15`), documentation ranges (`192.0.2.0/24`, `198.51.100.0/24`, `203.0.113.0/24`, `2001:db8::/32`), multicast (`224.0.0.0/4`, `ff00::/8`), reserved blocks (`240.0.0.0/4`), discard prefixes (`100::/64`), and IPv4-translated ranges (`64:ff9b::/96`, `::ffff:0:0/96`). Hostname pre-resolution and socket IP pinning eliminate DNS rebinding risks.
 
-### F. Session & Data Storage Architecture
+### G. Session & Data Storage Architecture
 * **Transparent Plaintext User Data:** Configuration (`config.json`), keybindings (`keybinds.json`), workspaces (`session.json`), history (`history.json`), bookmarks (`bookmarks.json`), and notes (`notes.md`) are stored in transparent, human-readable JSON and Markdown files under `~/.config/mise-browser/`, protected by standard user-only filesystem permissions (`0600`/`0700`). Users retain full ownership to inspect, edit, or back up files using standard tools.
 * **Session Persistence Integrity & Snapshot Rotation:** Tab URL persistence is strictly guarded by `isPersistableTabUrl` across navigation events, capturing only valid web and local file schemes (`http:`, `https:`, and `file:`) and rejecting transient blank or error schemes. Suspect blank session states are quarantined to `session.suspect.json` to prevent session corruption. Atomic backups (`session.json.bak`) are updated solely on valid non-blank writes, and timestamped recovery snapshots (`session.snap-YYYYMMDD-HHMMSS.json`) are automatically rotated, retaining the 10 newest snapshots with a 10-minute rate limit.
 * **Path Traversal Containment:** Local filesystem integrations, including opening Markdown notes in external editors, enforce strict path resolution confined to the application configuration directory (`resolveSafeNotesPath`). File paths supplied by renderer IPC requests are stripped or rejected to prevent directory traversal.
@@ -90,7 +95,7 @@ Mise Browser is designed with multiple defence-in-depth layers:
 * **Zero Cloud Synchronisation:** No remote telemetry, no cloud profile syncing, and zero analytics.
 * **Surgical Cookie Clearing:** Dedicated cache controls allow wiping tracking tokens for specific domains without invalidating sessions in unrelated tabs.
 
-### G. Credential & Password Management Philosophy
+### H. Credential & Password Management Philosophy
 * **Zero Embedded Password Manager:** Mise intentionally excludes built-in password saving, autofill prompts, and credential vaults.
 * **Elimination of Malware Targets:** Browser-bundled password vaults (such as Chromium's `Login Data` file) represent the primary attack target for infostealers and credential extraction malware. By omitting internal password storage entirely, Mise removes this high-value vulnerability surface.
 * **User Autonomy & External Tools:** Users retain full discretion to employ their preferred dedicated password managers (such as Pass, KeePassXC, Bitwarden, or system keychains) outside the browser's execution perimeter.

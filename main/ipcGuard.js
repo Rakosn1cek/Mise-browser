@@ -10,6 +10,7 @@ const GUEST_CHANNELS = Object.freeze([
     'read-pdf-data',
     'save-pdf-file',
     'is-trusted-domain',
+    'get-webrtc-policy',
     'get-google-signin-user-agent',
     '@ghostery/adblocker/inject-cosmetic-filters',
     '@ghostery/adblocker/is-mutation-observer-enabled',

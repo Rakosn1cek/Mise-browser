@@ -478,6 +478,19 @@
                                         <span class="toggle-slider"></span>
                                     </label>
                                 </div>
+
+                                <div class="setting-item">
+                                    <div class="setting-info">
+                                        <span class="setting-label">WebRTC IP Handling & Leak Protection</span>
+                                        <span class="setting-desc">Controls WebRTC address disclosure and STUN candidate gathering across network interfaces.</span>
+                                    </div>
+                                    <select id="setting-webrtc-policy" class="settings-select">
+                                        <option value="default_public_interface_only">Balanced: Hide Local LAN IPs (Default)</option>
+                                        <option value="disable_non_proxied_udp">Strict: Block Non-Proxied UDP (Proxy / VPN)</option>
+                                        <option value="disabled">Disabled: Neutralise WebRTC APIs</option>
+                                        <option value="default">Permissive: Standard Chromium</option>
+                                    </select>
+                                </div>
                 
                                 <div class="setting-item">
                                     <div class="setting-info">

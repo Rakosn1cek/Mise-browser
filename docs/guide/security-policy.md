@@ -74,6 +74,11 @@ Mise Browser is designed with multiple defence-in-depth layers:
 * Sensitive hardware capabilities (microphone, camera, geolocation, and MIDI) are denied by default.
 * Web notifications require explicit user opt-in via the interface toggle button.
 
+### WebRTC IP Handling & Leak Controls
+* **Anti-Leak Interface Binding:** To prevent STUN and ICE queries from leaking local LAN IP addresses or transmitting non-proxied UDP traffic outside of active VPN/proxy tunnels, Mise enforces configurable WebRTC IP handling policies across all browser sessions.
+* **Selectable Protection Levels:** Users can choose between Balanced (default public interface only), Strict / Proxy Safe (`disable_non_proxied_udp`), Disabled (neutralising `RTCPeerConnection`, `RTCSessionDescription`, and `RTCIceCandidate` on untrusted sites), and Permissive standard Chromium mode.
+* **Dynamic Hot-Reloading:** Changing the WebRTC policy in Preferences or cycling it via the Command Palette reconfigures active sessions in real time without requiring an application restart.
+
 ### Native Request Filtering
 * Network requests are intercepted in-process via Ghostery's blocking engine before departing the local machine.
 * Known malicious hosts, tracking scripts, and cryptominers are dropped at the network interceptor layer.

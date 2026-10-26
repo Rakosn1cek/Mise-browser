@@ -77,7 +77,9 @@ keybinds.initializeKeybinds(CONFIG_DIR);
 function initializeEngineSwitches() {
     const cfg = loadBrowserConfig();
 
-    app.commandLine.appendSwitch('force-webrtc-ip-handling-policy', 'default_public_interface_only');
+    const webrtcPolicy = cfg.webrtc_policy || 'default_public_interface_only';
+    const cliWebRTCPolicy = webrtcPolicy === 'disabled' ? 'disable_non_proxied_udp' : webrtcPolicy;
+    app.commandLine.appendSwitch('force-webrtc-ip-handling-policy', cliWebRTCPolicy);
 
     // Privacy and unwanted Web API feature restrictions
     const disabledFeatures = [
@@ -253,6 +255,12 @@ function applySpellcheckerToAllSessions(lang) {
     }
 }
 
+function applyWebRTCPolicyToAllSessions(policy) {
+    for (const sess of activeSessions) {
+        security.applyWebRTCPolicy(sess, policy);
+    }
+}
+
 function configureAndHardenSession(targetSession) {
     if (!targetSession) return;
     activeSessions.add(targetSession);
@@ -260,7 +268,11 @@ function configureAndHardenSession(targetSession) {
     configuredSessions.add(targetSession);
 
     const cfg = loadBrowserConfig();
-    security.hardenSession(targetSession, cfg.spellchecker_language || 'en-GB');
+    security.hardenSession(
+        targetSession,
+        cfg.spellchecker_language || 'en-GB',
+        cfg.webrtc_policy || 'default_public_interface_only'
+    );
     configureSessionPermissions(targetSession);
     downloads.configureDownloads(targetSession, {
         getMainWindow: () => mainWindow,
@@ -407,7 +419,8 @@ ipcMain.on('set-native-theme', (event, mode) => {
 config.registerConfigIpc(ipcMain, {
     onTrustedDomainsChange: security.setTrustedDomains,
     onSpellcheckerChange: applySpellcheckerToAllSessions,
-    onDiagnosticsChange: diagnostics.setDiagnosticsEnabled
+    onDiagnosticsChange: diagnostics.setDiagnosticsEnabled,
+    onWebRTCPolicyChange: applyWebRTCPolicyToAllSessions
 });
 
 ipcMain.on('renderer-ready', () => {
@@ -810,6 +823,26 @@ function buildSettingsSubmenu(cfg) {
         },
         { type: 'separator' },
         {
+            label: 'WebRTC IP Handling & Leak Protection',
+            submenu: [
+                { policy: 'default_public_interface_only', label: 'Balanced: Hide Local LAN IPs (Default)' },
+                { policy: 'disable_non_proxied_udp', label: 'Strict: Block Non-Proxied UDP (Proxy / VPN)' },
+                { policy: 'disabled', label: 'Disabled: Neutralise WebRTC APIs' },
+                { policy: 'default', label: 'Permissive: Standard Chromium' }
+            ].map(opt => ({
+                label: opt.label,
+                type: 'radio',
+                checked: (cfg.webrtc_policy || 'default_public_interface_only') === opt.policy,
+                click: () => {
+                    updateBrowserConfig({ webrtc_policy: opt.policy });
+                    if (mainWindow && !mainWindow.isDestroyed()) {
+                        mainWindow.webContents.send('master-shortcut', 'webrtc-policy-changed', opt.policy);
+                    }
+                }
+            }))
+        },
+        { type: 'separator' },
+        {
             label: 'Open User Scripts Directory',
             click: () => {
                 const sDir = path.join(CONFIG_DIR, 'scripts');
@@ -984,6 +1017,11 @@ function createWindow() {
 
     ipcMain.on('is-trusted-domain', (event, hostname) => {
         event.returnValue = security.isTrustedDomain(hostname);
+    });
+
+    ipcMain.on('get-webrtc-policy', (event) => {
+        const cfg = loadBrowserConfig();
+        event.returnValue = cfg.webrtc_policy || 'default_public_interface_only';
     });
 
     ipcMain.on('get-google-signin-user-agent', (event, hostname) => {

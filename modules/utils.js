@@ -154,4 +154,24 @@ export function isPersistableTabUrl(url) {
     }
 }
 
+// Displays a transient visual notification toast at the bottom of the viewport
+export function showNotificationToast(message, icon = 'fa-shield-halved') {
+    if (typeof document === 'undefined') return;
+    let toast = document.getElementById('MiseToastNotification');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'MiseToastNotification';
+        toast.className = 'mise-toast-notification';
+        toast.setAttribute('role', 'status');
+        toast.setAttribute('aria-live', 'polite');
+        document.body.appendChild(toast);
+    }
+    toast.innerHTML = `<i class="fa-solid ${icon}"></i><span>${escapeHtml(message)}</span>`;
+    toast.classList.add('visible');
+    if (toast._timer) clearTimeout(toast._timer);
+    toast._timer = setTimeout(() => {
+        toast.classList.remove('visible');
+    }, 3200);
+}
+
 
