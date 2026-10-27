@@ -3,6 +3,10 @@
   --vp-c-brand-2: #89b4fa;
   --vp-c-brand-3: #565f89;
   --vp-c-brand-soft: rgba(122, 162, 247, 0.14);
+
+  /* Developer-focused typography: crisp system sans and technical monospace */
+  --vp-font-family-base: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans", Ubuntu, Cantarell, "Helvetica Neue", Arial, sans-serif;
+  --vp-font-family-mono: "JetBrains Mono", "Fira Code", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
 }
 
 .dark {
@@ -17,23 +21,60 @@
   --vp-c-text-3: #565f89;
 }
 
-/* Feature card interactivity */
+/* Home hero title: solid Tokyo Night accent instead of synthetic gradient */
+.VPHero .name {
+  background: none !important;
+  -webkit-background-clip: initial !important;
+  -webkit-text-fill-color: var(--vp-c-brand-1) !important;
+  color: var(--vp-c-brand-1) !important;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.VPHero .text {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.VPHero .tagline {
+  max-width: 640px;
+  line-height: 1.6;
+}
+
+/* Feature cards: clean developer styling without floaty shadows */
 .VPFeature {
-  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
   border: 1px solid var(--vp-c-border);
+  background-color: var(--vp-c-bg-alt);
+  border-radius: 8px;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
 }
 
 .VPFeature:hover {
-  transform: translateY(-2px);
+  transform: none;
   border-color: var(--vp-c-brand-1);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  background-color: var(--vp-c-bg-elv);
+  box-shadow: none;
 }
 
-/* Home hero title gradient */
-.VPHero .name {
-  background: linear-gradient(135deg, #7aa2f7 0%, #bb9af7 50%, #7dcfff 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+/* Crisp keyboard shortcuts and code elements */
+.vp-doc kbd {
+  font-family: var(--vp-font-family-mono);
+  font-size: 0.84em;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--vp-c-bg-elv);
+  border: 1px solid var(--vp-c-border);
+  color: var(--vp-c-brand-1);
+}
+
+.vp-doc code {
+  font-family: var(--vp-font-family-mono);
+}
+
+/* Clean border framing for application screenshots */
+.vp-doc img {
+  border-radius: 8px;
+  border: 1px solid var(--vp-c-border);
 }
 
 /* Polished tables on documentation pages */
@@ -41,4 +82,3 @@
   display: table;
   width: 100%;
 }
-
