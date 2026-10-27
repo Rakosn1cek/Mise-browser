@@ -42,6 +42,8 @@ const DEFAULT_CONFIG = {
     show_window_controls: false,
     external_notes_command: '',
     custom_search_aliases: {},
+    doh_provider: 'off',
+    doh_custom_url: '',
     last_seen_version: null
 };
 
@@ -82,6 +84,8 @@ function loadBrowserConfig(targetDir = CONFIG_DIR, targetPath = CONFIG_PATH) {
             spellchecker_language: parsed.spellchecker_language || 'en-GB',
             webrtc_policy: parsed.webrtc_policy || 'default_public_interface_only',
             webview_theme: parsed.webview_theme || 'dark',
+            doh_provider: parsed.doh_provider || 'off',
+            doh_custom_url: typeof parsed.doh_custom_url === 'string' ? parsed.doh_custom_url : '',
             theme_colors: {
                 dark: { ...DEFAULT_THEME_COLORS.dark, ...(parsed.theme_colors?.dark || {}) },
                 light: { ...DEFAULT_THEME_COLORS.light, ...(parsed.theme_colors?.light || {}) }
@@ -335,6 +339,25 @@ function validateConfigPatch(patch) {
                 break;
             }
 
+            case 'doh_provider': {
+                const validProviders = new Set(['off', 'quad9', 'mullvad', 'cloudflare', 'custom']);
+                if (typeof val === 'string' && validProviders.has(val)) {
+                    clean[key] = val;
+                } else {
+                    rejected.push(key);
+                }
+                break;
+            }
+
+            case 'doh_custom_url': {
+                if (typeof val === 'string' && val.length <= 512) {
+                    clean[key] = val;
+                } else {
+                    rejected.push(key);
+                }
+                break;
+            }
+
             default:
                 rejected.push(key);
                 break;
@@ -414,6 +437,13 @@ function registerConfigIpc(ipcMain, hooks = {}) {
                 merged.webrtc_policy !== undefined &&
                 typeof hooks.onWebRTCPolicyChange === 'function') {
                 hooks.onWebRTCPolicyChange(merged.webrtc_policy);
+            }
+            const dohChanged = (Object.prototype.hasOwnProperty.call(payload, 'doh_provider') &&
+                before.doh_provider !== merged.doh_provider) ||
+                (Object.prototype.hasOwnProperty.call(payload, 'doh_custom_url') &&
+                before.doh_custom_url !== merged.doh_custom_url);
+            if (dohChanged && typeof hooks.onDoHChange === 'function') {
+                hooks.onDoHChange(merged.doh_provider, merged.doh_custom_url);
             }
             return true;
         } catch (e) {

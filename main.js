@@ -70,6 +70,8 @@ const {
 } = storage;
 
 const updater = require('./main/updater');
+const dohResolver = require('./main/dohResolver');
+const { applyDoHConfiguration } = dohResolver;
 
 // Initialise keybinds configuration
 keybinds.initializeKeybinds(CONFIG_DIR);
@@ -420,7 +422,8 @@ config.registerConfigIpc(ipcMain, {
     onTrustedDomainsChange: security.setTrustedDomains,
     onSpellcheckerChange: applySpellcheckerToAllSessions,
     onDiagnosticsChange: diagnostics.setDiagnosticsEnabled,
-    onWebRTCPolicyChange: applyWebRTCPolicyToAllSessions
+    onWebRTCPolicyChange: applyWebRTCPolicyToAllSessions,
+    onDoHChange: (provider, customUrl) => applyDoHConfiguration(app, provider, customUrl)
 });
 
 ipcMain.on('renderer-ready', () => {
@@ -1421,7 +1424,9 @@ if (gotSingleInstanceLock) {
 
     app.whenReady().then(() => {
         checkAndInitializeSentinel();
-        diagnostics.initDiagnostics(loadBrowserConfig());
+        const cfg = loadBrowserConfig();
+        applyDoHConfiguration(app, cfg.doh_provider, cfg.doh_custom_url);
+        diagnostics.initDiagnostics(cfg);
         if (isCrashRecoveryState()) {
             diagnostics.logEvent('warn', 'session', 'Detected previous unclean shutdown or crash, initialising recovery mode');
         }

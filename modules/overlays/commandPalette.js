@@ -1035,6 +1035,9 @@ export async function syncPreferencesUI() {
             const sidebarToggle = document.getElementById('setting-sidebar-collapse-toggle');
             const spellSelect = document.getElementById('setting-spellchecker-language');
             const webrtcSelect = document.getElementById('setting-webrtc-policy');
+            const dohProviderSelect = document.getElementById('setting-doh-provider');
+            const dohCustomContainer = document.getElementById('setting-doh-custom-container');
+            const dohCustomInput = document.getElementById('setting-doh-custom-url');
 
             if (gpuToggle) gpuToggle.checked = !cfg.disable_gpu;
             if (throttleToggle) throttleToggle.checked = !!cfg.background_throttling;
@@ -1044,6 +1047,13 @@ export async function syncPreferencesUI() {
             if (sidebarToggle) sidebarToggle.checked = cfg.sidebar_auto_collapse !== false;
             if (spellSelect) spellSelect.value = cfg.spellchecker_language || 'en-GB';
             if (webrtcSelect) webrtcSelect.value = cfg.webrtc_policy || 'default_public_interface_only';
+
+            const dohProvider = cfg.doh_provider || 'off';
+            if (dohProviderSelect) dohProviderSelect.value = dohProvider;
+            if (dohCustomInput) dohCustomInput.value = cfg.doh_custom_url || '';
+            if (dohCustomContainer) {
+                dohCustomContainer.style.display = dohProvider === 'custom' ? 'block' : 'none';
+            }
 
             const statusBarToggle = document.getElementById('setting-status-bar-toggle');
             if (statusBarToggle) statusBarToggle.checked = cfg.show_status_bar !== false;
@@ -1309,6 +1319,8 @@ export function setupPreferencesListeners() {
             const sidebarToggle = document.getElementById('setting-sidebar-collapse-toggle');
             const spellSelect = document.getElementById('setting-spellchecker-language');
             const webrtcSelect = document.getElementById('setting-webrtc-policy');
+            const dohSelect = document.getElementById('setting-doh-provider');
+            const dohCustomField = document.getElementById('setting-doh-custom-url');
             const windowControlsToggle = document.getElementById('setting-window-controls-toggle');
             const notesCmdField = document.getElementById('setting-notes-command');
 
@@ -1321,6 +1333,8 @@ export function setupPreferencesListeners() {
                 email_handler: emailSelect ? emailSelect.value : 'system',
                 spellchecker_language: spellSelect ? spellSelect.value : 'en-GB',
                 webrtc_policy: webrtcSelect ? webrtcSelect.value : 'default_public_interface_only',
+                doh_provider: dohSelect ? dohSelect.value : 'off',
+                doh_custom_url: dohCustomField ? dohCustomField.value.trim() : '',
                 show_window_controls: windowControlsToggle ? windowControlsToggle.checked : false,
                 external_notes_command: notesCmdField ? notesCmdField.value.trim() : '',
                 custom_search_aliases: state.customSearchAliases || {}
@@ -1440,6 +1454,40 @@ export function setupPreferencesListeners() {
                 await window.miseAPI.updateBrowserSettings(cfg);
             }
         };
+    }
+
+    const liveDoHProviderSelect = document.getElementById('setting-doh-provider');
+    const liveDoHCustomContainer = document.getElementById('setting-doh-custom-container');
+    const liveDoHCustomInput = document.getElementById('setting-doh-custom-url');
+
+    if (liveDoHProviderSelect) {
+        liveDoHProviderSelect.onchange = async () => {
+            const provider = liveDoHProviderSelect.value;
+            if (liveDoHCustomContainer) {
+                liveDoHCustomContainer.style.display = provider === 'custom' ? 'block' : 'none';
+            }
+            if (window.miseAPI && typeof window.miseAPI.getBrowserSettings === 'function') {
+                const cfg = (await window.miseAPI.getBrowserSettings()) || {};
+                cfg.doh_provider = provider;
+                if (provider === 'custom' && liveDoHCustomInput) {
+                    cfg.doh_custom_url = liveDoHCustomInput.value.trim();
+                }
+                await window.miseAPI.updateBrowserSettings(cfg);
+            }
+        };
+    }
+
+    if (liveDoHCustomInput) {
+        const handleCustomUrlChange = async () => {
+            const customUrl = liveDoHCustomInput.value.trim();
+            if (window.miseAPI && typeof window.miseAPI.getBrowserSettings === 'function') {
+                const cfg = (await window.miseAPI.getBrowserSettings()) || {};
+                cfg.doh_custom_url = customUrl;
+                await window.miseAPI.updateBrowserSettings(cfg);
+            }
+        };
+        liveDoHCustomInput.onchange = handleCustomUrlChange;
+        liveDoHCustomInput.onblur = handleCustomUrlChange;
     }
 
     const clearCookiesBtn = document.getElementById('setting-clear-cookies-btn');

@@ -60,6 +60,27 @@ When debugging web applications or purging lingering sessions:
 2. **Clear Site Cookies**: Surgically deletes cookies specifically matching the active tab's domain without logging you out of unrelated sites in other tabs.
 3. **Clear Cache**: Flushes the local Chromium disk and memory cache.
 
+---
+
+## DNS-over-HTTPS (DoH) Selector
+
+Mise Browser provides an optional client-side DNS-over-HTTPS (DoH) selector to encrypt domain name resolution requests against local network eavesdropping and ISP inspection.
+
+### Configuration & Placement
+
+The DoH selector is located exclusively within the Preferences overlay under **Privacy & Protection** (**F1** or **Ctrl + H**). To preserve an uncluttered interface and avoid accidental switching, it is deliberately excluded from the Command Palette, status bar, and keyboard shortcuts.
+
+### Supported Resolvers
+
+* **System Resolver (Default / Off):** Relies on standard operating system network name resolution out of the box. No external HTTPS DNS tunnels are established.
+* **Quad9 (`quad9`):** Routes encrypted queries to `https://dns.quad9.net/dns-query`. Operated by a non-profit foundation in Switzerland with integrated threat intelligence blocking.
+* **Mullvad (`mullvad`):** Routes encrypted queries to `https://dns.mullvad.net/dns-query`. Adheres to strict Swedish privacy laws with zero logging.
+* **Cloudflare (`cloudflare`):** Routes encrypted queries to `https://cloudflare-dns.com/dns-query` (1.1.1.1) for high-performance global anycast resolution.
+* **Custom HTTPS Resolver (`custom`):** Enables a custom input field allowing you to specify any trusted DoH endpoint template (e.g. `https://dns.example.com/dns-query`). The URL must strictly use the `https://` scheme and remain within 512 characters. If an invalid or non-HTTPS URL is supplied, Mise safely falls back to standard system resolution.
+
+> [!WARNING] Operational Security Advisory
+> When DoH is enabled, domain lookups travel directly to the chosen provider and are subject to their independent terms and privacy policy. While DoH protects lookups against local ISP monitoring, it does not guarantee anonymity, cloak your origin IP address, or prevent Server Name Indication (SNI) inspection unless the destination host supports Encrypted Client Hello (ECH). Use is at your sole discretion and risk.
+
 ***
 
 ## Zero Remote Asset Leakage & Bundled Dependencies

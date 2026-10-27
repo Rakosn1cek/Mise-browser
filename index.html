@@ -491,6 +491,29 @@
                                         <option value="default">Permissive: Standard Chromium</option>
                                     </select>
                                 </div>
+
+                                <div class="setting-item setting-item-stacked">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                                        <div class="setting-info">
+                                            <span class="setting-label">DNS-over-HTTPS (DoH)</span>
+                                            <span class="setting-desc">Encrypts DNS queries directly to a privacy-focused resolver, bypassing local network and ISP inspection.</span>
+                                        </div>
+                                        <select id="setting-doh-provider" class="settings-select">
+                                            <option value="off">System Resolver (Default / Off)</option>
+                                            <option value="quad9">Quad9 (Swiss Privacy & Threat Blocking)</option>
+                                            <option value="mullvad">Mullvad (Strict No Logs, Sweden)</option>
+                                            <option value="cloudflare">Cloudflare (1.1.1.1, Fast Global)</option>
+                                            <option value="custom">Custom HTTPS Resolver</option>
+                                        </select>
+                                    </div>
+                                    <div id="setting-doh-custom-container" style="display: none; width: 100%; margin-top: 6px;">
+                                        <input type="text" id="setting-doh-custom-url" class="settings-input" placeholder="https://example.com/dns-query" style="width: 100%; box-sizing: border-box; background: var(--bg-main); color: var(--text); border: 1px solid var(--border); border-radius: 4px; padding: 6px 10px; font-size: 13px;" spellcheck="false" autocomplete="off">
+                                    </div>
+                                    <div class="doh-warning-callout" style="margin-top: 6px; padding: 8px 12px; background: rgba(0, 0, 0, 0.2); border-left: 3px solid var(--accent); border-radius: 4px; font-size: 12px; line-height: 1.4; color: var(--text); opacity: 0.85;">
+                                        <i class="fa-solid fa-shield-halved" style="margin-right: 6px; color: var(--accent);"></i>
+                                        <strong>Operational Security Advisory:</strong> When enabled, queries travel directly to the selected third party resolver under their independent privacy terms. DoH encrypts domain lookups but does not guarantee anonymity, disguise your origin IP address, or bypass destination IP blocking. Use is at your sole discretion and risk.
+                                    </div>
+                                </div>
                 
                                 <div class="setting-item">
                                     <div class="setting-info">

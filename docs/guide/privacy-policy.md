@@ -73,6 +73,17 @@ Mise actively protects your privacy against third-party web trackers:
 
 ---
 
+## DNS-over-HTTPS (DoH) & Third-Party Resolvers
+
+Mise Browser includes an optional client-side selector for DNS-over-HTTPS (DoH) within Preferences:
+
+* **Disabled by Default:** DoH is disabled by default. The browser relies on standard operating system network name resolution unless explicitly enabled by the user.
+* **No Middleman or Proxying:** Mise Browser does not operate, intermediate, log, or proxy DNS traffic. When DoH is enabled, encrypted DNS requests travel directly from the user's device to the selected resolver endpoint.
+* **Third-Party Terms & Disclaimers:** When selecting an external resolver (such as Quad9, Mullvad, or Cloudflare), queries are subject to the independent privacy policy, logging practices, and service terms of that specific operator. The developer of Mise Browser does not control, audit, or guarantee third-party resolver availability or practices.
+* **Operational Security Advisory & Limitation of Liability:** While DoH encrypts domain lookups against local ISP inspection, it does not provide complete anonymity, cloak origin IP addresses, bypass destination IP blocks, or prevent Server Name Indication (SNI) inspection unless Encrypted Client Hello (ECH) is supported by the destination host. Users operating in hostile, monitored, or legally restrictive environments must assess their own threat models and assume all risk associated with their network configuration. In accordance with the GNU General Public Licence v3.0, this software is provided "as is", without warranty of any kind, and the developer accepts no liability for any legal, regulatory, or operational consequences resulting from the use or configuration of this feature.
+
+---
+
 ## Credential & Password Management
 
 Mise Browser intentionally excludes built-in password saving, autofill prompts, and credential vaults:

@@ -52,6 +52,8 @@ Controls hardware switches, process limits, privacy whitelists, and search prefe
         }
     },
     "enable_diagnostics": false,
+    "doh_provider": "off",
+    "doh_custom_url": "",
     "trusted_domains": [
         "x.com",
         "amazon.co.uk",
@@ -89,6 +91,8 @@ Controls hardware switches, process limits, privacy whitelists, and search prefe
   - **`sidebar_opacity`**: Sidebar background translucency percentage (40% to 100%) with backdrop blur glass effect.
   - **`overlay_opacity`**: Modal and overlay translucency percentage (50% to 100%) for Command Palette, Notes, and Preferences.
 - **`enable_diagnostics`**: When `true`, enables local in-memory diagnostic ring buffer recording for auditing and issue reproduction (OFF by default for zero telemetry).
+- **`doh_provider`**: Active DNS-over-HTTPS provider (`off`, `quad9`, `mullvad`, `cloudflare`, or `custom`). Disabled by default (`off`), relying on the host operating system's standard resolver.
+- **`doh_custom_url`**: Custom HTTPS endpoint URL for DNS resolution when `doh_provider` is set to `custom` (e.g. `https://dns.example.com/dns-query`). Must use the `https://` scheme and remain within 512 characters.
 - **`trusted_domains`**: Array of domains exempted from tracker blocking and fingerprint spoofing.
 - **`external_notes_command`**: Optional command or executable used to open notes and clippings (e.g. `obsidian`, `logseq`, `code`, `nvim`). When empty, uses system default Markdown handler. Path resolution is strictly confined to the application configuration directory, safeguarding against directory traversal. Modifying this setting via the interface or IPC triggers an interactive native confirmation prompt before persisting to disk.
 - **`custom_search_aliases`**: Key-value map of custom search prefixes and URL templates (with `%s` query placeholder). Typing `<alias> <query>` in the address bar (such as `aur hyprland` or `gh mise`) bypasses fallback engines and routes queries straight to the destination. Users can configure, override, or extend default built-ins directly in Preferences.
