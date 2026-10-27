@@ -16,6 +16,14 @@ Why technical communities extend blind trust to corporate browsers harvesting te
 
 ---
 
+### [The False Panacea of Encrypted DNS: Why Mise Keeps DNS-over-HTTPS Off by Default](./the-false-panacea-of-encrypted-dns.md)
+
+Why mainstream browsers pushed DoH to centralise query routing, the persistent myth of complete lookup anonymity, and how Mise balances protocol privacy with network sovereignty.
+
+`Perspectives` · `Open Source` · `Browser Security` · `Privacy Architecture` · `Mise Browser`
+
+---
+
 ## Engineering Chronicles
 
 Deep dives into the most challenging bugs, feature failures, and architectural lessons encountered during the development of Mise Browser.

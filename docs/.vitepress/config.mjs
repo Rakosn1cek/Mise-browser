@@ -37,7 +37,8 @@ export default defineConfig({
         text: 'Perspectives & Essays',
         items: [
           { text: 'Blog Overview', link: '/blog/' },
-          { text: 'The Illusion of Corporate Safety', link: '/blog/the-illusion-of-corporate-safety' }
+          { text: 'The Illusion of Corporate Safety', link: '/blog/the-illusion-of-corporate-safety' },
+          { text: 'The False Panacea of Encrypted DNS', link: '/blog/the-false-panacea-of-encrypted-dns' }
         ]
       },
       {
