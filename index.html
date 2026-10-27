@@ -585,7 +585,7 @@
                                     <div class="shortcuts-grid">
                                         <div class="shortcut-row" data-action="toggle-menu-bar"><span class="shortcut-desc">Toggle Mise Settings (Menu Bar)</span><span class="shortcut-key"><kbd class="shortcut-badge">F1</kbd></span></div>
                                         <div class="shortcut-row" data-action="spawn-tab"><span class="shortcut-desc">New DuckDuckGo Tab</span><span class="shortcut-key"><kbd class="shortcut-badge">Ctrl + T</kbd></span></div>
-                                        <div class="shortcut-row" data-action="toggle-address"><span class="shortcut-desc">Focus Address Bar (Status Bar)</span><span class="shortcut-key"><kbd class="shortcut-badge">Ctrl + L</kbd><span class="shortcut-sep">/</span><kbd class="shortcut-badge">o</kbd></span></div>
+                                        <div class="shortcut-row" data-action="toggle-address"><span class="shortcut-desc">Focus Address Bar (Status Bar)</span><span class="shortcut-key"><kbd class="shortcut-badge">Ctrl + L</kbd></span></div>
                                         <div class="shortcut-row" data-action="remove-tab"><span class="shortcut-desc">Close Current Tab (or Node)</span><span class="shortcut-key"><kbd class="shortcut-badge">Ctrl + X</kbd></span></div>
                                         <div class="shortcut-row" data-action="toggle-dashboard"><span class="shortcut-desc">Toggle Workspace Dashboard</span><span class="shortcut-key"><kbd class="shortcut-badge">Ctrl + Shift + W</kbd></span></div>
                                         <div class="shortcut-row" data-action="toggle-find"><span class="shortcut-desc">Find In Page</span><span class="shortcut-key"><kbd class="shortcut-badge">Ctrl + Shift + F</kbd><span class="shortcut-sep">/</span><kbd class="shortcut-badge">F3</kbd></span></div>
@@ -601,9 +601,56 @@
                                         <div class="shortcut-row" data-action="toggle-bookmarks"><span class="shortcut-desc">Open Bookmarks and Quickmarks</span><span class="shortcut-key"><kbd class="shortcut-badge">Ctrl + Shift + B</kbd></span></div>
                                         <div class="shortcut-row" data-action="toggle-history"><span class="shortcut-desc">Toggle Actionable History</span><span class="shortcut-key"><kbd class="shortcut-badge">Ctrl + Shift + H</kbd></span></div>
                                         <div class="shortcut-row" data-action="toggle-status-bar"><span class="shortcut-desc">Toggle Status & Mode Bar</span><span class="shortcut-key"><kbd class="shortcut-badge">Ctrl + /</kbd></span></div>
-                                        <div class="shortcut-row" data-action="toggle-dark-reader"><span class="shortcut-desc">Toggle Dark Reader on Active Tab</span><span class="shortcut-key"><kbd class="shortcut-badge">Ctrl + D</kbd><span class="shortcut-sep">/</span><kbd class="shortcut-badge">d</kbd></span></div>
+                                        <div class="shortcut-row" data-action="toggle-dark-reader"><span class="shortcut-desc">Toggle Dark Reader on Active Tab</span><span class="shortcut-key"><kbd class="shortcut-badge">Ctrl + D</kbd></span></div>
                                         <div class="shortcut-row"><span class="shortcut-desc">Deletes/Removes Bookmarks/Quickmarks When Selected</span><span class="shortcut-key"><kbd class="shortcut-badge">Delete</kbd></span></div>
                                         <div class="shortcut-row"><span class="shortcut-desc">Select All (text)</span><span class="shortcut-key"><kbd class="shortcut-badge">Ctrl + A</kbd></span></div>
+                                    </div>
+                                </div>
+
+                                <div class="reference-category">
+                                    <h3 class="reference-subheading">Vim Modal Navigation (NORMAL Mode)</h3>
+                                    <p style="font-size: 12px; color: var(--text); opacity: 0.8; margin: -4px 0 6px 0;">Single-key navigation active when viewing web content without an active text field.</p>
+                                    <div class="shortcuts-grid">
+                                        <div class="shortcut-row"><span class="shortcut-desc">Smooth scroll down / up (80px)</span><span class="shortcut-key"><kbd class="shortcut-badge">j</kbd><span class="shortcut-sep">/</span><kbd class="shortcut-badge">k</kbd></span></div>
+                                        <div class="shortcut-row"><span class="shortcut-desc">Smooth scroll left / right (80px)</span><span class="shortcut-key"><kbd class="shortcut-badge">h</kbd><span class="shortcut-sep">/</span><kbd class="shortcut-badge">l</kbd></span></div>
+                                        <div class="shortcut-row"><span class="shortcut-desc">Half-page smooth scroll up</span><span class="shortcut-key"><kbd class="shortcut-badge">u</kbd></span></div>
+                                        <div class="shortcut-row"><span class="shortcut-desc">Jump to top of page</span><span class="shortcut-key"><kbd class="shortcut-badge">gg</kbd></span></div>
+                                        <div class="shortcut-row"><span class="shortcut-desc">Jump to bottom of page</span><span class="shortcut-key"><kbd class="shortcut-badge">G</kbd></span></div>
+                                        <div class="shortcut-row"><span class="shortcut-desc">Open new blank tab</span><span class="shortcut-key"><kbd class="shortcut-badge">t</kbd></span></div>
+                                        <div class="shortcut-row"><span class="shortcut-desc">Close current active tab</span><span class="shortcut-key"><kbd class="shortcut-badge">x</kbd></span></div>
+                                        <div class="shortcut-row"><span class="shortcut-desc">Focus status bar address bar</span><span class="shortcut-key"><kbd class="shortcut-badge">o</kbd></span></div>
+                                        <div class="shortcut-row"><span class="shortcut-desc">Reload / Force reload active tab</span><span class="shortcut-key"><kbd class="shortcut-badge">r</kbd><span class="shortcut-sep">/</span><kbd class="shortcut-badge">R</kbd></span></div>
+                                        <div class="shortcut-row"><span class="shortcut-desc">History back / History forward</span><span class="shortcut-key"><kbd class="shortcut-badge">H</kbd><span class="shortcut-sep">/</span><kbd class="shortcut-badge">L</kbd></span></div>
+                                        <div class="shortcut-row"><span class="shortcut-desc">Find in page (search bar)</span><span class="shortcut-key"><kbd class="shortcut-badge">/</kbd></span></div>
+                                        <div class="shortcut-row"><span class="shortcut-desc">Toggle Link Hints overlay</span><span class="shortcut-key"><kbd class="shortcut-badge">f</kbd></span></div>
+                                        <div class="shortcut-row"><span class="shortcut-desc">Toggle Native Reader View</span><span class="shortcut-key"><kbd class="shortcut-badge">e</kbd></span></div>
+                                        <div class="shortcut-row"><span class="shortcut-desc">Toggle Dark Reader on active tab</span><span class="shortcut-key"><kbd class="shortcut-badge">d</kbd></span></div>
+                                        <div class="shortcut-row"><span class="shortcut-desc">Toggle audio mute (active tab / all tabs)</span><span class="shortcut-key"><kbd class="shortcut-badge">m</kbd><span class="shortcut-sep">/</span><kbd class="shortcut-badge">M</kbd></span></div>
+                                        <div class="shortcut-row"><span class="shortcut-desc">Toggle pinned status on active tab</span><span class="shortcut-key"><kbd class="shortcut-badge">p</kbd></span></div>
+                                        <div class="shortcut-row"><span class="shortcut-desc">Open Workspace Dashboard</span><span class="shortcut-key"><kbd class="shortcut-badge">w</kbd></span></div>
+                                        <div class="shortcut-row"><span class="shortcut-desc">Focus sidebar tab list</span><span class="shortcut-key"><kbd class="shortcut-badge">s</kbd></span></div>
+                                        <div class="shortcut-row"><span class="shortcut-desc">Yank (copy) current page URL</span><span class="shortcut-key"><kbd class="shortcut-badge">y</kbd></span></div>
+                                        <div class="shortcut-row"><span class="shortcut-desc">Explicitly enter INSERT mode</span><span class="shortcut-key"><kbd class="shortcut-badge">i</kbd></span></div>
+                                        <div class="shortcut-row"><span class="shortcut-desc">Blur text field and return to NORMAL mode</span><span class="shortcut-key"><kbd class="shortcut-badge">Escape</kbd></span></div>
+                                        <div class="shortcut-row"><span class="shortcut-desc">Toggle PASSTHROUGH mode (raw keys to web app)</span><span class="shortcut-key"><kbd class="shortcut-badge">Shift + Escape</kbd></span></div>
+                                    </div>
+                                </div>
+
+                                <div class="reference-category">
+                                    <h3 class="reference-subheading">Sidebar Navigation Mode (Ctrl + S or s)</h3>
+                                    <p style="font-size: 12px; color: var(--text); opacity: 0.8; margin: -4px 0 6px 0;">Active when keyboard focus is inside the vertical sidebar tab list.</p>
+                                    <div class="shortcuts-grid">
+                                        <div class="shortcut-row"><span class="shortcut-desc">Move visual cursor through tabs</span><span class="shortcut-key"><kbd class="shortcut-badge">j</kbd><span class="shortcut-sep">/</span><kbd class="shortcut-badge">k</kbd><span class="shortcut-sep">or</span><kbd class="shortcut-badge">↓</kbd><span class="shortcut-sep">/</span><kbd class="shortcut-badge">↑</kbd></span></div>
+                                        <div class="shortcut-row"><span class="shortcut-desc">Activate and wake highlighted tab</span><span class="shortcut-key"><kbd class="shortcut-badge">Enter</kbd><span class="shortcut-sep">/</span><kbd class="shortcut-badge">Space</kbd></span></div>
+                                        <div class="shortcut-row"><span class="shortcut-desc">Activate tab and return focus to webview</span><span class="shortcut-key"><kbd class="shortcut-badge">l</kbd><span class="shortcut-sep">/</span><kbd class="shortcut-badge">→</kbd><span class="shortcut-sep">/</span><kbd class="shortcut-badge">i</kbd></span></div>
+                                        <div class="shortcut-row"><span class="shortcut-desc">Focus navigation action buttons</span><span class="shortcut-key"><kbd class="shortcut-badge">h</kbd><span class="shortcut-sep">/</span><kbd class="shortcut-badge">←</kbd></span></div>
+                                        <div class="shortcut-row"><span class="shortcut-desc">Jump directly to tab 1 through 9</span><span class="shortcut-key"><kbd class="shortcut-badge">1</kbd><span class="shortcut-sep">-</span><kbd class="shortcut-badge">9</kbd></span></div>
+                                        <div class="shortcut-row"><span class="shortcut-desc">Close tab under cursor without waking</span><span class="shortcut-key"><kbd class="shortcut-badge">x</kbd></span></div>
+                                        <div class="shortcut-row"><span class="shortcut-desc">Yank (copy) URL of tab under cursor</span><span class="shortcut-key"><kbd class="shortcut-badge">y</kbd></span></div>
+                                        <div class="shortcut-row"><span class="shortcut-desc">Open new blank tab</span><span class="shortcut-key"><kbd class="shortcut-badge">t</kbd></span></div>
+                                        <div class="shortcut-row"><span class="shortcut-desc">Focus status bar address bar</span><span class="shortcut-key"><kbd class="shortcut-badge">o</kbd></span></div>
+                                        <div class="shortcut-row"><span class="shortcut-desc">Open Workspace Dashboard</span><span class="shortcut-key"><kbd class="shortcut-badge">w</kbd></span></div>
+                                        <div class="shortcut-row"><span class="shortcut-desc">Dismiss sidebar and return to webview</span><span class="shortcut-key"><kbd class="shortcut-badge">Escape</kbd></span></div>
                                     </div>
                                 </div>
 

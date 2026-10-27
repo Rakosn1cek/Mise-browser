@@ -61,12 +61,13 @@ All keyboard shortcuts in Mise Browser are fully customisable via `~/.config/mis
 
 ## Modal Navigation (NORMAL Mode)
 
-When viewing web content without an active text field or prompt, Mise operates in **NORMAL Mode**, allowing Vim-style single-key navigation without modifier chords:
+When viewing web content without an active text field or prompt, Mise operates in **NORMAL Mode**, allowing Vim-style single-key navigation without modifier chords (all listed directly within the in-app Preferences overlay under **Help & Shortcut Reference**):
 
 | Key | Description |
 | :--- | :--- |
 | `j` / `k` | Smooth scroll down / up (80px) |
-| `d` / `u` | Half-page smooth scroll down / up |
+| `d` | Toggle Dark Reader on active tab |
+| `u` | Half-page smooth scroll up |
 | `h` / `l` | Smooth scroll left / right (80px) |
 | `gg` | Jump to top of page |
 | `G` | Jump to bottom of page |
