@@ -116,7 +116,13 @@ console.log('Running Mise Ephemeral Tab Peek ("Glance") regression tests...');
         'commandPalette.js must include trigger-glance entry'
     );
 
-    console.log('✓ modules/webview.js IPC handler, renderer.js, keybinds.js, and command palette verified');
+    const indexSource = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
+    assert(
+        indexSource.includes(">gh</kbd>"),
+        'index.html must include gh in Vim Modal Navigation reference'
+    );
+
+    console.log('✓ modules/webview.js IPC handler, renderer.js, keybinds.js, and index.html verified');
 }
 
 // 4. Functional DOM and lifecycle simulation
