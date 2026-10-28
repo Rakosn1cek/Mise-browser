@@ -588,9 +588,11 @@ try {
 function getScrollTarget() {
     const active = document.activeElement;
     if (active && active !== document.body && active !== document.documentElement) {
-        const style = window.getComputedStyle(active);
-        if (/(auto|scroll)/.test(style.overflow + style.overflowY)) {
-            return active;
+        if (active.scrollHeight > active.clientHeight || active.scrollWidth > active.clientWidth) {
+            const style = window.getComputedStyle(active);
+            if (/(auto|scroll)/.test(style.overflow + style.overflowY)) {
+                return active;
+            }
         }
     }
     return document.scrollingElement || document.documentElement || document.body || window;
@@ -599,18 +601,18 @@ function getScrollTarget() {
 function scrollPageBy(dx, dy) {
     const target = getScrollTarget();
     if (target && typeof target.scrollBy === 'function') {
-        target.scrollBy({ left: dx, top: dy, behavior: 'smooth' });
+        target.scrollBy({ left: dx, top: dy, behavior: 'auto' });
     } else {
-        window.scrollBy({ left: dx, top: dy, behavior: 'smooth' });
+        window.scrollBy({ left: dx, top: dy, behavior: 'auto' });
     }
 }
 
 function scrollPageTo(x, y) {
     const target = getScrollTarget();
     if (target && typeof target.scrollTo === 'function') {
-        target.scrollTo({ left: x, top: y, behavior: 'smooth' });
+        target.scrollTo({ left: x, top: y, behavior: 'auto' });
     } else {
-        window.scrollTo({ left: x, top: y, behavior: 'smooth' });
+        window.scrollTo({ left: x, top: y, behavior: 'auto' });
     }
 }
 

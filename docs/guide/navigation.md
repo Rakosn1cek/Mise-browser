@@ -168,14 +168,14 @@ Mise Browser provides a Vim-inspired modal navigation engine that frees you from
 
 | Key | Action | Description |
 | :--- | :--- | :--- |
-| `j` | Scroll Down | Smooth scroll down by 80px |
-| `k` | Scroll Up | Smooth scroll up by 80px |
+| `j` | Scroll Down | Scroll down by 80px |
+| `k` | Scroll Up | Scroll up by 80px |
 | `d` | Dark Reader | Toggles high-contrast dark theme on active tab |
-| `u` | Half Page Up | Smooth scroll up by half the viewport height |
-| `h` | Scroll Left | Smooth scroll left by 80px |
-| `l` | Scroll Right | Smooth scroll right by 80px |
-| `gg` | Jump to Top | Smooth scroll to top of page |
-| `G` | Jump to Bottom | Smooth scroll to bottom of page |
+| `u` | Half Page Up | Scroll up by half the viewport height |
+| `h` | Scroll Left | Scroll left by 80px |
+| `l` | Scroll Right | Scroll right by 80px |
+| `gg` | Jump to Top | Jump to top of page |
+| `G` | Jump to Bottom | Jump to bottom of page |
 | `t` | New Tab | Opens a new tab with default search engine |
 | `x` | Close Tab | Closes the current active tab |
 | `o` | Address Bar | Focuses centered status bar address bar |

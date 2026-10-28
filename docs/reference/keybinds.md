@@ -67,10 +67,10 @@ When viewing web content without an active text field or prompt, Mise operates i
 
 | Key | Description |
 | :--- | :--- |
-| `j` / `k` | Smooth scroll down / up (80px) |
+| `j` / `k` | Scroll down / up (80px) |
 | `d` | Toggle Dark Reader on active tab |
-| `u` | Half-page smooth scroll up |
-| `h` / `l` | Smooth scroll left / right (80px) |
+| `u` | Half-page scroll up |
+| `h` / `l` | Scroll left / right (80px) |
 | `gg` | Jump to top of page |
 | `G` | Jump to bottom of page |
 | `t` | Open new tab |
