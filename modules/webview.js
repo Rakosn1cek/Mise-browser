@@ -14,6 +14,7 @@ import { buildUserScriptWrapper } from './userScriptShim.js';
 import { reapplyWebviewDarkReader } from './darkReader.js';
 import { exportArticleToNotes, exportArticleToExternalApp, openNotesInExternalApp } from './overlays/notes.js';
 import { originOf, sanitizeSnapshot, attachSnapshot, snapshotForRestore } from './sleepSnapshot.js';
+import { openPeekModal, closePeekModal, isPeekModalActive } from './overlays/peekModal.js';
 
 
 export function applyCSSThemeToView() {
@@ -444,6 +445,11 @@ export function createWebView(url, currentWS, idx) {
             }
         } else if (e.channel === 'reader-export-request') {
             handleReaderExportRequest(webview, e.args[0]);
+        } else if (e.channel === 'open-peek-preview') {
+            const previewUrl = e.args[0];
+            if (previewUrl && isSafeTabUrl(previewUrl)) {
+                openPeekModal(previewUrl);
+            }
         } else if (e.channel === 'normal-mode-action') {
             const action = e.args[0];
             const extra = e.args[1];
@@ -507,6 +513,11 @@ export function handleNormalModeAction(action, extra, webview, currentWS, idx) {
                 window.triggerLinkHints();
             }
             break;
+        case 'trigger-glance-hints':
+            if (typeof window.triggerGlanceHints === 'function') {
+                window.triggerGlanceHints();
+            }
+            break;
         case 'toggle-dashboard':
             if (typeof window.toggleDashboardView === 'function') {
                 window.toggleDashboardView();
@@ -557,7 +568,9 @@ export function handleNormalModeAction(action, extra, webview, currentWS, idx) {
             openNotesInExternalApp();
             break;
         case 'escape':
-            if (state.notesActive && typeof window.toggleNotesOverlay === 'function') {
+            if (typeof isPeekModalActive === 'function' && isPeekModalActive()) {
+                closePeekModal();
+            } else if (state.notesActive && typeof window.toggleNotesOverlay === 'function') {
                 window.toggleNotesOverlay();
             } else if (state.bookmarksActive && typeof window.toggleBookmarksOverlay === 'function') {
                 window.toggleBookmarksOverlay();

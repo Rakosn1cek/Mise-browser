@@ -108,6 +108,7 @@ import {
 } from './modules/navigation.js';
 
 import { openTransientShareModal } from './modules/overlays/shareModal.js';
+import { openPeekModal, closePeekModal, isPeekModalActive } from './modules/overlays/peekModal.js';
 import { initSearchEnginePreference, renderSearchAliasesUI } from './modules/overlays/searchEngine.js';
 import { initDownloadShelf, toggleDownloadShelf } from './modules/downloads.js';
 import { 
@@ -776,6 +777,7 @@ function setupEventListeners() {
             }
             case 'focus-webview': focusActiveWebview(); break;
             case 'trigger-hints': triggerLinkHints(); break;
+            case 'trigger-glance': triggerGlanceHints(); break;
             case 'toggle-palette': toggleCommandPaletteView(); break;
             case 'toggle-help': togglePreferencesView(); break;
             case 'toggle-history': toggleHistoryOverlay(); break;
@@ -1090,8 +1092,8 @@ function setupEventListeners() {
                 'PaletteInput', 'PaletteList', 'PreferencesOverlay',
                 'BookmarksOverlay', 'BookmarkSearchInput', 'HistoryOverlay',
                 'HistorySearchInput', 'NotesOverlay', 'NotesTextArea',
-                'DashboardOverlay', 'ShareModalOverlay', 'FindBarOverlay',
-                'DiagnosticsOverlay'
+                'DashboardOverlay', 'ShareModalOverlay', 'PeekModalOverlay',
+                'FindBarOverlay', 'DiagnosticsOverlay'
             ];
             for (const id of overlayIds) {
                 const el = document.getElementById(id);
@@ -1180,6 +1182,21 @@ function triggerLinkHints() {
         }
     }
 }
+
+function triggerGlanceHints() {
+    const currentWS = state.sessionState.current_workspace;
+    const activeListItem = document.querySelector('#TabList li.selected');
+    if (activeListItem) {
+        const currentIdx = Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem);
+        const activeWv = state.activeViewsCache[currentWS]?.[currentIdx];
+        if (activeWv && typeof activeWv.executeJavaScript === 'function') {
+            activeWv.executeJavaScript("if (typeof window.toggleHints === 'function') { window.toggleHints({ mode: 'glance' }); }").catch(() => {});
+        }
+    }
+}
+window.triggerGlanceHints = triggerGlanceHints;
+window.openPeekModal = openPeekModal;
+window.closePeekModal = closePeekModal;
   
 let currentWebviewTheme = 'dark';
 

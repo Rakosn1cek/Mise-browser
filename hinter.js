@@ -53,9 +53,11 @@
         return { codes, codeLength: len };
     }
 
-    window.toggleHints = function() {
+    window.toggleHints = function(options) {
+        const mode = (typeof options === 'string') ? options : (options && options.mode ? options.mode : 'click');
         const existing = document.getElementById('mise-hint-layer');
         if (existing) { 
+            const currentMode = existing.dataset.mode || 'click';
             if (typeof window.hintCleanup === 'function') {
                 window.hintCleanup();
             } else {
@@ -64,7 +66,9 @@
                     document.removeEventListener('keydown', window.hintKeyListener, true);
                 }
             }
-            return; 
+            if (currentMode === mode) {
+                return;
+            }
         }
 
         const candidates = collectInteractiveElements(document);
@@ -105,6 +109,7 @@
 
         const layer = document.createElement('div');
         layer.id = 'mise-hint-layer';
+        layer.dataset.mode = mode;
         layer.style.cssText = 'position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 2147483647;';
         document.documentElement.appendChild(layer);
 
@@ -112,6 +117,7 @@
         const activeHints = {};
         const badgeElements = [];
         let keysPressed = "";
+        const baseBg = mode === 'glance' ? '#bb9af7' : '#2ac3de';
 
         visible.forEach((item, index) => {
             const code = codes[index];
@@ -122,7 +128,7 @@
             badge.dataset.code = code;
             badge.style.cssText = `
                 position: fixed; left: ${Math.round(item.rect.left)}px; top: ${Math.round(item.rect.top)}px;
-                background: #2ac3de; color: #1a1b26; padding: 2px 5px; font-size: 12px;
+                background: ${baseBg}; color: #1a1b26; padding: 2px 5px; font-size: 12px;
                 line-height: 14px; font-weight: 800; border-radius: 3px; z-index: 2147483647;
                 font-family: monospace; text-transform: uppercase; border: 1px solid #1a1b26;
                 box-shadow: 0 2px 4px rgba(0,0,0,0.4); pointer-events: none; transition: opacity 0.1s ease;
@@ -150,10 +156,10 @@
                 const bCode = b.dataset.code;
                 if (!keysPressed || bCode.startsWith(keysPressed)) {
                     b.style.opacity = '1';
-                    b.style.background = keysPressed ? '#ff9e64' : '#2ac3de';
+                    b.style.background = keysPressed ? '#ff9e64' : baseBg;
                 } else {
                     b.style.opacity = '0.2';
-                    b.style.background = '#2ac3de';
+                    b.style.background = baseBg;
                 }
             });
         }
@@ -190,6 +196,21 @@
                 if (activeHints[keysPressed]) {
                     const target = activeHints[keysPressed];
                     cleanup();
+
+                    if (mode === 'glance') {
+                        let linkUrl = target.href || (target.getAttribute && target.getAttribute('href')) || '';
+                        if (!linkUrl && typeof target.closest === 'function') {
+                            const parentAnchor = target.closest('a[href]');
+                            if (parentAnchor) linkUrl = parentAnchor.href;
+                        }
+                        if (!linkUrl && target.getAttribute) {
+                            linkUrl = target.getAttribute('data-href') || target.getAttribute('data-url') || '';
+                        }
+                        if (linkUrl) {
+                            window.dispatchEvent(new CustomEvent('mise-glance-request', { detail: { url: linkUrl } }));
+                            return;
+                        }
+                    }
 
                     if (typeof target.click === 'function') {
                         target.click();

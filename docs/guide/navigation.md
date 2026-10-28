@@ -17,6 +17,25 @@ Link Hints allow you to click any link, button, or input field on a web page usi
 
 ---
 
+## Ephemeral Tab Peek ("Glance")
+
+Mise features a transient link preview modal ("Glance") inspired by the preview workflows in Zen and Arc, but engineered with zero background memory residue:
+
+1. **Triggering Glance**:
+   - **Shift + Click**: Hold `Shift` and click any hyperlink on a webpage to preview it immediately.
+   - **Vim Hint Sequence (`gh`)**: Press `g` followed by `h` within 500ms in NORMAL mode (or press `Ctrl + G`) to display purple link hints (`#bb9af7`). Typing a hint code opens the target link in the Peek preview frame.
+2. **Transient Isolation**:
+   - Spawns a floating modal frame over the active webview without creating a permanent tab in the tab list.
+   - Runs in the current workspace container partition, sharing authentication state without leaking session data.
+3. **Instant Dismissal**:
+   - Press **Escape** or click the close button to unmount the preview frame immediately.
+   - Invokes guest webview destruction to halt all media, abort event listeners, and detach DOM nodes completely, releasing memory back to the operating system.
+   - Keyboard focus returns directly to the underlying page without intermediate clicks.
+4. **Promotion to Permanent Tab**:
+   - Press **Ctrl + Enter** or click **Open in Tab** to convert the transient preview into a permanent tab within your active workspace.
+
+---
+
 ## Status Bar Address Bar (`Ctrl + L` / `o`)
 
 Press **Ctrl + L** or **o** at any time to focus the centered address bar fixed in the bottom status bar:

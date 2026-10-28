@@ -48,6 +48,45 @@ window.addEventListener('click', (e) => {
     }
 }, true);
 
+// Ephemeral Tab Peek (Glance): Shift + Click link preview
+window.addEventListener('click', (e) => {
+    if (!e || !e.isTrusted || !e.shiftKey) return;
+
+    const path = typeof e.composedPath === 'function' ? e.composedPath() : [];
+    let anchor = null;
+    for (const el of path) {
+        if (el && el.tagName === 'A' && el.href) {
+            anchor = el;
+            break;
+        }
+    }
+    if (!anchor && e.target && typeof e.target.closest === 'function') {
+        anchor = e.target.closest('a[href]');
+    }
+
+    if (anchor && anchor.href) {
+        const targetUrl = anchor.href;
+        if (targetUrl.startsWith('http://') || targetUrl.startsWith('https://')) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            try {
+                ipcRenderer.sendToHost('open-peek-preview', targetUrl);
+            } catch (err) {}
+        }
+    }
+}, true);
+
+// Glance link preview event listener for hint selection
+window.addEventListener('mise-glance-request', (e) => {
+    const targetUrl = e?.detail?.url;
+    if (targetUrl && (targetUrl.startsWith('http://') || targetUrl.startsWith('https://'))) {
+        try {
+            ipcRenderer.sendToHost('open-peek-preview', targetUrl);
+        } catch (err) {}
+    }
+});
+
 // Expose minimal, secure GM bridge for userscript execution
 try {
     if (contextBridge && typeof contextBridge.exposeInMainWorld === 'function') {
@@ -691,6 +730,12 @@ window.addEventListener('keydown', (e) => {
     }
     if (key === 'h') {
         consumeEvent(e);
+        const now = Date.now();
+        if (now - lastGTime < 500) {
+            lastGTime = 0;
+            try { ipcRenderer.sendToHost('normal-mode-action', 'trigger-glance-hints'); } catch (err) {}
+            return;
+        }
         scrollPageBy(-80, 0);
         return;
     }

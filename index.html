@@ -667,6 +667,8 @@
                                     <h3 class="reference-subheading">Web Interaction</h3>
                                     <div class="shortcuts-grid">
                                         <div class="shortcut-row" data-action="trigger-hints"><span class="shortcut-desc">Toggle Link Hints Overlay</span><span class="shortcut-key"><kbd class="shortcut-badge">Ctrl + F</kbd></span></div>
+                                        <div class="shortcut-row" data-action="trigger-glance"><span class="shortcut-desc">Ephemeral Tab Peek (Glance) Hints</span><span class="shortcut-key"><kbd class="shortcut-badge">Ctrl + G</kbd><span class="shortcut-sep">/</span><kbd class="shortcut-badge">gh</kbd></span></div>
+                                        <div class="shortcut-row"><span class="shortcut-desc">Peek Link Preview Modal</span><span class="shortcut-key"><kbd class="shortcut-badge">Shift + Click</kbd></span></div>
                                         <div class="shortcut-row"><span class="shortcut-desc">Contextual Actions</span><span class="shortcut-key"><kbd class="shortcut-badge">Right Click</kbd></span></div>
                                         <div class="shortcut-row" data-action="toggle-devtools"><span class="shortcut-desc">Toggle Active Webview DevTools</span><span class="shortcut-key"><kbd class="shortcut-badge">Ctrl + Shift + I</kbd><span class="shortcut-sep">/</span><kbd class="shortcut-badge">F12</kbd></span></div>
                                         <div class="shortcut-row" data-action="set-quickmark"><span class="shortcut-desc">Set quickmark (e.g. Ctrl + Shift + Q then g for GitHub)</span><span class="shortcut-key"><kbd class="shortcut-badge">Ctrl + Shift + Q [key]</kbd></span></div>
@@ -909,6 +911,24 @@
 	            <button id="CloseShareModalBtn" class="nav-icon-button" title="Close (Esc)"><i class="fa-solid fa-xmark"></i></button>
 	        </div>
 	        <div id="ShareModalWebviewContainer" class="share-modal-content"></div>
+	    </div>
+	</div>
+
+	<!-- Ephemeral Tab Peek (Glance) Modal Overlay -->
+	<div id="PeekModalOverlay" class="peek-modal-overlay" style="display: none;">
+	    <div class="peek-modal-window">
+	        <div class="peek-modal-header">
+	            <div class="peek-modal-title-group">
+	                <span class="peek-modal-badge"><i class="fa-solid fa-eye"></i> Glance</span>
+	                <span id="PeekModalTitle" class="peek-modal-title">Loading preview...</span>
+	                <span id="PeekModalUrl" class="peek-modal-url"></span>
+	            </div>
+	            <div class="peek-modal-actions">
+	                <button id="PromotePeekTabBtn" class="peek-action-btn" title="Open as permanent tab (Ctrl+Enter)"><i class="fa-solid fa-arrow-up-right-from-square"></i> Open in Tab</button>
+	                <button id="ClosePeekModalBtn" class="nav-icon-button" title="Close preview (Escape)"><i class="fa-solid fa-xmark"></i></button>
+	            </div>
+	        </div>
+	        <div id="PeekModalWebviewContainer" class="peek-modal-content"></div>
 	    </div>
 	</div>
 	

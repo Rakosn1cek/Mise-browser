@@ -2533,6 +2533,133 @@ body.zen-mode #right-content {
     display: inline-flex;
 }
 
+/* Ephemeral Tab Peek (Glance) Modal Overlay */
+.peek-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(4px);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.peek-modal-window {
+    width: 1080px;
+    height: 860px;
+    max-width: 92vw;
+    max-height: 88vh;
+    background: var(--bg-main, #1a1b26);
+    border: 1px solid var(--border-color, #24283b);
+    border-radius: 8px;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.55);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.peek-modal-header {
+    height: 40px;
+    padding: 0 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg-sidebar, #16161e);
+    border-bottom: 1px solid var(--border-color, #24283b);
+    font-size: 13px;
+    color: var(--text, #c0caf5);
+    flex-shrink: 0;
+    gap: 12px;
+}
+
+.peek-modal-title-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    flex: 1;
+}
+
+.peek-modal-badge {
+    background: #bb9af7;
+    color: #1a1b26;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.peek-modal-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text, #c0caf5);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 450px;
+}
+
+.peek-modal-url {
+    font-size: 11px;
+    color: var(--text-muted, #565f89);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex-shrink: 1;
+}
+
+.peek-modal-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.peek-action-btn {
+    background: color-mix(in srgb, var(--accent) 15%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+    color: var(--accent);
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.15s ease;
+}
+
+.peek-action-btn:hover {
+    background: var(--accent, #7aa2f7);
+    color: #1a1b26;
+}
+
+.peek-modal-content {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    position: relative;
+    background: var(--bg-main, #1a1b26);
+}
+
+.peek-modal-content webview {
+    flex: 1;
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: inline-flex;
+}
+
 /* Search Engines Switch */
 .pref-row {
     display: flex;

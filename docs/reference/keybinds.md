@@ -44,6 +44,8 @@ All keyboard shortcuts in Mise Browser are fully customisable via `~/.config/mis
 | Shortcut | Action | Description |
 | :--- | :--- | :--- |
 | **Ctrl + F** | `trigger-hints` | Toggles Link Hints overlay for mouse-free clicking |
+| **Ctrl + G** | `trigger-glance` | Toggles Ephemeral Tab Peek (Glance) hints for previewing links |
+| **Shift + Click** | `peek-preview` | Opens link in Ephemeral Tab Peek modal preview frame |
 | **Ctrl + D** | `toggle-dark-reader` | Toggles Dark Reader high-contrast dark theme on active tab |
 | **F9** | `toggle-reader-view` | Toggles Native Reader View (distilled readable article format) |
 | **Ctrl + Shift + E** | `export-reader-to-notes` | Exports distilled Reader View article or page clipping to Quick Notes |
@@ -78,6 +80,7 @@ When viewing web content without an active text field or prompt, Mise operates i
 | `H` / `L` | History back / History forward |
 | `/` | In-page text search |
 | `f` | Trigger Link Hints overlay |
+| `gh` | Trigger Ephemeral Tab Peek (Glance) hints to preview link |
 | `e` | Toggle Native Reader View |
 | `m` | Toggle audio mute on active tab |
 | `M` | Toggle audio mute globally across all tabs |

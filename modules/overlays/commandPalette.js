@@ -125,6 +125,19 @@ export const COMMAND_DEFINITIONS = [
         action: () => window.triggerLinkHints && window.triggerLinkHints()
     },
     {
+        id: 'trigger-glance',
+        title: 'Ephemeral Tab Peek (Glance) Hints',
+        desc: 'Display letter tags to preview links in a transient modal without adding tabs',
+        details: 'Generates letter tags over links in the active page. Typing a tag spawns a transient preview modal over the active tab that can be dismissed instantly with Escape or promoted to a permanent tab with Open in Tab.',
+        tip: 'Press Ctrl+G or type gh in Normal mode, or Shift+Click any link.',
+        category: 'Tabs & Navigation',
+        icon: 'fa-solid fa-eye',
+        actionId: 'trigger-glance',
+        shortcut: 'Ctrl+G',
+        keywords: ['glance', 'peek', 'preview', 'modal', 'ephemeral', 'hints', 'links', 'gh'],
+        action: () => window.triggerGlanceHints && window.triggerGlanceHints()
+    },
+    {
         id: 'toggle-find',
         title: 'Find In Page',
         desc: 'Search for text matches within the current active webpage',
