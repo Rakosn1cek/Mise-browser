@@ -206,7 +206,7 @@ try {
     {
         const { isTargetPrivateDomain } = require('../modules/utils.js');
         assert.strictEqual(
-            isTargetPrivateDomain('https://news.ycombinator.com'),
+            isTargetPrivateDomain('https://archlinux.org'),
             false,
             'External domains must not be routed into private partition from normal workspaces'
         );

@@ -271,7 +271,7 @@ const sessionStore = require('../main/sessionStore');
                 current_workspace: 'Workspace 1',
                 workspaces: {
                     'Workspace 1': ['https://duckduckgo.com', 'https://github.com'],
-                    'Workspace 2': ['https://news.ycombinator.com']
+                    'Workspace 2': ['https://archlinux.org']
                 }
             };
             const validRes = await saveSessionHandler(null, validSession);

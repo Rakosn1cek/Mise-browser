@@ -176,9 +176,9 @@ console.log('Running Mise quickmark jump and bookmark safety regression tests...
     }
 
     // Valid item
-    simulateSelectionActivation({ url: 'https://news.ycombinator.com', title: 'Hacker News' });
+    simulateSelectionActivation({ url: 'https://archlinux.org', title: 'Arch Linux' });
     assert.equal(activatedUrls.length, 1);
-    assert.equal(activatedUrls[0], 'https://news.ycombinator.com');
+    assert.equal(activatedUrls[0], 'https://archlinux.org');
 
     // Invalid item
     simulateSelectionActivation({ url: 'javascript:void(0)', title: 'XSS' });

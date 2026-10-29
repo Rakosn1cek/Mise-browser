@@ -84,7 +84,7 @@ console.log('Running Mise session persistence guard and snapshot rotation tests.
                     'https://duckduckgo.com',
                     'https://github.com',
                     'https://archlinux.org',
-                    'https://news.ycombinator.com',
+                    'https://wikipedia.org',
                     'https://kernel.org'
                 ]
             }

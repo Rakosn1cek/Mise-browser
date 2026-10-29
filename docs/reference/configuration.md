@@ -119,7 +119,7 @@ Maintains persistent workspaces, URLs, titles, Dark Reader preferences, and slee
             "https://github.com/notifications"
         ],
         "Personal": [
-            "https://news.ycombinator.com"
+            "https://archlinux.org"
         ]
     },
     "active_tabs": {
@@ -128,13 +128,13 @@ Maintains persistent workspaces, URLs, titles, Dark Reader preferences, and slee
     },
     "tab_titles": {
         "Work": ["Notifications"],
-        "Personal": ["Hacker News"]
+        "Personal": ["Arch Linux"]
     },
     "tab_sleep_states": {
         "Personal": [
             {
-                "url": "https://news.ycombinator.com",
-                "title": "Hacker News",
+                "url": "https://archlinux.org",
+                "title": "Arch Linux",
                 "scrollX": 0,
                 "scrollY": 840,
                 "hibernatedAt": 1727299000000
@@ -151,7 +151,7 @@ Maintains persistent workspaces, URLs, titles, Dark Reader preferences, and slee
     },
     "tab_favicons": {
         "Work": ["https://github.com/favicon.ico"],
-        "Personal": ["https://news.ycombinator.com/favicon.ico"]
+        "Personal": ["https://archlinux.org/favicon.ico"]
     }
 }
 ```
