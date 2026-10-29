@@ -1130,6 +1130,10 @@ export async function syncPreferencesUI() {
             }
         } catch (err) {}
     }
+
+    if (typeof window.renderPermissionsVaultView === 'function') {
+        window.renderPermissionsVaultView();
+    }
 }
 
 let activePreferencesTab = 'tab-performance';
@@ -1165,6 +1169,10 @@ export function switchPreferencesTab(targetTabId) {
 
     const overlay = document.getElementById('PreferencesOverlay');
     if (overlay && overlay.scrollTop !== 0) overlay.scrollTop = 0;
+
+    if (activePreferencesTab === 'tab-permissions' && typeof window.renderPermissionsVaultView === 'function') {
+        window.renderPermissionsVaultView();
+    }
 }
 
 export function setupPreferencesTabs() {

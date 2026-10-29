@@ -3612,6 +3612,338 @@ body.light-mode .download-action-btn:hover {
     color: var(--accent);
 }
 
+/* Preferences: Granular Permissions Vault Section */
+.permissions-vault-advisory {
+    display: flex;
+    align-items: center;
+    padding: 10px 14px;
+    background: color-mix(in srgb, var(--accent) 8%, transparent);
+    border-left: 3px solid var(--accent);
+    border-radius: 4px;
+    font-size: 12px;
+    line-height: 1.45;
+    color: var(--text);
+    margin-bottom: 14px;
+}
+
+.permissions-vault-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.permissions-search-box {
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex: 1;
+    min-width: 180px;
+}
+
+.permissions-search-icon {
+    position: absolute;
+    left: 10px;
+    font-size: 12px;
+    color: var(--text);
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.permissions-search-input {
+    width: 100%;
+    background: var(--bg-main);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 6px 10px 6px 28px;
+    font-size: 12px;
+    outline: none;
+    transition: border-color 0.15s ease;
+}
+
+.permissions-search-input:focus {
+    border-color: var(--accent);
+}
+
+.permissions-filter-chips {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.permissions-vault-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 520px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.permissions-vault-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--text);
+    opacity: 0.8;
+    background: rgba(0, 0, 0, 0.12);
+    border: 1px dashed var(--border);
+    border-radius: 6px;
+}
+
+.permissions-vault-empty p {
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.permissions-vault-card {
+    background: color-mix(in srgb, var(--accent) 3%, var(--bg-sidebar));
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    transition: border-color 0.15s ease;
+}
+
+.permissions-vault-card:hover {
+    border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+}
+
+.permissions-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    border-bottom: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+    padding-bottom: 8px;
+}
+
+.permissions-card-title-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    overflow: hidden;
+}
+
+.permissions-card-globe {
+    color: var(--accent);
+    font-size: 13px;
+    flex-shrink: 0;
+}
+
+.permissions-card-domain {
+    font-weight: 600;
+    color: var(--text);
+    font-size: 13px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.permissions-card-date {
+    font-size: 10px;
+    color: var(--text);
+    opacity: 0.55;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 1px 6px;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+
+.permissions-card-revoke-btn {
+    background: transparent;
+    border: 1px solid color-mix(in srgb, #f7768e 30%, transparent);
+    color: #f7768e;
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.permissions-card-revoke-btn:hover {
+    background: rgba(247, 118, 142, 0.15);
+    border-color: #f7768e;
+}
+
+.permissions-card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 8px 12px;
+}
+
+.permissions-card-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    padding: 4px 6px;
+    background: rgba(0, 0, 0, 0.12);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+}
+
+.permissions-card-item-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text);
+    font-size: 11px;
+}
+
+.permissions-card-item-label i {
+    color: var(--accent);
+    width: 13px;
+    text-align: center;
+}
+
+.permissions-cap-select {
+    background: var(--bg-main);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 2px 4px;
+    font-size: 11px;
+    outline: none;
+    cursor: pointer;
+}
+
+.permissions-cap-select:focus {
+    border-color: var(--accent);
+}
+
+/* Interactive Permission Prompt Banner */
+.permission-prompt-banner {
+    position: fixed;
+    bottom: 34px;
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: 720px;
+    width: calc(100% - 320px);
+    background: var(--bg-sidebar);
+    border: 1px solid var(--accent);
+    border-radius: 6px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.55);
+    z-index: 110;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    gap: 16px;
+    font-size: 12px;
+    animation: promptSlideUp 0.18s ease-out;
+}
+
+@keyframes promptSlideUp {
+    from {
+        opacity: 0;
+        transform: translate(-50%, 10px);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
+}
+
+.permission-prompt-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    overflow: hidden;
+}
+
+.permission-prompt-icon {
+    font-size: 16px;
+    color: var(--accent);
+    flex-shrink: 0;
+}
+
+.permission-prompt-text {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    overflow: hidden;
+    color: var(--text);
+}
+
+.permission-prompt-domain {
+    font-weight: 700;
+    color: var(--accent);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.permission-prompt-message {
+    color: var(--text);
+    opacity: 0.9;
+    white-space: nowrap;
+}
+
+.permission-prompt-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.permission-prompt-btn {
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text);
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+    white-space: nowrap;
+}
+
+.permission-prompt-btn.allow:hover {
+    background: rgba(158, 206, 106, 0.15);
+    border-color: #9ece6a;
+    color: #9ece6a;
+}
+
+.permission-prompt-btn.allow.primary {
+    background: var(--accent);
+    color: var(--bg-main);
+    border-color: var(--accent);
+}
+
+.permission-prompt-btn.allow.primary:hover {
+    filter: brightness(1.1);
+}
+
+.permission-prompt-btn.deny:hover {
+    background: rgba(247, 118, 142, 0.15);
+    border-color: #f7768e;
+    color: #f7768e;
+}
+
+.permission-prompt-btn.deny.danger {
+    border-color: rgba(247, 118, 142, 0.45);
+    color: #f7768e;
+}
+
+.permission-prompt-btn.deny.danger:hover {
+    background: rgba(247, 118, 142, 0.25);
+    border-color: #f7768e;
+}
+
 /* Partition States */
 .status-badge-partition {
     background: rgba(255, 255, 255, 0.04);

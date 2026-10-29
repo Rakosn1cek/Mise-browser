@@ -10,12 +10,13 @@ console.log('Running Mise Preferences 6-tab navigation & focus trap regression t
 
 const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
 
-// 1. Verify all 6 specified tabs and sections exist in index.html
+// 1. Verify all specified tabs and sections exist in index.html
 const expectedTabs = [
     { id: 'tab-performance', label: 'Performance & Hardware' },
     { id: 'tab-external-tools', label: 'External Tools [Notes]' },
     { id: 'tab-appearance', label: 'Appearance & Visual Theme' },
     { id: 'tab-privacy', label: 'Privacy & Protection' },
+    { id: 'tab-permissions', label: 'Permissions Vault' },
     { id: 'tab-diagnostics', label: 'Diagnostics & System Health' },
     { id: 'tab-help', label: 'Help & Shortcut Reference' }
 ];
@@ -195,7 +196,7 @@ assert.equal(sections[0].style.display, 'flex', 'Home key must jump to Performan
 const eventLeft = { key: 'ArrowLeft', defaultPrevented: false, preventDefault() { this.defaultPrevented = true; } };
 tabNav.onkeydown(eventLeft);
 assert.equal(eventLeft.defaultPrevented, true);
-assert.equal(sections[5].style.display, 'flex', 'ArrowLeft from first tab must wrap to Help tab');
+assert.equal(sections[sections.length - 1].style.display, 'flex', 'ArrowLeft from first tab must wrap to Help tab');
 
 console.log('✓ Keyboard arrow navigation, Home/End jumping, and wrapping verified');
 

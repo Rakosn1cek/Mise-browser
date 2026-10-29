@@ -110,6 +110,7 @@ import {
 import { openTransientShareModal } from './modules/overlays/shareModal.js';
 import { openPeekModal, closePeekModal, isPeekModalActive } from './modules/overlays/peekModal.js';
 import { initSearchEnginePreference, renderSearchAliasesUI } from './modules/overlays/searchEngine.js';
+import { initPermissionsOverlay, renderPermissionsVaultView } from './modules/overlays/permissions.js';
 import { initDownloadShelf, toggleDownloadShelf } from './modules/downloads.js';
 import { 
     toggleSplitView, 
@@ -530,6 +531,7 @@ async function initializeBrowser() {
     initSearchEnginePreference();
     initDownloadShelf();
     initStatusBar();
+    initPermissionsOverlay();
     initClock();
     initWindowControls(initialCfg);
 

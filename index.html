@@ -163,6 +163,10 @@
                                 <i class="fa-solid fa-shield-halved"></i>
                                 <span>Privacy & Protection</span>
                             </button>
+                            <button type="button" class="settings-tab-btn" role="tab" id="tab-btn-permissions" data-tab="tab-permissions" aria-selected="false" aria-controls="tab-permissions">
+                                <i class="fa-solid fa-key"></i>
+                                <span>Permissions Vault</span>
+                            </button>
                             <button type="button" class="settings-tab-btn" role="tab" id="tab-btn-diagnostics" data-tab="tab-diagnostics" aria-selected="false" aria-controls="tab-diagnostics">
                                 <i class="fa-solid fa-stethoscope"></i>
                                 <span>Diagnostics & System Health</span>
@@ -539,6 +543,38 @@
                                 </div>
                             </section>
                 
+                            <!-- Granular Permissions Vault Section -->
+                            <section class="settings-section" id="tab-permissions" role="tabpanel" aria-labelledby="tab-btn-permissions" style="display: none;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--border); padding-bottom: 8px;">
+                                    <h2 style="border-bottom: none; padding-bottom: 0; margin-bottom: 0;">Granular Permissions Vault</h2>
+                                    <span class="settings-save-note visible" style="opacity: 0.75;"><i class="fa-solid fa-shield-halved"></i> Local POSIX 0600 Vault</span>
+                                </div>
+
+                                <div class="permissions-vault-advisory">
+                                    <i class="fa-solid fa-shield-cat" style="color: var(--accent); margin-right: 8px; font-size: 14px;"></i>
+                                    <span><strong>Zero-Trust Architecture:</strong> Persistent workspaces track granular permissions per domain. Private Profile (<code style="color: var(--accent);">MisePrivateProfile</code>) enforces an unconditional sensor block to prevent device fingerprinting and physical location tracking.</span>
+                                </div>
+
+                                <div class="permissions-vault-toolbar">
+                                    <div class="permissions-search-box">
+                                        <i class="fa-solid fa-magnifying-glass permissions-search-icon"></i>
+                                        <input type="text" id="permissions-search-input" class="permissions-search-input" placeholder="Filter tracked domains..." autocomplete="off">
+                                    </div>
+                                    <div class="permissions-filter-chips" role="group" aria-label="Filter permissions by capability">
+                                        <button type="button" class="palette-filter-chip active" data-perm-filter="all">All</button>
+                                        <button type="button" class="palette-filter-chip" data-perm-filter="media:audio"><i class="fa-solid fa-microphone"></i> Mic</button>
+                                        <button type="button" class="palette-filter-chip" data-perm-filter="media:video"><i class="fa-solid fa-video"></i> Camera</button>
+                                        <button type="button" class="palette-filter-chip" data-perm-filter="geolocation"><i class="fa-solid fa-location-dot"></i> Location</button>
+                                        <button type="button" class="palette-filter-chip" data-perm-filter="clipboard-read"><i class="fa-solid fa-clipboard"></i> Clipboard</button>
+                                    </div>
+                                    <button id="permissions-clear-all-btn" class="settings-action-btn" style="background-color: transparent; border: 1px solid rgba(247, 118, 142, 0.4); color: #f7768e; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 11px; white-space: nowrap;">
+                                        <i class="fa-solid fa-trash-can"></i> Reset All Permissions
+                                    </button>
+                                </div>
+
+                                <div id="permissions-vault-list" class="permissions-vault-list"></div>
+                            </section>
+                
                             <!-- Diagnostics & System Health Section -->
                             <section class="settings-section" id="tab-diagnostics" role="tabpanel" aria-labelledby="tab-btn-diagnostics" style="display: none;">
                                 <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--border); padding-bottom: 8px;">
@@ -885,6 +921,23 @@
                     <button id="PermissionsPopoverPrefsBtn" class="permissions-popover-prefs-btn">
                         <i class="fa-solid fa-sliders"></i> Manage All in Preferences
                     </button>
+                </div>
+            </div>
+
+            <!-- Interactive Permission Prompt Banner -->
+            <div id="PermissionPromptBanner" class="permission-prompt-banner" style="display: none;" role="alert" aria-live="assertive">
+                <div class="permission-prompt-content">
+                    <i id="PermissionPromptIcon" class="fa-solid fa-shield-halved permission-prompt-icon"></i>
+                    <div class="permission-prompt-text">
+                        <strong id="PermissionPromptDomain" class="permission-prompt-domain">example.com</strong>
+                        <span id="PermissionPromptMessage" class="permission-prompt-message">wants permission</span>
+                    </div>
+                </div>
+                <div class="permission-prompt-actions">
+                    <button id="PermissionPromptAllowOnceBtn" class="permission-prompt-btn allow">Allow Once</button>
+                    <button id="PermissionPromptAlwaysAllowBtn" class="permission-prompt-btn allow primary">Always Allow</button>
+                    <button id="PermissionPromptDenyOnceBtn" class="permission-prompt-btn deny">Block</button>
+                    <button id="PermissionPromptAlwaysDenyBtn" class="permission-prompt-btn deny danger">Always Block</button>
                 </div>
             </div>
         </div>
