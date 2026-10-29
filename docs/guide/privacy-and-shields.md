@@ -52,6 +52,31 @@ Mise resolves this through the **Trusted Sites** architecture:
 
 ---
 
+## Granular Permission Vault & Sensor Lockdown
+
+Mise provides a per-domain Permissions Vault that strictly isolates hardware sensor access:
+
+* **Managed Sensors**: Controls camera, microphone, geolocation, notifications, and clipboard access.
+* **Per-Domain Memory**: In standard workspaces, permissions granted or revoked are remembered on a per-domain basis in `~/.config/mise-browser/permissions.json` using atomic file writes.
+* **Interactive Status Bar Popover**: Click the permission shield icon in the status bar to view all sensor privileges for the active domain and toggle them on the fly.
+* **Vault Management in Preferences**: Open **Preferences** (**F1** or **Ctrl + H**) and navigate to **Permissions Vault** to search, inspect, or revoke domain permissions individually or perform a complete reset.
+* **Zero-Trust Private Profile**: When browsing in the Private workspace (`MisePrivateProfile`), an unconditional Zero-Trust policy applies. All sensor requests are rejected immediately to guarantee zero identity leakage or physical environment fingerprinting.
+
+---
+
+## WebRTC Leak Protection & IP Handling
+
+Web Real-Time Communication (WebRTC) can inadvertently expose your local network IP address or bypass VPN tunnels through STUN and ICE candidate harvesting. Mise provides granular policy controls to protect your origin identity:
+
+* **Balanced (`default_public_interface_only` - Default)**: WebRTC uses the default public network interface only. It eliminates private LAN IP disclosure while maintaining full compatibility with web conferencing tools (Google Meet, Discord, Zoom).
+* **Strict / Proxy Safe (`disable_non_proxied_udp`)**: Disables non-proxied UDP bindings, forcing WebRTC media traffic strictly through your configured proxy or VPN tunnel.
+* **Disabled (`disable`)**: Completely disables WebRTC peer connections inside webviews.
+* **Permissive (`default_public_and_private_interfaces`)**: Standard Chromium behaviour without interface filtering.
+
+You can adjust the active policy in Preferences under **Privacy & Protection**, or toggle protection on the fly using the Command Palette (**Ctrl + P**).
+
+---
+
 ## Active Site Data Clearing
 
 When debugging web applications or purging lingering sessions:

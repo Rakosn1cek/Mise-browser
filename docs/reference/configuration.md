@@ -53,6 +53,7 @@ Controls hardware switches, process limits, privacy whitelists, and search prefe
         }
     },
     "enable_diagnostics": false,
+    "webrtc_policy": "default_public_interface_only",
     "doh_provider": "off",
     "doh_custom_url": "",
     "trusted_domains": [
@@ -93,6 +94,7 @@ Controls hardware switches, process limits, privacy whitelists, and search prefe
   - **`sidebar_opacity`**: Sidebar background translucency percentage (40% to 100%) with backdrop blur glass effect.
   - **`overlay_opacity`**: Modal and overlay translucency percentage (50% to 100%) for Command Palette, Notes, and Preferences.
 - **`enable_diagnostics`**: When `true`, enables local in-memory diagnostic ring buffer recording for auditing and issue reproduction (OFF by default for zero telemetry).
+- **`webrtc_policy`**: WebRTC IP leak protection policy (`default_public_interface_only`, `disable_non_proxied_udp`, `disable`, or `default_public_and_private_interfaces`). Defaults to `default_public_interface_only` to eliminate local network IP leakage while maintaining VoIP functionality. Use `disable_non_proxied_udp` when routing through VPNs or proxies.
 - **`doh_provider`**: Active DNS-over-HTTPS provider (`off`, `quad9`, `mullvad`, `cloudflare`, or `custom`). Disabled by default (`off`), relying on the host operating system's standard resolver.
 - **`doh_custom_url`**: Custom HTTPS endpoint URL for DNS resolution when `doh_provider` is set to `custom` (e.g. `https://dns.example.com/dns-query`). Must use the `https://` scheme and remain within 512 characters.
 - **`trusted_domains`**: Array of domains exempted from tracker blocking and fingerprint spoofing.
@@ -175,3 +177,25 @@ Maintains persistent workspaces, URLs, titles, Dark Reader preferences, and slee
 
 - **`notes.md`**: A standard Markdown file storing everything typed into the Quick Notes overlay (**Ctrl + N**) or exported from Reader View (**Ctrl + Shift + E**). You can edit this file directly or open it from the overlay in your favourite external editor (Obsidian, Logseq, Neovim, VS Code).
 - **`clippings/`**: Dedicated directory storing standalone exported Markdown clippings and distilled articles saved for external note tools.
+
+---
+
+## 6. Permissions Vault (`permissions.json`)
+
+Maintains persistent hardware and sensor permissions per domain for non-private workspaces:
+
+```json
+{
+    "github.com": {
+        "clipboard-read": "prompt",
+        "notifications": "denied"
+    },
+    "meet.google.com": {
+        "media": "granted",
+        "geolocation": "denied"
+    }
+}
+```
+
+- **Sensors Managed**: Media (camera and microphone), geolocation, notifications, and clipboard access.
+- **Security Boundaries**: Written atomically to `~/.config/mise-browser/permissions.json` with strict `0600` POSIX file permissions. Private workspaces bypass this file completely, operating under an unconditional Zero-Trust lockdown where all hardware sensor requests are blocked.

@@ -37,6 +37,7 @@ The Command Centre gives you rapid, searchable access to all Mise operations, in
 | **Toggle Workspace Dashboard** | `Ctrl+Shift+W` | `toggle-dashboard` | Full-page hierarchical tree of all workspaces, tabs, and windows. |
 | **Toggle Actionable History** | `Ctrl+Shift+H` | `toggle-history` | Local history ledger with domain-level filtering and record purging. |
 | **Toggle Link Hints Overlay** | `Ctrl+F` | `trigger-hints` | Letter tags overlaid on clickable webpage links for keyboard browsing. |
+| **Trigger Glance Hints (Preview)** | `Ctrl+G` / `gh` | `trigger-glance` | Ephemeral Tab Peek link hints for transient modal previews without creating tabs. |
 | **Find In Page** | `Ctrl+Shift+F` / `F3` | `toggle-find` | In-page text search overlay across active webview content. |
 | **Reload Active Tab** | `Ctrl+R` / `F5` | `reload-active-tab` | Refreshes current webview document while preserving session state. |
 | **Close Current Tab** | `Ctrl+X` | `remove-tab` | Disposes of active webview and reclaims allocated V8 heap memory. |
@@ -113,3 +114,10 @@ The Command Centre gives you rapid, searchable access to all Mise operations, in
 | **Test Clean Google Sign-In Flow** | — | `test-google-signin` | Launches Google Sign-In in a clean, volatile scratch partition to audit authentication health. |
 | **Toggle Colour Theme (Dark / Light)** | — | — | Swaps UI styling and webview shader inversion between dark and light. |
 | **Toggle Application Menu Bar** | `F1` | `toggle-menu-bar` | Shows or hides the native top window menu bar. |
+| **WebRTC Policy: Balanced (Default)** | — | `webrtc-policy-balanced` | Restricts WebRTC to default public interface only to avoid LAN IP leakage. |
+| **WebRTC Policy: Strict (Proxy Safe)** | — | `webrtc-policy-strict` | Disables non-proxied UDP to force WebRTC traffic through VPN or proxy. |
+| **WebRTC Policy: Completely Disabled** | — | `webrtc-policy-disabled` | Completely disables WebRTC peer connection creation in webviews. |
+| **WebRTC Policy: Permissive** | — | `webrtc-policy-permissive` | Allows standard WebRTC public and private interface binding. |
+| **Cycle WebRTC Privacy Policy** | — | `cycle-webrtc-policy` | Cycles through available WebRTC leak prevention policies on the fly. |
+| **Toggle WebRTC Leak Protection** | — | `toggle-webrtc-protection` | Quick toggle between strict proxy-safe and balanced policies. |
+| **Inspect WebRTC Privacy Status** | — | `inspect-webrtc-status` | Displays currently active WebRTC IP policy in the status bar. |

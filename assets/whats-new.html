@@ -251,57 +251,58 @@
                 <img src="icons/Mise-logo48.png" alt="Mise Logo">
                 <h1>What's New in Mise v1.3.0</h1>
             </div>
-            <p class="subtitle">The v1.3.0 Centred Omnibar & Defence-in-Depth Update: Fixed status bar address bar with upward suggestions, rigorous IPC host sender verification across all handlers, hardened userscript bridge security and storage quotas, community feedback integration, and upstream dependency patches.</p>
+            <p class="subtitle">The v1.4.0 Privacy Shield & Ephemeral Peek Update: Introducing the granular domain permission vault with Zero-Trust sensor isolation, transient Glance modal previews, DNS-over-HTTPS resolver controls, WebRTC privacy policies, workspace active tab persistence, and the latest Chromium/Electron 45.1.0 engine.</p>
         </header>
 
         <section class="feature-card">
-            <h2 class="feature-title">Fixed Centred Status Bar Address Bar</h2>
+            <h2 class="feature-title">Granular Permission Vault & Zero-Trust Sensor Lockdown</h2>
             <p class="feature-desc">
-                The Wide Address Bar is now natively integrated into the fixed 28px bottom status bar, preserving a 100% uncluttered browsing canvas.
+                Fine-grained per-domain access control for camera, microphone, geolocation, notifications, and clipboard sensors.
             </p>
             <ul class="feature-points">
-                <li>Relocated the omnibar directly into the status bar centre with responsive proportional sizing.</li>
-                <li>Upward suggestions pop-up overlay (<kbd>#AddressSuggestions</kbd>) presenting instant search aliases, quickmarks, and history completions.</li>
-                <li>Preserves full Vim normal mode shortcut integration: press <kbd>Ctrl + L</kbd> or <kbd>!</kbd> to focus and begin navigating immediately.</li>
-                <li>Refined border radii and auto-collapse sidebar stacking order ensuring smooth visual transitions.</li>
+                <li>Dedicated Permissions Vault in Preferences (<kbd>F1</kbd> or <kbd>Ctrl + H</kbd>) with search filtering, domain status cards, and individual or bulk access revocation.</li>
+                <li>Zero-Trust sensor lockdown in Private Profile (<kbd>MisePrivateProfile</kbd>): all sensor requests are blocked unconditionally to prevent fingerprinting leaks.</li>
+                <li>Quick status bar indicator and interactive popover displaying real-time domain permissions with instant toggle overrides.</li>
+                <li>Atomic disk persistence with automatic corruption recovery ensuring your privacy rules are never lost.</li>
             </ul>
         </section>
 
         <section class="feature-card">
-            <h2 class="feature-title">IPC Defence-in-Depth & Host Sender Verification</h2>
+            <h2 class="feature-title">Ephemeral Tab Peek ("Glance")</h2>
             <p class="feature-desc">
-                Comprehensive multi-layer isolation ensuring privileged main process capabilities cannot be invoked by untrusted guest webview content.
+                Lightning-fast, keyboard-driven preview modal that inspects links without adding permanent tabs to your tab list.
             </p>
             <ul class="feature-points">
-                <li>Strict host sender verification on all <kbd>ipcMain</kbd> handlers: requests originating from guest webview frames are actively intercepted and denied.</li>
-                <li>Input validation and bounding: diagnostics payloads bounded to depth 6 and capped strings to prevent memory exhaustion.</li>
-                <li>Configuration safety: partial configuration updates validated against strict schemas, rejecting unrecognised keys and malicious URL schemes.</li>
-                <li>Session persistence safeguards: session saving rejects malformed payloads and limits snapshot rotation.</li>
+                <li>Trigger instantaneously using <kbd>Shift + Click</kbd> or the <kbd>gh</kbd> link hint chord.</li>
+                <li>Detaches cleanly from the DOM on dismissal (<kbd>Escape</kbd>) with zero memory residue.</li>
+                <li>Promote any previewed link to a full permanent tab with a single keystroke (<kbd>Enter</kbd>).</li>
+                <li>Full sandboxing and isolated navigation guards prevent untrusted frames from breaking out.</li>
             </ul>
         </section>
 
         <section class="feature-card">
-            <h2 class="feature-title">Hardened Userscript Sandbox & Storage Quotas</h2>
+            <h2 class="feature-title">DNS-over-HTTPS (DoH) Resolver</h2>
             <p class="feature-desc">
-                Engineered robust lifecycle protections and storage boundaries for local userscripts and user styles.
+                Protect domain lookups from local network eavesdropping and ISP tracking with encrypted DNS resolution.
             </p>
             <ul class="feature-points">
-                <li>Dynamic token lifecycle: userscript API bridge tokens expire on idle and enforce capacity limits.</li>
-                <li>Strict sender binding: tokens are bound to the initial sender and main frame, revoking immediately upon navigation.</li>
-                <li>Storage safety: 1 MB persistent storage quota per script with atomic file persistence and write debouncing.</li>
-                <li>Style query isolation: CSS extractions proceed cleanly without minting unnecessary privileged userscript tokens.</li>
+                <li>Integrated privacy-focused providers: Cloudflare, Quad9, Google, and Mullvad.</li>
+                <li>Full support for custom RFC 8484 DoH HTTPS endpoints with input validation.</li>
+                <li>Dynamic resolver switching in Preferences without requiring a browser restart.</li>
             </ul>
         </section>
 
         <section class="feature-card">
-            <h2 class="feature-title">Community Dialogue & Upstream Security Patches</h2>
+            <h2 class="feature-title">WebRTC Privacy Controls & Active Tab Persistence</h2>
             <p class="feature-desc">
-                Strengthened upstream dependencies and integrated community collaboration tools directly into the browser workflow.
+                Advanced leak prevention, enhanced workspace session restoration across restarts, and upstream engine updates.
             </p>
             <ul class="feature-points">
-                <li>Upgraded upstream dependencies: bumped <kbd>fast-uri</kbd> to 3.1.9 and <kbd>undici</kbd> to 7.30.1 and 6.29.1.</li>
-                <li>Command Palette integration: jump directly to GitHub Discussions or report issues via searchable commands in <kbd>Ctrl + P</kbd>.</li>
-                <li>All 56 automated test suites passing with 100% verification across security, UI, and storage modules.</li>
+                <li>Configurable WebRTC policies including <kbd>default_public_interface_only</kbd> and <kbd>disable_non_proxied_udp</kbd> to eliminate local IP address leakage.</li>
+                <li>Remembers active tab indexes per workspace, waking only your active tab on startup whilst keeping background tabs asleep.</li>
+                <li>Optimised native auto-step scrolling navigation.</li>
+                <li>Upgraded to Electron 45.1.0 with the latest Chromium security enhancements and Wayland stability improvements.</li>
+                <li>All 61 automated test suites passing with 100% verification across security, UI, and storage modules.</li>
             </ul>
         </section>
 

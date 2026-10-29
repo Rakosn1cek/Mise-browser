@@ -23,7 +23,7 @@ Named after the Czech word for *"mission"*, Mise leverages the Chromium renderin
 * **Mouse-Free Navigation**: Complete keyboard control via Link Hints, centered status bar address bar with search aliases, and customisable shortcuts in `keybinds.json`.
 * **Ephemeral Tab Peek ("Glance")**: Transient keyboard-driven link preview modal (`Shift + Click` or `gh` hint) over the active tab, dismissing instantly on `Escape` without memory residue, or promoting to a permanent tab with `Ctrl + Enter`.
 * **Clipboard-Mediated Terminal Oversight**: High-risk script execution and raw web commands trigger a clipboard-mediated security handshake, sanitising and staging vetted commands to your clipboard for deliberate user review and execution in an external terminal.
-* **Native Privacy & WebRTC Control**: Built-in request interception blocks trackers, telemetry, and advertisements without heavy third-party extensions, with granular WebRTC leak controls and selective whitelisting for trusted services.
+* **Native Privacy, DoH & WebRTC Control**: Built-in request interception blocks trackers, telemetry, and advertisements without heavy third-party extensions, with DNS-over-HTTPS resolver selection, granular WebRTC leak controls, and selective whitelisting for trusted services.
 * **Local User Scripts & Styles**: Direct native injection of `.user.js` and `.user.css` files directly from `~/.config/mise-browser/` with inotify watching and live CSS hot-reloading, avoiding the heavy memory overhead of full WebExtensions.
 * **Power Tools**: Integrated Markdown notes, bookmarks, quickmarks, actionable history overlay, and a full-page Command Centre.
 
@@ -36,7 +36,7 @@ Security, isolation, and upstream dependency freshness are foundational principl
 * **Weekly Upstream Security Auditing**: Mise monitors upstream Electron and Chromium security releases weekly. Security patches and CVE fixes are evaluated, verified, and shipped promptly.
 * **Engine Version Verification**: Active Mise, Electron, and Chromium runtime versions are visible directly within the Preferences overlay (`Ctrl + H`) and the Welcome view.
 * **Strict Process Sandboxing**: Webviews run with `contextIsolation: true`, `nodeIntegration: false`, and Chromium sandboxing enabled, guarded by a minimal IPC whitelist.
-* **Permissions Denied by Default**: Hardware access (camera, microphone, geolocation, and MIDI) is blocked by default.
+* **Granular Permission Vault & Zero-Trust Isolation**: Hardware access (camera, microphone, geolocation, and clipboard) is isolated in a per-domain Permissions Vault with interactive status bar inspection and an unconditional Zero-Trust lockdown in Private Profile.
 * **Local Data Ownership & Zero Password Vault Targets**: Plaintext JSON configuration, notes, and history files are stored locally under user-only permissions (`0600`). Mise deliberately excludes built-in password managers, eliminating browser credential harvesting by infostealer malware. Session cookies are encrypted via host OS keyrings.
 * **Responsible Disclosure**: See the [Security Policy](SECURITY.md) for vulnerability disclosure guidelines via GitHub Security Advisories.
 
