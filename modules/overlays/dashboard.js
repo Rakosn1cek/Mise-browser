@@ -82,6 +82,11 @@ export function renameWorkspace(oldName, newName) {
         delete state.sessionState.tab_sleep_states[oldName];
     }
 
+    if (state.sessionState.active_tabs?.[oldName] !== undefined) {
+        state.sessionState.active_tabs[trimmed] = state.sessionState.active_tabs[oldName];
+        delete state.sessionState.active_tabs[oldName];
+    }
+
     if (state.sessionState.current_workspace === oldName) {
         state.sessionState.current_workspace = trimmed;
     }
@@ -115,6 +120,7 @@ export function deleteWorkspace(wsName) {
     if (state.sessionState.tab_pinned?.[wsName]) delete state.sessionState.tab_pinned[wsName];
     if (state.sessionState.tab_titles?.[wsName]) delete state.sessionState.tab_titles[wsName];
     if (state.sessionState.tab_sleep_states?.[wsName]) delete state.sessionState.tab_sleep_states[wsName];
+    if (state.sessionState.active_tabs?.[wsName] !== undefined) delete state.sessionState.active_tabs[wsName];
     delete state.sessionState.workspaces[wsName];
     
     window.miseAPI.saveSession(state.sessionState);
@@ -381,7 +387,8 @@ export function executeDashboardItemActivation(payload) {
     if (type === 'tab') {
         renderWorkspaceUI(idx);
     } else {
-        renderWorkspaceUI(0);
+        const lastActive = state.sessionState.active_tabs?.[wsName] ?? 0;
+        renderWorkspaceUI(lastActive);
     }
 }
 

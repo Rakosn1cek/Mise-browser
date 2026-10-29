@@ -19,6 +19,7 @@ Controls hardware switches, process limits, privacy whitelists, and search prefe
     "process_limit": 4,
     "tab_sleep_timeout_minutes": 15,
     "sidebar_auto_collapse": true,
+    "startup_behavior": "restore",
     "show_status_bar": true,
     "show_clock": true,
     "clock_format": "datetime",
@@ -72,6 +73,7 @@ Controls hardware switches, process limits, privacy whitelists, and search prefe
 - **`process_limit`**: Hard cap on Chromium renderer process forks (1 to 5).
 - **`tab_sleep_timeout_minutes`**: Inactivity timeout before background tabs detach and hibernate (5, 15, 30, 60, or 0 to disable).
 - **`sidebar_auto_collapse`**: When `true`, collapses the vertical sidebar into a 36px icon strip, expanding smoothly on hover or via shortcut.
+- **`startup_behavior`**: Startup launch behaviour (`restore`, `dashboard`, or `new-tab`). Defaults to `restore` (reopens on the exact active tab and workspace where you left off). When set to `dashboard`, Mise opens the Workspaces Dashboard overlay on launch for instant keyboard selection. When set to `new-tab`, Mise opens a fresh search tab on launch.
 - **`show_status_bar`**: When `true`, displays the 28px footer status bar with modal state, real-time link hover preview, centered address bar pill, and TLS security status.
 - **`show_clock`**: When `true`, displays a real-time clock and date widget in the status bar and sidebar for full screen browsing.
 - **`clock_format`**: Date and time display format: `12h` (e.g. 02:45 PM), `24h` (e.g. 14:45), `seconds` (e.g. 14:45:08), or `datetime` (e.g. 15 Oct, 14:45).
@@ -119,6 +121,10 @@ Maintains persistent workspaces, URLs, titles, Dark Reader preferences, and slee
         "Personal": [
             "https://news.ycombinator.com"
         ]
+    },
+    "active_tabs": {
+        "Work": 0,
+        "Personal": 0
     },
     "tab_titles": {
         "Work": ["Notifications"],

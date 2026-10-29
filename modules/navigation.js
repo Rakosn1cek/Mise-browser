@@ -151,7 +151,8 @@ export async function handleNavigation(input) {
         if (matchedWs) {
             state.sessionState.current_workspace = matchedWs;
             window.miseAPI.saveSession(state.sessionState);
-            renderWorkspaceUI(0);
+            const lastActive = state.sessionState.active_tabs?.[matchedWs] ?? 0;
+            renderWorkspaceUI(lastActive);
         } else {
             alert(`Workspace "${targetWs}" does not exist.`);
         }

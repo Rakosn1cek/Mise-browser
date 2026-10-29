@@ -44,6 +44,7 @@ const DEFAULT_CONFIG = {
     custom_search_aliases: {},
     doh_provider: 'off',
     doh_custom_url: '',
+    startup_behavior: 'restore',
     last_seen_version: null
 };
 
@@ -86,6 +87,7 @@ function loadBrowserConfig(targetDir = CONFIG_DIR, targetPath = CONFIG_PATH) {
             webview_theme: parsed.webview_theme || 'dark',
             doh_provider: parsed.doh_provider || 'off',
             doh_custom_url: typeof parsed.doh_custom_url === 'string' ? parsed.doh_custom_url : '',
+            startup_behavior: ['restore', 'dashboard', 'new-tab'].includes(parsed.startup_behavior) ? parsed.startup_behavior : 'restore',
             theme_colors: {
                 dark: { ...DEFAULT_THEME_COLORS.dark, ...(parsed.theme_colors?.dark || {}) },
                 light: { ...DEFAULT_THEME_COLORS.light, ...(parsed.theme_colors?.light || {}) }
@@ -245,6 +247,15 @@ function validateConfigPatch(patch) {
             case 'theme':
             case 'webview_theme': {
                 if (val === 'dark' || val === 'light') {
+                    clean[key] = val;
+                } else {
+                    rejected.push(key);
+                }
+                break;
+            }
+
+            case 'startup_behavior': {
+                if (['restore', 'dashboard', 'new-tab'].includes(val)) {
                     clean[key] = val;
                 } else {
                     rejected.push(key);

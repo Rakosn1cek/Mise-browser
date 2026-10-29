@@ -79,7 +79,7 @@ function migrateLegacyPrivateWorkspace(sessionData) {
         delete sessionData.workspaces[oldKey];
 
         // Migrate tab metadata collections
-        for (const metaKey of ['tab_titles', 'tab_favicons', 'tab_sleep_states', 'tab_dark_reader', 'tab_pinned']) {
+        for (const metaKey of ['tab_titles', 'tab_favicons', 'tab_sleep_states', 'tab_dark_reader', 'tab_pinned', 'active_tabs']) {
             if (sessionData[metaKey] && typeof sessionData[metaKey] === 'object' && sessionData[metaKey][oldKey]) {
                 sessionData[metaKey][targetName] = sessionData[metaKey][oldKey];
                 delete sessionData[metaKey][oldKey];
@@ -95,7 +95,7 @@ function sanitizeSessionForDisk(sessionData) {
     const clone = JSON.parse(JSON.stringify(sessionData));
     const isPrivateWS = (k) => String(k).trim().toLowerCase() === 'private';
 
-    for (const key of ['workspaces', 'tab_titles', 'tab_favicons', 'tab_sleep_states', 'tab_dark_reader', 'tab_pinned']) {
+    for (const key of ['workspaces', 'tab_titles', 'tab_favicons', 'tab_sleep_states', 'tab_dark_reader', 'tab_pinned', 'active_tabs']) {
         if (clone[key] && typeof clone[key] === 'object') {
             for (const ws of Object.keys(clone[key])) {
                 if (isPrivateWS(ws)) {
@@ -347,6 +347,17 @@ function registerSessionIpc(ipcMain) {
             if (!Array.isArray(wsTabs)) return false;
             for (const url of wsTabs) {
                 if (typeof url !== 'string' || url.length > 16384) {
+                    return false;
+                }
+            }
+        }
+
+        if (sessionData.active_tabs !== undefined) {
+            if (!sessionData.active_tabs || typeof sessionData.active_tabs !== 'object' || Array.isArray(sessionData.active_tabs)) {
+                return false;
+            }
+            for (const [ws, idx] of Object.entries(sessionData.active_tabs)) {
+                if (typeof ws !== 'string' || ws.length > 200 || !Number.isInteger(idx) || idx < 0) {
                     return false;
                 }
             }

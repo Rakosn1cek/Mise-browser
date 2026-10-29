@@ -892,6 +892,15 @@ export function renderWorkspaceUI(targetTabToFocus = null) {
 
     const urls = state.sessionState.workspaces[currentWS] || [];
 
+    let effectiveTargetTab = targetTabToFocus;
+    if (effectiveTargetTab === null && state.sessionState.active_tabs && typeof state.sessionState.active_tabs[currentWS] === 'number') {
+        const saved = state.sessionState.active_tabs[currentWS];
+        if (saved >= 0 && saved < urls.length) {
+            effectiveTargetTab = saved;
+        }
+    }
+    const resolvedFocusIdx = effectiveTargetTab !== null ? effectiveTargetTab : 0;
+
     const welcomeEl = document.getElementById('EmptyWorkspaceWelcome');
     const container = document.getElementById('webview-container');
     const allWebviews = container.querySelectorAll('webview');
@@ -946,7 +955,7 @@ export function renderWorkspaceUI(targetTabToFocus = null) {
         const cachedFavicon = state.tabFavicons[currentWS]?.[idx] || null;
 
         const li = document.createElement('li');
-        const isInitiallySelected = (idx === (targetTabToFocus !== null ? targetTabToFocus : 0));
+        const isInitiallySelected = (idx === resolvedFocusIdx);
         li.setAttribute('tabindex', isInitiallySelected ? '0' : '-1');
         const isPinned = !!state.tabPinned?.[currentWS]?.[idx];
         li.className = 'tab-item';
@@ -1101,7 +1110,7 @@ export function renderWorkspaceUI(targetTabToFocus = null) {
         if (isSplitActive(currentWS)) {
             applySplitLayout();
         } else {
-            const focusIdx = targetTabToFocus !== null ? targetTabToFocus : 0;
+            const focusIdx = resolvedFocusIdx;
             switchTabFocus(focusIdx);
         }
     }
@@ -1118,6 +1127,13 @@ export function switchTabFocus(targetIdx) {
     }
     if (targetIdx < 0) {
         targetIdx = 0;
+    }
+
+    if (!state.sessionState.active_tabs) state.sessionState.active_tabs = {};
+    const previousActiveIdx = state.sessionState.active_tabs[currentWS];
+    state.sessionState.active_tabs[currentWS] = targetIdx;
+    if (previousActiveIdx !== targetIdx && window.miseAPI && typeof window.miseAPI.saveSession === 'function') {
+        window.miseAPI.saveSession(state.sessionState);
     }
 
     if (!state.tabHistory) state.tabHistory = {};
@@ -1404,6 +1420,17 @@ export function handleTabRemoval(explicitIdx) {
 
     state.sessionState.tab_dark_reader = state.tabDarkReaderStates;
     state.sessionState.tab_pinned = state.tabPinned;
+    if (!state.sessionState.active_tabs) state.sessionState.active_tabs = {};
+    if (tabs.length === 0) {
+        state.sessionState.active_tabs[currentWS] = 0;
+    } else if (typeof state.sessionState.active_tabs[currentWS] === 'number') {
+        const curActive = state.sessionState.active_tabs[currentWS];
+        if (curActive > currentIdx) {
+            state.sessionState.active_tabs[currentWS] = curActive - 1;
+        } else if (curActive === currentIdx) {
+            state.sessionState.active_tabs[currentWS] = Math.max(0, Math.min(currentIdx, tabs.length - 1));
+        }
+    }
     window.miseAPI.saveSession(state.sessionState);
     window.miseAllowWebviewFocus = true;
 

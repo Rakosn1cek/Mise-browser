@@ -432,11 +432,18 @@ async function initializeBrowser() {
         });
         state.tabSleepStates = { ...state.sessionState.tab_sleep_states };
         // Initialise any awake background tabs as sleeping on boot to conserve memory
+        const bootWS = state.sessionState.current_workspace;
+        const bootUrls = state.sessionState.workspaces?.[bootWS] || [];
+        const rawBootActive = state.sessionState.active_tabs?.[bootWS];
+        const activeIdxOnBoot = (typeof rawBootActive === 'number' && rawBootActive >= 0 && rawBootActive < bootUrls.length)
+            ? rawBootActive
+            : 0;
+
         Object.keys(state.sessionState.workspaces || {}).forEach(ws => {
             const urls = state.sessionState.workspaces[ws] || [];
             if (!state.tabSleepStates[ws]) state.tabSleepStates[ws] = [];
             urls.forEach((u, i) => {
-                if (ws !== state.sessionState.current_workspace || i !== 0) {
+                if (ws !== bootWS || i !== activeIdxOnBoot) {
                     if (!state.tabSleepStates[ws][i]) {
                         state.tabSleepStates[ws][i] = {
                             url: u,
@@ -453,13 +460,20 @@ async function initializeBrowser() {
             });
         });
     } else {
-        // Crash recovery or initial cold boot: force ALL background tabs to sleep to eliminate memory spikes
+        // Crash recovery or initial cold boot: force background tabs to sleep to eliminate memory spikes
+        const bootWS = state.sessionState.current_workspace;
+        const bootUrls = state.sessionState.workspaces?.[bootWS] || [];
+        const rawBootActive = state.sessionState.active_tabs?.[bootWS];
+        const activeIdxOnBoot = (typeof rawBootActive === 'number' && rawBootActive >= 0 && rawBootActive < bootUrls.length)
+            ? rawBootActive
+            : 0;
+
         Object.keys(state.sessionState.workspaces || {}).forEach(ws => {
             const urls = state.sessionState.workspaces[ws] || [];
             const previousSleep = state.sessionState.tab_sleep_states?.[ws] || [];
             if (!state.tabSleepStates[ws]) state.tabSleepStates[ws] = [];
             urls.forEach((u, i) => {
-                if (ws !== state.sessionState.current_workspace || i !== 0) {
+                if (ws !== bootWS || i !== activeIdxOnBoot) {
                     const prev = previousSleep[i];
                     state.tabSleepStates[ws][i] = {
                         url: prev?.url || u,
@@ -534,6 +548,21 @@ async function initializeBrowser() {
     initPermissionsOverlay();
     initClock();
     initWindowControls(initialCfg);
+
+    const startupBehavior = initialCfg?.startup_behavior || 'restore';
+    if (!isCrashRecovery) {
+        if (startupBehavior === 'dashboard' && typeof window.toggleDashboardView === 'function') {
+            setTimeout(() => {
+                if (!state.dashboardActive) {
+                    window.toggleDashboardView();
+                }
+            }, 100);
+        } else if (startupBehavior === 'new-tab') {
+            setTimeout(() => {
+                spawnNewBlankTab();
+            }, 100);
+        }
+    }
 
     if (isCrashRecovery) {
         setTimeout(() => {
@@ -1142,7 +1171,8 @@ export function togglePrivateWorkspace() {
         const allWebviews = container.querySelectorAll('webview');
         allWebviews.forEach(wv => wv.style.display = 'none');
     }
-    renderWorkspaceUI(0);
+    const targetActiveTab = state.sessionState.active_tabs?.[state.sessionState.current_workspace] ?? 0;
+    renderWorkspaceUI(targetActiveTab);
 }
 
 function handlePrivateBrowsingStateShift() {

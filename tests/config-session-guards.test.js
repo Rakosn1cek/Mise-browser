@@ -49,7 +49,8 @@ const sessionStore = require('../main/sessionStore');
                 custom_search_aliases: {
                     gh: 'https://github.com/search?q=%s',
                     aur: 'https://aur.archlinux.org/packages?K=%s'
-                }
+                },
+                startup_behavior: 'dashboard'
             };
 
             const result = config.validateConfigPatch(validPatch);
@@ -68,7 +69,8 @@ const sessionStore = require('../main/sessionStore');
                 trusted_domains: 'https://single-domain.org',
                 last_seen_version: 102,
                 theme_colors: 'dark-palette',
-                custom_search_aliases: ['array-instead-of-object']
+                custom_search_aliases: ['array-instead-of-object'],
+                startup_behavior: 'invalid-mode'
             };
 
             const result = config.validateConfigPatch(wrongTypePatch);
@@ -321,7 +323,33 @@ const sessionStore = require('../main/sessionStore');
                 workspaces: { 'Workspace 1': [longTabUrl] }
             }), false, 'Tab URL > 16384 chars must be rejected');
 
-            // 10e: Oversized session payload (> 5 MB) rejected
+            // 10e: Invalid active_tabs rejected
+            assert.strictEqual(await saveSessionHandler(null, {
+                current_workspace: 'Workspace 1',
+                workspaces: { 'Workspace 1': [] },
+                active_tabs: 'not-an-object'
+            }), false, 'Non-object active_tabs must be rejected');
+
+            assert.strictEqual(await saveSessionHandler(null, {
+                current_workspace: 'Workspace 1',
+                workspaces: { 'Workspace 1': [] },
+                active_tabs: { 'Workspace 1': -1 }
+            }), false, 'Negative active_tabs index must be rejected');
+
+            assert.strictEqual(await saveSessionHandler(null, {
+                current_workspace: 'Workspace 1',
+                workspaces: { 'Workspace 1': [] },
+                active_tabs: { 'Workspace 1': 'zero' }
+            }), false, 'Non-integer active_tabs index must be rejected');
+
+            // 10f: Valid active_tabs accepted
+            assert.strictEqual(await saveSessionHandler(null, {
+                current_workspace: 'Workspace 1',
+                workspaces: { 'Workspace 1': ['https://duckduckgo.com', 'https://reddit.com'] },
+                active_tabs: { 'Workspace 1': 1 }
+            }), true, 'Valid active_tabs payload must be accepted');
+
+            // 10g: Oversized session payload (> 5 MB) rejected
             const largeTabList = [];
             for (let i = 0; i < 600; i++) {
                 largeTabList.push('https://example.com/item/' + 'z'.repeat(10000));

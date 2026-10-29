@@ -1046,6 +1046,7 @@ export async function syncPreferencesUI() {
             const emailSelect = document.getElementById('setting-email-handler');
             const sleepSelect = document.getElementById('setting-sleep-timeout');
             const sidebarToggle = document.getElementById('setting-sidebar-collapse-toggle');
+            const startupSelect = document.getElementById('setting-startup-behavior');
             const spellSelect = document.getElementById('setting-spellchecker-language');
             const webrtcSelect = document.getElementById('setting-webrtc-policy');
             const dohProviderSelect = document.getElementById('setting-doh-provider');
@@ -1058,6 +1059,7 @@ export async function syncPreferencesUI() {
             if (emailSelect) emailSelect.value = cfg.email_handler || 'system';
             if (sleepSelect) sleepSelect.value = String(cfg.tab_sleep_timeout_minutes ?? 15);
             if (sidebarToggle) sidebarToggle.checked = cfg.sidebar_auto_collapse !== false;
+            if (startupSelect) startupSelect.value = cfg.startup_behavior || 'restore';
             if (spellSelect) spellSelect.value = cfg.spellchecker_language || 'en-GB';
             if (webrtcSelect) webrtcSelect.value = cfg.webrtc_policy || 'default_public_interface_only';
 
@@ -1338,6 +1340,7 @@ export function setupPreferencesListeners() {
             const emailSelect = document.getElementById('setting-email-handler');
             const sleepSelect = document.getElementById('setting-sleep-timeout');
             const sidebarToggle = document.getElementById('setting-sidebar-collapse-toggle');
+            const startupSelect = document.getElementById('setting-startup-behavior');
             const spellSelect = document.getElementById('setting-spellchecker-language');
             const webrtcSelect = document.getElementById('setting-webrtc-policy');
             const dohSelect = document.getElementById('setting-doh-provider');
@@ -1351,6 +1354,7 @@ export function setupPreferencesListeners() {
                 process_limit: processSelect ? parseInt(processSelect.value, 10) : 3,
                 tab_sleep_timeout_minutes: sleepSelect ? parseInt(sleepSelect.value, 10) : 15,
                 sidebar_auto_collapse: sidebarToggle ? sidebarToggle.checked : true,
+                startup_behavior: startupSelect ? startupSelect.value : 'restore',
                 email_handler: emailSelect ? emailSelect.value : 'system',
                 spellchecker_language: spellSelect ? spellSelect.value : 'en-GB',
                 webrtc_policy: webrtcSelect ? webrtcSelect.value : 'default_public_interface_only',
@@ -1460,6 +1464,18 @@ export function setupPreferencesListeners() {
             if (window.miseAPI && typeof window.miseAPI.getBrowserSettings === 'function') {
                 const cfg = (await window.miseAPI.getBrowserSettings()) || {};
                 cfg.email_handler = handler;
+                await window.miseAPI.updateBrowserSettings(cfg);
+            }
+        };
+    }
+
+    const liveStartupSelect = document.getElementById('setting-startup-behavior');
+    if (liveStartupSelect) {
+        liveStartupSelect.onchange = async () => {
+            const behavior = liveStartupSelect.value;
+            if (window.miseAPI && typeof window.miseAPI.getBrowserSettings === 'function') {
+                const cfg = (await window.miseAPI.getBrowserSettings()) || {};
+                cfg.startup_behavior = behavior;
                 await window.miseAPI.updateBrowserSettings(cfg);
             }
         };

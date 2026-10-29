@@ -87,6 +87,21 @@ export function transferTab(state, source, index, target, requestedIndex) {
             .map(i => (i >= destination ? i + 1 : i));
     }
 
+    if (state.sessionState?.active_tabs) {
+        const sourceActive = state.sessionState.active_tabs[source];
+        if (typeof sourceActive === 'number') {
+            if (sourceActive > index) {
+                state.sessionState.active_tabs[source] = sourceActive - 1;
+            } else if (sourceActive === index) {
+                state.sessionState.active_tabs[source] = Math.max(0, Math.min(sourceActive, workspaces[source].length - 1));
+            }
+        }
+        const targetActive = state.sessionState.active_tabs[target];
+        if (typeof targetActive === 'number' && targetActive >= destination) {
+            state.sessionState.active_tabs[target] = targetActive + 1;
+        }
+    }
+
     const sourceSplit = state.splitStates?.[source];
     if (sourceSplit) {
         if (sourceSplit.primaryIdx === index || sourceSplit.secondaryIdx === index) {
