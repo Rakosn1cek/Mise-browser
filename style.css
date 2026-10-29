@@ -3434,6 +3434,184 @@ body.light-mode .download-action-btn:hover {
     border: 1px solid var(--border);
 }
 
+/* Permission Badge States */
+.status-badge-permissions {
+    cursor: pointer;
+}
+
+.status-badge-permissions:hover {
+    background: var(--selected);
+    border-color: var(--accent);
+}
+
+.status-badge-permissions.permissions-allowed {
+    background: rgba(158, 206, 106, 0.15);
+    color: #9ece6a;
+    border: 1px solid rgba(158, 206, 106, 0.35);
+}
+
+.status-badge-permissions.permissions-denied {
+    background: rgba(247, 118, 142, 0.15);
+    color: #f7768e;
+    border: 1px solid rgba(247, 118, 142, 0.35);
+}
+
+.status-badge-permissions.permissions-locked {
+    background: rgba(187, 154, 247, 0.15);
+    color: #bb9af7;
+    border: 1px solid rgba(187, 154, 247, 0.35);
+}
+
+.status-badge-permissions.permissions-neutral {
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text);
+    opacity: 0.8;
+    border: 1px solid var(--border);
+}
+
+/* Quick-Toggle Permissions Popover */
+.permissions-popover {
+    position: fixed;
+    bottom: 34px;
+    right: 280px;
+    width: 310px;
+    background: var(--bg-sidebar);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+    z-index: 105;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    font-size: 12px;
+}
+
+.permissions-popover-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    background: color-mix(in srgb, var(--accent) 8%, var(--bg-sidebar));
+}
+
+.permissions-popover-title-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    overflow: hidden;
+}
+
+.permissions-popover-icon {
+    color: var(--accent);
+    font-size: 13px;
+    flex-shrink: 0;
+}
+
+.permissions-popover-domain {
+    font-weight: 600;
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 12px;
+}
+
+.permissions-popover-close {
+    background: transparent;
+    border: none;
+    color: var(--text);
+    opacity: 0.6;
+    cursor: pointer;
+    font-size: 12px;
+    padding: 2px 4px;
+    border-radius: 3px;
+}
+
+.permissions-popover-close:hover {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.permissions-popover-body {
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 260px;
+    overflow-y: auto;
+}
+
+.permissions-popover-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 3px 0;
+}
+
+.permissions-popover-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text);
+    font-size: 11px;
+}
+
+.permissions-popover-label i {
+    width: 14px;
+    text-align: center;
+    color: var(--accent);
+}
+
+.permissions-popover-select {
+    background: var(--bg-main);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 3px 6px;
+    font-size: 11px;
+    outline: none;
+    cursor: pointer;
+}
+
+.permissions-popover-select:focus {
+    border-color: var(--accent);
+}
+
+.permissions-private-advisory {
+    text-align: center;
+    padding: 6px 4px;
+}
+
+.permissions-popover-footer {
+    padding: 8px 12px;
+    border-top: 1px solid var(--border);
+    background: rgba(0, 0, 0, 0.15);
+    display: flex;
+    justify-content: flex-end;
+}
+
+.permissions-popover-prefs-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.permissions-popover-prefs-btn:hover {
+    background: var(--selected);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
 /* Partition States */
 .status-badge-partition {
     background: rgba(255, 255, 255, 0.04);

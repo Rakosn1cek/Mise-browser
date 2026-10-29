@@ -851,6 +851,10 @@
                     </div>
                 </div>
                 <div class="status-bar-right">
+                    <span id="StatusBarPermissions" class="status-badge status-badge-permissions permissions-neutral" title="Site Permissions" tabindex="0" role="button" aria-haspopup="dialog" aria-expanded="false" style="display: none;">
+                        <i class="fa-solid fa-sliders"></i>
+                        <span class="status-badge-text">PERMS</span>
+                    </span>
                     <span id="StatusBarSecurity" class="status-badge status-badge-security security-neutral" title="Connection Security State">
                         <i class="fa-solid fa-circle-minus"></i>
                         <span class="status-badge-text">BLANK</span>
@@ -866,6 +870,23 @@
                     </span>
                 </div>
             </footer>
+
+            <!-- Quick-Toggle Permissions Popover -->
+            <div id="PermissionsPopover" class="permissions-popover" style="display: none;" role="dialog" aria-label="Site Permissions">
+                <div class="permissions-popover-header">
+                    <div class="permissions-popover-title-row">
+                        <i class="fa-solid fa-shield-halved permissions-popover-icon"></i>
+                        <span id="PermissionsPopoverDomain" class="permissions-popover-domain">Site Permissions</span>
+                    </div>
+                    <button id="ClosePermissionsPopoverBtn" class="permissions-popover-close" title="Close"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div id="PermissionsPopoverBody" class="permissions-popover-body"></div>
+                <div class="permissions-popover-footer">
+                    <button id="PermissionsPopoverPrefsBtn" class="permissions-popover-prefs-btn">
+                        <i class="fa-solid fa-sliders"></i> Manage All in Preferences
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 

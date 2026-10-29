@@ -4,6 +4,7 @@ import { isSplitActive, applySplitLayout, handleSplitTabSelection, handleTabRemo
 import { 
     setTargetUrl, 
     updateSecurityStatus, 
+    updatePermissionsStatus,
     updateStatusBarFromActiveView, 
     handleGuestInputFocus, 
     handleGuestHintsState,
@@ -215,6 +216,8 @@ export function createWebView(url, currentWS, idx) {
             const currentSelectedIdx = activeListItem ? Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem) : -1;
             if (liveIdx === currentSelectedIdx) {
                 updateSecurityStatus(cleanUrl);
+                const isPrivate = currentWS === 'Private' || getWorkspacePartition(currentWS) === 'MisePrivateProfile' || !!state.globalPrivateModeActive;
+                updatePermissionsStatus(cleanUrl, isPrivate);
             }
         }
     }, listenerOptions);
@@ -242,6 +245,8 @@ export function createWebView(url, currentWS, idx) {
             const currentSelectedIdx = activeListItem ? Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem) : -1;
             if (liveIdx === currentSelectedIdx) {
                 updateSecurityStatus(cleanUrl);
+                const isPrivate = currentWS === 'Private' || getWorkspacePartition(currentWS) === 'MisePrivateProfile' || !!state.globalPrivateModeActive;
+                updatePermissionsStatus(cleanUrl, isPrivate);
             }
         }
         if (webview.__miseDarkReaderEnabled) {

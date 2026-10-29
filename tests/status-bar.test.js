@@ -9,7 +9,7 @@ const { escapeHtml } = require('../modules/utils.js');
 
 console.log('Running Mise status bar throttling and accessibility regression tests...');
 
-let htmlWrites = { security: 0, partition: 0 };
+let htmlWrites = { security: 0, partition: 0, permissions: 0 };
 const elements = {
     StatusBar: { style: {} },
     StatusBarMode: { style: {}, classList: { add() {}, remove() {} }, addEventListener() {} },
@@ -25,7 +25,19 @@ const elements = {
         addEventListener() {},
         get innerHTML() { return this._html || ''; },
         set innerHTML(val) { this._html = val; htmlWrites.partition += 1; }
-    }
+    },
+    StatusBarPermissions: {
+        style: {},
+        addEventListener() {},
+        setAttribute() {},
+        get innerHTML() { return this._html || ''; },
+        set innerHTML(val) { this._html = val; htmlWrites.permissions += 1; }
+    },
+    PermissionsPopover: { style: {}, setAttribute() {} },
+    PermissionsPopoverDomain: { textContent: '' },
+    PermissionsPopoverBody: { innerHTML: '', querySelectorAll: () => [] },
+    ClosePermissionsPopoverBtn: { addEventListener() {} },
+    PermissionsPopoverPrefsBtn: { style: {}, addEventListener() {} }
 };
 
 const mockState = {
@@ -107,7 +119,26 @@ assert.doesNotMatch(elements.StatusBarPartition.innerHTML, /<img/);
 console.log('✓ Security and partition badge updates suppress redundant DOM operations');
 console.log('✓ Status bar badges safely escape special HTML characters');
 
-// 8. Stacking order verification: auto-collapsed and extended sidebar sits above status bar
+// 8. Permissions badge updates and throttling
+context.updatePermissionsStatus('https://example.org', true);
+assert.equal(htmlWrites.permissions, 1, 'Initial private profile call sets permissions badge to locked');
+assert.match(elements.StatusBarPermissions.innerHTML, /LOCKED/);
+
+context.updatePermissionsStatus('https://example.org/other', true);
+assert.equal(htmlWrites.permissions, 1, 'Repeated private profile call is throttled');
+
+context.updatePermissionsStatus('https://example.org', false);
+assert.equal(htmlWrites.permissions, 2, 'Normal profile domain triggers permissions badge update');
+
+context.updatePermissionsStatus('https://example.org/path', false);
+assert.equal(htmlWrites.permissions, 2, 'Duplicate normal profile domain call is throttled');
+
+context.updatePermissionsStatus('about:blank', false);
+assert.equal(elements.StatusBarPermissions.style.display, 'none', 'Blank URL hides permissions badge');
+
+console.log('✓ Permissions badge dirty checking and Zero-Trust private profile indicator verified');
+
+// 9. Stacking order verification: auto-collapsed and extended sidebar sits above status bar
 {
     const cssContent = fs.readFileSync(path.join(__dirname, '../style.css'), 'utf8');
 
