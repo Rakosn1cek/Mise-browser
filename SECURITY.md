@@ -66,9 +66,11 @@ Mise Browser is designed with multiple defence-in-depth layers:
 * **Optional Oversight Scanner:** Active command scanning, heuristic script inspection, Shannon entropy checks, and interactive confirmation paging are provided exclusively by [Oversight](https://github.com/Rakosn1cek/oversight), an independent, optional external utility created by the same author.
 * **Execution at User's Own Risk:** Oversight is not bundled with Mise. Without the standalone Oversight utility installed in the system PATH, commands staged on the clipboard are pasted and run by the user entirely at their own risk, without automated scanning, heuristic checks, or safety prompts.
 
-### D. Permission Sandboxing
-* Sensitive hardware capabilities (microphone, camera, geolocation, and MIDI) are denied by default.
-* Web notifications require explicit user opt-in via the interface toggle button.
+### D. Granular Permission Vault & Sensor Sandboxing
+* **Zero-Trust Sensor Lockdown in Private Profiles:** The volatile private profile (`MisePrivateProfile`) enforces an unconditional sensor block. Requests for camera, microphone, geolocation, clipboard reading, and notifications are immediately denied without prompt interruption, memory leak, or disk persistence. Benign non-identifying display capabilities (`fullscreen`, `pointerLock`, `keyboardLock`, `clipboard-sanitized-write`) remain active for seamless navigation.
+* **Granular Per-Domain Permission Vault:** For persistent workspaces, permissions for camera, microphone, geolocation, clipboard read, and notifications are tracked granularly per domain in `~/.config/mise-browser/permissions.json` using atomic file writes with restrictive `0o600` POSIX permissions.
+* **Separation from Anti-Fingerprinting Trust:** Hardware permissions are strictly decoupled from `trusted_domains`. Marking a domain as trusted for anti-fingerprint and tracker exceptions does not grant silent access to cameras, microphones, or location sensors.
+* **Interactive Prompt Broker & Cross-Origin Guards:** Unrecorded permission requests trigger an interactive prompt brokered by the main process with a 25-second fail-closed timeout. Subframe requests from cross-origin iframes are blocked unconditionally.
 
 ### E. WebRTC IP Handling & Leak Controls
 * **Anti-Leak Interface Binding:** To prevent STUN and ICE queries from leaking local LAN IP addresses or transmitting non-proxied UDP traffic outside of active VPN/proxy tunnels, Mise enforces configurable WebRTC IP handling policies across all browser sessions.

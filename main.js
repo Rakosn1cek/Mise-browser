@@ -36,6 +36,7 @@ const keybinds = require('./keybinds');
 const userContent = require('./userContent');
 const diagnostics = require('./diagnostics');
 const downloads = require('./main/downloads');
+const permissions = require('./main/permissions');
 const config = require('./main/config');
 const {
     CONFIG_DIR,
@@ -275,7 +276,10 @@ function configureAndHardenSession(targetSession) {
         cfg.spellchecker_language || 'en-GB',
         cfg.webrtc_policy || 'default_public_interface_only'
     );
-    configureSessionPermissions(targetSession);
+    permissions.configureSessionPermissions(targetSession, {
+        getMainWindow: () => mainWindow,
+        areNotificationsEnabled: () => globalNotificationsEnabled
+    });
     downloads.configureDownloads(targetSession, {
         getMainWindow: () => mainWindow,
         sendNotification: sendSystemNotification,
@@ -283,41 +287,11 @@ function configureAndHardenSession(targetSession) {
     });
 }
 
-function configureSessionPermissions(targetSession) {
-    targetSession.setPermissionRequestHandler((webContents, permission, callback, details) => {
-        let hostname = '';
-        try { hostname = new URL(webContents.getURL()).hostname; } catch (e) {}
-        const requestingUrl = (details && details.requestingUrl) || webContents.getURL();
-        const topLevelUrl = webContents.getURL();
-        const isMainFrame = !details || details.isMainFrame !== false;
-        const trusted = security.isPermissionTrustedRequest({ requestingUrl, topLevelUrl, isMainFrame });
-        const allowed = security.decidePermission(permission, {
-            trusted,
-            notificationsEnabled: globalNotificationsEnabled
-        });
-        if (!allowed) {
-            diagnostics.logEvent('warn', 'permissions', 'Denied permission', { permission, hostname });
-        }
-        callback(allowed);
-    });
-
-    targetSession.setPermissionCheckHandler((webContents, permission, requestingOrigin, details) => {
-        let hostname = '';
-        try { hostname = new URL(requestingOrigin).hostname; } catch (e) {}
-        const requestingUrl = (details && details.requestingUrl) || requestingOrigin;
-        const topLevelUrl = (details && details.embeddingOrigin) || (webContents && webContents.getURL()) || requestingOrigin;
-        const isMainFrame = !details || details.isMainFrame !== false;
-        const trusted = security.isPermissionTrustedRequest({ requestingUrl, topLevelUrl, isMainFrame });
-        const allowed = security.decidePermission(permission, {
-            trusted,
-            notificationsEnabled: globalNotificationsEnabled
-        });
-        if (!allowed) {
-            diagnostics.logEvent('warn', 'permissions', 'Denied permission', { permission, hostname });
-        }
-        return allowed;
-    });
-}
+// Register permissions vault and interactive prompt broker IPC channels
+permissions.registerPermissionsIpc(ipcMain, {
+    getMainWindow: () => mainWindow,
+    areNotificationsEnabled: () => globalNotificationsEnabled
+});
 
 ipcMain.handle('toggle-global-notifications', (event, enabled) => {
     globalNotificationsEnabled = enabled;

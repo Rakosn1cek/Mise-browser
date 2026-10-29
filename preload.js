@@ -97,6 +97,17 @@ contextBridge.exposeInMainWorld('miseAPI', {
         const handler = (event, isMax) => callback(isMax);
         ipcRenderer.on('window-maximized-state', handler);
         return () => ipcRenderer.removeListener('window-maximized-state', handler);
+    },
+    getPermissionsVault: () => ipcRenderer.invoke('get-permissions-vault'),
+    getDomainPermissions: (domain) => ipcRenderer.invoke('get-domain-permissions', domain),
+    setDomainPermission: (domain, capability, state) => ipcRenderer.invoke('set-domain-permission', domain, capability, state),
+    revokeDomainPermissions: (domain) => ipcRenderer.invoke('revoke-domain-permissions', domain),
+    clearAllPermissions: () => ipcRenderer.invoke('clear-all-permissions'),
+    resolvePermissionPrompt: (requestId, allow, remember) => ipcRenderer.invoke('resolve-permission-prompt', { requestId, allow, remember }),
+    onPermissionPromptRequested: (callback) => {
+        const handler = (event, requestData) => callback(requestData);
+        ipcRenderer.on('permission-prompt-requested', handler);
+        return () => ipcRenderer.removeListener('permission-prompt-requested', handler);
     }
 });
 
