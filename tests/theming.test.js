@@ -127,7 +127,15 @@ console.log('Running Mise theming and accent colour regression tests...');
 
 // 4. Verify style.css dynamic color-mix and absence of hardcoded blue leakage
 {
-    const css = fs.readFileSync(path.join(__dirname, '../style.css'), 'utf8');
+    function readCss(filePath) {
+        const content = fs.readFileSync(filePath, 'utf8');
+        return content.replace(/@import\s+['"]([^'"]+)['"];/g, (_, importPath) => {
+            const resolved = path.resolve(path.dirname(filePath), importPath);
+            return readCss(resolved);
+        });
+    }
+
+    const css = readCss(path.join(__dirname, '../style.css'));
 
     // Selected variable uses color-mix
     assert.match(css, /--selected:\s*color-mix\(in srgb,\s*var\(--accent\)\s*26%,\s*var\(--bg-sidebar\)\);/, 'Root --selected must derive from accent and sidebar using color-mix');

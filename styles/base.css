@@ -1,0 +1,41 @@
+:root {
+    --bg-main: #1a1b26;
+    --bg-sidebar: #16161e;
+    --text: #c0caf5;
+    --accent: #7aa2f7;
+    --border: #24283b;
+    --selected: color-mix(in srgb, var(--accent) 26%, var(--bg-sidebar));
+    --sidebar-opacity: 100%;
+    --overlay-opacity: 100%;
+}
+
+body.light-mode {
+    --border: #bebebe;
+    --selected: color-mix(in srgb, var(--accent) 20%, var(--bg-sidebar));
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--accent);
+}

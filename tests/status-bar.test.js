@@ -140,7 +140,15 @@ console.log('✓ Permissions badge dirty checking and Zero-Trust private profile
 
 // 9. Stacking order verification: auto-collapsed and extended sidebar sits above status bar
 {
-    const cssContent = fs.readFileSync(path.join(__dirname, '../style.css'), 'utf8');
+    function readCss(filePath) {
+        const content = fs.readFileSync(filePath, 'utf8');
+        return content.replace(/@import\s+['"]([^'"]+)['"];/g, (_, importPath) => {
+            const resolved = path.resolve(path.dirname(filePath), importPath);
+            return readCss(resolved);
+        });
+    }
+
+    const cssContent = readCss(path.join(__dirname, '../style.css'));
 
     const sidebarMatch = cssContent.match(/body\.sidebar-auto-collapse\s+#Sidebar\s*\{[^}]*?z-index:\s*(\d+)/);
     assert(sidebarMatch, 'body.sidebar-auto-collapse #Sidebar must define a numeric z-index');

@@ -1,0 +1,681 @@
+#Sidebar {
+    position: relative;
+    width: 260px;
+    min-width: 260px;
+    background-color: color-mix(in srgb, var(--bg-sidebar) var(--sidebar-opacity, 100%), transparent);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    transition: width 0.22s cubic-bezier(0.2, 0, 0, 1),
+                min-width 0.22s cubic-bezier(0.2, 0, 0, 1),
+                max-width 0.22s cubic-bezier(0.2, 0, 0, 1),
+                box-shadow 0.22s ease,
+                padding 0.22s ease;
+}
+
+/* Auto-collapse 36px strip mode */
+body.sidebar-auto-collapse #Sidebar {
+    width: 36px;
+    min-width: 36px;
+    max-width: 36px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    height: 100vh;
+    z-index: 150;
+    padding: 6px 3px;
+    overflow-x: hidden;
+    overflow-y: hidden;
+}
+
+body.sidebar-auto-collapse #right-content {
+    margin-left: 36px;
+    width: calc(100vw - 36px);
+    transition: margin-left 0.22s cubic-bezier(0.2, 0, 0, 1), width 0.22s cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* Smooth expansion on hover, focus-within, or when expanded via shortcut */
+body.sidebar-auto-collapse #Sidebar:hover,
+body.sidebar-auto-collapse #Sidebar.expanded,
+body.sidebar-auto-collapse #Sidebar:focus-within {
+    width: 260px;
+    min-width: 260px;
+    max-width: 260px;
+    padding: 10px;
+    box-shadow: 6px 0 28px rgba(0, 0, 0, 0.65);
+    overflow-y: auto;
+}
+
+/* Pinned (expanded) mode */
+body.sidebar-pinned #Sidebar {
+    position: relative;
+    width: 260px;
+    min-width: 260px;
+    max-width: 260px;
+    padding: 10px;
+    box-shadow: none;
+    overflow-y: auto;
+}
+
+body.sidebar-pinned #right-content {
+    margin-left: 0;
+    width: calc(100vw - 260px);
+}
+
+#Sidebar::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('./assets/icons/Mise-logo256.png');
+    background-repeat: no-repeat;
+    background-position: center 55%;
+    background-size: 140px;
+    opacity: 0.2;
+    z-index: 0;
+    pointer-events: none;
+    transition: opacity 0.22s ease;
+}
+
+body.light-mode #Sidebar::before {
+    opacity: 0.12;
+}
+
+body.sidebar-auto-collapse #Sidebar:not(:hover):not(.expanded):not(:focus-within)::before {
+    opacity: 0;
+}
+
+/* Sidebar Window Controls */
+.window-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 2px 4px 6px 4px;
+    margin-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    transition: padding 0.18s ease, margin 0.18s ease;
+}
+
+.window-controls-brand {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    opacity: 0.9;
+    user-select: none;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.window-controls-brand i {
+    font-size: 12px;
+}
+
+.window-controls-actions {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.win-btn {
+    background-color: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    cursor: pointer;
+    width: 26px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    outline: none;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.win-btn:hover {
+    background-color: var(--selected);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.win-btn.win-close:hover {
+    background-color: #f7768e;
+    border-color: #f7768e;
+    color: #ffffff;
+}
+
+/* Auto-collapse adaptation for 36px strip */
+body.sidebar-auto-collapse #Sidebar:not(:hover):not(.expanded):not(:focus-within) .window-controls {
+    flex-direction: column;
+    padding: 2px 0 6px 0;
+    margin-bottom: 6px;
+    justify-content: center;
+    gap: 4px;
+}
+
+body.sidebar-auto-collapse #Sidebar:not(:hover):not(.expanded):not(:focus-within) .window-controls-brand {
+    display: none;
+}
+
+body.sidebar-auto-collapse #Sidebar:not(:hover):not(.expanded):not(:focus-within) .window-controls-actions {
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+    align-items: center;
+}
+
+body.sidebar-auto-collapse #Sidebar:not(:hover):not(.expanded):not(:focus-within) .win-btn {
+    width: 26px;
+    height: 22px;
+    font-size: 10px;
+}
+
+/* Workspace Header & Badges */
+#WorkspaceHeader {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 3px 2px;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background 0.15s ease;
+    flex-shrink: 0;
+    min-height: 34px;
+}
+
+#WorkspaceHeader:hover {
+    background: var(--selected);
+}
+
+#WorkspaceBadge {
+    width: 28px;
+    min-width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: var(--border);
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 11px;
+    border: 1px solid var(--accent);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    margin: 0 auto;
+    transition: margin 0.2s ease, border-color 0.2s ease;
+}
+
+/* Private workspace subtle Tokyo Night rose styling */
+body.workspace-private {
+    --bg-main: color-mix(in srgb, #f7768e 6%, #1a1b26);
+    --bg-sidebar: color-mix(in srgb, #f7768e 8%, #16161e);
+}
+
+body.light-mode.workspace-private {
+    --bg-main: color-mix(in srgb, #f7768e 8%, #f2f4f8);
+    --bg-sidebar: color-mix(in srgb, #f7768e 10%, #e6e9ef);
+}
+
+body.workspace-private #Sidebar {
+    border-right: 1px solid color-mix(in srgb, #f7768e 35%, var(--border));
+}
+
+body.workspace-private #WorkspaceBadge {
+    background: color-mix(in srgb, #f7768e 18%, var(--bg-sidebar));
+    border-color: #f7768e;
+    color: #f7768e;
+}
+
+body.workspace-private #WorkspaceHeader:hover {
+    background: color-mix(in srgb, #f7768e 15%, var(--bg-sidebar));
+}
+
+#WorkspaceLabel {
+    color: var(--text);
+    font-weight: bold;
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    opacity: 0;
+    max-width: 0;
+    display: none;
+    transition: opacity 0.18s ease, max-width 0.18s ease;
+}
+
+body.sidebar-auto-collapse #Sidebar:hover #WorkspaceLabel,
+body.sidebar-auto-collapse #Sidebar.expanded #WorkspaceLabel,
+body.sidebar-auto-collapse #Sidebar:focus-within #WorkspaceLabel,
+body.sidebar-pinned #WorkspaceLabel {
+    opacity: 1;
+    max-width: 180px;
+    display: inline-block;
+}
+
+body.sidebar-auto-collapse #Sidebar:hover #WorkspaceBadge,
+body.sidebar-auto-collapse #Sidebar.expanded #WorkspaceBadge,
+body.sidebar-auto-collapse #Sidebar:focus-within #WorkspaceBadge,
+body.sidebar-pinned #WorkspaceBadge {
+    margin: 0;
+}
+
+.nav-action-layout {
+    display: flex;
+    gap: 6px;
+    padding: 0;
+    align-items: center;
+    opacity: 0;
+    max-height: 0;
+    overflow: hidden;
+    pointer-events: none;
+    transition: opacity 0.18s ease, max-height 0.18s ease, margin 0.18s ease;
+    margin: 0;
+}
+
+body.sidebar-auto-collapse #Sidebar:hover .nav-action-layout,
+body.sidebar-auto-collapse #Sidebar.expanded .nav-action-layout,
+body.sidebar-auto-collapse #Sidebar:focus-within .nav-action-layout,
+body.sidebar-pinned .nav-action-layout {
+    opacity: 1;
+    max-height: 40px;
+    pointer-events: auto;
+    margin: 6px 0;
+}
+
+.nav-icon-button {
+    background-color: transparent;
+    color: var(--text);
+    font-weight: bold;
+    font-size: 12px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px;
+    cursor: pointer;
+    width: 28px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    outline: none;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.nav-icon-button:hover, .nav-icon-button:focus {
+    background-color: var(--selected);
+    border-color: var(--accent);
+}
+
+#update-indicator-btn {
+    color: var(--accent);
+    border-color: var(--accent);
+    animation: updatePulse 2.5s infinite ease-in-out;
+}
+
+@keyframes updatePulse {
+    0%, 100% {
+        box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 40%, transparent);
+    }
+    50% {
+        box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 0%, transparent);
+    }
+}
+
+#TabList {
+    list-style: none;
+    flex-grow: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    margin-top: 4px;
+    background-color: transparent;
+    border: none;
+    outline: none;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+#TabList li {
+    padding: 6px 8px;
+    border-radius: 6px;
+    font-size: 13px;
+    color: var(--text);
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    outline: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+    transition: background 0.15s ease, border-color 0.15s ease, width 0.2s ease, padding 0.2s ease;
+    border: 1px solid transparent;
+}
+
+/* Collapsed tab appearance in 36px strip */
+body.sidebar-auto-collapse #Sidebar:not(:hover):not(.expanded):not(:focus-within) #TabList li {
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    margin: 0 auto;
+    justify-content: center;
+    border-radius: 6px;
+}
+
+body.sidebar-auto-collapse #Sidebar:not(:hover):not(.expanded):not(:focus-within) #TabList li .tab-title,
+body.sidebar-auto-collapse #Sidebar:not(:hover):not(.expanded):not(:focus-within) #TabList li .tab-sleep-badge,
+body.sidebar-auto-collapse #Sidebar:not(:hover):not(.expanded):not(:focus-within) #TabList li .tab-media-badge,
+body.sidebar-auto-collapse #Sidebar:not(:hover):not(.expanded):not(:focus-within) #TabList li .tab-pin-badge,
+body.sidebar-auto-collapse #Sidebar:not(:hover):not(.expanded):not(:focus-within) #TabList li .tab-shield-btn {
+    display: none !important;
+}
+
+/* Tab Favicon Wrapper */
+.tab-favicon-wrapper {
+    width: 18px;
+    height: 18px;
+    min-width: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.tab-favicon {
+    width: 16px;
+    height: 16px;
+    border-radius: 2px;
+    object-fit: contain;
+    display: block;
+}
+
+.tab-fallback-icon {
+    font-size: 12px;
+    color: var(--accent);
+    display: none;
+}
+
+/* Mini indicators for 36px collapsed strip */
+.tab-sleep-dot {
+    display: none;
+    position: absolute;
+    bottom: -3px;
+    right: -3px;
+    font-size: 7px;
+    color: var(--accent);
+    background: var(--bg-sidebar);
+    border-radius: 50%;
+    padding: 1px;
+}
+
+.tab-audio-dot {
+    display: none;
+    position: absolute;
+    top: -3px;
+    right: -3px;
+    font-size: 7px;
+    color: #9ece6a;
+    background: var(--bg-sidebar);
+    border-radius: 50%;
+    padding: 1px;
+}
+
+.tab-pin-dot {
+    display: none;
+    position: absolute;
+    top: -3px;
+    left: -3px;
+    font-size: 7px;
+    color: #e0af68;
+    background: var(--bg-sidebar);
+    border-radius: 50%;
+    padding: 1px;
+}
+
+/* Dynamic Tab Jump Index Badge */
+.tab-index-badge {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.7);
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    background-color: var(--accent);
+    color: var(--bg-main);
+    font-size: 10px;
+    font-weight: 800;
+    line-height: 16px;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+    z-index: 6;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+#Sidebar:focus-within .tab-index-badge,
+body.show-tab-badges .tab-index-badge {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+#Sidebar:focus-within .tab-index-badge ~ .tab-favicon,
+body.show-tab-badges .tab-index-badge ~ .tab-favicon,
+#Sidebar:focus-within .tab-index-badge ~ .tab-fallback-icon,
+body.show-tab-badges .tab-index-badge ~ .tab-fallback-icon {
+    opacity: 0.15;
+}
+
+body.sidebar-auto-collapse #Sidebar:not(:hover):not(.expanded):not(:focus-within) #TabList li.tab-sleeping .tab-sleep-dot {
+    display: block;
+}
+
+body.sidebar-auto-collapse #Sidebar:not(:hover):not(.expanded):not(:focus-within) #TabList li .tab-audio-dot {
+    display: block;
+}
+
+body.sidebar-auto-collapse #Sidebar:not(:hover):not(.expanded):not(:focus-within) #TabList li.tab-pinned .tab-pin-dot {
+    display: block;
+}
+
+/* Sleeping tab styling */
+#TabList li.tab-sleeping .tab-favicon {
+    opacity: 0.55;
+    filter: grayscale(40%);
+}
+
+#TabList li.selected {
+    background-color: var(--selected);
+    color: var(--text);
+    border-color: var(--accent);
+}
+
+#TabList li:hover {
+    background-color: color-mix(in srgb, var(--accent) 15%, transparent);
+}
+
+#TabList li:focus {
+    border-color: var(--accent);
+    outline: none;
+}
+
+#TabList li:focus:not(.selected) {
+    border-color: var(--accent);
+    background-color: color-mix(in srgb, var(--accent) 16%, transparent);
+    outline: 1px dashed var(--accent);
+    outline-offset: -1px;
+}
+
+.bottom-theme-layout {
+    display: flex;
+    gap: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+    margin-top: auto;
+    align-items: center;
+    justify-content: flex-start;
+    transition: padding 0.18s ease;
+}
+
+body.sidebar-auto-collapse #Sidebar:not(:hover):not(.expanded):not(:focus-within) .bottom-theme-layout {
+    flex-direction: column;
+    gap: 6px;
+    border-top: none;
+    padding-top: 4px;
+    align-items: center;
+    justify-content: center;
+}
+
+body.sidebar-auto-collapse #Sidebar:not(:hover):not(.expanded):not(:focus-within) .bottom-theme-layout button:not(#pin-sidebar-btn) {
+    display: none;
+}
+
+#pin-sidebar-btn.pin-active {
+    color: var(--accent);
+    border-color: var(--accent);
+    background: var(--selected);
+}
+
+#reader-view-btn.active,
+#dark-reader-btn.active {
+    color: var(--accent);
+    border-color: var(--accent);
+}
+
+/* Sidebar Clock Widget */
+.sidebar-clock {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    margin-top: 6px;
+    margin-bottom: 4px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--text);
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    font-variant-numeric: tabular-nums;
+    user-select: none;
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.sidebar-clock:hover {
+    background: var(--selected);
+    border-color: var(--accent);
+}
+
+.sidebar-clock i {
+    color: var(--accent);
+    font-size: 11px;
+}
+
+.sidebar-clock-date {
+    opacity: 0.8;
+}
+
+.sidebar-clock-time {
+    color: var(--accent);
+    font-weight: 700;
+    margin-left: auto;
+}
+
+body.sidebar-auto-collapse #Sidebar:not(:hover):not(.expanded):not(:focus-within) #SidebarClock {
+    display: none !important;
+}
+
+#TabList li {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.tab-title {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: left;
+}
+
+#TabList li.tab-sleeping {
+    opacity: 0.65;
+}
+
+#TabList li.tab-sleeping:hover {
+    opacity: 0.9;
+}
+
+#TabList li.tab-sleeping.selected {
+    opacity: 1;
+}
+
+#TabList li.tab-sleeping .tab-title {
+    font-style: italic;
+}
+
+.tab-sleep-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: var(--accent, #7aa2f7);
+    margin-right: 6px;
+    opacity: 0.85;
+}
+
+.tab-shield-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 2px 4px;
+    margin-left: auto;
+    margin-right: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    outline: none;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+
+.tab-shield-btn:hover {
+    background-color: var(--selected);
+}
+
+.shield-on {
+    color: var(--accent);
+}
+
+.shield-off {
+    color: #565f89;
+    opacity: 0.7;
+}
+
+#TabList li.tab-pinned {
+    background: rgba(224, 175, 104, 0.08);
+    border-color: rgba(224, 175, 104, 0.25);
+}
+
+#TabList li.tab-pinned.selected {
+    background: color-mix(in srgb, var(--accent) 20%, transparent);
+    border-color: var(--accent);
+}

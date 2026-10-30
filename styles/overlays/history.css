@@ -1,0 +1,133 @@
+/* Actionable History Overlay */
+
+/* Actionable History Overlay */
+#HistoryOverlay {
+    display: none; /* Hidden by default */
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.4);
+    z-index: 2000;
+    justify-content: center;
+    align-items: flex-start;
+    padding-top: 60px;
+}
+
+.history-card {
+    width: 600px;
+    background-color: color-mix(in srgb, var(--bg-sidebar) var(--overlay-opacity, 100%), transparent);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    max-height: 450px;
+    overflow: hidden;
+}
+
+.history-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    border-bottom: 1px solid var(--border);
+}
+
+#HistorySearchInput {
+    flex-grow: 1;
+    background-color: var(--bg-main);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 10px;
+    font-size: 14px;
+    outline: none;
+}
+
+#HistorySearchInput:focus {
+    border-color: var(--accent);
+}
+
+.history-action-btn {
+    background-color: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px;
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    outline: none;
+    font-size: 14px;
+    transition: all 0.15s ease;
+}
+
+.history-action-btn:hover, .history-action-btn:focus {
+    background-color: var(--selected);
+    border-color: var(--accent);
+}
+
+#PurgeHistoryBtn:hover {
+    color: #ef4444; /* Clean red warning on hover */
+    border-color: #ef4444;
+}
+
+.history-results {
+    list-style: none;
+    color: var(--text);
+    font-size: 14px;
+    max-height: 350px;
+    overflow-y: auto;
+    outline: none;
+    padding: 10px;
+}
+
+.history-item {
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+}
+
+.history-item:hover,
+.history-item.selected {
+    background-color: var(--selected);
+    border-left: 3px solid var(--accent);
+}
+
+.history-item-title {
+    font-weight: bold;
+    font-size: 13px;
+    color: var(--text);
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.history-item-url {
+    font-size: 11px;
+    color: var(--text);
+    opacity: 0.6;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.history-empty {
+    color: var(--text);
+    opacity: 0.5;
+    text-align: center;
+    padding: 30px;
+    font-size: 13px;
+}

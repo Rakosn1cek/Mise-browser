@@ -1,0 +1,118 @@
+/* Workspace Dashboard Overlay */
+
+#DashboardOverlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: color-mix(in srgb, var(--bg-main) var(--overlay-opacity, 100%), transparent);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    color: var(--text);
+    z-index: 500;
+    display: none;
+    flex-direction: column;
+    padding: 30px;
+    overflow-y: auto;
+    outline: none;
+}
+
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+}
+
+.dashboard-title {
+    font-size: 20px;
+    font-weight: bold;
+    color: var(--accent);
+}
+
+.workspace-tree-node {
+    margin-bottom: 15px;
+    padding: 10px;
+    background-color: var(--bg-sidebar);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+}
+
+.workspace-tree-header {
+    font-weight: bold;
+    font-size: 16px;
+    padding: 6px;
+    border-radius: 4px;
+    cursor: pointer;
+    outline: none;
+}
+
+.workspace-tree-header.dashboard-selected {
+    background-color: var(--selected);
+}
+
+.dashboard-tab-item {
+    padding: 6px 10px;
+    font-size: 14px;
+    color: var(--text);
+    opacity: 0.8;
+    border-left: 2px solid var(--border);
+    margin-left: 10px;
+    margin-top: 4px;
+    border-radius: 4px;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    outline: none;
+}
+
+.dashboard-tab-item.dashboard-selected {
+    background-color: var(--selected);
+    opacity: 1;
+}
+
+.dashboard-action-btn {
+    background-color: var(--selected);
+    color: var(--text);
+    border: 1px solid var(--accent);
+    border-radius: 4px;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+#WorkspaceInputBox {
+    display: none;
+    gap: 8px;
+    margin-bottom: 20px;
+    background-color: var(--bg-sidebar);
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+}
+
+#NewWorkspaceTitleInput {
+    flex-grow: 1;
+    background-color: var(--bg-main);
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 6px 10px;
+    border-radius: 4px;
+    outline: none;
+}
+
+
+/* Dashboard Action Specific Modifiers */
+.dashboard-action-btn.submit-btn {
+    border-color: var(--accent);
+}
+
+.dashboard-action-btn.cancel-btn {
+    background-color: transparent;
+    border-color: var(--border);
+}
+

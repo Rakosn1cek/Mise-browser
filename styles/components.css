@@ -1,0 +1,677 @@
+/* Standalone Components, Modals, and Floating Prompts */
+
+/* Empty Workspace Welcome Screen */
+#EmptyWorkspaceWelcome {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--bg-main);
+    color: var(--text);
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 40px;
+    z-index: 100;
+}
+
+.welcome-card {
+    background-color: var(--bg-sidebar);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 40px;
+    max-width: 650px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+}
+
+.welcome-logo {
+    font-size: 48px;
+    color: var(--accent);
+    margin-bottom: 16px;
+}
+
+.welcome-title {
+    font-size: 28px;
+    font-weight: bold;
+    color: var(--text);
+    margin-bottom: 8px;
+}
+
+.welcome-subtitle {
+    font-size: 16px;
+    color: var(--accent);
+    font-weight: 600;
+    margin-bottom: 16px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.welcome-desc {
+    font-size: 14px;
+    color: var(--text);
+    opacity: 0.7;
+    margin-bottom: 30px;
+    line-height: 1.5;
+}
+
+.welcome-shortcuts-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    width: 100%;
+}
+
+.welcome-shortcut-card {
+    background-color: var(--bg-main);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.15s ease;
+}
+
+.welcome-shortcut-card:hover {
+    background-color: var(--selected);
+    border-color: var(--accent);
+    transform: translateY(-2px);
+}
+
+.welcome-shortcut-card .shortcut-key {
+    background-color: var(--selected);
+    color: var(--accent);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-family: monospace;
+    font-weight: bold;
+    font-size: 13px;
+}
+
+.welcome-shortcut-card .shortcut-desc {
+    font-size: 13px;
+    color: var(--text);
+    opacity: 0.9;
+}
+
+.welcome-versions {
+    margin-top: 24px;
+    font-size: 11px;
+    font-family: monospace;
+    color: var(--accent);
+    opacity: 0.85;
+    background-color: var(--bg-main);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 6px 14px;
+    display: inline-block;
+    user-select: text;
+}
+
+/* Native Download Shelf & Item Cards */
+#DownloadShelf {
+    height: 52px;
+    min-height: 52px;
+    max-height: 52px;
+    background-color: color-mix(in srgb, var(--bg-sidebar) var(--overlay-opacity, 100%), transparent);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    gap: 12px;
+    z-index: 100;
+    flex-shrink: 0;
+    box-sizing: border-box;
+}
+
+.download-shelf-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text);
+    font-size: 12px;
+    font-weight: 600;
+    opacity: 0.85;
+    white-space: nowrap;
+    user-select: none;
+}
+
+.download-shelf-header-icon {
+    color: var(--accent);
+    font-size: 13px;
+}
+
+.download-shelf-items {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    overflow-x: auto;
+    overflow-y: hidden;
+    height: 100%;
+    padding: 4px 0;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+}
+
+.download-shelf-items::-webkit-scrollbar {
+    height: 4px;
+}
+
+.download-shelf-items::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 2px;
+}
+
+.download-shelf-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.download-shelf-icon-btn {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text);
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    opacity: 0.75;
+    transition: background-color 0.15s ease, opacity 0.15s ease, border-color 0.15s ease;
+}
+
+.download-shelf-icon-btn:hover {
+    opacity: 1;
+    background-color: var(--selected);
+    border-color: var(--border);
+}
+
+.download-card {
+    height: 38px;
+    min-width: 250px;
+    max-width: 310px;
+    background-color: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    padding: 3px 8px;
+    gap: 8px;
+    flex-shrink: 0;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+body.light-mode .download-card {
+    background-color: rgba(0, 0, 0, 0.04);
+}
+
+.download-card:hover {
+    border-color: var(--accent);
+}
+
+.download-card.completed {
+    cursor: pointer;
+}
+
+.download-card.completed:hover {
+    background-color: rgba(255, 255, 255, 0.07);
+}
+
+body.light-mode .download-card.completed:hover {
+    background-color: rgba(0, 0, 0, 0.07);
+}
+
+.download-card.cancelled {
+    opacity: 0.6;
+}
+
+.download-card.interrupted {
+    border-color: #f7768e;
+}
+
+.download-card-icon {
+    font-size: 15px;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    flex-shrink: 0;
+}
+
+.download-card-content {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 1px;
+}
+
+.download-card-title {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+}
+
+.download-card-meta {
+    display: flex;
+    align-items: center;
+    font-size: 10.5px;
+    color: var(--text);
+    opacity: 0.75;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+}
+
+.download-card-progress-track {
+    width: 100%;
+    height: 2px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 1px;
+    overflow: hidden;
+    margin-top: 2px;
+}
+
+body.light-mode .download-card-progress-track {
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.download-card-progress-bar {
+    height: 100%;
+    background-color: var(--accent);
+    transition: width 0.25s ease;
+}
+
+.download-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+}
+
+.download-action-btn {
+    background: transparent;
+    border: none;
+    color: var(--text);
+    width: 22px;
+    height: 22px;
+    border-radius: 3px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    opacity: 0.7;
+    transition: opacity 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+}
+
+.download-action-btn:hover {
+    opacity: 1;
+    background-color: rgba(255, 255, 255, 0.12);
+}
+
+body.light-mode .download-action-btn:hover {
+    background-color: rgba(0, 0, 0, 0.08);
+}
+
+.download-action-btn.cancel-btn:hover {
+    color: #f7768e;
+}
+
+/* Share Modal Overlay */
+.share-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(4px);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.share-modal-window {
+    width: 1020px;
+    height: 840px;
+    max-width: 90vw;
+    max-height: 85vh;
+    background: var(--bg-main, #1a1b26);
+    border: 1px solid var(--border-color, #24283b);
+    border-radius: 8px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.share-modal-header {
+    height: 38px;
+    padding: 0 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg-sidebar, #16161e);
+    border-bottom: 1px solid var(--border-color, #24283b);
+    font-size: 13px;
+    color: var(--text, #c0caf5);
+    flex-shrink: 0;
+}
+
+.share-modal-content {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    position: relative;
+}
+
+.share-modal-content webview {
+    flex: 1;
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: inline-flex;
+}
+
+/* Ephemeral Tab Peek (Glance) Modal Overlay */
+.peek-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(4px);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.peek-modal-window {
+    width: 1080px;
+    height: 860px;
+    max-width: 92vw;
+    max-height: 88vh;
+    background: var(--bg-main, #1a1b26);
+    border: 1px solid var(--border-color, #24283b);
+    border-radius: 8px;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.55);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.peek-modal-header {
+    height: 40px;
+    padding: 0 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg-sidebar, #16161e);
+    border-bottom: 1px solid var(--border-color, #24283b);
+    font-size: 13px;
+    color: var(--text, #c0caf5);
+    flex-shrink: 0;
+    gap: 12px;
+}
+
+.peek-modal-title-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    flex: 1;
+}
+
+.peek-modal-badge {
+    background: #bb9af7;
+    color: #1a1b26;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.peek-modal-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text, #c0caf5);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 450px;
+}
+
+.peek-modal-url {
+    font-size: 11px;
+    color: var(--text-muted, #565f89);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex-shrink: 1;
+}
+
+.peek-modal-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.peek-action-btn {
+    background: color-mix(in srgb, var(--accent) 15%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+    color: var(--accent);
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.15s ease;
+}
+
+.peek-action-btn:hover {
+    background: var(--accent, #7aa2f7);
+    color: #1a1b26;
+}
+
+.peek-modal-content {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    position: relative;
+    background: var(--bg-main, #1a1b26);
+}
+
+.peek-modal-content webview {
+    flex: 1;
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: inline-flex;
+}
+
+/* Interactive Permission Prompt Banner */
+.permission-prompt-banner {
+    position: fixed;
+    bottom: 34px;
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: 720px;
+    width: calc(100% - 320px);
+    background: var(--bg-sidebar);
+    border: 1px solid var(--accent);
+    border-radius: 6px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.55);
+    z-index: 110;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    gap: 16px;
+    font-size: 12px;
+    animation: promptSlideUp 0.18s ease-out;
+}
+
+@keyframes promptSlideUp {
+    from {
+        opacity: 0;
+        transform: translate(-50%, 10px);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
+}
+
+.permission-prompt-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    overflow: hidden;
+}
+
+.permission-prompt-icon {
+    font-size: 16px;
+    color: var(--accent);
+    flex-shrink: 0;
+}
+
+.permission-prompt-text {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    overflow: hidden;
+    color: var(--text);
+}
+
+.permission-prompt-domain {
+    font-weight: 700;
+    color: var(--accent);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.permission-prompt-message {
+    color: var(--text);
+    opacity: 0.9;
+    white-space: nowrap;
+}
+
+.permission-prompt-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.permission-prompt-btn {
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text);
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+    white-space: nowrap;
+}
+
+.permission-prompt-btn.allow:hover {
+    background: rgba(158, 206, 106, 0.15);
+    border-color: #9ece6a;
+    color: #9ece6a;
+}
+
+.permission-prompt-btn.allow.primary {
+    background: var(--accent);
+    color: var(--bg-main);
+    border-color: var(--accent);
+}
+
+.permission-prompt-btn.allow.primary:hover {
+    filter: brightness(1.1);
+}
+
+.permission-prompt-btn.deny:hover {
+    background: rgba(247, 118, 142, 0.15);
+    border-color: #f7768e;
+    color: #f7768e;
+}
+
+.permission-prompt-btn.deny.danger {
+    border-color: rgba(247, 118, 142, 0.45);
+    color: #f7768e;
+}
+
+.permission-prompt-btn.deny.danger:hover {
+    background: rgba(247, 118, 142, 0.25);
+    border-color: #f7768e;
+}
+
+/* Floating HUD Toast Notification */
+.mise-toast-notification {
+    position: fixed;
+    bottom: 38px;
+    left: 50%;
+    transform: translateX(-50%) translateY(8px);
+    background: var(--bg-sidebar);
+    color: var(--text);
+    border: 1px solid var(--accent);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+    padding: 7px 16px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 99999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.mise-toast-notification.visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}

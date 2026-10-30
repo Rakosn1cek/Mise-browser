@@ -1,0 +1,10 @@
+/* Overlays Master Aggregator */
+
+@import './overlays/dashboard.css';
+@import './overlays/commandPalette.css';
+@import './overlays/preferences.css';
+@import './overlays/history.css';
+@import './overlays/findBar.css';
+@import './overlays/notes.css';
+@import './overlays/bookmarks.css';
+@import './overlays/diagnostics.css';

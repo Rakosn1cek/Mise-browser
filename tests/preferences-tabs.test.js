@@ -254,7 +254,14 @@ assert.equal(toggled, true, 'Enter key on checkbox must dispatch change event');
 console.log('✓ Keyboard Enter key toggles checkbox state and dispatches change event');
 
 // 8. Verify CSS visual focus indicators for toggles, sliders, and rows
-const css = fs.readFileSync(path.join(__dirname, '../style.css'), 'utf8');
+function readCss(filePath) {
+    const content = fs.readFileSync(filePath, 'utf8');
+    return content.replace(/@import\s+['"]([^'"]+)['"];/g, (_, importPath) => {
+        const resolved = path.resolve(path.dirname(filePath), importPath);
+        return readCss(resolved);
+    });
+}
+const css = readCss(path.join(__dirname, '../style.css'));
 assert.match(css, /\.toggle-switch\s+input:focus-visible\s*\+\s*\.toggle-slider\s*\{[^}]*outline:/, 'Toggle switches must have focus-visible outline');
 assert.match(css, /\.theme-slider:focus-visible\s*\{[^}]*outline:/, 'Range sliders must have focus-visible outline');
 assert.match(css, /\.slider-group:focus-within\s+\.slider-val-badge/, 'Slider value badges must highlight on focus-within');

@@ -26,7 +26,8 @@ Mise combines the rendering capabilities of Chromium with Electron and native sy
 1. **Main Process (`main.js`)**: Manages window lifecycles, memory pressure monitoring, partition isolation, native configurations, and keybinding translation.
 2. **Renderer Process (`renderer.js`)**: Powers the vertical tab sidebar, overlays, link hints, notes, and user interface.
 3. **Webview Subsystem (`modules/webview.js` & `modules/webview/`)**: Orchestrates individual web pages inside sandboxed `<webview>` tags assigned to specific workspace container partitions. Organised into modular controllers for guest lifecycles (`tabLifecycle.js`), memory-saving tab hibernation (`sleepManager.js`), dual-split layouts (`splitView.js`), and audio controls (`audioManager.js`).
-4. **Local Configuration (`~/.config/mise-browser/`)**: Human-readable JSON files and Markdown notes stored safely in your home directory.
+4. **Style Sheet Subsystem (`style.css` & `styles/`)**: Vanilla CSS modularised into domain-specific sheets (`styles/base.css`, `styles/layout.css`, `styles/sidebar.css`, `styles/statusbar.css`, `styles/components.css`, `styles/overlays.css`, and `styles/overlays/*`) aggregated cleanly via native imports without build tool overhead.
+5. **Local Configuration (`~/.config/mise-browser/`)**: Human-readable JSON files and Markdown notes stored safely in your home directory.
 
 ---
 
