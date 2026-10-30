@@ -120,3 +120,14 @@ You can also trigger hibernation manually via the Command Palette (**Ctrl + P**)
 
 - **Hibernate Inactive Tabs**: Immediately detaches all eligible idle background tabs across all workspaces.
 - **Wake All Tabs in Workspace**: Re-instantiates all sleeping tabs in the active workspace at once.
+
+---
+
+## Modular Architecture & Scope Isolation
+
+Tab dormancy, background scanning, and re-hydration are isolated inside the dedicated sleep manager module (`modules/webview/sleepManager.js`). 
+
+Decoupling the sleep manager from the main renderer orchestrator ensures that:
+- Periodic background scanners do not retain long-lived closures over the broader browser UI state or temporary webview caches.
+- V8 garbage collection runs cleanly via `compactMemory()` after batch hibernation without trapped lexical scopes.
+- State serialisation (`originOf`, `sanitizeSnapshot`, `attachSnapshot`) remains strictly bounded within `modules/sleepSnapshot.js`.
