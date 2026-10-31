@@ -77,7 +77,10 @@ import {
     executeDashboardItemActivation, 
     showWorkspaceInputDialog, 
     hideWorkspaceInputDialog, 
-    processWorkspaceCreation 
+    processWorkspaceCreation,
+    promptWorkspaceCreation,
+    promptWorkspaceRename,
+    confirmWorkspaceDeletion
 } from './modules/overlays/dashboard.js';
 
 import { 
@@ -159,6 +162,9 @@ import {
 window.toggleDarkReaderOnActiveTab = toggleDarkReaderOnActiveTab;
 window.toggleReaderViewOnActiveTab = toggleReaderViewOnActiveTab;
 window.toggleDashboardView = toggleDashboardView;
+window.promptWorkspaceCreation = promptWorkspaceCreation;
+window.promptWorkspaceRename = promptWorkspaceRename;
+window.confirmWorkspaceDeletion = confirmWorkspaceDeletion;
 window.displayAddressOverlay = displayAddressOverlay;
 window.triggerLinkHints = triggerLinkHints;
 window.toggleInPageSearch = toggleInPageSearch;
@@ -692,6 +698,11 @@ function setupEventListeners() {
     document.getElementById('cancel-ws-btn').addEventListener('click', hideWorkspaceInputDialog);
     
     document.getElementById('NewWorkspaceTitleInput').addEventListener('keydown', (e) => {
+        // The prompt lives inside the dashboard overlay, whose own keydown handler
+        // maps Enter and Escape to tree navigation. Committing a name must not also
+        // activate whichever node happens to be selected, so stop the keystroke here
+        // just as the inline rename input does.
+        e.stopPropagation();
         if (e.key === 'Enter') processWorkspaceCreation();
         else if (e.key === 'Escape') hideWorkspaceInputDialog();
     });
@@ -749,6 +760,9 @@ function setupEventListeners() {
             case 'open-transient-share': openTransientShareModal(args[0]); break;
             case 'toggle-address': displayAddressOverlay(); break;
             case 'toggle-dashboard': toggleDashboardView(); break;
+            case 'create-workspace': promptWorkspaceCreation(); break;
+            case 'rename-workspace': promptWorkspaceRename(); break;
+            case 'delete-workspace': confirmWorkspaceDeletion(); break;
             case 'reload-active-tab': {
                 const activeWv = getActiveWebview();
                 if (activeWv) activeWv.reload();

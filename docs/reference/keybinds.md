@@ -133,3 +133,21 @@ Keybindings are decoupled from source code and managed by `keybinds.js`. You can
 - **Modifiers**: Use `Ctrl`, `Shift`, or `Meta` combined with `+` (avoid `Alt` to prevent conflicts with Linux tiling window managers).
 - **Multiple Bindings**: Assign an array of strings to bind multiple shortcuts to the same action (e.g. `["Ctrl+W", "Ctrl+D"]`).
 - **Reloading**: Customisations apply immediately upon restarting Mise, or automatically when modifying bindings via the internal configuration bridge.
+
+### Workspace Actions Without Default Chords
+
+These actions ship unbound to avoid claiming chords in an already crowded map. Each is reachable from the Command Palette (`Ctrl + P`) and can be bound in `keybinds.json` like any other action:
+
+| Action | Description |
+| :--- | :--- |
+| `create-workspace` | Opens the workspace name prompt and switches to the new container on save |
+| `rename-workspace` | Prefills the prompt with the active workspace name and migrates its tabs on save |
+| `delete-workspace` | Deletes the active workspace, confirming first when it still holds open tabs |
+
+```json
+{
+  "create-workspace": "Ctrl+Shift+C",
+  "rename-workspace": "Ctrl+Shift+R",
+  "delete-workspace": "Ctrl+Shift+Delete"
+}
+```

@@ -53,6 +53,42 @@ export const COMMAND_DEFINITIONS = [
         action: () => window.toggleDashboardView && window.toggleDashboardView()
     },
     {
+        id: 'create-workspace',
+        title: 'Create New Workspace',
+        desc: 'Create a fresh container isolated workspace and switch to it',
+        details: 'Opens the dashboard name prompt and registers a new workspace, which receives its own persistent Electron container partition so cookies, web storage and cache stay separate from every other workspace.',
+        tip: 'Bind a chord to create-workspace in keybinds.json to spawn workspaces without opening the dashboard first.',
+        category: 'Tabs & Navigation',
+        icon: 'fa-solid fa-folder-plus',
+        actionId: 'create-workspace',
+        keywords: ['workspace', 'new', 'create', 'add', 'container', 'partition'],
+        action: () => window.promptWorkspaceCreation && window.promptWorkspaceCreation()
+    },
+    {
+        id: 'rename-workspace',
+        title: 'Rename Active Workspace',
+        desc: 'Rename the active workspace and migrate its tabs to a new partition',
+        details: 'Opens the dashboard name prompt prefilled with the active workspace name. Renaming migrates the tabs and per tab metadata to the container partition derived from the new name.',
+        tip: 'The permanent Private workspace is a reserved name and cannot be renamed in either direction.',
+        category: 'Tabs & Navigation',
+        icon: 'fa-solid fa-pen-to-square',
+        actionId: 'rename-workspace',
+        keywords: ['workspace', 'rename', 'container', 'partition', 'label'],
+        action: () => window.promptWorkspaceRename && window.promptWorkspaceRename()
+    },
+    {
+        id: 'delete-workspace',
+        title: 'Delete Active Workspace',
+        desc: 'Remove the active workspace together with its tabs and container',
+        details: 'Disposes of every webview belonging to the targeted workspace and deletes its persisted state. A confirmation prompt guards the action whenever the workspace still holds open tabs.',
+        tip: 'Select a workspace node in the dashboard first to delete that workspace rather than the active one.',
+        category: 'Tabs & Navigation',
+        icon: 'fa-solid fa-trash-can',
+        actionId: 'delete-workspace',
+        keywords: ['workspace', 'delete', 'remove', 'close', 'container'],
+        action: () => window.confirmWorkspaceDeletion && window.confirmWorkspaceDeletion()
+    },
+    {
         id: 'toggle-history',
         title: 'Toggle Actionable History',
         desc: 'Search, filter by domain, or purge browsing history records',

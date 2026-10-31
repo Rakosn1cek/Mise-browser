@@ -35,6 +35,9 @@ The Command Centre gives you rapid, searchable access to all Mise operations, in
 | **New Blank Tab** | `Ctrl+T` | `spawn-tab` | Creates an isolated webview in the current workspace. |
 | **Focus Status Bar Address Bar** | `Ctrl+L` | `toggle-address` | Focuses status bar address bar with upward query completion and search aliases. |
 | **Toggle Workspace Dashboard** | `Ctrl+Shift+W` | `toggle-dashboard` | Full-page hierarchical tree of all workspaces, tabs, and windows. |
+| **Create New Workspace** | Unbound by default | `create-workspace` | Opens the name prompt and registers a workspace with its own container partition. |
+| **Rename Active Workspace** | Unbound by default | `rename-workspace` | Renames the active workspace and migrates its tabs to the new partition. |
+| **Delete Active Workspace** | Unbound by default | `delete-workspace` | Removes the active workspace and its tabs, with a confirmation prompt when tabs remain. |
 | **Toggle Actionable History** | `Ctrl+Shift+H` | `toggle-history` | Local history ledger with domain-level filtering and record purging. |
 | **Toggle Link Hints Overlay** | `Ctrl+F` | `trigger-hints` | Letter tags overlaid on clickable webpage links for keyboard browsing. |
 | **Trigger Glance Hints (Preview)** | `Ctrl+G` / `gh` | `trigger-glance` | Ephemeral Tab Peek link hints for transient modal previews without creating tabs. |

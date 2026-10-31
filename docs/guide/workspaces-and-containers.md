@@ -48,10 +48,15 @@ The Workspace Dashboard provides a structural tree view of all open tabs across 
 - **Tree Navigation**: Use the **Up** and **Down** arrow keys to traverse workspaces and tabs, and press **Enter** to jump directly to any tab.
 - **Workspace Creation**: Click the **+ New Workspace** button or use the input prompt to create a new isolated container workspace.
 - **Workspace Renaming**: Double-click any workspace header to edit its name inline.
+- **Keyboard Driven Management**: The Command Palette (`Ctrl + P`) exposes `create-workspace`, `rename-workspace` and `delete-workspace`, which reuse the very same prompt and validation rules as the buttons above. Bind them to chords in `keybinds.json` if you prefer never to leave the keyboard.
 - **Drag-and-Drop Organization**:
   - Reorder tabs within a workspace by dragging them up or down.
   - Move tabs between different workspaces by dragging a tab item and dropping it onto another workspace node. When moved across workspaces, the tab automatically adapts to the target container partition.
 - **Tab & Workspace Deletion**: Press **Delete** or **Ctrl + W** on any highlighted node in the dashboard tree to close tabs or remove an empty workspace.
+
+### Deleting From a Command
+
+The `delete-workspace` command acts on the workspace selected in the dashboard tree, or on the active workspace when the dashboard is closed. It refuses to touch the permanent **Private** workspace, refuses to remove the last remaining workspace, and asks for confirmation when the target still holds open tabs, because those tabs are discarded with the container.
 
 ---
 

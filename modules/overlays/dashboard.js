@@ -1,5 +1,5 @@
 import { state } from '../state.js';
-import { focusActiveWebview, getWorkspacePartition, isReservedWorkspaceName } from '../utils.js';
+import { focusActiveWebview, getWorkspacePartition, isReservedWorkspaceName, showNotificationToast } from '../utils.js';
 import { renderWorkspaceUI, switchTabFocus, spawnTabWithUrl, spawnNewBlankTab, handleTabRemoval, moveTabState, destroyGuestWebview } from '../webview.js';
 import { transferTab } from '../tabTransfer.js';
 
@@ -392,17 +392,25 @@ export function executeDashboardItemActivation(payload) {
     }
 }
 
-export function showWorkspaceInputDialog() {
+// Set when the shared name prompt was opened for a rename rather than a
+// creation, so the keyboard commands and the "+ New Workspace" button keep using
+// one input and one set of validation rules.
+let pendingRenameTarget = null;
+
+export function showWorkspaceInputDialog(initialValue) {
     const container = document.getElementById('WorkspaceInputBox');
     const input = document.getElementById('NewWorkspaceTitleInput');
     if (container && input) {
         container.style.display = 'flex';
-        input.value = '';
+        // Callers may pass a click event straight through, so only honour strings.
+        input.value = typeof initialValue === 'string' ? initialValue : '';
         input.focus();
+        input.select();
     }
 }
 
 export function hideWorkspaceInputDialog() {
+    pendingRenameTarget = null;
     document.getElementById('WorkspaceInputBox').style.display = 'none';
     document.getElementById('DashboardOverlay').focus();
 }
@@ -410,6 +418,15 @@ export function hideWorkspaceInputDialog() {
 export function processWorkspaceCreation() {
     const input = document.getElementById('NewWorkspaceTitleInput');
     const name = input.value.trim();
+    const renameTarget = pendingRenameTarget;
+    pendingRenameTarget = null;
+
+    if (renameTarget && name && renameTarget !== name && state.sessionState.workspaces[renameTarget]) {
+        renameWorkspace(renameTarget, name);
+        hideWorkspaceInputDialog();
+        return;
+    }
+
     if (!name || name.toLowerCase() === 'private' || isReservedWorkspaceName(name)) {
         hideWorkspaceInputDialog();
         return;
@@ -428,4 +445,62 @@ export function processWorkspaceCreation() {
     } else {
         hideWorkspaceInputDialog();
     }
+}
+
+// The dashboard honours its own tree selection when it is open, otherwise the
+// commands act on the workspace the user is currently browsing.
+function resolveCommandTargetWorkspace(wsName) {
+    if (wsName) return wsName;
+    if (state.dashboardActive) {
+        const selectedItem = state.dashboardItems[state.dashboardSelectionIdx];
+        if (selectedItem && selectedItem.payload && selectedItem.payload[0] === 'workspace') {
+            return selectedItem.payload[1];
+        }
+    }
+    return state.sessionState.current_workspace;
+}
+
+function revealWorkspaceNamePrompt(initialValue, renameTarget) {
+    if (!state.dashboardActive) toggleDashboardView();
+    pendingRenameTarget = renameTarget || null;
+    showWorkspaceInputDialog(initialValue);
+}
+
+export function promptWorkspaceCreation() {
+    revealWorkspaceNamePrompt('', null);
+}
+
+export function promptWorkspaceRename(wsName) {
+    const target = resolveCommandTargetWorkspace(wsName);
+    if (isReservedWorkspaceName(target)) {
+        showNotificationToast('The Private workspace cannot be renamed.', 'fa-shield-halved');
+        return;
+    }
+    if (!state.sessionState.workspaces || !state.sessionState.workspaces[target]) return;
+    revealWorkspaceNamePrompt(target, target);
+}
+
+export function confirmWorkspaceDeletion(wsName) {
+    const target = resolveCommandTargetWorkspace(wsName);
+    const workspaces = state.sessionState.workspaces || {};
+
+    if (isReservedWorkspaceName(target)) {
+        showNotificationToast('The Private workspace is protected from deletion.', 'fa-shield-halved');
+        return false;
+    }
+    if (!workspaces[target]) return false;
+    if (Object.keys(workspaces).length <= 1) {
+        showNotificationToast('At least one workspace must remain available.', 'fa-circle-info');
+        return false;
+    }
+
+    const openTabs = (workspaces[target] || []).length;
+    const question = openTabs > 0
+        ? `Delete workspace "${target}" together with its ${openTabs} open tab${openTabs === 1 ? '' : 's'}? This cannot be undone.`
+        : `Delete the empty workspace "${target}"?`;
+
+    if (typeof window.confirm === 'function' && !window.confirm(question)) return false;
+
+    deleteWorkspace(target);
+    return true;
 }
