@@ -1,6 +1,6 @@
 import { state } from '../state.js';
 import { escapeHtml, focusActiveWebview, isSafeTabUrl } from '../utils.js';
-import { spawnTabWithUrl } from '../webview.js';
+import { spawnTabWithUrl, switchTabFocus } from '../webview.js';
 
 let notesSaveTimeout = null;
 
@@ -75,7 +75,9 @@ export function renderNotesView() {
         setTimeout(() => {
             textarea.focus();
             const len = textarea.value.length;
-            textarea.setSelectionRange(len, len);
+            if (typeof textarea.setSelectionRange === 'function') {
+                textarea.setSelectionRange(len, len);
+            }
         }, 30);
     } else {
         mdView.innerHTML = parseMarkdownToHtml(textarea.value);
@@ -294,9 +296,48 @@ export function handleNotesGlobalKeyDown(e) {
         return;
     }
 
+    // Cyclic focus trap between interactive controls in notes overlay
+    if (e.key === 'Tab' && typeof document !== 'undefined') {
+        const editBtn = document.getElementById('ToggleEditNotesBtn');
+        const expandBtn = document.getElementById('ToggleExpandNotesBtn');
+        const externalBtn = document.getElementById('OpenExternalNotesBtn');
+        const closeBtn = document.getElementById('CloseNotesBtn');
+        const contentEl = state.isEditingNotes
+            ? document.getElementById('NotesTextArea')
+            : document.getElementById('NotesMarkdownView');
+
+        const links = (!state.isEditingNotes && contentEl)
+            ? Array.from(contentEl.querySelectorAll('a'))
+            : [];
+        const focusable = [contentEl, ...links, editBtn, expandBtn, externalBtn, closeBtn].filter(Boolean);
+
+        if (focusable.length > 0) {
+            e.preventDefault();
+            e.stopPropagation();
+            const activeEl = document.activeElement;
+            const currentIdx = focusable.indexOf(activeEl);
+
+            if (e.shiftKey) {
+                const prevIdx = (currentIdx <= 0) ? focusable.length - 1 : currentIdx - 1;
+                focusable[prevIdx].focus();
+            } else {
+                const nextIdx = (currentIdx === -1 || currentIdx >= focusable.length - 1) ? 0 : currentIdx + 1;
+                focusable[nextIdx].focus();
+            }
+        }
+        return;
+    }
+
     if (!state.isEditingNotes) {
+        const activeEl = typeof document !== 'undefined' ? document.activeElement : null;
+        const isInteractiveControl = activeEl && (
+            activeEl.tagName === 'BUTTON' ||
+            activeEl.tagName === 'A' ||
+            activeEl.id === 'CloseNotesBtn'
+        );
+
         // Preview mode shortcuts
-        if (e.key === 'e' || e.key === 'i' || e.key === 'Enter') {
+        if (!isInteractiveControl && (e.key === 'e' || e.key === 'i' || e.key === 'Enter')) {
             e.preventDefault();
             e.stopPropagation();
             state.isEditingNotes = true;
@@ -304,7 +345,7 @@ export function handleNotesGlobalKeyDown(e) {
             return;
         }
 
-        if (e.key === 'f') {
+        if (e.key === 'f' && !isInteractiveControl) {
             e.preventDefault();
             e.stopPropagation();
             toggleExpandNotesOverlay();
@@ -399,41 +440,53 @@ export function toggleNotesOverlay() {
             window.toggleBookmarksOverlay();
         }
 
-        // Release webview focus to ensure window captures keystrokes
-        if (document.activeElement && typeof document.activeElement.blur === 'function') {
-            document.activeElement.blur();
+        // Hide webviews to ensure guest process releases keyboard focus cleanly
+        const container = document.getElementById('webview-container');
+        if (container) {
+            const allWebviews = container.querySelectorAll('webview');
+            allWebviews.forEach((wv) => wv.style.display = 'none');
         }
-        window.focus();
 
-        const finishOpening = (content) => {
-            textarea.value = content || '';
-            renderNotesView();
-            overlay.style.display = 'flex';
-            setTimeout(() => {
-                if (state.isEditingNotes) {
-                    textarea.focus();
-                } else if (mdView) {
-                    mdView.focus();
-                }
-            }, 50);
-        };
+        // Show overlay and render content immediately to prevent keypress lag
+        overlay.style.display = 'flex';
+        renderNotesView();
+
+        if (state.isEditingNotes) {
+            textarea.focus();
+        } else if (mdView) {
+            mdView.focus();
+        }
 
         if (window.miseAPI && typeof window.miseAPI.readNotes === 'function') {
             window.miseAPI.readNotes().then((content) => {
-                finishOpening(content);
+                if (state.notesActive && content !== undefined && content !== null) {
+                    const changed = textarea.value !== content;
+                    textarea.value = content;
+                    if (changed) {
+                        updateWordCountBadge(content);
+                        if (!state.isEditingNotes && mdView) {
+                            mdView.innerHTML = parseMarkdownToHtml(content);
+                        }
+                    }
+                }
             }).catch((err) => {
                 console.error("Failed to load notes:", err);
-                finishOpening(textarea.value);
             });
-        } else {
-            finishOpening(textarea.value);
         }
     } else {
         if (window.miseAPI && typeof window.miseAPI.saveNotes === 'function') {
             window.miseAPI.saveNotes(textarea.value);
         }
         overlay.style.display = 'none';
-        focusActiveWebview();
+        if (!state.dashboardActive && !state.bookmarksActive && !state.historyActive && !state.paletteActive) {
+            const activeListItem = document.querySelector('#TabList li.selected');
+            const currentIdx = activeListItem ? Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem) : 0;
+            if (typeof switchTabFocus === 'function') {
+                switchTabFocus(currentIdx);
+            } else {
+                focusActiveWebview();
+            }
+        }
     }
 }
 

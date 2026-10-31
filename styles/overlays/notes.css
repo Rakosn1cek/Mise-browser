@@ -89,7 +89,19 @@
     outline: none;
 }
 
+#NotesMarkdownView:focus-visible {
+    outline: 1px solid var(--accent);
+    outline-offset: -1px;
+}
+
+#NotesMarkdownView a:focus-visible {
+    outline: 2px solid var(--accent);
+    border-radius: 2px;
+}
+
 .close-btn {
+    background: transparent;
+    border: none;
     cursor: pointer;
     font-size: 18px;
     color: var(--text);
@@ -100,8 +112,10 @@
     transition: color 0.15s ease;
 }
 
-.close-btn:hover {
+.close-btn:hover,
+.close-btn:focus-visible {
     color: #ef4444;
+    outline: none;
 }
 
 #NotesTextArea {
@@ -218,9 +232,11 @@
     transition: all 0.15s ease;
 }
 
-.notes-mode-btn:hover {
+.notes-mode-btn:hover,
+.notes-mode-btn:focus-visible {
     background: var(--selected);
     border-color: var(--accent);
+    outline: none;
 }
 
 body.zen-mode #Sidebar {
