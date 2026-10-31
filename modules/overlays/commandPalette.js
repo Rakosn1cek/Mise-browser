@@ -79,39 +79,6 @@ export const COMMAND_DEFINITIONS = [
         action: () => window.toggleStatusBar && window.toggleStatusBar()
     },
     {
-        id: 'toggle-clock',
-        title: 'Toggle Clock & Date Display',
-        desc: 'Show or hide the live clock in the status bar and sidebar',
-        details: 'Toggles the real-time clock widget displaying local date and time in the bottom status bar and vertical sidebar.',
-        tip: 'Click on the clock at any time to cycle between date and time, time only, and seconds.',
-        category: 'Preferences & System',
-        icon: 'fa-regular fa-clock',
-        keywords: ['clock', 'time', 'date', 'watch', 'hours', 'minutes', 'status'],
-        action: () => window.toggleClock && window.toggleClock()
-    },
-    {
-        id: 'cycle-clock-format',
-        title: 'Cycle Clock Format (Date & Time / Time / Seconds)',
-        desc: 'Switch between date and time, compact time, or time with seconds',
-        details: 'Rotates the clock presentation mode between standard UK date and time, compact time-only, and high-precision seconds.',
-        tip: 'You can also click the clock widget directly in the status bar or sidebar.',
-        category: 'Preferences & System',
-        icon: 'fa-solid fa-stopwatch',
-        keywords: ['clock', 'format', 'seconds', 'time', 'date', 'cycle', 'switch'],
-        action: () => window.cycleClockFormat && window.cycleClockFormat()
-    },
-    {
-        id: 'toggle-window-controls',
-        title: 'Toggle Window Controls (Minimise, Maximise, Close)',
-        desc: 'Show or hide window action buttons in the sidebar for desktop environments',
-        details: 'Displays window management buttons at the top of the vertical sidebar. Ideal for desktop environments such as KDE or GNOME where native window buttons are hidden or disabled.',
-        tip: 'Enable this if your desktop environment hides title bars on maximised windows.',
-        category: 'Preferences & System',
-        icon: 'fa-regular fa-window-restore',
-        keywords: ['window', 'controls', 'minimize', 'minimise', 'maximize', 'maximise', 'close', 'restore', 'buttons', 'kde', 'gnome'],
-        action: () => window.toggleWindowControls && window.toggleWindowControls()
-    },
-    {
         id: 'trigger-hints',
         title: 'Toggle Link Hints Overlay',
         desc: 'Display letter tags over clickable links for mouse-free browsing',
@@ -574,6 +541,30 @@ export const COMMAND_DEFINITIONS = [
         keywords: ['mute', 'audio', 'sound', 'volume', 'silence', 'global', 'all', 'panictab'],
         action: () => window.toggleGlobalAudioMute && window.toggleGlobalAudioMute()
     },
+    {
+        id: 'toggle-dark-reader',
+        title: 'Toggle Dark Reader on Active Tab',
+        desc: 'Invert web page colours into high-contrast dark theme preserving media',
+        details: 'Applies zero-dependency GPU-accelerated dark styling to the active tab and split panes.',
+        tip: 'Press Ctrl+D or d in NORMAL mode to toggle Dark Reader instantly.',
+        category: 'Tools & Notes',
+        icon: 'fa-solid fa-circle-half-stroke',
+        actionId: 'toggle-dark-reader',
+        keywords: ['dark', 'reader', 'mode', 'invert', 'contrast', 'night'],
+        action: () => window.toggleDarkReaderOnActiveTab && window.toggleDarkReaderOnActiveTab()
+    },
+    {
+        id: 'toggle-reader-view',
+        title: 'Toggle Reader View on Active Tab',
+        desc: 'Distil web article into clean, distraction-free reading layout',
+        details: 'Extracts article text, byline, and media using in-engine Mozilla Readability with custom themes and typography.',
+        tip: 'Press F9 or e in NORMAL mode to toggle Reader View instantly.',
+        category: 'Tools & Notes',
+        icon: 'fa-solid fa-book-open',
+        actionId: 'toggle-reader-view',
+        keywords: ['reader', 'view', 'read', 'article', 'distill', 'clean', 'typography', 'book'],
+        action: () => window.toggleReaderViewOnActiveTab && window.toggleReaderViewOnActiveTab()
+    },
 
     // User Scripts & Styles
     {
@@ -636,12 +627,45 @@ export const COMMAND_DEFINITIONS = [
         action: () => togglePreferencesView()
     },
     {
+        id: 'toggle-clock',
+        title: 'Toggle Clock & Date Display',
+        desc: 'Show or hide the live clock in the status bar and sidebar',
+        details: 'Toggles the real-time clock widget displaying local date and time in the bottom status bar and vertical sidebar.',
+        tip: 'Click on the clock at any time to cycle between date and time, time only, and seconds.',
+        category: 'Preferences & System',
+        icon: 'fa-regular fa-clock',
+        keywords: ['clock', 'time', 'date', 'watch', 'hours', 'minutes', 'status'],
+        action: () => window.toggleClock && window.toggleClock()
+    },
+    {
+        id: 'cycle-clock-format',
+        title: 'Cycle Clock Format (Date & Time / Time / Seconds)',
+        desc: 'Switch between date and time, compact time, or time with seconds',
+        details: 'Rotates the clock presentation mode between standard UK date and time, compact time-only, and high-precision seconds.',
+        tip: 'You can also click the clock widget directly in the status bar or sidebar.',
+        category: 'Preferences & System',
+        icon: 'fa-solid fa-stopwatch',
+        keywords: ['clock', 'format', 'seconds', 'time', 'date', 'cycle', 'switch'],
+        action: () => window.cycleClockFormat && window.cycleClockFormat()
+    },
+    {
+        id: 'toggle-window-controls',
+        title: 'Toggle Window Controls (Minimise, Maximise, Close)',
+        desc: 'Show or hide window action buttons in the sidebar for desktop environments',
+        details: 'Displays window management buttons at the top of the vertical sidebar. Ideal for desktop environments such as KDE or GNOME where native window buttons are hidden or disabled.',
+        tip: 'Enable this if your desktop environment hides title bars on maximised windows.',
+        category: 'Preferences & System',
+        icon: 'fa-regular fa-window-restore',
+        keywords: ['window', 'controls', 'minimize', 'minimise', 'maximize', 'maximise', 'close', 'restore', 'buttons', 'kde', 'gnome'],
+        action: () => window.toggleWindowControls && window.toggleWindowControls()
+    },
+    {
         id: 'toggle-private-mode',
         title: 'Switch to Private Workspace',
         desc: 'Jump into dedicated volatile in-memory workspace',
         details: 'Switches to the isolated Private workspace where cookies, cache, and history are kept in volatile memory and purged upon exit.',
         tip: 'Press Ctrl+Shift+P to jump directly into the Private workspace.',
-        category: 'Navigation & Workspaces',
+        category: 'Preferences & System',
         icon: 'fa-solid fa-user-secret',
         actionId: 'toggle-private-mode',
         shortcut: 'Ctrl+Shift+P',
@@ -669,30 +693,6 @@ export const COMMAND_DEFINITIONS = [
                 await window.testCleanGoogleSignIn();
             }
         }
-    },
-    {
-        id: 'toggle-dark-reader',
-        title: 'Toggle Dark Reader on Active Tab',
-        desc: 'Invert web page colours into high-contrast dark theme preserving media',
-        details: 'Applies zero-dependency GPU-accelerated dark styling to the active tab and split panes.',
-        tip: 'Press Ctrl+D or d in NORMAL mode to toggle Dark Reader instantly.',
-        category: 'Web Interaction',
-        icon: 'fa-solid fa-circle-half-stroke',
-        actionId: 'toggle-dark-reader',
-        keywords: ['dark', 'reader', 'mode', 'invert', 'contrast', 'night'],
-        action: () => window.toggleDarkReaderOnActiveTab && window.toggleDarkReaderOnActiveTab()
-    },
-    {
-        id: 'toggle-reader-view',
-        title: 'Toggle Reader View on Active Tab',
-        desc: 'Distil web article into clean, distraction-free reading layout',
-        details: 'Extracts article text, byline, and media using in-engine Mozilla Readability with custom themes and typography.',
-        tip: 'Press F9 or e in NORMAL mode to toggle Reader View instantly.',
-        category: 'Web Interaction',
-        icon: 'fa-solid fa-book-open',
-        actionId: 'toggle-reader-view',
-        keywords: ['reader', 'view', 'read', 'article', 'distill', 'clean', 'typography', 'book'],
-        action: () => window.toggleReaderViewOnActiveTab && window.toggleReaderViewOnActiveTab()
     },
     {
         id: 'toggle-theme',
@@ -1645,7 +1645,9 @@ export async function openCommandPalette() {
     const filterContainer = document.getElementById('PaletteCategoryFilters');
     if (filterContainer) {
         filterContainer.querySelectorAll('.palette-filter-chip').forEach(chip => {
-            chip.classList.toggle('active', chip.dataset.category === 'all');
+            const isAll = (chip.dataset.category === 'all');
+            chip.classList.toggle('active', isAll);
+            chip.setAttribute('tabindex', isAll ? '0' : '-1');
         });
     }
 
@@ -1901,52 +1903,168 @@ export function updatePaletteVisualSelection(scrollIntoView = true) {
     renderPaletteInspector(activeCmd);
 }
 
+export function getCommandPaletteFocusableElements() {
+    const overlay = document.getElementById('CommandPaletteOverlay');
+    if (!overlay) return [];
+
+    const input = document.getElementById('PaletteInput');
+    const activeChip = document.querySelector('#PaletteCategoryFilters .palette-filter-chip.active');
+    const list = document.getElementById('PaletteList');
+    const execBtn = document.getElementById('PaletteInspectorExecuteBtn');
+    const closeBtn = document.getElementById('ClosePaletteBtn');
+
+    const elements = [];
+    if (input && isVisibleControl(input)) elements.push(input);
+    if (activeChip && isVisibleControl(activeChip)) elements.push(activeChip);
+    if (list && isVisibleControl(list)) elements.push(list);
+    if (execBtn && isVisibleControl(execBtn)) elements.push(execBtn);
+    if (closeBtn && isVisibleControl(closeBtn)) elements.push(closeBtn);
+    return elements;
+}
+
+export function cyclePaletteCategory(direction = 1) {
+    const filterContainer = document.getElementById('PaletteCategoryFilters');
+    if (!filterContainer) return;
+    const chips = Array.from(filterContainer.querySelectorAll('.palette-filter-chip'));
+    if (chips.length === 0) return;
+
+    const currentActive = filterContainer.querySelector('.palette-filter-chip.active');
+    const currentIndex = currentActive ? chips.indexOf(currentActive) : 0;
+    const nextIndex = (currentIndex + direction + chips.length) % chips.length;
+    const nextChip = chips[nextIndex];
+
+    chips.forEach(c => {
+        const isMatch = (c === nextChip);
+        c.classList.toggle('active', isMatch);
+        c.setAttribute('tabindex', isMatch ? '0' : '-1');
+    });
+    activeCategoryFilter = nextChip.dataset.category || 'all';
+
+    const input = document.getElementById('PaletteInput');
+    filterPaletteCommands(input ? input.value : '');
+    if (document.activeElement && document.activeElement.classList.contains('palette-filter-chip')) {
+        nextChip.focus();
+    }
+}
+
+if (typeof window !== 'undefined') {
+    window.cyclePaletteCategory = cyclePaletteCategory;
+}
+
+let lastHandledPaletteEvent = null;
+
 export function handlePaletteInputNavigation(e) {
-    const total = state.paletteMatches.length;
+    if (!e || e === lastHandledPaletteEvent) return;
+    lastHandledPaletteEvent = e;
+
+    const total = (state.paletteMatches && state.paletteMatches.length) || 0;
+    const input = document.getElementById('PaletteInput');
+    const isInputFocused = (document.activeElement === input);
+
+    if (e.key === 'Tab') {
+        const focusables = getCommandPaletteFocusableElements();
+        if (focusables.length === 0) return;
+
+        e.preventDefault();
+        const currentActive = document.activeElement;
+        const currentIndex = focusables.indexOf(currentActive);
+
+        if (!e.shiftKey) {
+            const nextIndex = (currentIndex === -1 || currentIndex === focusables.length - 1)
+                ? 0
+                : currentIndex + 1;
+            focusables[nextIndex].focus();
+        } else {
+            const prevIndex = (currentIndex <= 0)
+                ? focusables.length - 1
+                : currentIndex - 1;
+            focusables[prevIndex].focus();
+        }
+        return;
+    }
+
     if (e.key === 'Escape') {
         e.preventDefault();
         e.stopPropagation();
         closeCommandPalette();
         return;
-    } else if (e.key === 'ArrowDown') {
+    }
+
+    if (e.key === 'ArrowDown') {
         e.preventDefault();
         if (total > 0) {
             state.paletteSelectionIdx = (state.paletteSelectionIdx + 1) % total;
             updatePaletteVisualSelection(true);
         }
-    } else if (e.key === 'ArrowUp') {
+        return;
+    }
+
+    if (e.key === 'ArrowUp') {
         e.preventDefault();
         if (total > 0) {
             state.paletteSelectionIdx = (state.paletteSelectionIdx - 1 + total) % total;
             updatePaletteVisualSelection(true);
         }
-    } else if (e.key === 'PageDown') {
+        return;
+    }
+
+    if (e.key === 'PageDown') {
         e.preventDefault();
         if (total > 0) {
             state.paletteSelectionIdx = Math.min(total - 1, state.paletteSelectionIdx + 5);
             updatePaletteVisualSelection(true);
         }
-    } else if (e.key === 'PageUp') {
+        return;
+    }
+
+    if (e.key === 'PageUp') {
         e.preventDefault();
         if (total > 0) {
             state.paletteSelectionIdx = Math.max(0, state.paletteSelectionIdx - 5);
             updatePaletteVisualSelection(true);
         }
-    } else if (e.key === 'Home') {
-        e.preventDefault();
-        if (total > 0) {
-            state.paletteSelectionIdx = 0;
-            updatePaletteVisualSelection(true);
+        return;
+    }
+
+    if (e.key === 'Home') {
+        if (!isInputFocused) {
+            e.preventDefault();
+            if (total > 0) {
+                state.paletteSelectionIdx = 0;
+                updatePaletteVisualSelection(true);
+            }
         }
-    } else if (e.key === 'End') {
-        e.preventDefault();
-        if (total > 0) {
-            state.paletteSelectionIdx = total - 1;
-            updatePaletteVisualSelection(true);
+        return;
+    }
+
+    if (e.key === 'End') {
+        if (!isInputFocused) {
+            e.preventDefault();
+            if (total > 0) {
+                state.paletteSelectionIdx = total - 1;
+                updatePaletteVisualSelection(true);
+            }
         }
-    } else if (e.key === 'Enter') {
+        return;
+    }
+
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+        if (!isInputFocused) {
+            e.preventDefault();
+            cyclePaletteCategory(e.key === 'ArrowRight' ? 1 : -1);
+        }
+        return;
+    }
+
+    if (e.key === 'Enter') {
+        const closeBtn = document.getElementById('ClosePaletteBtn');
+        if (document.activeElement === closeBtn) {
+            e.preventDefault();
+            closeCommandPalette();
+            return;
+        }
         e.preventDefault();
-        executePaletteSelection(document.getElementById('PaletteInput').value.trim());
+        executePaletteSelection(input ? input.value.trim() : '');
     }
 }
 
@@ -2001,12 +2119,14 @@ export function setupCommandPaletteOverlayListeners() {
                 closeCommandPalette();
             }
         });
-        overlay.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                e.preventDefault();
-                e.stopPropagation();
-                closeCommandPalette();
-            }
+        overlay.addEventListener('keydown', handlePaletteInputNavigation);
+        overlay.onkeydown = handlePaletteInputNavigation;
+    }
+
+    const input = document.getElementById('PaletteInput');
+    if (input) {
+        input.addEventListener('input', () => {
+            filterPaletteCommands(input.value);
         });
     }
 
@@ -2026,17 +2146,14 @@ export function setupCommandPaletteOverlayListeners() {
             if (!chip) return;
             activeCategoryFilter = chip.dataset.category || 'all';
             filterContainer.querySelectorAll('.palette-filter-chip').forEach(c => {
-                c.classList.toggle('active', c === chip);
+                const isMatch = (c === chip);
+                c.classList.toggle('active', isMatch);
+                c.setAttribute('tabindex', isMatch ? '0' : '-1');
             });
-            const input = document.getElementById('PaletteInput');
-            filterPaletteCommands(input ? input.value : '');
-            if (input) input.focus();
+            const inputEl = document.getElementById('PaletteInput');
+            filterPaletteCommands(inputEl ? inputEl.value : '');
+            if (inputEl) inputEl.focus();
         });
-    }
-
-    const listContainer = document.getElementById('PaletteList');
-    if (listContainer) {
-        listContainer.addEventListener('keydown', handlePaletteInputNavigation);
     }
 }
 

@@ -10,9 +10,10 @@ The Command Centre gives you rapid, searchable access to all Mise operations, in
 
 - Press **Ctrl + P** from anywhere in Mise.
 - Type to fuzzy-search commands, shortcuts, and keywords dynamically.
-- Click category filter chips (**All**, **Tabs & Navigation**, **Split View**, **Performance**, **Tools & Notes**, **Scripts & Styles**, **Preferences**) to filter actions instantly.
-- Use **Up** and **Down** arrow keys (or hover with your cursor) to inspect any command.
-- View the right-hand **Feature Inspector** card for in-depth architecture descriptions, default and customized keybindings, and workflow tips.
+- Click category filter chips (**All**, **Tabs & Navigation**, **Split View**, **Performance**, **Tools & Notes**, **Scripts & Styles**, **Preferences**) or use **Left** and **Right** arrow keys when the list is focused to switch categories.
+- Use **Up** and **Down** arrow keys anywhere in the overlay (whether focused on the search input, list, execute button, or close button) to navigate commands.
+- Press **Tab** to cycle focus cleanly between the search input, command list, execute button, and close button (trapped within the overlay, cycling back to the top without escaping).
+- View the right-hand **Feature Inspector** card for in-depth architecture descriptions, default and customised keybindings, and workflow tips.
 - Press **Enter** or click **Execute Action** to run the selected action.
 - Press **Escape** or click the close button to dismiss the overlay and return focus to your webpage.
 
@@ -87,6 +88,7 @@ The Command Centre gives you rapid, searchable access to all Mise operations, in
 | **Toggle Global Media Playback** | `Ctrl+Shift+0` / `F10` | `toggle-global-media` | Global play and pause toggle across all active media streams. |
 | **Toggle Tab Audio Mute** | `Ctrl+Shift+M` / `F8` | `toggle-tab-audio-mute` | Mute or unmute audio output on active tab without pausing playback. |
 | **Toggle Global Audio Mute** | `M` (Normal mode) | `toggle-global-audio-mute` | Mute or unmute audio output across all tabs and workspaces simultaneously. |
+| **Toggle Dark Reader on Active Tab** | `Ctrl+D` / `d` | `toggle-dark-reader` | Inverts web page colours into high-contrast dark theme. |
 | **Toggle Reader View on Active Tab** | `F9` | `toggle-reader-view` | Distils webpage into a clean, distraction-free reading layout. |
 
 ### User Scripts & Styles
@@ -103,6 +105,9 @@ The Command Centre gives you rapid, searchable access to all Mise operations, in
 | Command Title | Shortcut | Action ID | Description |
 | :--- | :--- | :--- | :--- |
 | **Open Preferences** | `Ctrl+H` | `toggle-help` | Full-page settings view for GPU switches, memory caps, and themes. |
+| **Toggle Clock & Date Display** | — | `toggle-clock` | Shows or hides the live clock in the status bar and sidebar. |
+| **Cycle Clock Format** | — | `cycle-clock-format` | Rotates clock format between standard date and time, compact time, and seconds. |
+| **Toggle Window Controls** | — | `toggle-window-controls` | Shows or hides window management buttons at the top of the sidebar. |
 | **Switch to Private Workspace** | `Ctrl+Shift+P` | `toggle-private-mode` | Switches to the isolated Private workspace with volatile in-memory storage. |
 | **Open Diagnostics & Health Hub** | — | `open-diagnostics` | View local system health, runtime memory breakdown, and sanitised logs. |
 | **Toggle Diagnostics Recording** | — | `toggle-diagnostics-recording` | Toggles local in-memory event recording for reproduction and bug reports. |
