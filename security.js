@@ -6,10 +6,31 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const { app, ipcMain } = require('electron');
+const { hasBotManagerCookie } = require('./main/botBlockRetry');
+const {
+    buildLowEntropyHints,
+    buildFullVersionList,
+    applyClientHints,
+    createAcceptChStore
+} = require('./main/clientHints');
 
 let blockerInstance = null;
 let blockerInitialisation = null;
 let ipcInitialized = false;
+let botBlockObserver = null;
+
+// Accept-CH is remembered per session (i.e. per workspace profile), so a site that
+// asked for high-entropy hints in one workspace cannot change requests in another.
+const acceptChStores = new WeakMap();
+function getAcceptChStore(targetSession) {
+    if (!targetSession) return createAcceptChStore();
+    let store = acceptChStores.get(targetSession);
+    if (!store) {
+        store = createAcceptChStore();
+        acceptChStores.set(targetSession, store);
+    }
+    return store;
+}
 
 // Domains the user has explicitly marked as trusted (e.g. their bank, their
 // usual checkout sites). Anti-fingerprinting and ad/tracker blocking are
@@ -294,6 +315,8 @@ function hardenSession(targetSession, spellLang = 'en-GB', webrtcPolicy = 'defau
 
     attachNetworkHandlers(targetSession);
 
+    const acceptCh = getAcceptChStore(targetSession);
+
     const cleanUserAgent = (ua) => {
         return (ua || '')
             .replace(/mise-browser\/[0-9.]+\s*/gi, '')
@@ -319,19 +342,33 @@ function hardenSession(targetSession, spellLang = 'en-GB', webrtcPolicy = 'defau
             }
 
             const headers = details.requestHeaders;
-            if (headers) {
-                if (headers['User-Agent']) {
-                    headers['User-Agent'] = cleanUserAgent(headers['User-Agent']);
-                }
-                const chromeMatch = (headers['User-Agent'] || '').match(/Chrome\/(\d+)\.([\d.]+)/);
-                const realChromeMajor = (process.versions && process.versions.chrome) ? process.versions.chrome.split('.')[0] : '132';
-                const chromeMajor = chromeMatch ? chromeMatch[1] : realChromeMajor;
+            if (!headers) return callback({ requestHeaders: headers });
 
-                headers['sec-ch-ua'] = `"Chromium";v="${chromeMajor}", "Google Chrome";v="${chromeMajor}", "Not-A.Brand";v="99"`;
-                headers['sec-ch-ua-full-version-list'] = `"Chromium";v="${chromeMajor}.0.0.0", "Google Chrome";v="${chromeMajor}.0.0.0", "Not-A.Brand";v="99.0.0.0"`;
-                headers['Accept-Language'] = 'en-GB,en-US;q=0.9,en;q=0.8';
+            if (headers['User-Agent']) {
+                headers['User-Agent'] = cleanUserAgent(headers['User-Agent']);
             }
-            callback({ requestHeaders: headers });
+
+            if (!/^https?:/i.test(details.url || '')) {
+                return callback({ requestHeaders: headers });
+            }
+
+            // Electron emits no client hints at all, so Mise supplies the low-entropy
+            // trio that every Chromium sends. The high-entropy full version list is
+            // only sent to an origin that asked for it with Accept-CH, which is what
+            // Chrome does; sending it unsolicited was a shape no browser produces.
+            // Accept-Language is left to Chromium: it derives it from the same locale
+            // that navigator.languages reports, so overriding it only risks a
+            // header-vs-JS contradiction.
+            const userAgent = headers['User-Agent'] || '';
+            const hints = buildLowEntropyHints(userAgent);
+            const isDocument = details.resourceType === 'main_frame' || details.resourceType === 'mainFrame';
+            let origin = '';
+            try { origin = new URL(details.url).origin; } catch (e) {}
+            if (isDocument && origin && acceptCh.wants(origin, 'sec-ch-ua-full-version-list')) {
+                hints['sec-ch-ua-full-version-list'] = buildFullVersionList(userAgent);
+            }
+
+            return callback({ requestHeaders: applyClientHints(headers, hints) });
         });
     }
 }
@@ -339,10 +376,18 @@ function hardenSession(targetSession, spellLang = 'en-GB', webrtcPolicy = 'defau
 // Electron keeps a single listener per webRequest event, so the ad-blocker's
 // onBeforeRequest and onHeadersReceived would replace ours. Register one
 // listener for each that runs Mise's rules first, then hands over to the blocker.
+// main.js observes bot-manager denials here because the response headers are
+// only available from a session-level webRequest listener, and Electron keeps a
+// single listener per event (see attachNetworkHandlers).
+function setBotBlockObserver(observer) {
+    botBlockObserver = typeof observer === 'function' ? observer : null;
+}
+
 function attachNetworkHandlers(targetSession) {
     if (!targetSession.webRequest) return;
 
     const blockingEnabled = () => blockerInstance && blockerInstance.isBlockingEnabled(targetSession);
+    const acceptCh = getAcceptChStore(targetSession);
 
     targetSession.webRequest.onBeforeRequest({ urls: ['<all_urls>'] }, (details, callback) => {
         // Route Google authentication requests through the WebLite sign-in flow
@@ -377,6 +422,27 @@ function attachNetworkHandlers(targetSession) {
                 }
             }
         }
+        // A 403 that hands back its own bot-manager cookies is the "error page
+        // first, works on the second click" shape; main.js decides whether to
+        // retry the navigation once the error page has finished loading.
+        if (botBlockObserver &&
+            Number(details.statusCode) === 403 &&
+            details.webContentsId != null &&
+            (details.resourceType === 'main_frame' || details.resourceType === 'mainFrame') &&
+            hasBotManagerCookie(details.responseHeaders)) {
+            try {
+                botBlockObserver({ webContentsId: details.webContentsId, url: details.url, method: details.method });
+            } catch (e) {}
+        }
+
+        // A document that opts into high-entropy client hints tells us so here; the
+        // request handler then sends sec-ch-ua-full-version-list to that origin only.
+        if ((details.resourceType === 'main_frame' || details.resourceType === 'mainFrame') && details.url) {
+            try {
+                acceptCh.record(new URL(details.url).origin, details.responseHeaders);
+            } catch (e) {}
+        }
+
         if (blockingEnabled()) return blockerInstance.onHeadersReceived(details, callback);
         callback({ responseHeaders: details.responseHeaders });
     });
@@ -657,6 +723,7 @@ module.exports = {
     getGoogleSignInUserAgent,
     isGoogleSignInRequest,
     attachNetworkHandlers,
+    setBotBlockObserver,
     mintPdfViewerUrl,
     validatePdfAccess,
     isSafeTabUrl,

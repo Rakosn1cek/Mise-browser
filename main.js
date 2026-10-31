@@ -36,6 +36,7 @@ const keybinds = require('./keybinds');
 const userContent = require('./userContent');
 const diagnostics = require('./diagnostics');
 const downloads = require('./main/downloads');
+const botBlockRetry = require('./main/botBlockRetry');
 const permissions = require('./main/permissions');
 const config = require('./main/config');
 const {
@@ -73,6 +74,17 @@ const {
 const updater = require('./main/updater');
 const dohResolver = require('./main/dohResolver');
 const { applyDoHConfiguration } = dohResolver;
+
+// Bot-manager denials (Akamai: eBay's "Error Page | eBay", then the same link
+// works) are recorded from the session's response headers, then recovered per
+// webContents when the navigation lands. See main/botBlockRetry.js.
+const botBlockRetries = botBlockRetry.createBotBlockRetryTracker();
+security.setBotBlockObserver(({ webContentsId, url, method }) => {
+    // Replaying a refused GET is safe; a refused POST may have had no side effect
+    // either, but loadURL cannot replay its body, so leave it to the user.
+    if (method && String(method).toUpperCase() !== 'GET') return;
+    botBlockRetries.note(webContentsId, url);
+});
 
 // Initialise keybinds configuration
 keybinds.initializeKeybinds(CONFIG_DIR);
@@ -1110,6 +1122,30 @@ app.on('web-contents-created', (event, webContents) => {
             if (!isPrivate) {
                 logVisit(webContents.getTitle(), url);
             }
+        });
+
+        // The site refused this navigation with a 403 that hands back fresh bot
+        // cookies, and that error page's own sensor script is what mints the
+        // replacement. Retry the same URL once, after the page has settled, so the
+        // user does not have to click the link a second time. Bounded per URL by
+        // the tracker, and skipped if the tab moved on (or the site redirected to
+        // its challenge page) in the meantime.
+        webContents.on('did-frame-navigate', (navEvent, url, httpResponseCode, httpStatusText, isMainFrame) => {
+            if (!isMainFrame || Number(httpResponseCode) !== 403) return;
+            if (!url || !/^https?:/i.test(url)) return;
+            if (!botBlockRetries.claim(webContents.id, url)) return;
+
+            let retried = false;
+            const retry = () => {
+                if (retried || webContents.isDestroyed()) return;
+                retried = true;
+                if (webContents.getURL() !== url) return;
+                diagnostics.logEvent('info', 'navigation', 'Retrying bot-managed 403 navigation after its sensor page loaded', { url });
+                Promise.resolve(webContents.loadURL(url)).catch(() => {});
+            };
+            webContents.once('did-stop-loading', () => setTimeout(retry, 250));
+            // Ceiling in case did-stop-loading never fires (hung subresource).
+            setTimeout(retry, 3000);
         });
 
         webContents.on('context-menu', (contextEvent, params) => {

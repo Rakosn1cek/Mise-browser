@@ -74,7 +74,9 @@ const source = fs.readFileSync(path.join(__dirname, '../security.js'), 'utf8');
                             }
                         };
                     }
-                    return require(id);
+                    // Relative ids in the module under test resolve against the repo
+                    // root (__dirname here), exactly as Node would for security.js itself.
+                    return require(id.startsWith('.') ? path.join(__dirname, '..', id) : id);
                 }
             };
 
