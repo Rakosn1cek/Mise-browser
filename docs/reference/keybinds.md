@@ -75,6 +75,7 @@ When viewing web content without an active text field or prompt, Mise operates i
 | `G` | Jump to bottom of page |
 | `t` | Open new tab |
 | `x` | Close current tab |
+| `J` / `K` | Previous / next tab (wraps around) |
 | `o` | Focus status bar address bar |
 | `r` / `R` | Reload / Force reload current tab |
 | `H` / `L` | History back / History forward |
@@ -116,6 +117,14 @@ Keybindings are decoupled from source code and managed by `keybinds.js`. You can
 ~/.config/mise-browser/keybinds.json
 ```
 
+The file holds two kinds of entry:
+
+- **Top-level entries** are modifier chords (`Ctrl+T`, `F11`, ...). They are matched in
+  the main process and apply whatever mode the page is in.
+- **A `normal` object** maps the single-key NORMAL-mode (vim) bindings listed in the
+  table above. Those are matched inside the page you are viewing, because only the
+  page knows whether it is in NORMAL or INSERT mode.
+
 ### Example Custom Configuration
 
 ```json
@@ -126,10 +135,37 @@ Keybindings are decoupled from source code and managed by `keybinds.js`. You can
   "focus-sidebar": "Ctrl+Shift+E",
   "focus-webview": "Ctrl+Shift+B",
   "trigger-hints": "Ctrl+F",
-  "toggle-zen-mode": "F11"
+  "toggle-zen-mode": "F11",
+
+  "normal": {
+    "J": "previous-tab",
+    "K": "next-tab",
+    "W": "remove-tab",
+    "d": null,
+    "g+h": "trigger-glance"
+  }
 }
 ```
 
+### NORMAL-mode entries
+
+- **Spelling**: write the key as the browser reports it, so a shifted letter is
+  capital. `"Shift+j"`, `"J"` and `"shift + j"` all mean the same binding. A two-key
+  sequence is written joined by `+`, as in `"g+h"` above.
+- **Modifiers do not belong in `normal`.** `Ctrl+`, `Alt+` and `Meta+` are rejected
+  there with a console warning - put them at the top level, since a chord is matched
+  before mode matters. `Shift` is the only allowed modifier, and it is simply the
+  uppercase letter.
+- **Unbind**: `"d": null` drops the default binding, so that key falls through to the
+  page.
+- **Unknown action**: a typo such as `"x": "close-tab"` is reported and ignored, and
+  the default binding for that key stays in effect - a mistake cannot silently leave
+  you without a key.
+- **Precedence**: binding a key in `normal` replaces the default for that key only;
+  every other default remains. If a key is both a single binding and the start of a
+  sequence (say `h` and `g+h`), the sequence wins while its first key is pending and
+  the single binding applies otherwise, so do not bind one key as both.
+
 - **Modifiers**: Use `Ctrl`, `Shift`, or `Meta` combined with `+` (avoid `Alt` to prevent conflicts with Linux tiling window managers).
 - **Multiple Bindings**: Assign an array of strings to bind multiple shortcuts to the same action (e.g. `["Ctrl+W", "Ctrl+D"]`).
-- **Reloading**: Customisations apply immediately upon restarting Mise, or automatically when modifying bindings via the internal configuration bridge.
+- **Reloading**: Customisations apply immediately upon restarting Mise, or automatically when modifying bindings via the internal configuration bridge. `normal` bindings are pushed to every open tab the moment the file is saved, so a rebind takes effect without reloading the page.

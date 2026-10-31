@@ -39,6 +39,10 @@ contextBridge.exposeInMainWorld('miseAPI', {
     signalRendererReady: () => ipcRenderer.send('renderer-ready'),
     toggleMenuBar: () => ipcRenderer.send('toggle-menu-bar'),
     getKeybinds: () => ipcRenderer.invoke('get-keybinds'),
+    // sendSync rather than invoke: main serves this channel with ipcMain.on so guests can
+    // pull the table at document start, and an invoke against an on handler would never
+    // resolve.
+    getNormalKeybinds: () => ipcRenderer.sendSync('get-normal-keybinds'),
     saveKeybinds: (binds) => ipcRenderer.invoke('save-keybinds', binds),
     getActionMetadata: () => ipcRenderer.invoke('get-action-metadata'),
     reloadKeybinds: () => ipcRenderer.invoke('reload-keybinds'),

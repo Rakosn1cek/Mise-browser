@@ -19,6 +19,7 @@ import {
     renderWorkspaceUI, 
     switchTabFocus, 
     jumpToTabByIndex,
+    cycleActiveTab,
     spawnNewBlankTab, 
     spawnTabWithUrl, 
     handleTabRemoval, 
@@ -765,6 +766,8 @@ function setupEventListeners() {
             case 'toggle-downloads': toggleDownloadShelf(); break;
             case 'toggle-find': toggleInPageSearch(); break;
             case 'remove-tab': handleTabRemoval(); break;
+            case 'previous-tab': cycleActiveTab(-1); break;
+            case 'next-tab': cycleActiveTab(1); break;
             case 'toggle-zen-mode': toggleSidebarExpansion(); break;
             case 'toggle-sidebar-collapse-mode': applySidebarMode(args[0]); break;
             case 'set-quickmark': promptQuickmark('set'); break;

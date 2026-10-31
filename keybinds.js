@@ -50,6 +50,51 @@ const DEFAULT_KEYBINDS = {
     'jump-to-tab-9': 'Ctrl+9'
 };
 
+// Normal-mode (vim) bindings.
+//
+// These are evaluated inside the guest page by webview-preload.js and only apply
+// while the tab is in NORMAL mode. They live in their own section rather than in
+// DEFAULT_KEYBINDS above because the chord table is matched by the main process in
+// before-input-event, which does not know about vim modes: a bare "J" there would
+// fire every time the user types a capital letter into a form field.
+//
+// Keys are one keystroke ("j", "G" = Shift+j, "/") or a two-keystroke sequence
+// ("gg", "gh") matched within SEQUENCE_WINDOW_MS. A null or "" value unbinds.
+const DEFAULT_NORMAL_KEYBINDS = {
+    'j': 'scroll-down',
+    'k': 'scroll-up',
+    'h': 'scroll-left',
+    'l': 'scroll-right',
+    'u': 'scroll-half-page-up',
+    'G': 'scroll-bottom',
+    'gg': 'scroll-top',
+    'gh': 'trigger-glance',
+    'd': 'toggle-dark-reader',
+    'e': 'toggle-reader-view',
+    'i': 'enter-insert-mode',
+    'f': 'trigger-hints',
+    't': 'spawn-tab',
+    'x': 'remove-tab',
+    'J': 'previous-tab',
+    'K': 'next-tab',
+    'W': 'remove-tab',
+    'o': 'toggle-address',
+    'r': 'reload-active-tab',
+    'R': 'force-reload-active-tab',
+    'H': 'history-back',
+    'L': 'history-forward',
+    '/': 'toggle-find',
+    'w': 'toggle-dashboard',
+    's': 'focus-sidebar',
+    'm': 'toggle-tab-audio-mute',
+    'M': 'toggle-global-audio-mute',
+    'p': 'toggle-pin-tab',
+    'y': 'yank-url'
+};
+
+// How long the first key of a two-key sequence stays armed for the second key.
+const SEQUENCE_WINDOW_MS = 500;
+
 const ACTION_METADATA = {
     'toggle-menu-bar': { label: 'Toggle Mise Settings (Menu Bar)', category: 'System' },
     'spawn-tab': { label: 'New Blank Tab', category: 'Navigation & Workspaces' },
@@ -105,11 +150,28 @@ const ACTION_METADATA = {
     'jump-to-tab-6': { label: 'Jump to Tab 6', category: 'Navigation & Workspaces' },
     'jump-to-tab-7': { label: 'Jump to Tab 7', category: 'Navigation & Workspaces' },
     'jump-to-tab-8': { label: 'Jump to Tab 8', category: 'Navigation & Workspaces' },
-    'jump-to-tab-9': { label: 'Jump to Tab 9 (or Last Tab)', category: 'Navigation & Workspaces' }
+    'jump-to-tab-9': { label: 'Jump to Tab 9 (or Last Tab)', category: 'Navigation & Workspaces' },
+    'previous-tab': { label: 'Activate Previous Tab (wraps)', category: 'Navigation & Workspaces' },
+    'next-tab': { label: 'Activate Next Tab (wraps)', category: 'Navigation & Workspaces' },
+    'force-reload-active-tab': { label: 'Reload Active Tab Bypassing Cache', category: 'Navigation & Workspaces' },
+    'history-back': { label: 'Navigate Back in History', category: 'Navigation & Workspaces' },
+    'history-forward': { label: 'Navigate Forward in History', category: 'Navigation & Workspaces' },
+    'yank-url': { label: 'Copy Current URL to Clipboard', category: 'Web Interaction' },
+    'enter-insert-mode': { label: 'Enter Insert Mode (pass keys to the page)', category: 'Normal Mode' },
+    'scroll-down': { label: 'Scroll Page Down', category: 'Normal Mode' },
+    'scroll-up': { label: 'Scroll Page Up', category: 'Normal Mode' },
+    'scroll-left': { label: 'Scroll Page Left', category: 'Normal Mode' },
+    'scroll-right': { label: 'Scroll Page Right', category: 'Normal Mode' },
+    'scroll-half-page-up': { label: 'Scroll Half Page Up', category: 'Normal Mode' },
+    'scroll-half-page-down': { label: 'Scroll Half Page Down', category: 'Normal Mode' },
+    'scroll-top': { label: 'Scroll To Top Of Page', category: 'Normal Mode' },
+    'scroll-bottom': { label: 'Scroll To Bottom Of Page', category: 'Normal Mode' }
 };
 
 let activeKeybinds = { ...DEFAULT_KEYBINDS };
+let activeNormalKeybinds = { ...DEFAULT_NORMAL_KEYBINDS };
 let compiledKeymap = compileKeymap(activeKeybinds);
+let compiledNormalKeymap = compileNormalKeymap(activeNormalKeybinds);
 
 function normalizeKeyCombination(str) {
     if (!str || typeof str !== 'string') return '';
@@ -203,6 +265,131 @@ function compileKeymap(binds) {
     return map;
 }
 
+// A single keystroke spec, or the two keystrokes of a sequence, with Shift
+// folded into the letter's case ("Shift+j" -> "J"). Returns '' for anything the
+// normal-mode layer cannot express: a chord with Ctrl/Alt/Meta belongs in the
+// top-level chord table, because before-input-event applies those mode-blind.
+function normalizeNormalKeySpec(spec) {
+    if (typeof spec !== 'string') return '';
+    const trimmed = spec.trim();
+    if (!trimmed) return '';
+
+    if (!trimmed.includes('+')) {
+        // Plain form: "j", "J", "/", "gg"
+        if (/^[A-Za-z]$/.test(trimmed)) return trimmed;
+        if (/^[A-Za-z]{2}$/.test(trimmed)) return trimmed;
+        if (trimmed.length === 1) return trimmed;
+        return '';
+    }
+
+    const parts = trimmed.split('+').map(p => p.trim()).filter(Boolean);
+    if (!parts.length) return '';
+
+    let ctrl = false;
+    let alt = false;
+    let meta = false;
+    let shiftBefore = false;
+    const keys = [];
+
+    for (const part of parts) {
+        const lower = part.toLowerCase();
+        if (lower === 'ctrl' || lower === 'control') { ctrl = true; continue; }
+        if (lower === 'alt' || lower === 'option') { alt = true; continue; }
+        if (lower === 'meta' || lower === 'super' || lower === 'cmd' || lower === 'command') { meta = true; continue; }
+        if (lower === 'shift') { shiftBefore = true; continue; }
+        keys.push(part);
+    }
+
+    if (ctrl || alt || meta) return '';
+
+    // "g + h" spells a sequence; a single keystroke plus Shift is one key.
+    if (keys.length > 1) {
+        if (keys.every(k => /^[A-Za-z]$/.test(k))) return keys.join('');
+        return '';
+    }
+
+    const key = keys[0];
+    if (/^[A-Za-z]$/.test(key)) {
+        return shiftBefore ? key.toUpperCase() : key.toLowerCase();
+    }
+    if (/^[A-Za-z]{2}$/.test(key)) return key;
+    return key.length === 1 ? key : '';
+}
+
+function compileNormalKeymap(binds) {
+    const singles = {};
+    const sequences = {};
+    if (!binds || typeof binds !== 'object') {
+        return { singles, sequences };
+    }
+
+    for (const [spec, action] of Object.entries(binds)) {
+        if (action === null || action === '' || action === false) continue;
+        if (typeof action !== 'string') continue;
+        const canonical = normalizeNormalKeySpec(spec);
+        if (!canonical) {
+            console.warn(`Ignoring normal-mode binding "${spec}": use a plain key or two-key sequence without Ctrl/Alt/Meta.`);
+            continue;
+        }
+        if (!Object.prototype.hasOwnProperty.call(ACTION_METADATA, action)) {
+            console.warn(`Ignoring normal-mode binding "${spec}": unknown action "${action}".`);
+            continue;
+        }
+        if (canonical.length === 1) singles[canonical] = action;
+        else sequences[canonical] = action;
+    }
+
+    return { singles, sequences };
+}
+
+// Merge user normal-mode bindings over the defaults. A key present in the user
+// config replaces the default for that key; an explicit null/"" unbinds it.
+function mergeNormalKeybinds(userBinds) {
+    const result = { ...DEFAULT_NORMAL_KEYBINDS };
+    if (!userBinds || typeof userBinds !== 'object') return result;
+    for (const [rawSpec, action] of Object.entries(userBinds)) {
+        const canonical = normalizeNormalKeySpec(rawSpec) || rawSpec;
+        if (action === null || action === '' || action === false) {
+            delete result[canonical];
+            continue;
+        }
+        // Reject an unknown action here rather than at compile time: dropping it
+        // later would silently remove the default binding for that key too, so a
+        // typo would cost the user a working key instead of leaving it alone.
+        if (typeof action !== 'string' || !Object.prototype.hasOwnProperty.call(ACTION_METADATA, action)) {
+            console.warn(`Ignoring normal-mode binding "${rawSpec}": unknown action "${action}". The default binding for this key stays in effect.`);
+            continue;
+        }
+        result[canonical] = action;
+    }
+    return result;
+}
+
+// Resolve one keystroke against a compiled normal keymap. `pending` is the
+// previous armed key of a sequence, or null. Returns:
+//   { action }        run this action now
+//   { pending: 'g' }  arm a sequence that starts with this key
+//   null              not bound in normal mode
+// A pending sequence wins over the single-key binding when both exist, which is
+// what makes "gh" glance while a lone "h" still scrolls left.
+function matchNormalKey(compiled, key, pending) {
+    if (!key || key.length !== 1) return null;
+
+    if (pending && compiled.sequences[pending + key]) {
+        return { action: compiled.sequences[pending + key] };
+    }
+
+    if (compiled.singles[key]) {
+        return { action: compiled.singles[key] };
+    }
+
+    if (Object.keys(compiled.sequences).some(seq => seq[0] === key)) {
+        return { pending: key };
+    }
+
+    return null;
+}
+
 function mergeKeybinds(defaults, userBinds) {
     const result = { ...defaults };
     if (!userBinds || typeof userBinds !== 'object') return result;
@@ -239,27 +426,45 @@ function initializeKeybinds(configDir) {
     try {
         if (!fs.existsSync(configDir)) fs.mkdirSync(configDir, { recursive: true });
         if (!fs.existsSync(keybindsPath)) {
-            fs.writeFileSync(keybindsPath, JSON.stringify(DEFAULT_KEYBINDS, null, 4), 'utf8');
+            fs.writeFileSync(
+                keybindsPath,
+                JSON.stringify({ ...DEFAULT_KEYBINDS, normal: DEFAULT_NORMAL_KEYBINDS }, null, 4),
+                'utf8'
+            );
             activeKeybinds = { ...DEFAULT_KEYBINDS };
+            activeNormalKeybinds = { ...DEFAULT_NORMAL_KEYBINDS };
         } else {
             const raw = fs.readFileSync(keybindsPath, 'utf8');
             const parsed = JSON.parse(raw);
-            activeKeybinds = mergeKeybinds(DEFAULT_KEYBINDS, parsed);
+            const { normal, ...chords } = parsed && typeof parsed === 'object' ? parsed : {};
+            activeKeybinds = mergeKeybinds(DEFAULT_KEYBINDS, chords);
+            activeNormalKeybinds = mergeNormalKeybinds(normal);
         }
     } catch (err) {
         console.error('Failed to initialise keybinds configuration, using defaults:', err);
         activeKeybinds = { ...DEFAULT_KEYBINDS };
+        activeNormalKeybinds = { ...DEFAULT_NORMAL_KEYBINDS };
     }
     compiledKeymap = compileKeymap(activeKeybinds);
-    return activeKeybinds;
+    compiledNormalKeymap = compileNormalKeymap(activeNormalKeybinds);
+    return getKeybinds();
 }
 
 function saveKeybinds(configDir, newBinds) {
     const keybindsPath = path.join(configDir, 'keybinds.json');
     try {
-        activeKeybinds = mergeKeybinds(DEFAULT_KEYBINDS, newBinds);
-        fs.writeFileSync(keybindsPath, JSON.stringify(activeKeybinds, null, 4), 'utf8');
+        const { normal, ...chords } = newBinds && typeof newBinds === 'object' ? newBinds : {};
+        activeKeybinds = mergeKeybinds(DEFAULT_KEYBINDS, chords);
+        // The preferences UI only edits chords, so a payload without a normal
+        // section must not wipe normal bindings the user wrote by hand.
+        if (normal !== undefined) activeNormalKeybinds = mergeNormalKeybinds(normal);
+        fs.writeFileSync(
+            keybindsPath,
+            JSON.stringify({ ...activeKeybinds, normal: activeNormalKeybinds }, null, 4),
+            'utf8'
+        );
         compiledKeymap = compileKeymap(activeKeybinds);
+        compiledNormalKeymap = compileNormalKeymap(activeNormalKeybinds);
         return true;
     } catch (err) {
         console.error('Failed to save keybinds configuration:', err);
@@ -277,18 +482,40 @@ function getKeybinds() {
     return { ...activeKeybinds };
 }
 
+// The merged normal-mode table, for display and for the guest preload.
+function getNormalKeybinds() {
+    return { ...activeNormalKeybinds };
+}
+
+// Compiled lookup shape handed to each guest page: { singles, sequences }.
+// Compiled rather than raw so the guest never re-implements spec normalisation.
+function getCompiledNormalKeymap() {
+    return {
+        singles: { ...compiledNormalKeymap.singles },
+        sequences: { ...compiledNormalKeymap.sequences },
+        windowMs: SEQUENCE_WINDOW_MS
+    };
+}
+
 function getActionMetadata() {
     return { ...ACTION_METADATA };
 }
 
 module.exports = {
     DEFAULT_KEYBINDS,
+    DEFAULT_NORMAL_KEYBINDS,
+    SEQUENCE_WINDOW_MS,
     ACTION_METADATA,
     initializeKeybinds,
     saveKeybinds,
     getActionForInput,
     getKeybinds,
+    getNormalKeybinds,
+    getCompiledNormalKeymap,
     getActionMetadata,
     normalizeKeyCombination,
+    normalizeNormalKeySpec,
+    compileNormalKeymap,
+    matchNormalKey,
     inputEventToKeyCombination
 };

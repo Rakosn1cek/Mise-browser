@@ -383,15 +383,21 @@ function loadHinter(dom) {
         'webview-preload.js must register the modal navigation keydown listener in the capture phase'
     );
 
-    // 'f' must reach the host as a normal-mode action.
-    assert.match(
-        preloadSource,
-        /case 'f':[\s\S]{0,220}?ipcRenderer\.sendToHost\('normal-mode-action', 'trigger-hints'\)/,
-        "webview-preload.js must map 'f' to trigger-hints in normal mode"
+    // 'f' reaching the host is configuration now rather than a literal in this file,
+    // so pin the default binding plus the table-driven dispatch that forwards it.
+    assert.equal(
+        require('../keybinds.js').DEFAULT_NORMAL_KEYBINDS.f,
+        'trigger-hints',
+        "'f' must be bound to trigger-hints by default"
     );
     assert.match(
         preloadSource,
-        /ipcRenderer\.sendToHost\('normal-mode-action', '[a-z-]+'\)/,
+        /if \(normalKeymap\.singles\[key\]\) \{\s*consumeEvent\(e\);\s*runNormalAction\(normalKeymap\.singles\[key\]\);/,
+        'webview-preload.js must dispatch single-key normal bindings from the keymap'
+    );
+    assert.match(
+        preloadSource,
+        /ipcRenderer\.sendToHost\('normal-mode-action', action\)/,
         'actions the guest cannot perform itself must still reach the host as normal-mode-action'
     );
     assert.match(

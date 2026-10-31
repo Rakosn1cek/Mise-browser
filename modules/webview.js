@@ -541,17 +541,25 @@ export function handleNormalModeAction(action, extra, webview, currentWS, idx) {
         case 'remove-tab':
             handleTabRemoval();
             break;
+        case 'previous-tab':
+            cycleActiveTab(-1);
+            break;
+        case 'next-tab':
+            cycleActiveTab(1);
+            break;
         case 'toggle-address':
             if (typeof window.displayAddressOverlay === 'function') {
                 window.displayAddressOverlay();
             }
             break;
         case 'reload-tab':
+        case 'reload-active-tab':
             if (webview && typeof webview.reload === 'function') {
                 webview.reload();
             }
             break;
         case 'force-reload-tab':
+        case 'force-reload-active-tab':
             if (webview && typeof webview.reloadIgnoringCache === 'function') {
                 webview.reloadIgnoringCache();
             }
@@ -575,6 +583,7 @@ export function handleNormalModeAction(action, extra, webview, currentWS, idx) {
             }
             break;
         case 'trigger-glance-hints':
+        case 'trigger-glance':
             if (typeof window.triggerGlanceHints === 'function') {
                 window.triggerGlanceHints(webview);
             }
@@ -1246,6 +1255,22 @@ export function switchTabFocus(targetIdx) {
     }
 
     updateStatusBarFromActiveView();
+}
+
+// Wraps around the workspace's tab list. Used by the configurable normal-mode
+// bindings (previous-tab / next-tab) and by any chord routed through the same
+// action names, so both entry points move selection the same way.
+export function cycleActiveTab(delta) {
+    const currentWS = state.sessionState.current_workspace;
+    const tabs = state.sessionState.workspaces[currentWS] || [];
+    if (tabs.length < 2) return;
+
+    const selected = document.querySelector('#TabList li.selected') || document.querySelector('#TabList li');
+    let currentIdx = selected ? Array.prototype.indexOf.call(document.querySelectorAll('#TabList li'), selected) : -1;
+    if (currentIdx < 0) currentIdx = 0;
+
+    const targetIdx = (currentIdx + delta + tabs.length) % tabs.length;
+    jumpToTabByIndex(targetIdx + 1);
 }
 
 export function jumpToTabByIndex(oneBasedIdx) {

@@ -528,7 +528,7 @@ function isEventInEditable(e) {
 // Modal state variables
 let isPassthroughMode = false;
 let isExplicitInsert = false;
-let lastGTime = 0;
+let lastGTime = 0; // unused: sequences are tracked by pendingNormalSeq below
 
 // Host passthrough mode synchronisation
 ipcRenderer.on('set-passthrough-mode', (_event, enabled) => {
@@ -619,7 +619,106 @@ function scrollPageTo(x, y) {
     }
 }
 
-// Modal navigation engine keydown listener
+// ── Normal-mode key routing ─────────────────────────────────────────────
+// Bindings are data, not code. keybinds.js owns the table (user-editable under
+// "normal" in keybinds.json) and the guest only matches keystrokes against it, so
+// rebinding a vim key needs no change here. FALLBACK_NORMAL_KEYMAP mirrors the
+// shipped defaults for the case where the fetch below fails: without it a lost IPC
+// round trip would silently kill every normal-mode key, which is the failure mode
+// this file has already been burned by once. tests/normal-keybinds.test.js pins
+// the two tables against each other so they cannot drift.
+const FALLBACK_NORMAL_KEYMAP = {
+    singles: {
+        'j': 'scroll-down', 'k': 'scroll-up', 'h': 'scroll-left', 'l': 'scroll-right',
+        'u': 'scroll-half-page-up', 'G': 'scroll-bottom', 'i': 'enter-insert-mode',
+        'd': 'toggle-dark-reader', 'e': 'toggle-reader-view', 'f': 'trigger-hints',
+        't': 'spawn-tab', 'x': 'remove-tab', 'J': 'previous-tab', 'K': 'next-tab',
+        'W': 'remove-tab', 'o': 'toggle-address', 'r': 'reload-active-tab',
+        'R': 'force-reload-active-tab', 'H': 'history-back', 'L': 'history-forward',
+        '/': 'toggle-find', 'w': 'toggle-dashboard', 's': 'focus-sidebar',
+        'm': 'toggle-tab-audio-mute', 'M': 'toggle-global-audio-mute',
+        'p': 'toggle-pin-tab', 'y': 'yank-url'
+    },
+    sequences: { 'gg': 'scroll-top', 'gh': 'trigger-glance' },
+    windowMs: 500
+};
+
+let normalKeymap = FALLBACK_NORMAL_KEYMAP;
+
+function refreshNormalKeymap() {
+    try {
+        const remote = ipcRenderer.sendSync('get-normal-keybinds');
+        if (remote && remote.singles && remote.sequences) {
+            normalKeymap = remote;
+        }
+    } catch (err) {
+        // Keep whichever table we already have.
+    }
+}
+
+refreshNormalKeymap();
+ipcRenderer.on('keybinds-changed', () => {
+    pendingNormalSeq = null;
+    refreshNormalKeymap();
+});
+
+// First keystroke of a two-key sequence, waiting for its second ("g" then "g").
+let pendingNormalSeq = null;
+let pendingNormalSeqTime = 0;
+
+function scrollPageToBottom() {
+    const target = getScrollTarget();
+    const maxY = Math.max(
+        document.body ? document.body.scrollHeight : 0,
+        document.documentElement ? document.documentElement.scrollHeight : 0,
+        target ? (target.scrollHeight || 0) : 0
+    );
+    scrollPageTo(0, maxY);
+}
+
+// Actions the guest performs by itself, because they are page-local. Anything not
+// listed is forwarded to the host by action id (handleNormalModeAction), so a new
+// binding to an existing host action never touches this file.
+const LOCAL_NORMAL_ACTIONS = {
+    'scroll-down': () => scrollPageBy(0, 80),
+    'scroll-up': () => scrollPageBy(0, -80),
+    'scroll-left': () => scrollPageBy(-80, 0),
+    'scroll-right': () => scrollPageBy(80, 0),
+    'scroll-half-page-up': () => scrollPageBy(0, -Math.floor(window.innerHeight * 0.5)),
+    'scroll-half-page-down': () => scrollPageBy(0, Math.floor(window.innerHeight * 0.5)),
+    'scroll-top': () => scrollPageTo(0, 0),
+    'scroll-bottom': scrollPageToBottom,
+    'enter-insert-mode': () => {
+        isExplicitInsert = true;
+        setInputFocusState(true);
+    },
+    'yank-url': () => {
+        let currentUrl = window.location.href;
+        // The bundled PDF viewer wraps the real file in its own URL.
+        if (currentUrl.includes('/assets/pdfjs/viewer.html') && currentUrl.includes('file=')) {
+            try {
+                const parsed = new URL(currentUrl);
+                const fileParam = parsed.searchParams.get('file');
+                if (fileParam) currentUrl = fileParam;
+            } catch (urlErr) {}
+        }
+        if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+            navigator.clipboard.writeText(currentUrl).catch(() => {});
+        }
+        try { ipcRenderer.sendToHost('normal-mode-action', 'yank-url', currentUrl); } catch (err) {}
+    }
+};
+
+function runNormalAction(action) {
+    const local = LOCAL_NORMAL_ACTIONS[action];
+    if (local) {
+        local();
+        return;
+    }
+    try { ipcRenderer.sendToHost('normal-mode-action', action); } catch (err) {}
+}
+
+// Modal navigation keydown listener
 window.addEventListener('keydown', (e) => {
     // Passthrough toggle chord: Shift + Escape
     if (e.shiftKey && e.key === 'Escape') {
@@ -707,151 +806,37 @@ window.addEventListener('keydown', (e) => {
         evt.stopImmediatePropagation();
     }
 
-    // Smooth page scrolling
-    if (key === 'j') {
+    // Everything below is normal-mode key routing, driven by the keymap: a bound
+    // keystroke is consumed here so the page never sees it, an unbound one falls
+    // through to the page untouched.
+    if (typeof key !== 'string' || key.length !== 1) return;
+
+    const windowMs = normalKeymap.windowMs || FALLBACK_NORMAL_KEYMAP.windowMs;
+    const armed = (pendingNormalSeq && (Date.now() - pendingNormalSeqTime) < windowMs)
+        ? pendingNormalSeq
+        : null;
+    pendingNormalSeq = null;
+
+    // A pending sequence wins over the single-key binding, which is what makes
+    // "gh" glance while a lone "h" still scrolls left.
+    if (armed && normalKeymap.sequences[armed + key]) {
         consumeEvent(e);
-        scrollPageBy(0, 80);
+        runNormalAction(normalKeymap.sequences[armed + key]);
         return;
     }
-    if (key === 'k') {
+
+    if (normalKeymap.singles[key]) {
         consumeEvent(e);
-        scrollPageBy(0, -80);
+        runNormalAction(normalKeymap.singles[key]);
         return;
     }
-    if (key === 'd') {
-        consumeEvent(e);
-        try { ipcRenderer.sendToHost('normal-mode-action', 'toggle-dark-reader'); } catch (err) {}
-        return;
-    }
-    if (key === 'e') {
-        consumeEvent(e);
-        try { ipcRenderer.sendToHost('normal-mode-action', 'toggle-reader-view'); } catch (err) {}
-        return;
-    }
-    if (key === 'u') {
-        consumeEvent(e);
-        scrollPageBy(0, -Math.floor(window.innerHeight * 0.5));
-        return;
-    }
-    if (key === 'h') {
-        consumeEvent(e);
-        const now = Date.now();
-        if (now - lastGTime < 500) {
-            lastGTime = 0;
-            try { ipcRenderer.sendToHost('normal-mode-action', 'trigger-glance-hints'); } catch (err) {}
+
+    for (const seq of Object.keys(normalKeymap.sequences)) {
+        if (seq[0] === key) {
+            consumeEvent(e);
+            pendingNormalSeq = key;
+            pendingNormalSeqTime = Date.now();
             return;
         }
-        scrollPageBy(-80, 0);
-        return;
-    }
-    if (key === 'l') {
-        consumeEvent(e);
-        scrollPageBy(80, 0);
-        return;
-    }
-    if (key === 'g') {
-        consumeEvent(e);
-        const now = Date.now();
-        if (now - lastGTime < 500) {
-            scrollPageTo(0, 0);
-            lastGTime = 0;
-        } else {
-            lastGTime = now;
-        }
-        return;
-    }
-    if (key === 'G') {
-        consumeEvent(e);
-        const target = getScrollTarget();
-        const maxY = Math.max(
-            document.body ? document.body.scrollHeight : 0,
-            document.documentElement ? document.documentElement.scrollHeight : 0,
-            target ? (target.scrollHeight || 0) : 0
-        );
-        scrollPageTo(0, maxY);
-        return;
-    }
-
-    // Explicit insert mode entry
-    if (key === 'i') {
-        consumeEvent(e);
-        isExplicitInsert = true;
-        setInputFocusState(true);
-        return;
-    }
-
-    // Browser navigation and actions dispatched to host
-    switch (key) {
-        case 't':
-            consumeEvent(e);
-            try { ipcRenderer.sendToHost('normal-mode-action', 'spawn-tab'); } catch (err) {}
-            break;
-        case 'x':
-            consumeEvent(e);
-            try { ipcRenderer.sendToHost('normal-mode-action', 'remove-tab'); } catch (err) {}
-            break;
-        case 'o':
-            consumeEvent(e);
-            try { ipcRenderer.sendToHost('normal-mode-action', 'toggle-address'); } catch (err) {}
-            break;
-        case 'r':
-            consumeEvent(e);
-            try { ipcRenderer.sendToHost('normal-mode-action', 'reload-tab'); } catch (err) {}
-            break;
-        case 'R':
-            consumeEvent(e);
-            try { ipcRenderer.sendToHost('normal-mode-action', 'force-reload-tab'); } catch (err) {}
-            break;
-        case 'H':
-            consumeEvent(e);
-            try { ipcRenderer.sendToHost('normal-mode-action', 'history-back'); } catch (err) {}
-            break;
-        case 'L':
-            consumeEvent(e);
-            try { ipcRenderer.sendToHost('normal-mode-action', 'history-forward'); } catch (err) {}
-            break;
-        case '/':
-            consumeEvent(e);
-            try { ipcRenderer.sendToHost('normal-mode-action', 'toggle-find'); } catch (err) {}
-            break;
-        case 'f':
-            consumeEvent(e);
-            try { ipcRenderer.sendToHost('normal-mode-action', 'trigger-hints'); } catch (err) {}
-            break;
-        case 'w':
-            consumeEvent(e);
-            try { ipcRenderer.sendToHost('normal-mode-action', 'toggle-dashboard'); } catch (err) {}
-            break;
-        case 's':
-            consumeEvent(e);
-            try { ipcRenderer.sendToHost('normal-mode-action', 'focus-sidebar'); } catch (err) {}
-            break;
-        case 'm':
-            consumeEvent(e);
-            try { ipcRenderer.sendToHost('normal-mode-action', 'toggle-tab-audio-mute'); } catch (err) {}
-            break;
-        case 'M':
-            consumeEvent(e);
-            try { ipcRenderer.sendToHost('normal-mode-action', 'toggle-global-audio-mute'); } catch (err) {}
-            break;
-        case 'p':
-            consumeEvent(e);
-            try { ipcRenderer.sendToHost('normal-mode-action', 'toggle-pin-tab'); } catch (err) {}
-            break;
-        case 'y':
-            consumeEvent(e);
-            try {
-                let currentUrl = window.location.href;
-                if (currentUrl.includes('/assets/pdfjs/viewer.html') && currentUrl.includes('file=')) {
-                    try {
-                        const parsed = new URL(currentUrl);
-                        const fileParam = parsed.searchParams.get('file');
-                        if (fileParam) currentUrl = fileParam;
-                    } catch (urlErr) {}
-                }
-                navigator.clipboard.writeText(currentUrl).catch(() => {});
-                ipcRenderer.sendToHost('normal-mode-action', 'yank-url', currentUrl);
-            } catch (err) {}
-            break;
     }
 }, true);

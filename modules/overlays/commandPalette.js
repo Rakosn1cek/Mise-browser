@@ -1133,6 +1133,60 @@ export async function syncPreferencesUI() {
         } catch (err) {}
     }
 
+    // NORMAL-mode rows carry data-normal-action: the static <kbd> text in index.html
+    // is only the default, and would silently lie after a rebind, so repaint each row
+    // from the live table. Specs are rendered in table order and every key bound to
+    // the action is listed, so an action with two bindings (x and Shift+W both close
+    // a tab) shows both. Nodes are built rather than innerHTML'd because the specs
+    // come from a user-editable file.
+    if (window.miseAPI && typeof window.miseAPI.getNormalKeybinds === 'function') {
+        try {
+            const normalBinds = await window.miseAPI.getNormalKeybinds();
+            if (normalBinds && normalBinds.singles) {
+                const displaySpec = (spec) => spec.replace(/^([A-Z])$/, 'Shift + $1');
+                const specsForAction = (action) => {
+                    if (!action) return [];
+                    const specs = [];
+                    for (const source of [normalBinds.singles, normalBinds.sequences || {}]) {
+                        for (const [spec, mapped] of Object.entries(source)) {
+                            if (mapped === action) specs.push(displaySpec(spec));
+                        }
+                    }
+                    return specs;
+                };
+
+                document.querySelectorAll('.shortcut-row[data-normal-action]').forEach(row => {
+                    const keySpan = row.querySelector('.shortcut-key');
+                    if (!keySpan) return;
+                    const specs = [
+                        ...specsForAction(row.getAttribute('data-normal-action')),
+                        ...specsForAction(row.getAttribute('data-normal-action-alt'))
+                    ];
+                    keySpan.textContent = '';
+                    if (!specs.length) {
+                        const unbound = document.createElement('kbd');
+                        unbound.className = 'shortcut-badge';
+                        unbound.textContent = 'unbound';
+                        keySpan.appendChild(unbound);
+                        return;
+                    }
+                    specs.forEach((spec, idx) => {
+                        if (idx) {
+                            const sep = document.createElement('span');
+                            sep.className = 'shortcut-sep';
+                            sep.textContent = '/';
+                            keySpan.appendChild(sep);
+                        }
+                        const kbd = document.createElement('kbd');
+                        kbd.className = 'shortcut-badge';
+                        kbd.textContent = spec;
+                        keySpan.appendChild(kbd);
+                    });
+                });
+            }
+        } catch (err) {}
+    }
+
     if (typeof window.renderPermissionsVaultView === 'function') {
         window.renderPermissionsVaultView();
     }

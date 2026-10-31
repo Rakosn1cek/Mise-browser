@@ -59,11 +59,33 @@ console.log('Running Mise Ephemeral Tab Peek ("Glance") regression tests...');
     );
 
     // Normal mode gh chord verification
-    assert(
-        preloadSource.includes("now - lastGTime < 500") &&
-        preloadSource.includes("'trigger-glance-hints'"),
-        'webview-preload.js must detect gh chord within 500ms and dispatch trigger-glance-hints'
-    );
+    // Normal mode gh sequence verification.
+    // This used to assert the literal "now - lastGTime < 500" branch. Normal-mode
+    // keys are configuration now (keybinds.json "normal"), so assert the behaviour
+    // instead: gh resolves to the glance action and the host routes it to the
+    // guest-side hint engine.
+    {
+        const keybinds = require('../keybinds.js');
+        const compiledNormal = keybinds.compileNormalKeymap(keybinds.DEFAULT_NORMAL_KEYBINDS);
+        assert.equal(
+            compiledNormal.sequences.gh,
+            'trigger-glance',
+            'the gh sequence must still resolve to the glance action by default'
+        );
+        assert.equal(
+            keybinds.matchNormalKey(compiledNormal, 'h', 'g').action,
+            'trigger-glance',
+            'a pending gh must win over the lone h scroll binding'
+        );
+        assert.ok(
+            fs.readFileSync(path.join(__dirname, '../modules/webview.js'), 'utf8').includes("case 'trigger-glance':"),
+            'modules/webview.js must handle the glance action name the guest forwards'
+        );
+        assert.ok(
+            preloadSource.includes("runNormalAction(normalKeymap.sequences[armed + key])"),
+            'webview-preload.js must dispatch sequences from the keymap rather than a hardcoded branch'
+        );
+    }
 
     // hinter.js glance mode support
     assert(

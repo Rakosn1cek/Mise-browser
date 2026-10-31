@@ -604,7 +604,9 @@ ipcMain.handle('get-keybinds', async () => {
 });
 
 ipcMain.handle('save-keybinds', async (event, binds) => {
-    return keybinds.saveKeybinds(CONFIG_DIR, binds);
+    const saved = keybinds.saveKeybinds(CONFIG_DIR, binds);
+    if (saved) broadcastKeybindsChanged();
+    return saved;
 });
 
 ipcMain.handle('get-action-metadata', async () => {
@@ -612,8 +614,27 @@ ipcMain.handle('get-action-metadata', async () => {
 });
 
 ipcMain.handle('reload-keybinds', async () => {
-    return keybinds.initializeKeybinds(CONFIG_DIR);
+    const reloaded = keybinds.initializeKeybinds(CONFIG_DIR);
+    broadcastKeybindsChanged();
+    return reloaded;
 });
+
+// Normal-mode bindings are evaluated inside each guest page - the guest is the
+// only party that knows whether the tab is in NORMAL or INSERT mode - so guests
+// pull the compiled table at document start and are pushed a notice when it moves.
+ipcMain.on('get-normal-keybinds', (event) => {
+    event.returnValue = keybinds.getCompiledNormalKeymap();
+});
+
+function broadcastKeybindsChanged() {
+    const compiled = keybinds.getCompiledNormalKeymap();
+    for (const contents of webContents.getAllWebContents()) {
+        if (!contents || contents.isDestroyed()) continue;
+        try {
+            contents.send('keybinds-changed', compiled);
+        } catch (err) {}
+    }
+}
 
 ipcMain.on('execute-terminal-command', (event, commandStr) => {
     const sanitised = security.sanitiseTerminalCommand(commandStr);
