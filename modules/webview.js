@@ -31,6 +31,51 @@ function getLiveTabIndex(webview, wsName) {
     return -1;
 }
 
+// Link hints engine (hinter.js) installation.
+// The engine used to be injected only from the dom-ready handler, behind two awaited
+// IPC round-trips and behind a `liveIdx < 0` early return. A page that finished
+// loading first (or a tab whose index was not registered yet) therefore kept a
+// document with no `window.toggleHints`, and pressing `f` silently did nothing.
+// Injection is now eager and idempotent, and `f` can also install it on demand.
+let cachedHinterSource = null;
+
+async function loadHinterSource() {
+    if (cachedHinterSource) return cachedHinterSource;
+    try {
+        if (!window.miseAPI || typeof window.miseAPI.readHinterCode !== 'function') return '';
+        const code = await window.miseAPI.readHinterCode();
+        if (code) cachedHinterSource = code;
+        return code || '';
+    } catch (err) {
+        return '';
+    }
+}
+
+export async function ensureHinterInjected(webview) {
+    if (!webview || webview.__miseDestroyed || typeof webview.executeJavaScript !== 'function') {
+        return false;
+    }
+
+    try {
+        if (await webview.executeJavaScript("typeof window.toggleHints === 'function'")) {
+            return true;
+        }
+    } catch (err) {
+        return false;
+    }
+
+    try {
+        const hinterCode = await loadHinterSource();
+        if (!hinterCode) return false;
+        // Clear the guard so a document whose first injection was interrupted can retry.
+        await webview.executeJavaScript('try { window.hasHinter = false; } catch (e) {}');
+        await webview.executeJavaScript(`try { ${hinterCode} } catch(e) {}`);
+        return !!(await webview.executeJavaScript("typeof window.toggleHints === 'function'"));
+    } catch (err) {
+        return false;
+    }
+}
+
 export function destroyGuestWebview(webview) {
     if (!webview) return;
     webview.__miseDestroyed = true;
@@ -339,6 +384,23 @@ export function createWebView(url, currentWS, idx) {
 
     webview.addEventListener('dom-ready', async () => {
         webview.style.opacity = '1';
+
+        // Install the hints engine first and without awaiting it: everything below is
+        // deferred behind IPC round-trips (or skipped entirely for a tab that is not
+        // registered yet), and a keystroke that arrives in that window used to be lost.
+        ensureHinterInjected(webview).catch(() => {});
+
+        // A freshly loaded document starts with no focused editable element and no hint
+        // overlay, but the document it replaced cannot fire focusout or hint-layer
+        // mutations any more. Without this reset the mode indicator stayed stuck on
+        // INSERT/HINTS after navigating away from a page with a focused input.
+        const wasPassthrough = !!webview.__miseKeyboardMode?.passthrough;
+        webview.__miseKeyboardMode = { input: false, hints: false, passthrough: wasPassthrough };
+        if (wasPassthrough) {
+            // The guest's own passthrough flag is per-document; re-apply the host's choice.
+            try { webview.send('set-passthrough-mode', true); } catch (err) {}
+        }
+
         const liveIdx = getLiveTabIndex(webview, currentWS, idx);
         if (liveIdx < 0) return;
 
@@ -352,14 +414,6 @@ export function createWebView(url, currentWS, idx) {
             const liveTitle = webview.getTitle();
             if (liveTitle && liveTitle !== 'about:blank') {
                 syncTitle(liveTitle);
-            }
-        } catch (err) {}
-
-        try {
-            const hinterCode = await window.miseAPI.readHinterCode();
-            if (hinterCode && typeof webview.executeJavaScript === 'function') {
-                const safeExecutionWrapper = `try { ${hinterCode} } catch(e) {}`;
-                webview.executeJavaScript(safeExecutionWrapper, false).catch(() => {});
             }
         } catch (err) {}
 
@@ -515,12 +569,14 @@ export function handleNormalModeAction(action, extra, webview, currentWS, idx) {
             break;
         case 'trigger-hints':
             if (typeof window.triggerLinkHints === 'function') {
-                window.triggerLinkHints();
+                // Pass the guest that saw the keystroke so the overlay lands in the pane
+                // the user is looking at even if the tab list selection is stale.
+                window.triggerLinkHints(webview);
             }
             break;
         case 'trigger-glance-hints':
             if (typeof window.triggerGlanceHints === 'function') {
-                window.triggerGlanceHints();
+                window.triggerGlanceHints(webview);
             }
             break;
         case 'toggle-dashboard':

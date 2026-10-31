@@ -104,6 +104,11 @@ function applyTargetUrl(targetUrl) {
 
     const addressBar = document.getElementById('WideAddressBar');
     dismissAddressBar(addressBar);
+
+    // Hand the keyboard back to the page. Blurring the address bar leaves the host
+    // shell focused, so NORMAL-mode keys ('f' for link hints, j/k, t, ...) would be
+    // swallowed by the embedder and silently do nothing until the page was clicked.
+    focusActiveWebview();
 }
 
 export function displayAddressOverlay() {

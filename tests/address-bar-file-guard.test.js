@@ -236,6 +236,36 @@ console.log('Running Mise address bar local file navigation guard tests...');
         assert.equal(mockState.sessionState.workspaces.default[0], 'https://github.com/rakosn1cek/mise-browser');
         assert.equal(mockState.activeViewsCache.default[0].src, 'https://github.com/rakosn1cek/mise-browser');
 
+        // Test H: Navigating from the address bar must hand the keyboard back to the
+        // page. Regression: Ctrl+T -> type "linkedin" -> Enter left focus on the host
+        // shell, so 'f' (link hints) and every other NORMAL-mode key silently did nothing.
+        activeWebviewFocused = false;
+        addressBarDisplay = 'block';
+        await handleNavigation('https://github.com/rakosn1cek/mise-browser');
+        assert.equal(activeWebviewFocused, true, 'URL navigation must restore webview focus');
+
+        activeWebviewFocused = false;
+        addressBarDisplay = 'block';
+        await handleNavigation('linkedin');
+        assert.equal(
+            mockState.activeViewsCache.default[0].src,
+            'https://duckduckgo.com/?q=linkedin',
+            'Bare queries must resolve to a search URL'
+        );
+        assert.equal(addressBarDisplay, 'none', 'Address bar must close after searching');
+        assert.equal(activeWebviewFocused, true, 'Search navigation must restore webview focus');
+
+        // A dismissed address bar that keeps focus on the host shell breaks every
+        // NORMAL-mode key, so applyTargetUrl must never end without focusing the page.
+        const applyTargetUrlBody = navSource.slice(
+            navSource.indexOf('function applyTargetUrl('),
+            navSource.indexOf('export function displayAddressOverlay')
+        );
+        assert(
+            /dismissAddressBar\(addressBar\);\s*(\/\/[^\n]*\n\s*)*focusActiveWebview\(\);/.test(applyTargetUrlBody),
+            'applyTargetUrl must call focusActiveWebview() after dismissing the address bar'
+        );
+
         console.log('✓ Address bar navigation guard successfully isolates local file schemes and permits PDFs');
         console.log('All address bar local file navigation guard tests passed successfully!');
     }

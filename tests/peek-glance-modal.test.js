@@ -96,8 +96,9 @@ console.log('Running Mise Ephemeral Tab Peek ("Glance") regression tests...');
         'modules/webview.js must handle trigger-glance-hints in handleNormalModeAction'
     );
     assert(
-        rendererSource.includes("function triggerGlanceHints()"),
-        'renderer.js must implement triggerGlanceHints'
+        /function triggerGlanceHints\s*\(/.test(rendererSource) &&
+        rendererSource.includes('window.triggerGlanceHints = triggerGlanceHints;'),
+        'renderer.js must implement and expose triggerGlanceHints'
     );
     assert(
         rendererSource.includes("'PeekModalOverlay'"),

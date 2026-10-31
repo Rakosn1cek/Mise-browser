@@ -572,12 +572,15 @@ try {
     };
 
     const attachHintObserver = () => {
-        if (!document.body) return;
+        // The hint layer is mounted on <html>, not <body>: observing <body> meant the
+        // HINTS mode indicator never updated when the overlay opened or closed.
+        const root = document.documentElement;
+        if (!root) return;
         const observer = new MutationObserver(notifyHintsState);
-        observer.observe(document.body, { childList: true });
+        observer.observe(root, { childList: true });
     };
 
-    if (document.body) {
+    if (document.documentElement) {
         attachHintObserver();
     } else {
         document.addEventListener('DOMContentLoaded', attachHintObserver);

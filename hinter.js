@@ -53,6 +53,8 @@
         return { codes, codeLength: len };
     }
 
+    // Returns the number of hints painted, 0 when the page had no visible targets,
+    // or -1 when an existing overlay was dismissed.
     window.toggleHints = function(options) {
         const mode = (typeof options === 'string') ? options : (options && options.mode ? options.mode : 'click');
         const existing = document.getElementById('mise-hint-layer');
@@ -67,7 +69,7 @@
                 }
             }
             if (currentMode === mode) {
-                return;
+                return -1;
             }
         }
 
@@ -105,7 +107,7 @@
             }
         });
 
-        if (visible.length === 0) return;
+        if (visible.length === 0) return 0;
 
         const layer = document.createElement('div');
         layer.id = 'mise-hint-layer';
@@ -233,5 +235,6 @@
         };
 
         document.addEventListener('keydown', window.hintKeyListener, true);
+        return visible.length;
     };
 })();

@@ -39,7 +39,8 @@ import {
     toggleReaderViewOnActiveTab,
     exportActiveTabToNotes,
     exportActiveTabToExternal,
-    destroyGuestWebview
+    destroyGuestWebview,
+    ensureHinterInjected
 } from './modules/webview.js';
 
 import { 
@@ -1203,28 +1204,66 @@ async function executeGlobalCacheWipe() {
     focusActiveWebview();
 }
 
-function triggerLinkHints() {
+function resolveHintTargetWebview(originWebview) {
     const currentWS = state.sessionState.current_workspace;
+    const views = state.activeViewsCache[currentWS] || [];
+
+    // Prefer the guest that produced the keystroke (split view, stale selection).
+    if (originWebview && !originWebview.__miseDestroyed && views.indexOf(originWebview) !== -1) {
+        return originWebview;
+    }
+
     const activeListItem = document.querySelector('#TabList li.selected');
-    if (activeListItem) {
-        const currentIdx = Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem);
-        const activeWv = state.activeViewsCache[currentWS]?.[currentIdx];
-        if (activeWv && typeof activeWv.executeJavaScript === 'function') {
-            activeWv.executeJavaScript("if (typeof window.toggleHints === 'function') { window.toggleHints(); }").catch(() => {});
+    if (!activeListItem) return null;
+    const currentIdx = Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem);
+    const activeWv = views[currentIdx];
+    return (activeWv && !activeWv.__miseDestroyed) ? activeWv : null;
+}
+
+async function runHintsOnWebview(webview, mode) {
+    if (!webview || typeof webview.executeJavaScript !== 'function') return;
+
+    const options = JSON.stringify({ mode: mode === 'glance' ? 'glance' : 'click' });
+    const expression = `(() => {
+        if (typeof window.toggleHints !== 'function') return -2;
+        const shown = window.toggleHints(${options});
+        return (typeof shown === 'number') ? shown : 0;
+    })()`;
+
+    let shown = -2;
+    try {
+        shown = await webview.executeJavaScript(expression);
+    } catch (err) {
+        return;
+    }
+
+    if (shown === -2) {
+        // The engine is normally installed on dom-ready. If the document has none yet
+        // (fast page, missed dom-ready, keystroke before injection settled) install it
+        // now and retry once, instead of dropping the key silently.
+        const injected = await ensureHinterInjected(webview);
+        if (!injected) {
+            setTargetUrl('Link hints unavailable on this page', 2000);
+            return;
         }
+        try {
+            shown = await webview.executeJavaScript(expression);
+        } catch (err) {
+            return;
+        }
+    }
+
+    if (shown === 0) {
+        setTargetUrl('Link hints: no targets in view', 2000);
     }
 }
 
-function triggerGlanceHints() {
-    const currentWS = state.sessionState.current_workspace;
-    const activeListItem = document.querySelector('#TabList li.selected');
-    if (activeListItem) {
-        const currentIdx = Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem);
-        const activeWv = state.activeViewsCache[currentWS]?.[currentIdx];
-        if (activeWv && typeof activeWv.executeJavaScript === 'function') {
-            activeWv.executeJavaScript("if (typeof window.toggleHints === 'function') { window.toggleHints({ mode: 'glance' }); }").catch(() => {});
-        }
-    }
+function triggerLinkHints(originWebview) {
+    runHintsOnWebview(resolveHintTargetWebview(originWebview), 'click').catch(() => {});
+}
+
+function triggerGlanceHints(originWebview) {
+    runHintsOnWebview(resolveHintTargetWebview(originWebview), 'glance').catch(() => {});
 }
 window.triggerGlanceHints = triggerGlanceHints;
 window.openPeekModal = openPeekModal;
