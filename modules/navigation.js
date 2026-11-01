@@ -104,6 +104,7 @@ function applyTargetUrl(targetUrl) {
 
     const addressBar = document.getElementById('WideAddressBar');
     dismissAddressBar(addressBar);
+    focusActiveWebview();
 }
 
 export function displayAddressOverlay() {

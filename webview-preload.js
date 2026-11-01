@@ -572,12 +572,13 @@ try {
     };
 
     const attachHintObserver = () => {
-        if (!document.body) return;
+        const targetNode = document.documentElement || document.body;
+        if (!targetNode) return;
         const observer = new MutationObserver(notifyHintsState);
-        observer.observe(document.body, { childList: true });
+        observer.observe(targetNode, { childList: true });
     };
 
-    if (document.body) {
+    if (document.documentElement || document.body) {
         attachHintObserver();
     } else {
         document.addEventListener('DOMContentLoaded', attachHintObserver);

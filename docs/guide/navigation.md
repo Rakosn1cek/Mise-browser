@@ -15,6 +15,8 @@ Link Hints allow you to click any link, button, or input field on a web page usi
    - Text inputs and search bars automatically receive focus for immediate typing.
 4. Press **Escape** or press **Ctrl + F** again to dismiss hints without clicking.
 
+The link hinter script is injected directly upon guest page readiness and operates independently of tab indexing, ensuring transferred, restored, and background tabs always receive link hinting capabilities. While hints are active, the status bar mode badge reflects **HINTS** mode live.
+
 ---
 
 ## Ephemeral Tab Peek ("Glance")
@@ -40,7 +42,7 @@ Mise features a transient link preview modal ("Glance") inspired by the preview 
 
 Press **Ctrl + L** or **o** at any time to focus the centered address bar fixed in the bottom status bar:
 
-- **Direct Navigation**: Type any full or partial URL and press **Enter**.
+- **Direct Navigation**: Type any full or partial URL and press **Enter**. Upon navigation, keyboard focus immediately returns to the guest webview so Vim normal mode shortcuts (`f`, `j`, `k`, `r`, etc.) are active immediately without requiring a manual mouse click.
 - **Live Search Autocomplete**: As you type, Mise queries your browsing history and active bookmarks live. Use the **Up** and **Down** arrow keys to select a suggestion and press **Enter**. Suggestions expand smoothly upwards above the status bar.
 - **Direct Calculator**: Type any arithmetic expression (e.g. `240 * 1.2`, `15% of 200`, `sqrt(144)`) to compute the answer live in the upward dropdown menu. Press **Enter** to copy the answer to your clipboard, or press the **Down Arrow** or **Tab** to put the result into the address bar and continue calculating.
 - **DuckDuckGo Bangs**: Type any DuckDuckGo bang (e.g. `!w Arch Linux`, `!gh MiseBrowser`, `!yt ambient`) to route directly to thousands of external search destinations.
@@ -158,11 +160,12 @@ Mise maintains clean separation between sidebar navigation and active web page i
 
 ## Modal Navigation Engine
 
-Mise Browser provides a Vim-inspired modal navigation engine that frees you from chorded modifiers during routine web browsing. The engine distinguishes between three primary operational states:
+Mise Browser provides a Vim-inspired modal navigation engine that frees you from chorded modifiers during routine web browsing. The engine distinguishes between four primary operational states reflected in the status bar mode badge:
 
 1. **NORMAL Mode**: The default state. Home-row keys control page scrolling and browser actions without requiring Ctrl or Alt chords.
 2. **INSERT Mode**: Automatically entered whenever you click or focus a text input, search box, or content-editable field (or press `i` explicitly). Keystrokes pass directly into the field. Pressing **Escape** blurs the field and immediately returns to **NORMAL** mode.
 3. **PASSTHROUGH Mode**: Designed for rich web applications like Google Docs, sheets, design suites, and cloud terminals. In passthrough mode, all keystrokes pass directly to the guest web application without browser interception. Toggle passthrough mode at any time using **Shift + Escape** or by clicking the mode badge in the status bar.
+4. **HINTS Mode**: Automatically active while link hints are displayed over the page (`Ctrl + F` or `f` in NORMAL mode). The status bar indicator synchronises live via guest DOM mutation monitoring, returning to NORMAL mode upon hint selection or dismissal.
 
 ### NORMAL Mode Keymap
 

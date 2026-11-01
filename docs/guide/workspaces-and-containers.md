@@ -44,14 +44,21 @@ The Workspace Dashboard provides a structural tree view of all open tabs across 
 ![Mise Browser Workspace Dashboard](/screenshots/workspace-dashboard.webp)
 
 - Press **Ctrl + Shift + W** to open or close the Dashboard.
-- **Visual Overview**: Displays every workspace, highlighting the currently active workspace, along with the title and status of every tab.
-- **Tree Navigation**: Use the **Up** and **Down** arrow keys to traverse workspaces and tabs, and press **Enter** to jump directly to any tab.
-- **Workspace Creation**: Click the **+ New Workspace** button or use the input prompt to create a new isolated container workspace.
-- **Workspace Renaming**: Double-click any workspace header to edit its name inline.
-- **Drag-and-Drop Organization**:
+- **Visual Overview**: Displays every workspace, highlighting the currently active workspace, along with the title, pinned state, and sleeping status of every tab.
+- **Tree Navigation & Selection Anchoring**: Use the **Up** and **Down** arrow keys to traverse workspaces and tabs, and press **Enter** to jump directly to any tab. Opening or rebuilding the tree automatically anchors selection to the active workspace.
+- **Focus Trapping & Action Delegation**: Pressing **Tab** cycles keyboard focus smoothly through interactive action buttons (`+ New Workspace`, Rename, and Delete). Pressing **Enter** while focused on an action button triggers that button directly without inadvertently activating the virtual tree cursor.
+- **Automatic Focus Restoration**: Focus returns automatically to `#DashboardOverlay` after tree rebuilds, prompt dismissals, or deletions, ensuring arrow navigation remains active without requiring mouse clicks.
+- **Workspace Creation**: Click the **+ New Workspace** button, press Enter on the button, or run **Create New Workspace** in the Command Palette to register a new isolated container partition.
+- **Workspace Renaming**: Click the rename icon button, double-click a workspace header, or trigger **Rename Active Workspace** in the Command Palette.
+- **Safe Workspace Deletion**:
+  - The `Private` workspace and the final persistent workspace are strictly protected from deletion.
+  - Workspaces containing open tabs prompt for explicit confirmation before deletion.
+  - Deleting the active workspace automatically shifts the session to an adjacent surviving workspace without interrupting active windows.
+  - Workspace deletion can be triggered from the dedicated trash icon button or via **Delete Active Workspace** in the Command Palette.
+- **Drag-and-Drop Organisation**:
   - Reorder tabs within a workspace by dragging them up or down.
   - Move tabs between different workspaces by dragging a tab item and dropping it onto another workspace node. When moved across workspaces, the tab automatically adapts to the target container partition.
-- **Tab & Workspace Deletion**: Press **Delete** or **Ctrl + W** on any highlighted node in the dashboard tree to close tabs or remove an empty workspace.
+- **Tab Deletion**: Press **Delete** or **Ctrl + W** on any highlighted tab node in the dashboard tree to close it immediately.
 
 ---
 

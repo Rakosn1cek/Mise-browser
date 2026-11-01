@@ -10,7 +10,7 @@ The Command Centre gives you rapid, searchable access to all Mise operations, in
 
 - Press **Ctrl + P** from anywhere in Mise.
 - Type to fuzzy-search commands, shortcuts, and keywords dynamically.
-- Click category filter chips (**All**, **Tabs & Navigation**, **Split View**, **Performance**, **Tools & Notes**, **Scripts & Styles**, **Preferences**) or use **Left** and **Right** arrow keys when the list is focused to switch categories.
+- Click category filter chips (**All**, **Tabs & Navigation**, **Workspaces**, **Split View**, **Performance**, **Tools & Notes**, **Scripts & Styles**, **Preferences**) or use **Left** and **Right** arrow keys when the list is focused to switch categories.
 - Use **Up** and **Down** arrow keys anywhere in the overlay (whether focused on the search input, list, execute button, or close button) to navigate commands.
 - Press **Tab** to cycle focus cleanly between the search input, command list, execute button, and close button (trapped within the overlay, cycling back to the top without escaping).
 - View the right-hand **Feature Inspector** card for in-depth architecture descriptions, default and customised keybindings, and workflow tips.

@@ -112,13 +112,12 @@ export function renameWorkspace(oldName, newName) {
 export function deleteWorkspace(wsName) {
     if (String(wsName).trim().toLowerCase() === 'private') return;
     if (isReservedWorkspaceName(wsName)) return;
-    const totalWorkspaces = Object.keys(state.sessionState.workspaces);
-    if (totalWorkspaces.length <= 1) return;
+    const totalWorkspaces = Object.keys(state.sessionState.workspaces || {});
+    const nonPrivateWorkspaces = totalWorkspaces.filter(k => k !== 'Private' && !isReservedWorkspaceName(k));
+    if (nonPrivateWorkspaces.length <= 1) return;
 
     if (wsName === state.sessionState.current_workspace) {
-        const sortedNonPrivate = totalWorkspaces
-            .filter(k => k !== 'Private')
-            .sort((a, b) => a.localeCompare(b));
+        const sortedNonPrivate = nonPrivateWorkspaces.sort((a, b) => a.localeCompare(b));
         const currentIdx = sortedNonPrivate.indexOf(wsName);
         let fallbackWS = 'Default';
         if (currentIdx > 0) {
@@ -260,7 +259,8 @@ export function buildDashboardTree() {
             actionsDiv.appendChild(renameBtn);
 
             // Dedicated Delete Button
-            if (wsKeys.length > 1) {
+            const nonPrivateCount = wsKeys.filter(k => k !== 'Private' && !isReservedWorkspaceName(k)).length;
+            if (nonPrivateCount > 1) {
                 const deleteBtn = document.createElement('button');
                 deleteBtn.className = 'nav-icon-button';
                 deleteBtn.innerHTML = '<i class="fa-solid fa-trash-can"></i>';
@@ -270,7 +270,7 @@ export function buildDashboardTree() {
                 deleteBtn.style.fontSize = '11px';
                 deleteBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    deleteWorkspace(wsName);
+                    confirmWorkspaceDeletion(wsName);
                 });
                 actionsDiv.appendChild(deleteBtn);
             }
@@ -514,14 +514,19 @@ export function confirmWorkspaceDeletion(wsName) {
         return false;
     }
     const totalWorkspaces = Object.keys(state.sessionState.workspaces || {});
-    if (totalWorkspaces.length <= 1) {
+    const nonPrivateWorkspaces = totalWorkspaces.filter(k => k !== 'Private' && !isReservedWorkspaceName(k));
+    if (nonPrivateWorkspaces.length <= 1) {
         return false;
     }
 
     const tabCount = state.sessionState.workspaces[targetWs]?.length || 0;
     if (tabCount > 0) {
         const confirmed = window.confirm(`Workspace "${targetWs}" has ${tabCount} open tab(s). Are you sure you want to delete it?`);
-        if (!confirmed) return false;
+        if (!confirmed) {
+            const overlay = document.getElementById('DashboardOverlay');
+            if (overlay && state.dashboardActive) overlay.focus();
+            return false;
+        }
     }
 
     deleteWorkspace(targetWs);

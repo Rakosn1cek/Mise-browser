@@ -383,6 +383,21 @@ export function createWebView(url, currentWS, idx) {
 
     webview.addEventListener('dom-ready', async () => {
         webview.style.opacity = '1';
+
+        try {
+            const hinterCode = await window.miseAPI.readHinterCode();
+            if (hinterCode && typeof webview.executeJavaScript === 'function') {
+                const safeExecutionWrapper = `try { ${hinterCode} } catch(e) {}`;
+                webview.executeJavaScript(safeExecutionWrapper, false).catch(() => {});
+            }
+        } catch (err) {}
+
+        injectMatchingUserContent(webview).catch(() => {});
+
+        if (webview.__miseDarkReaderEnabled) {
+            reapplyWebviewDarkReader(webview).catch(() => {});
+        }
+
         const liveIdx = getLiveTabIndex(webview, currentWS, idx);
         if (liveIdx < 0) return;
 
@@ -398,20 +413,6 @@ export function createWebView(url, currentWS, idx) {
                 syncTitle(liveTitle);
             }
         } catch (err) {}
-
-        try {
-            const hinterCode = await window.miseAPI.readHinterCode();
-            if (hinterCode && typeof webview.executeJavaScript === 'function') {
-                const safeExecutionWrapper = `try { ${hinterCode} } catch(e) {}`;
-                webview.executeJavaScript(safeExecutionWrapper, false).catch(() => {});
-            }
-        } catch (err) {}
-
-        injectMatchingUserContent(webview).catch(() => {});
-
-        if (webview.__miseDarkReaderEnabled) {
-            reapplyWebviewDarkReader(webview).catch(() => {});
-        }
 
         if (state.sessionState.current_workspace === currentWS) {
             const activeListItem = document.querySelector('#TabList li.selected');
