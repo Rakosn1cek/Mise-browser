@@ -745,7 +745,7 @@ export function renderWorkspaceUI(targetTabToFocus = null) {
         const isInitiallySelected = (idx === resolvedFocusIdx);
         li.setAttribute('tabindex', isInitiallySelected ? '0' : '-1');
         const isPinned = !!state.tabPinned?.[currentWS]?.[idx];
-        li.className = 'tab-item';
+        li.className = 'tab-item' + (isInitiallySelected ? ' selected' : '');
         li.title = `${cachedTitle}\n${url}`;
         if (isSleeping) li.classList.add('tab-sleeping');
         if (isPinned) li.classList.add('tab-pinned');

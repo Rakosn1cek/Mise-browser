@@ -35,7 +35,6 @@ The Command Centre gives you rapid, searchable access to all Mise operations, in
 | :--- | :--- | :--- | :--- |
 | **New Blank Tab** | `Ctrl+T` | `spawn-tab` | Creates an isolated webview in the current workspace. |
 | **Focus Status Bar Address Bar** | `Ctrl+L` | `toggle-address` | Focuses status bar address bar with upward query completion and search aliases. |
-| **Toggle Workspace Dashboard** | `Ctrl+Shift+W` | `toggle-dashboard` | Full-page hierarchical tree of all workspaces, tabs, and windows. |
 | **Toggle Actionable History** | `Ctrl+Shift+H` | `toggle-history` | Local history ledger with domain-level filtering and record purging. |
 | **Toggle Link Hints Overlay** | `Ctrl+F` | `trigger-hints` | Letter tags overlaid on clickable webpage links for keyboard browsing. |
 | **Trigger Glance Hints (Preview)** | `Ctrl+G` / `gh` | `trigger-glance` | Ephemeral Tab Peek link hints for transient modal previews without creating tabs. |
@@ -52,6 +51,15 @@ The Command Centre gives you rapid, searchable access to all Mise operations, in
 | **Toggle Status & Mode Bar** | `Ctrl+/` | `toggle-status-bar` | 22px footer status bar displaying modal state, target URL, and TLS encryption. |
 | **Toggle Auto-Collapse Sidebar** | — | — | Pins sidebar open or enables auto-shrink to 36px strip with hover expansion. |
 | **Toggle Zen Mode (Hide Sidebar)** | — | — | Completely hides peripheral sidebar chrome for edge-to-edge reading. |
+
+### Workspaces & Dashboard
+
+| Command Title | Shortcut | Action ID | Description |
+| :--- | :--- | :--- | :--- |
+| **Toggle Workspace Dashboard** | `Ctrl+Shift+W` | `toggle-dashboard` | Full-page hierarchical tree of all workspaces, tabs, and windows. |
+| **Create New Workspace** | — | `create-workspace` | Opens the workspace creation dialogue to register a new isolated container partition. |
+| **Rename Active Workspace** | — | `rename-workspace` | Renames the current container workspace and migrates active tabs to the new partition. |
+| **Delete Active Workspace** | — | `delete-workspace` | Removes the active container workspace and its tabs after confirmation. |
 
 ### Split View
 

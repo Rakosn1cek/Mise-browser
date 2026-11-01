@@ -8,7 +8,7 @@ import {
 } from './modules/webview.js';
 import { toggleBookmarksOverlay, promptQuickmark, addCurrentPageToBookmarks, deleteBookmark, deleteQuickmark } from './modules/overlays/bookmarks.js';
 import { toggleCommandPaletteView, togglePreferencesView, cycleWebRTCPolicy, toggleWebRTCProtection, setWebRTCPolicy, inspectWebRTCStatus, getWebRTCReadableLabel } from './modules/overlays/commandPalette.js';
-import { toggleDashboardView } from './modules/overlays/dashboard.js';
+import { toggleDashboardView, promptWorkspaceCreation, promptWorkspaceRename, confirmWorkspaceDeletion } from './modules/overlays/dashboard.js';
 import { toggleHistoryOverlay } from './modules/overlays/history.js';
 import { toggleNotesOverlay, appendSelectionToNotes, openNotesInExternalApp } from './modules/overlays/notes.js';
 import { displayAddressOverlay } from './modules/navigation.js';
@@ -152,7 +152,7 @@ Object.assign(window, {
     toggleCommandPaletteView, toggleGlobalMediaPlayback, toggleActiveTabAudioMute,
     toggleGlobalAudioMute, togglePinActiveTab, toggleSplitView, cycleSplitOrientation,
     switchSplitFocus, swapSplitPanes, closeSplitView, openUrlInSplit, toggleBookmarksOverlay,
-    promptQuickmark, addCurrentPageToBookmarks, focusSidebar, testCleanGoogleSignIn, checkForUpdates: triggerUpdateCheck
+    promptQuickmark, addCurrentPageToBookmarks, focusSidebar, testCleanGoogleSignIn, checkForUpdates: triggerUpdateCheck, promptWorkspaceCreation, promptWorkspaceRename, confirmWorkspaceDeletion
 });
 
 if (window.miseAPI && typeof window.miseAPI.onMasterShortcut === 'function') {
@@ -164,6 +164,9 @@ if (window.miseAPI && typeof window.miseAPI.onMasterShortcut === 'function') {
             case 'open-transient-share': openTransientShareModal(args[0]); break;
             case 'toggle-address': displayAddressOverlay(); break;
             case 'toggle-dashboard': toggleDashboardView(); break;
+            case 'create-workspace': promptWorkspaceCreation(); break;
+            case 'rename-workspace': promptWorkspaceRename(); break;
+            case 'delete-workspace': confirmWorkspaceDeletion(); break;
             case 'reload-active-tab': getActiveWebview()?.reload(); break;
             case 'toggle-devtools': toggleActiveDevTools(); break;
             case 'toggle-bookmarks': toggleBookmarksOverlay(); break;
@@ -184,9 +187,8 @@ if (window.miseAPI && typeof window.miseAPI.onMasterShortcut === 'function') {
             case 'toggle-tab-audio-mute': toggleActiveTabAudioMute(); break;
             case 'toggle-global-audio-mute': toggleGlobalAudioMute(); break;
             case 'toggle-pin-tab': togglePinActiveTab(); break;
-            case 'jump-to-tab-1': case 'jump-to-tab-2': case 'jump-to-tab-3':
-            case 'jump-to-tab-4': case 'jump-to-tab-5': case 'jump-to-tab-6':
-            case 'jump-to-tab-7': case 'jump-to-tab-8': case 'jump-to-tab-9':
+            case 'jump-to-tab-1': case 'jump-to-tab-2': case 'jump-to-tab-3': case 'jump-to-tab-4':
+            case 'jump-to-tab-5': case 'jump-to-tab-6': case 'jump-to-tab-7': case 'jump-to-tab-8': case 'jump-to-tab-9':
                 jumpToTabByIndex(parseInt(action.slice(-1), 10)); break;
             case 'jump-to-tab': jumpToTabByIndex(args[0]); break;
             case 'toggle-split': toggleSplitView(); break;
@@ -215,8 +217,7 @@ if (window.miseAPI && typeof window.miseAPI.onMasterShortcut === 'function') {
             case 'toggle-clock': toggleClock(); break;
             case 'cycle-clock-format': cycleClockFormat(); break;
             case 'toggle-window-controls': toggleWindowControls(args[0]); break;
-            case 'open-diagnostics':
-            case 'toggle-diagnostics': toggleDiagnosticsView(); break;
+            case 'open-diagnostics': case 'toggle-diagnostics': toggleDiagnosticsView(); break;
             case 'toggle-diagnostics-recording': toggleDiagnosticsRecording(); break;
             case 'cycle-webrtc-policy': cycleWebRTCPolicy(); break;
             case 'toggle-webrtc-protection': toggleWebRTCProtection(); break;
@@ -236,10 +237,8 @@ if (window.miseAPI && typeof window.miseAPI.onMasterShortcut === 'function') {
             }
             case 'toggle-dark-reader': toggleDarkReaderOnActiveTab(); break;
             case 'toggle-reader-view': toggleReaderViewOnActiveTab(); break;
-            case 'go-back':
-            case 'go-back-signal': navigateFrameBack(); break;
-            case 'go-forward':
-            case 'go-forward-signal': navigateFrameForward(); break;
+            case 'go-back': case 'go-back-signal': navigateFrameBack(); break;
+            case 'go-forward': case 'go-forward-signal': navigateFrameForward(); break;
             case 'toggle-private-mode': togglePrivateWorkspace(); break;
             case 'hibernate-inactive-tabs': hibernateInactiveTabs(); break;
         }

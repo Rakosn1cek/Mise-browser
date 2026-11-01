@@ -3,6 +3,9 @@ import { focusActiveWebview, getWorkspacePartition, isReservedWorkspaceName } fr
 import { renderWorkspaceUI, switchTabFocus, spawnTabWithUrl, spawnNewBlankTab, handleTabRemoval, moveTabState, destroyGuestWebview } from '../webview.js';
 import { transferTab } from '../tabTransfer.js';
 
+let currentDialogMode = 'create';
+let renameTargetWorkspace = '';
+
 export function toggleDashboardView() {
     if (state.paletteActive && typeof window.toggleCommandPaletteView === 'function') {
         window.toggleCommandPaletteView();
@@ -22,8 +25,14 @@ export function toggleDashboardView() {
         allWebviews.forEach((wv) => wv.style.display = 'none');
     } else {
         overlay.style.display = 'none';
+        const currentWS = state.sessionState.current_workspace;
         const activeListItem = document.querySelector('#TabList li.selected');
-        const currentIdx = activeListItem ? Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem) : 0;
+        let currentIdx = activeListItem ? Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem) : -1;
+        if (currentIdx < 0) {
+            const savedTab = state.sessionState.active_tabs?.[currentWS];
+            const urls = state.sessionState.workspaces?.[currentWS] || [];
+            currentIdx = (typeof savedTab === 'number' && savedTab >= 0 && savedTab < urls.length) ? savedTab : 0;
+        }
         switchTabFocus(currentIdx);
     }
 }
@@ -92,7 +101,11 @@ export function renameWorkspace(oldName, newName) {
     }
 
     window.miseAPI.saveSession(state.sessionState);
-    renderWorkspaceUI();
+    const targetWs = state.sessionState.current_workspace;
+    const targetTab = (state.sessionState.active_tabs && typeof state.sessionState.active_tabs[targetWs] === 'number')
+        ? state.sessionState.active_tabs[targetWs]
+        : 0;
+    renderWorkspaceUI(targetTab);
     buildDashboardTree();
 }
 
@@ -103,7 +116,18 @@ export function deleteWorkspace(wsName) {
     if (totalWorkspaces.length <= 1) return;
 
     if (wsName === state.sessionState.current_workspace) {
-        const fallbackWS = totalWorkspaces.find(k => k !== wsName);
+        const sortedNonPrivate = totalWorkspaces
+            .filter(k => k !== 'Private')
+            .sort((a, b) => a.localeCompare(b));
+        const currentIdx = sortedNonPrivate.indexOf(wsName);
+        let fallbackWS = 'Default';
+        if (currentIdx > 0) {
+            fallbackWS = sortedNonPrivate[currentIdx - 1];
+        } else if (sortedNonPrivate.length > 1) {
+            fallbackWS = sortedNonPrivate[1];
+        } else {
+            fallbackWS = totalWorkspaces.find(k => k !== wsName) || 'Default';
+        }
         state.sessionState.current_workspace = fallbackWS;
     }
 
@@ -124,8 +148,16 @@ export function deleteWorkspace(wsName) {
     delete state.sessionState.workspaces[wsName];
     
     window.miseAPI.saveSession(state.sessionState);
-    renderWorkspaceUI();
-    buildDashboardTree();
+    const targetWs = state.sessionState.current_workspace;
+    const targetTab = (state.sessionState.active_tabs && typeof state.sessionState.active_tabs[targetWs] === 'number')
+        ? state.sessionState.active_tabs[targetWs]
+        : 0;
+    renderWorkspaceUI(targetTab);
+    if (state.dashboardActive) {
+        buildDashboardTree();
+        const overlay = document.getElementById('DashboardOverlay');
+        if (overlay) overlay.focus();
+    }
 }
 
 export function buildDashboardTree() {
@@ -356,9 +388,19 @@ export function buildDashboardTree() {
         container.appendChild(node);
     });
 
-    state.dashboardSelectionIdx = Math.min(state.dashboardSelectionIdx, state.dashboardItems.length - 1);
-    if (state.dashboardSelectionIdx < 0) state.dashboardSelectionIdx = 0;
+    const activeWsIdx = state.dashboardItems.findIndex(item => item.payload[0] === 'workspace' && item.payload[1] === state.sessionState.current_workspace);
+    if (activeWsIdx >= 0) {
+        state.dashboardSelectionIdx = activeWsIdx;
+    } else {
+        state.dashboardSelectionIdx = Math.min(state.dashboardSelectionIdx, state.dashboardItems.length - 1);
+        if (state.dashboardSelectionIdx < 0) state.dashboardSelectionIdx = 0;
+    }
     updateDashboardVisualSelection();
+
+    const overlay = document.getElementById('DashboardOverlay');
+    if (state.dashboardActive && overlay) {
+        overlay.focus();
+    }
 }
 
 export function updateDashboardVisualSelection() {
@@ -392,25 +434,47 @@ export function executeDashboardItemActivation(payload) {
     }
 }
 
-export function showWorkspaceInputDialog() {
+export function showWorkspaceInputDialog(mode = 'create', targetWs = '') {
     const container = document.getElementById('WorkspaceInputBox');
     const input = document.getElementById('NewWorkspaceTitleInput');
+    const submitBtn = document.getElementById('submit-ws-btn');
     if (container && input) {
+        currentDialogMode = mode;
+        renameTargetWorkspace = targetWs;
         container.style.display = 'flex';
-        input.value = '';
+        input.value = mode === 'rename' ? targetWs : '';
+        input.placeholder = mode === 'rename' ? 'New workspace name...' : 'Workspace name...';
+        if (submitBtn) submitBtn.textContent = mode === 'rename' ? 'Rename' : 'Save';
         input.focus();
+        if (mode === 'rename') input.select();
+        setTimeout(() => {
+            if (document.activeElement !== input) {
+                input.focus();
+                if (mode === 'rename') input.select();
+            }
+        }, 50);
     }
 }
 
 export function hideWorkspaceInputDialog() {
-    document.getElementById('WorkspaceInputBox').style.display = 'none';
-    document.getElementById('DashboardOverlay').focus();
+    const container = document.getElementById('WorkspaceInputBox');
+    if (container) container.style.display = 'none';
+    currentDialogMode = 'create';
+    renameTargetWorkspace = '';
+    const overlay = document.getElementById('DashboardOverlay');
+    if (overlay && state.dashboardActive) overlay.focus();
 }
 
 export function processWorkspaceCreation() {
     const input = document.getElementById('NewWorkspaceTitleInput');
-    const name = input.value.trim();
+    const name = input ? input.value.trim() : '';
     if (!name || name.toLowerCase() === 'private' || isReservedWorkspaceName(name)) {
+        hideWorkspaceInputDialog();
+        return;
+    }
+
+    if (currentDialogMode === 'rename' && renameTargetWorkspace) {
+        renameWorkspace(renameTargetWorkspace, name);
         hideWorkspaceInputDialog();
         return;
     }
@@ -423,9 +487,43 @@ export function processWorkspaceCreation() {
         
         const overlay = document.getElementById('DashboardOverlay');
         state.dashboardActive = false;
-        overlay.style.display = 'none';
+        if (overlay) overlay.style.display = 'none';
         renderWorkspaceUI();
     } else {
         hideWorkspaceInputDialog();
     }
+}
+
+export function promptWorkspaceCreation() {
+    if (!state.dashboardActive) toggleDashboardView();
+    showWorkspaceInputDialog('create');
+}
+
+export function promptWorkspaceRename(wsName) {
+    const targetWs = wsName || state.sessionState.current_workspace;
+    if (String(targetWs).trim().toLowerCase() === 'private' || isReservedWorkspaceName(targetWs)) {
+        return;
+    }
+    if (!state.dashboardActive) toggleDashboardView();
+    showWorkspaceInputDialog('rename', targetWs);
+}
+
+export function confirmWorkspaceDeletion(wsName) {
+    const targetWs = wsName || state.sessionState.current_workspace;
+    if (String(targetWs).trim().toLowerCase() === 'private' || isReservedWorkspaceName(targetWs)) {
+        return false;
+    }
+    const totalWorkspaces = Object.keys(state.sessionState.workspaces || {});
+    if (totalWorkspaces.length <= 1) {
+        return false;
+    }
+
+    const tabCount = state.sessionState.workspaces[targetWs]?.length || 0;
+    if (tabCount > 0) {
+        const confirmed = window.confirm(`Workspace "${targetWs}" has ${tabCount} open tab(s). Are you sure you want to delete it?`);
+        if (!confirmed) return false;
+    }
+
+    deleteWorkspace(targetWs);
+    return true;
 }

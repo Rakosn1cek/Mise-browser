@@ -106,8 +106,14 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
     padding-bottom: 2px;
+}
+
+.palette-category-filters::-webkit-scrollbar {
+    display: none;
 }
 
 .palette-filter-chip {
@@ -118,8 +124,9 @@
     border-radius: 20px;
     font-size: 11.5px;
     font-weight: 500;
+    white-space: nowrap;
     cursor: pointer;
-    transition: all 0.12s ease;
+    transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease;
     user-select: none;
 }
 
@@ -132,7 +139,7 @@
     background-color: var(--accent);
     color: var(--bg-main);
     border-color: var(--accent);
-    font-weight: 600;
+    font-weight: 500;
 }
 
 /* Two-Column Body */
@@ -163,6 +170,7 @@
     margin: 0;
     padding: 6px;
     overflow-y: auto;
+    scrollbar-gutter: stable;
     flex: 1;
     display: flex;
     flex-direction: column;

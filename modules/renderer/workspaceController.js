@@ -101,8 +101,14 @@ export function setupWorkspaceListeners() {
     document.getElementById('cancel-ws-btn')?.addEventListener('click', hideWorkspaceInputDialog);
 
     document.getElementById('NewWorkspaceTitleInput')?.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') processWorkspaceCreation();
-        else if (e.key === 'Escape') hideWorkspaceInputDialog();
+        e.stopPropagation();
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            processWorkspaceCreation();
+        } else if (e.key === 'Escape') {
+            e.preventDefault();
+            hideWorkspaceInputDialog();
+        }
     });
 
     const overlay = document.getElementById('DashboardOverlay');
@@ -115,8 +121,15 @@ export function setupWorkspaceListeners() {
                 return;
             }
 
-            if (state.dashboardItems.length === 0) return;
             if (document.activeElement === document.getElementById('NewWorkspaceTitleInput') || document.activeElement?.classList.contains('dashboard-rename-input')) return;
+
+            if (e.key === 'Enter' && document.activeElement && document.activeElement.tagName === 'BUTTON') {
+                e.preventDefault();
+                document.activeElement.click();
+                return;
+            }
+
+            if (state.dashboardItems.length === 0) return;
 
             if (e.key === 'ArrowDown') {
                 e.preventDefault();

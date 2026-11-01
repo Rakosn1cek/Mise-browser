@@ -34,3 +34,4 @@ BUG_HUNT_AND_FIX_PLAN.md
 
 # Local maintenance scripts
 scripts/update-aur.zsh
+scripts/resources.zsh

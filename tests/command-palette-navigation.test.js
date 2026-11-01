@@ -32,8 +32,8 @@ assert.equal(
 const inactiveChipMatches = html.match(/class="palette-filter-chip"[^>]*tabindex="-1"/g) || [];
 assert.equal(
     inactiveChipMatches.length,
-    6,
-    'All 6 inactive palette category filter chips must have tabindex="-1"'
+    7,
+    'All 7 inactive palette category filter chips must have tabindex="-1"'
 );
 
 console.log('✓ HTML markup for Command Palette overlay, list, and roving filter chips verified');
@@ -97,7 +97,7 @@ const countBadge = new MockElement('PaletteMatchesCount', 'span');
 const inspectorCard = new MockElement('PaletteInspectorCard', 'div');
 const filterContainer = new MockElement('PaletteCategoryFilters', 'div');
 
-const chipCategories = ['all', 'Tabs & Navigation', 'Split View', 'Performance & Memory', 'Tools & Notes', 'User Scripts & Styles', 'Preferences & System'];
+const chipCategories = ['all', 'Tabs & Navigation', 'Workspaces & Dashboard', 'Split View', 'Performance & Memory', 'Tools & Notes', 'User Scripts & Styles', 'Preferences & System'];
 const chips = chipCategories.map((cat, idx) => {
     const chip = new MockElement(`chip-${idx}`, 'button', { category: cat });
     if (idx === 0) chip.classList.add('active');
@@ -359,6 +359,7 @@ console.log('✓ Enter execution and Escape dismissal verified');
 const commandDefMatches = jsSource.matchAll(/id:\s*['"]([^'"]+)['"].*?category:\s*['"]([^'"]+)['"]/gs);
 const validCategories = new Set([
     'Tabs & Navigation',
+    'Workspaces & Dashboard',
     'Split View',
     'Performance & Memory',
     'Tools & Notes',

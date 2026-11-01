@@ -7,6 +7,9 @@ import { syncVisualSettingsInputs, setupVisualSettingsListeners } from '../theme
 import { renderSearchAliasesUI } from './searchEngine.js';
 
 function returnFocusToWebview() {
+    if (state.paletteActive || state.dashboardActive || state.preferencesActive || state.historyActive || state.notesActive || state.bookmarksActive || state.diagnosticsActive) {
+        return;
+    }
     window.miseAllowWebviewFocus = true;
     focusActiveWebview();
 }
@@ -38,19 +41,6 @@ export const COMMAND_DEFINITIONS = [
         shortcut: 'Ctrl+L',
         keywords: ['url', 'address', 'search', 'goto', 'navigate', 'location'],
         action: () => window.displayAddressOverlay && window.displayAddressOverlay()
-    },
-    {
-        id: 'toggle-dashboard',
-        title: 'Toggle Workspace Dashboard',
-        desc: 'Full-page tree view of all workspaces, tabs, and windows',
-        details: 'Renders an expansive visual hierarchy of every workspace, active tab, and sleeping webview across the session with bulk management controls.',
-        tip: 'Press Ctrl+Shift+W to audit and reorder your tabs across multi-window sessions.',
-        category: 'Tabs & Navigation',
-        icon: 'fa-solid fa-layer-group',
-        actionId: 'toggle-dashboard',
-        shortcut: 'Ctrl+Shift+W',
-        keywords: ['workspace', 'tree', 'tabs', 'all', 'overview', 'dashboard'],
-        action: () => window.toggleDashboardView && window.toggleDashboardView()
     },
     {
         id: 'toggle-history',
@@ -274,6 +264,57 @@ export const COMMAND_DEFINITIONS = [
         icon: 'fa-solid fa-eye-slash',
         keywords: ['zen', 'fullscreen', 'distraction', 'hide'],
         action: () => window.toggleZenMode && window.toggleZenMode()
+    },
+
+    // Workspaces & Dashboard
+    {
+        id: 'toggle-dashboard',
+        title: 'Toggle Workspace Dashboard',
+        desc: 'Full-page tree view of all workspaces, tabs, and windows',
+        details: 'Renders an expansive visual hierarchy of every workspace, active tab, and sleeping webview across the session with bulk management controls.',
+        tip: 'Press Ctrl+Shift+W to audit and reorder your tabs across multi-window sessions.',
+        category: 'Workspaces & Dashboard',
+        icon: 'fa-solid fa-layer-group',
+        actionId: 'toggle-dashboard',
+        shortcut: 'Ctrl+Shift+W',
+        keywords: ['workspace', 'tree', 'tabs', 'all', 'overview', 'dashboard'],
+        action: () => window.toggleDashboardView && window.toggleDashboardView()
+    },
+    {
+        id: 'create-workspace',
+        title: 'Create New Workspace',
+        desc: 'Open workspace prompt to register a new container partition',
+        details: 'Opens the workspace creation dialogue to configure an isolated container workspace with independent cookies and session storage.',
+        tip: 'Workspaces isolate storage partitions: ideal for separating personal and work accounts.',
+        category: 'Workspaces & Dashboard',
+        icon: 'fa-solid fa-folder-plus',
+        actionId: 'create-workspace',
+        keywords: ['workspace', 'create', 'new', 'container', 'add'],
+        action: () => window.promptWorkspaceCreation && window.promptWorkspaceCreation()
+    },
+    {
+        id: 'rename-workspace',
+        title: 'Rename Active Workspace',
+        desc: 'Rename current container workspace and migrate active tabs',
+        details: 'Opens the workspace rename prompt for the active workspace, migrating its tabs and session metadata to the new container partition name.',
+        tip: 'The built-in Private workspace cannot be renamed.',
+        category: 'Workspaces & Dashboard',
+        icon: 'fa-solid fa-pen-to-square',
+        actionId: 'rename-workspace',
+        keywords: ['workspace', 'rename', 'edit', 'name', 'title'],
+        action: () => window.promptWorkspaceRename && window.promptWorkspaceRename()
+    },
+    {
+        id: 'delete-workspace',
+        title: 'Delete Active Workspace',
+        desc: 'Remove active workspace and close tabs after confirmation',
+        details: 'Removes the currently active workspace and discards all associated tabs and container data after confirming.',
+        tip: 'Mise prevents deleting the Private workspace or the last remaining workspace.',
+        category: 'Workspaces & Dashboard',
+        icon: 'fa-solid fa-trash-can',
+        actionId: 'delete-workspace',
+        keywords: ['workspace', 'delete', 'remove', 'trash', 'close'],
+        action: () => window.confirmWorkspaceDeletion && window.confirmWorkspaceDeletion()
     },
 
     // Split View
