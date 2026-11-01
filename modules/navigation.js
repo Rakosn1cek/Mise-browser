@@ -3,7 +3,7 @@ import { escapeHtml, focusActiveWebview, getActiveWebview, isPdfUrl, getPdfViewe
 import { renderWorkspaceUI, switchTabFocus, spawnTabWithUrl, spawnNewBlankTab, handleTabRemoval, wakeTab } from './webview.js';
 import { formatSearchUrl, resolveSearchAliasUrl, getEffectiveSearchAliases } from './overlays/searchEngine.js';
 import { evaluateMathExpression } from './calculator.js';
-import { setTargetUrl } from './statusBar.js';
+import { setTargetUrl, updateStatusBarFromActiveView } from './statusBar.js';
 
 export const POPULAR_BANGS = {
     '!w': 'Wikipedia',
@@ -66,7 +66,7 @@ export function dismissAddressBar(addressBar) {
     }
     hideSuggestions();
     const statusBar = document.getElementById('StatusBar');
-    if (statusBar && statusBar.dataset.temporarilyRevealed === 'true') {
+    if (statusBar && statusBar.dataset && statusBar.dataset.temporarilyRevealed === 'true') {
         statusBar.style.display = 'none';
         delete statusBar.dataset.temporarilyRevealed;
     }
@@ -87,17 +87,42 @@ function applyTargetUrl(targetUrl) {
 
     const currentWS = state.sessionState.current_workspace;
     const activeListItem = document.querySelector('#TabList li.selected');
-    if (!activeListItem) return;
+    if (!activeListItem) {
+        if (typeof spawnTabWithUrl === 'function') {
+            spawnTabWithUrl(targetUrl);
+        }
+        const addressBar = document.getElementById('WideAddressBar');
+        dismissAddressBar(addressBar);
+        focusActiveWebview();
+        return;
+    }
 
     const currentIdx = Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem);
 
     state.sessionState.workspaces[currentWS][currentIdx] = targetUrl;
     window.miseAPI.saveSession(state.sessionState);
 
+    const titleSpan = typeof activeListItem.querySelector === 'function' ? activeListItem.querySelector('.tab-title') : null;
+    if (titleSpan) {
+        try {
+            const parsed = new URL(targetUrl);
+            titleSpan.textContent = parsed.hostname || targetUrl;
+        } catch (e) {
+            titleSpan.textContent = targetUrl;
+        }
+    }
+    activeListItem.title = `Loading...\n${targetUrl}`;
+
     const effectiveLoadUrl = isPdfUrl(targetUrl) ? getPdfViewerUrl(targetUrl) : targetUrl;
 
     if (state.activeViewsCache[currentWS] && state.activeViewsCache[currentWS][currentIdx]) {
-        state.activeViewsCache[currentWS][currentIdx].setAttribute('src', effectiveLoadUrl);
+        const wv = state.activeViewsCache[currentWS][currentIdx];
+        if (typeof wv.loadURL === 'function') {
+            wv.loadURL(effectiveLoadUrl).catch(() => {});
+        }
+        if (typeof wv.setAttribute === 'function') {
+            wv.setAttribute('src', effectiveLoadUrl);
+        }
     } else {
         wakeTab(currentWS, currentIdx);
     }
@@ -234,11 +259,11 @@ export async function handleNavigation(input) {
 
 export function setupAddressBarAutocomplete() {
     const addressBar = document.getElementById('WideAddressBar');
+    if (!addressBar) return;
     const suggestionsList = document.getElementById('AddressSuggestions');
 
-    if (!addressBar || !suggestionsList) return;
-
     addressBar.addEventListener('input', async (e) => {
+        if (!suggestionsList) return;
         const query = e.target.value.trim();
         if (!query) {
             hideSuggestions();
@@ -346,8 +371,38 @@ export function setupAddressBarAutocomplete() {
         renderSuggestions(matches);
     });
 
-    addressBar.addEventListener('keydown', (e) => {
-        if (suggestionsList.style.display === 'none') return;
+    addressBar.addEventListener('keydown', async (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            if (state.addressSelectionIdx >= 0 && state.addressSuggestions[state.addressSelectionIdx]) {
+                await selectSuggestion(state.addressSuggestions[state.addressSelectionIdx]);
+            } else if (addressBar.value.trim()) {
+                await handleNavigation(addressBar.value.trim());
+            } else {
+                dismissAddressBar(addressBar);
+                if (typeof updateStatusBarFromActiveView === 'function') {
+                    updateStatusBarFromActiveView();
+                }
+                if (typeof focusActiveWebview === 'function') {
+                    focusActiveWebview();
+                }
+            }
+            return;
+        }
+
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            dismissAddressBar(addressBar);
+            if (typeof updateStatusBarFromActiveView === 'function') {
+                updateStatusBarFromActiveView();
+            }
+            if (typeof focusActiveWebview === 'function') {
+                focusActiveWebview();
+            }
+            return;
+        }
+
+        if (!suggestionsList || suggestionsList.style.display === 'none') return;
 
         if (e.key === 'ArrowDown') {
             e.preventDefault();
@@ -368,6 +423,34 @@ export function setupAddressBarAutocomplete() {
                 state.addressSelectionIdx = idx;
                 updateSuggestionHighlight();
             }
+        }
+    });
+
+    addressBar.addEventListener('focus', () => {
+        requestAnimationFrame(() => {
+            if (typeof addressBar.select === 'function') {
+                addressBar.select();
+            }
+        });
+    });
+
+    addressBar.addEventListener('blur', () => {
+        setTimeout(() => {
+            hideSuggestions();
+            const statusBar = document.getElementById('StatusBar');
+            if (statusBar && statusBar.dataset && statusBar.dataset.temporarilyRevealed === 'true') {
+                statusBar.style.display = 'none';
+                delete statusBar.dataset.temporarilyRevealed;
+            }
+            if (typeof updateStatusBarFromActiveView === 'function') {
+                updateStatusBarFromActiveView();
+            }
+        }, 150);
+    });
+
+    addressBar.addEventListener('mouseup', (e) => {
+        if (document.activeElement === addressBar && addressBar.selectionStart !== addressBar.selectionEnd) {
+            e.preventDefault();
         }
     });
 }
@@ -429,9 +512,11 @@ export async function selectSuggestion(item) {
         const targetWs = item.value.split('ws:')[1];
         state.sessionState.current_workspace = targetWs;
         window.miseAPI.saveSession(state.sessionState);
-        renderWorkspaceUI(0);
+        const lastActive = state.sessionState.active_tabs?.[targetWs] ?? 0;
+        renderWorkspaceUI(lastActive);
         const addressBar = document.getElementById('WideAddressBar');
         dismissAddressBar(addressBar);
+        focusActiveWebview();
         return;
     }
 
