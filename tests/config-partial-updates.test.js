@@ -116,17 +116,20 @@ const config = require('../main/config');
 
         // 3. Source regression check on buildSettingsSubmenu
         {
-            const mainSource = fs.readFileSync(path.join(__dirname, '..', 'main.js'), 'utf8');
+            const contextMenusPath = path.join(__dirname, '..', 'main', 'contextMenus.js');
+            const targetSource = fs.existsSync(contextMenusPath)
+                ? fs.readFileSync(contextMenusPath, 'utf8')
+                : fs.readFileSync(path.join(__dirname, '..', 'main.js'), 'utf8');
             const startMarker = 'function buildSettingsSubmenu';
             const endMarker = 'function openSettingsMenu';
-            const startIndex = mainSource.indexOf(startMarker);
-            const endIndex = mainSource.indexOf(endMarker);
+            const startIndex = targetSource.indexOf(startMarker);
+            const endIndex = targetSource.indexOf(endMarker);
 
-            assert(startIndex !== -1, 'buildSettingsSubmenu must exist in main.js');
-            assert(endIndex !== -1, 'openSettingsMenu must exist in main.js');
+            assert(startIndex !== -1, 'buildSettingsSubmenu must exist in main/contextMenus.js');
+            assert(endIndex !== -1, 'openSettingsMenu must exist in main/contextMenus.js');
             assert(startIndex < endIndex, 'buildSettingsSubmenu must precede openSettingsMenu');
 
-            const submenuSource = mainSource.slice(startIndex, endIndex);
+            const submenuSource = targetSource.slice(startIndex, endIndex);
             assert(!submenuSource.includes('writeConfigFile('), 'buildSettingsSubmenu must not contain writeConfigFile(');
             assert(!/\bcfg\.\w+\s*=[^=]/.test(submenuSource), 'buildSettingsSubmenu must not assign to cfg properties');
 

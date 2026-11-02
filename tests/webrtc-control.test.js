@@ -248,29 +248,32 @@ const security = require('../security');
 
         // 9. Verify F1 native settings submenu and explicit Command Palette commands
         {
-            const mainJs = fs.readFileSync(path.join(__dirname, '..', 'main.js'), 'utf8');
+            const contextMenusPath = path.join(__dirname, '..', 'main', 'contextMenus.js');
+            const menuSource = fs.existsSync(contextMenusPath)
+                ? fs.readFileSync(contextMenusPath, 'utf8')
+                : fs.readFileSync(path.join(__dirname, '..', 'main.js'), 'utf8');
             assert.strictEqual(
-                mainJs.includes("label: 'WebRTC IP Handling & Leak Protection'"),
+                menuSource.includes("label: 'WebRTC IP Handling & Leak Protection'"),
                 true,
                 'buildSettingsSubmenu must include WebRTC IP Handling & Leak Protection'
             );
             assert.strictEqual(
-                mainJs.includes("policy: 'default_public_interface_only'"),
+                menuSource.includes("policy: 'default_public_interface_only'"),
                 true,
                 'buildSettingsSubmenu must include default_public_interface_only'
             );
             assert.strictEqual(
-                mainJs.includes("policy: 'disable_non_proxied_udp'"),
+                menuSource.includes("policy: 'disable_non_proxied_udp'"),
                 true,
                 'buildSettingsSubmenu must include disable_non_proxied_udp'
             );
             assert.strictEqual(
-                mainJs.includes("policy: 'disabled'"),
+                menuSource.includes("policy: 'disabled'"),
                 true,
                 'buildSettingsSubmenu must include disabled'
             );
             assert.strictEqual(
-                mainJs.includes("policy: 'default'"),
+                menuSource.includes("policy: 'default'"),
                 true,
                 'buildSettingsSubmenu must include default'
             );
