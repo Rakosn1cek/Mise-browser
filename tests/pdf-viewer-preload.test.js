@@ -31,20 +31,24 @@ console.log('Running Mise PDF viewer preload capability matching regression test
     console.log('✓ webview-preload.js canonical path matching logic verified');
 }
 
-// 2. Verify main.js registers get-pdf-viewer-path IPC handler
+// 2. Verify get-pdf-viewer-path IPC handler registration
 {
-    const mainSource = fs.readFileSync(path.join(__dirname, '../main.js'), 'utf8');
+    const systemIpcPath = path.join(__dirname, '../main/systemIpc.js');
+    const targetSource = fs.existsSync(systemIpcPath)
+        ? fs.readFileSync(systemIpcPath, 'utf8')
+        : fs.readFileSync(path.join(__dirname, '../main.js'), 'utf8');
 
     assert(
-        mainSource.includes("ipcMain.on('get-pdf-viewer-path'"),
-        'main.js must register get-pdf-viewer-path synchronous IPC handler'
+        targetSource.includes("ipcMain.on('get-pdf-viewer-path'"),
+        'systemIpc.js must register get-pdf-viewer-path synchronous IPC handler'
     );
     assert(
-        mainSource.includes("path.join(__dirname, 'assets', 'pdfjs', 'viewer.html')"),
-        'main.js must resolve canonical assets/pdfjs/viewer.html path'
+        targetSource.includes("path.join(appDir, 'assets', 'pdfjs', 'viewer.html')") ||
+        targetSource.includes("path.join(__dirname, 'assets', 'pdfjs', 'viewer.html')"),
+        'systemIpc.js must resolve canonical assets/pdfjs/viewer.html path'
     );
 
-    console.log('✓ main.js get-pdf-viewer-path handler registration verified');
+    console.log('✓ get-pdf-viewer-path handler registration verified');
 }
 
 // 3. Functional verification of capability matching algorithm

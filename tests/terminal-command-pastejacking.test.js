@@ -8,26 +8,29 @@ const security = require('../security.js');
 
 console.log('Running Mise terminal command pastejacking sanitisation regression tests...');
 
-// 1. Static code inspection of main.js IPC listener
+// 1. Static code inspection of terminal command IPC listener
 {
-    const mainSource = fs.readFileSync(path.join(__dirname, '../main.js'), 'utf8');
+    const systemIpcPath = path.join(__dirname, '../main/systemIpc.js');
+    const targetSource = fs.existsSync(systemIpcPath)
+        ? fs.readFileSync(systemIpcPath, 'utf8')
+        : fs.readFileSync(path.join(__dirname, '../main.js'), 'utf8');
 
     assert(
-        mainSource.includes("ipcMain.on('execute-terminal-command'"),
-        'main.js must register execute-terminal-command IPC handler'
+        targetSource.includes("ipcMain.on('execute-terminal-command'"),
+        'systemIpc.js must register execute-terminal-command IPC handler'
     );
 
     assert(
-        mainSource.includes('security.sanitiseTerminalCommand(commandStr)'),
-        'main.js must invoke security.sanitiseTerminalCommand on incoming commandStr'
+        targetSource.includes('security.sanitiseTerminalCommand(commandStr)'),
+        'systemIpc.js must invoke security.sanitiseTerminalCommand on incoming commandStr'
     );
 
     assert(
-        mainSource.includes('clipboard.writeText(sanitised)'),
-        'main.js must copy only sanitised command string to clipboard'
+        targetSource.includes('clipboard.writeText(sanitised)'),
+        'systemIpc.js must copy only sanitised command string to clipboard'
     );
 
-    console.log('✓ main.js execute-terminal-command handler sanitisation integration verified');
+    console.log('✓ execute-terminal-command handler sanitisation integration verified');
 }
 
 // 2. Functional testing of security.sanitiseTerminalCommand

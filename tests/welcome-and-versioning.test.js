@@ -48,11 +48,18 @@ const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
 
 // 2. Verify IPC wiring for welcome path across main and preload
 {
-    const mainContent = fs.readFileSync(mainPath, 'utf8');
+    const systemIpcPath = path.join(rootDir, 'main', 'systemIpc.js');
+    const targetContent = fs.existsSync(systemIpcPath)
+        ? fs.readFileSync(systemIpcPath, 'utf8')
+        : fs.readFileSync(mainPath, 'utf8');
     const preloadContent = fs.readFileSync(preloadPath, 'utf8');
 
-    assert(mainContent.includes("ipcMain.on('get-welcome-path'"), 'main.js must register get-welcome-path IPC handler');
-    assert(mainContent.includes("path.join(__dirname, 'assets', 'welcome.html')"), 'main.js must resolve assets/welcome.html');
+    assert(targetContent.includes("ipcMain.on('get-welcome-path'"), 'systemIpc.js must register get-welcome-path IPC handler');
+    assert(
+        targetContent.includes("path.join(appDir, 'assets', 'welcome.html')") ||
+        targetContent.includes("path.join(__dirname, 'assets', 'welcome.html')"),
+        'systemIpc.js must resolve assets/welcome.html'
+    );
     assert(preloadContent.includes("getWelcomePath: () => ipcRenderer.sendSync('get-welcome-path')"), 'preload.js must expose getWelcomePath API');
 
     console.log('✓ First run welcome path IPC channels verified');

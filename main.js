@@ -79,6 +79,7 @@ const {
     openSettingsMenu,
     showWebviewContextMenu
 } = contextMenus;
+const systemIpc = require('./main/systemIpc');
 
 // Initialise keybinds configuration
 keybinds.initializeKeybinds(CONFIG_DIR);
@@ -412,161 +413,11 @@ ipcMain.on('renderer-ready', () => {
     flushPendingUrls();
 });
 
-ipcMain.on('get-webview-preload-path', (event) => { 
-    event.returnValue = path.join(__dirname, 'webview-preload.js'); 
-});
-
-ipcMain.on('get-pdf-viewer-path', (event) => { 
-    event.returnValue = 'file://' + path.join(__dirname, 'assets', 'pdfjs', 'viewer.html'); 
-});
-
-ipcMain.on('get-pdf-viewer-url', (event, targetUrl) => { 
-    event.returnValue = security.mintPdfViewerUrl(targetUrl); 
-});
-
-ipcMain.on('get-whats-new-path', (event) => { 
-    event.returnValue = 'file://' + path.join(__dirname, 'assets', 'whats-new.html'); 
-});
-
-ipcMain.on('get-welcome-path', (event) => { 
-    event.returnValue = 'file://' + path.join(__dirname, 'assets', 'welcome.html'); 
-});
-
-ipcMain.handle('read-pdf-data', async (event, payload) => {
-    const { token, url: sourceUrl } = payload || {};
-    if (!sourceUrl || typeof sourceUrl !== 'string') {
-        throw new Error('Invalid PDF URL specified.');
-    }
-
-    security.validatePdfAccess(token, sourceUrl, event.sender ? event.sender.getURL() : '');
-
-    if (sourceUrl.startsWith('file://') || sourceUrl.startsWith('/')) {
-        let filePath = sourceUrl;
-        if (sourceUrl.startsWith('file://')) {
-            try {
-                filePath = new URL(sourceUrl).pathname;
-            } catch (e) {
-                filePath = sourceUrl.replace(/^file:\/\//, '');
-            }
-        }
-        filePath = decodeURIComponent(filePath);
-        if (!fs.existsSync(filePath)) {
-            throw new Error(`Local file not found: ${filePath}`);
-        }
-        const data = await fs.promises.readFile(filePath);
-        return data;
-    }
-
-    if (sourceUrl.startsWith('http://') || sourceUrl.startsWith('https://')) {
-        const callerSession = event.sender ? event.sender.session : session.defaultSession;
-        const netFetch = (callerSession && callerSession.net && typeof callerSession.net.fetch === 'function')
-            ? callerSession.net.fetch.bind(callerSession.net)
-            : net.fetch;
-
-        const response = await netFetch(sourceUrl);
-        if (!response.ok) {
-            throw new Error(`Failed to fetch PDF: HTTP ${response.status} ${response.statusText}`);
-        }
-        const arrayBuffer = await response.arrayBuffer();
-        return Buffer.from(arrayBuffer);
-    }
-
-    if (sourceUrl.startsWith('data:application/pdf;base64,')) {
-        const base64Data = sourceUrl.split(',')[1];
-        return Buffer.from(base64Data, 'base64');
-    }
-
-    throw new Error(`Unsupported protocol for PDF loading: ${sourceUrl}`);
-});
-
-ipcMain.handle('save-pdf-file', async (event, payload) => {
-    try {
-        const { token, options } = payload || {};
-        const { url, suggestedName, data } = options || {};
-
-        security.validatePdfAccess(token, url, event.sender ? event.sender.getURL() : '');
-
-        let cleanName = suggestedName || 'document.pdf';
-        if (!cleanName.toLowerCase().endsWith('.pdf')) cleanName += '.pdf';
-
-        const defaultSavePath = path.join(app.getPath('downloads'), cleanName);
-
-        const { canceled, filePath } = await dialog.showSaveDialog(mainWindow, {
-            title: 'Save PDF Document',
-            defaultPath: defaultSavePath,
-            filters: [
-                { name: 'PDF Documents', extensions: ['pdf'] },
-                { name: 'All Files', extensions: ['*'] }
-            ]
-        });
-
-        if (canceled || !filePath) {
-            return { success: false, canceled: true };
-        }
-
-        if (data && (Buffer.isBuffer(data) || data instanceof Uint8Array || ArrayBuffer.isView(data))) {
-            await fs.promises.writeFile(filePath, Buffer.from(data));
-        } else if (url && (url.startsWith('file://') || url.startsWith('/'))) {
-            let srcPath = url.startsWith('file://') ? new URL(url).pathname : url;
-            srcPath = decodeURIComponent(srcPath);
-            await fs.promises.copyFile(srcPath, filePath);
-        } else if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
-            const callerSession = event.sender ? event.sender.session : session.defaultSession;
-            const netFetch = (callerSession && callerSession.net && typeof callerSession.net.fetch === 'function')
-                ? callerSession.net.fetch.bind(callerSession.net)
-                : net.fetch;
-            const resp = await netFetch(url);
-            const arrayBuf = await resp.arrayBuffer();
-            await fs.promises.writeFile(filePath, Buffer.from(arrayBuf));
-        } else {
-            throw new Error('No PDF payload or valid source URL provided.');
-        }
-
-        const stats = await fs.promises.stat(filePath);
-        const record = {
-            id: `dl_pdf_${Date.now()}`,
-            filename: path.basename(filePath),
-            totalBytes: stats.size,
-            receivedBytes: stats.size,
-            state: 'completed',
-            savePath: filePath,
-            url: url || ''
-        };
-
-        if (mainWindow && !mainWindow.isDestroyed()) {
-            mainWindow.webContents.send('download-done', record);
-        }
-
-        if (globalNotificationsEnabled) {
-            sendSystemNotification('PDF Saved', `${path.basename(filePath)} saved successfully.`);
-        }
-
-        return { success: true, filePath };
-    } catch (err) {
-        console.error('Failed to save PDF document:', err);
-        return { success: false, error: err.message };
-    }
-});
-
-ipcMain.handle('read-hinter-code', async () => {
-    try {
-        const hinterPath = path.join(__dirname, 'hinter.js');
-        if (fs.existsSync(hinterPath)) return fs.readFileSync(hinterPath, 'utf8');
-    } catch (err) {}
-    return '';
-});
-
-let cachedReaderDistillerCode = null;
-ipcMain.handle('read-reader-code', async () => {
-    if (cachedReaderDistillerCode) return cachedReaderDistillerCode;
-    try {
-        const distillerPath = path.join(__dirname, 'modules', 'readerDistiller.js');
-        if (fs.existsSync(distillerPath)) {
-            cachedReaderDistillerCode = fs.readFileSync(distillerPath, 'utf8');
-            return cachedReaderDistillerCode;
-        }
-    } catch (err) {}
-    return '';
+// Register system services, PDF, and code ingestion IPC channels
+systemIpc.registerSystemIpc(ipcMain, {
+    getMainWindow: () => mainWindow,
+    sendNotification: sendSystemNotification,
+    areNotificationsEnabled: () => globalNotificationsEnabled
 });
 
 // Register session persistence and crash recovery IPC channels
@@ -622,44 +473,7 @@ ipcMain.handle('reload-keybinds', async () => {
     return keybinds.initializeKeybinds(CONFIG_DIR);
 });
 
-ipcMain.on('execute-terminal-command', (event, commandStr) => {
-    const sanitised = security.sanitiseTerminalCommand(commandStr);
-    if (!sanitised) return;
 
-    clipboard.writeText(sanitised);
-
-    const platform = process.platform;
-    if (platform === 'linux') {
-        const emulators = ["kitty", "alacritty", "foot", "st", "xterm"];
-        exec("which " + emulators.join(" "), (err, stdout) => {
-            let chosenTerm = "";
-            if (stdout) {
-                const paths = stdout.trim().split("\n");
-                if (paths.length > 0) {
-                    chosenTerm = paths[0].split("/").pop();
-                }
-            }
-            if (!chosenTerm) {
-                chosenTerm = "xdg-terminal-exec";
-            }
-            spawn(chosenTerm, [], { detached: true, stdio: 'ignore' }).unref();
-        });
-    } else if (platform === 'darwin') {
-        spawn('open', ['-a', 'Terminal'], { detached: true, stdio: 'ignore' }).unref();
-    } else if (platform === 'win32') {
-        exec('where wt', (err) => {
-            if (!err) {
-                spawn('wt', [], { detached: true, stdio: 'ignore' }).unref();
-            } else {
-                spawn('cmd.exe', [], { 
-                    detached: true, 
-                    stdio: 'ignore',
-                    windowsHide: false
-                }).unref();
-            }
-        });
-    }
-});
 
 
 
@@ -701,38 +515,7 @@ ipcMain.handle('log-diagnostics-event', async (event, data) => {
     return true;
 });
 
-function initializeMemoryWatcher() {
-    setInterval(() => {
-        if (!mainWindow || mainWindow.isDestroyed()) return;
-        const metrics = app.getAppMetrics();
-        let shouldHibernate = false;
-        metrics.forEach(metric => {
-            // Electron returns residentSet in KiB; 200 * 1024 KiB = 200 MB
-            if (metric.type === 'Renderer' && metric.memory.residentSet > 200 * 1024) {
-                const wc = webContents.fromId(metric.webContentsId);
-                if (wc && !wc.isFocused()) {
-                    shouldHibernate = true;
-                }
-            }
-        });
-        if (shouldHibernate) {
-            mainWindow.webContents.send('master-shortcut', 'hibernate-inactive-tabs');
-            if (typeof global.gc === 'function') {
-                setTimeout(() => { try { global.gc(); } catch (e) {} }, 1000);
-            }
-        }
-    }, 15000);
-}
 
-ipcMain.handle('compact-memory', () => {
-    if (typeof global.gc === 'function') {
-        try {
-            global.gc();
-            return true;
-        } catch (e) {}
-    }
-    return false;
-});
 
 
 
@@ -1098,7 +881,7 @@ if (gotSingleInstanceLock) {
             diagnostics.logEvent('warn', 'session', 'Detected previous unclean shutdown or crash, initialising recovery mode');
         }
         createWindow();
-        initializeMemoryWatcher();
+        systemIpc.initializeMemoryWatcher({ getMainWindow: () => mainWindow });
     });
 }
 
