@@ -15,10 +15,13 @@ console.log('Running Mise session persistence and IPC throttling regression test
     const source = fs.existsSync(sessionStorePath) ? fs.readFileSync(sessionStorePath, 'utf8') : fs.readFileSync(mainPath, 'utf8');
     const mainSource = fs.readFileSync(mainPath, 'utf8');
 
+    const windowManagerPath = path.join(__dirname, '../main/windowManager.js');
+    const windowManagerSource = fs.existsSync(windowManagerPath) ? fs.readFileSync(windowManagerPath, 'utf8') : mainSource;
+
     assert(source.includes('function flushSessionToDisk('), 'flushSessionToDisk must be defined in session store module');
     assert(source.includes('function scheduleSessionSave('), 'scheduleSessionSave must be defined in session store module');
     assert(source.includes('ipcMain.handle(\'save-session\''), 'save-session handler must delegate to scheduleSessionSave');
-    assert(mainSource.includes("mainWindow.on('close'"), 'mainWindow close must flush session to disk');
+    assert(windowManagerSource.includes("mainWindow.on('close'"), 'mainWindow close must flush session to disk');
     assert(mainSource.includes("app.on('before-quit'"), 'before-quit must flush session to disk');
 
     // Test debounced write and atomic flush behaviour

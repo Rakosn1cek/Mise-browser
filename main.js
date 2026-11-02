@@ -1,8 +1,17 @@
 const { app, BrowserWindow, ipcMain, session, Menu, MenuItem, nativeTheme, Notification, clipboard, shell, webContents, dialog, net } = require('electron');
 const { installIpcGuard, GUEST_CHANNELS } = require('./main/ipcGuard');
+const windowManager = require('./main/windowManager');
+const {
+    createMainWindow,
+    getMainWindow,
+    dispatchTabUrl,
+    extractUrlsFromArgs,
+    handleAppAction,
+    registerWindowIpc
+} = windowManager;
 
 installIpcGuard(ipcMain, {
-    getMainWindow: () => mainWindow,
+    getMainWindow,
     guestChannels: GUEST_CHANNELS
 });
 
@@ -152,59 +161,10 @@ function initializeEngineSwitches() {
 
 initializeEngineSwitches();
 
-let mainWindow;
-contextMenus.setMainWindowGetter(() => mainWindow);
-
-// URL queue and readiness tracking for external link dispatch
-let isRendererReady = false;
-const pendingUrls = [];
-
-function extractUrlsFromArgs(argv) {
-    if (!argv || !Array.isArray(argv)) return [];
-    const urls = [];
-    for (let i = 1; i < argv.length; i++) {
-        let arg = (argv[i] || '').trim();
-        if (!arg) continue;
-        if (arg.startsWith('-')) continue;
-        arg = arg.replace(/^["']|["']$/g, '');
-        if (arg === '.' || arg.endsWith('main.js') || arg === __dirname) continue;
-
-        if (/^https?:\/\//i.test(arg) || /^file:\/\//i.test(arg)) {
-            urls.push(arg);
-        } else if (/^localhost(:\d+)?(\/.*)?$/i.test(arg) || /^127\.0\.0\.1(:\d+)?(\/.*)?$/i.test(arg)) {
-            urls.push('http://' + arg);
-        } else if (/^[a-zA-Z0-9][-a-zA-Z0-9]*\.[a-zA-Z]{2,}(\/.*)?$/i.test(arg)) {
-            urls.push('https://' + arg);
-        } else {
-            try {
-                if (fs.existsSync(arg) && fs.statSync(arg).isFile() && !arg.endsWith('.js') && !arg.endsWith('.json')) {
-                    urls.push('file://' + path.resolve(arg));
-                }
-            } catch (e) {}
-        }
-    }
-    return urls;
-}
-
-function dispatchTabUrl(url) {
-    if (!url) return;
-    if (isRendererReady && mainWindow && mainWindow.webContents) {
-        mainWindow.webContents.send('master-shortcut', 'spawn-tab-with-url', url);
-    } else {
-        pendingUrls.push(url);
-    }
-}
-
-function flushPendingUrls() {
-    if (!mainWindow || !mainWindow.webContents) return;
-    while (pendingUrls.length > 0) {
-        const nextUrl = pendingUrls.shift();
-        mainWindow.webContents.send('master-shortcut', 'spawn-tab-with-url', nextUrl);
-    }
-}
+contextMenus.setMainWindowGetter(getMainWindow);
 
 // Queue initial command line URLs received on cold start
-extractUrlsFromArgs(process.argv).forEach(url => pendingUrls.push(url));
+extractUrlsFromArgs(process.argv).forEach(url => dispatchTabUrl(url));
 
 
 function sendSystemNotification(title, body) {
@@ -286,11 +246,11 @@ function configureAndHardenSession(targetSession) {
         cfg.webrtc_policy || 'default_public_interface_only'
     );
     permissions.configureSessionPermissions(targetSession, {
-        getMainWindow: () => mainWindow,
+        getMainWindow,
         areNotificationsEnabled: () => globalNotificationsEnabled
     });
     downloads.configureDownloads(targetSession, {
-        getMainWindow: () => mainWindow,
+        getMainWindow,
         sendNotification: sendSystemNotification,
         areNotificationsEnabled: () => globalNotificationsEnabled
     });
@@ -298,7 +258,7 @@ function configureAndHardenSession(targetSession) {
 
 // Register permissions vault and interactive prompt broker IPC channels
 permissions.registerPermissionsIpc(ipcMain, {
-    getMainWindow: () => mainWindow,
+    getMainWindow,
     areNotificationsEnabled: () => globalNotificationsEnabled
 });
 
@@ -387,8 +347,9 @@ ipcMain.handle('get-workspace-partition', (event, name) => {
 });
 
 ipcMain.on('toggle-active-devtools', () => {
-    if (!mainWindow) return;
-    mainWindow.webContents.send('master-shortcut', 'toggle-devtools');
+    const win = getMainWindow();
+    if (!win) return;
+    win.webContents.send('master-shortcut', 'toggle-devtools');
 });
 
 ipcMain.on('set-native-theme', (event, mode) => {
@@ -409,14 +370,12 @@ config.registerConfigIpc(ipcMain, {
     onDoHChange: (provider, customUrl) => applyDoHConfiguration(app, provider, customUrl)
 });
 
-ipcMain.on('renderer-ready', () => {
-    isRendererReady = true;
-    flushPendingUrls();
-});
+// Register window lifecycle and management IPC channels
+registerWindowIpc(ipcMain);
 
 // Register system services, PDF, and code ingestion IPC channels
 systemIpc.registerSystemIpc(ipcMain, {
-    getMainWindow: () => mainWindow,
+    getMainWindow,
     sendNotification: sendSystemNotification,
     areNotificationsEnabled: () => globalNotificationsEnabled
 });
@@ -426,37 +385,6 @@ sessionStore.registerSessionIpc(ipcMain);
 
 // Register storage and local data IPC channels
 storage.registerStorageIpc(ipcMain);
-
-ipcMain.on('toggle-menu-bar', () => {
-    openSettingsMenu();
-});
-
-// Window management controls
-ipcMain.on('window-minimize', () => {
-    if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.minimize();
-    }
-});
-
-ipcMain.on('window-toggle-maximize', () => {
-    if (mainWindow && !mainWindow.isDestroyed()) {
-        if (mainWindow.isMaximized()) {
-            mainWindow.unmaximize();
-        } else {
-            mainWindow.maximize();
-        }
-    }
-});
-
-ipcMain.on('window-close', () => {
-    if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.close();
-    }
-});
-
-ipcMain.handle('window-is-maximized', () => {
-    return (mainWindow && !mainWindow.isDestroyed()) ? mainWindow.isMaximized() : false;
-});
 
 ipcMain.handle('get-keybinds', async () => {
     return keybinds.getKeybinds();
@@ -520,202 +448,54 @@ ipcMain.handle('log-diagnostics-event', async (event, data) => {
 
 
 
-function handleAppAction(action, sourceWebContents) {
-    if (!mainWindow || mainWindow.isDestroyed()) return;
+// Register session security and Google auth IPC channels
+ipcMain.on('is-trusted-domain', (event, hostname) => {
+    event.returnValue = security.isTrustedDomain(hostname);
+});
 
-    if (action === 'toggle-menu-bar') {
-        openSettingsMenu();
-        return;
-    }
-
-    if (action === 'reload-active-tab') {
-        if (sourceWebContents && sourceWebContents !== mainWindow.webContents) {
-            sourceWebContents.reload();
-        } else {
-            mainWindow.webContents.send('master-shortcut', 'reload-active-tab');
-        }
-        return;
-    }
-
-    mainWindow.webContents.send('master-shortcut', action);
-}
-
-function createWindow() {
-    mainWindow = new BrowserWindow({
-        width: 1600,
-        height: 1040,
-        icon: path.join(__dirname, 'assets', 'icons', 'Mise-logo256.png'),
-        frame: true,
-        autoHideMenuBar: false,
-        webPreferences: {
-            preload: path.join(__dirname, 'preload.js'),
-            sandbox: true,
-            contextIsolation: true,
-            nodeIntegration: false,
-            webviewTag: true
-        }
-    });
-    
+ipcMain.on('get-webrtc-policy', (event) => {
     const cfg = loadBrowserConfig();
-    nativeTheme.themeSource = cfg.webview_theme || 'dark';
-    const systemMenu = Menu.buildFromTemplate([
-        {
-            label: 'Mise Settings',
-            submenu: buildSettingsSubmenu(cfg)
-        }
-    ]);
-    mainWindow.setMenu(systemMenu);
-    mainWindow.setMenuBarVisibility(false);
-    
-    // Configure default and volatile private sessions
-    configureAndHardenSession(session.defaultSession);
-    configureAndHardenSession(session.fromPartition('MisePrivateProfile'));
+    event.returnValue = cfg.webrtc_policy || 'default_public_interface_only';
+});
 
-    // Configure active workspace partition; other partitions configure lazily on demand
-    try {
-        const initialSession = readCurrentSession();
-        const activeWs = (initialSession && initialSession.current_workspace) || 'default';
-        configureAndHardenSession(session.fromPartition(getWorkspacePartition(activeWs)));
-    } catch (err) {
-        console.error('Failed to initialise active workspace session:', err);
+ipcMain.on('get-google-signin-user-agent', (event, hostname) => {
+    event.returnValue = security.getGoogleSignInUserAgent(hostname);
+});
+
+ipcMain.handle('clear-google-auth-cookies', async (event, partitionName) => {
+    if (partitionName !== undefined && partitionName !== null) {
+        if (!security.isValidPartitionName(partitionName)) {
+            return false;
+        }
     }
+    const targetSession = partitionName ? session.fromPartition(partitionName) : session.fromPartition('MisePrivateProfile');
+    await security.clearGoogleAuthCookies(targetSession);
+    return true;
+});
 
-    security.setTrustedDomains(loadBrowserConfig().trusted_domains || []);
-
-    // Guard main window from navigating away from application shell
-    const appIndexPath = path.resolve(__dirname, 'index.html');
-    mainWindow.webContents.on('will-navigate', (event, navigationUrl) => {
-        let isAppIndex = false;
-        try {
-            const parsed = new URL(navigationUrl);
-            if (parsed.protocol === 'file:') {
-                const targetFilePath = path.resolve(decodeURIComponent(parsed.pathname));
-                if (targetFilePath === appIndexPath) {
-                    isAppIndex = true;
-                }
-            }
-        } catch (e) {}
-
-        if (isAppIndex) return;
-
-        event.preventDefault();
-        if (security.isSafeTabUrl(navigationUrl) && mainWindow && !mainWindow.isDestroyed() && mainWindow.webContents) {
-            mainWindow.webContents.send('master-shortcut', 'spawn-tab-with-url', navigationUrl);
-        }
-    });
-
-    mainWindow.webContents.setWindowOpenHandler((details) => {
-        if (details.url && security.isSafeTabUrl(details.url) && mainWindow && !mainWindow.isDestroyed() && mainWindow.webContents) {
-            mainWindow.webContents.send('master-shortcut', 'spawn-tab-with-url', details.url);
-        }
-        return { action: 'deny' };
-    });
-
-    mainWindow.loadFile('index.html');
-
-    mainWindow.on('close', () => {
-        markSentinelState(true);
-        flushSessionToDisk();
-        flushHistoryToDisk();
-    });
-
-    mainWindow.on('maximize', () => {
-        if (mainWindow && !mainWindow.isDestroyed() && mainWindow.webContents) {
-            mainWindow.webContents.send('window-maximized-state', true);
-        }
-    });
-
-    mainWindow.on('unmaximize', () => {
-        if (mainWindow && !mainWindow.isDestroyed() && mainWindow.webContents) {
-            mainWindow.webContents.send('window-maximized-state', false);
-        }
-    });
-
-    mainWindow.webContents.once('did-finish-load', () => {
-        setTimeout(() => {
-            if (!isRendererReady) {
-                isRendererReady = true;
-                flushPendingUrls();
-            }
-            // Trigger idle heap sweep to release startup deserialisation buffers
-            if (typeof global.gc === 'function') {
-                try { global.gc(); } catch (e) {}
-            }
-        }, 1200);
-
-        // Check for updates in background after startup
-        setTimeout(async () => {
-            try {
-                const updateInfo = await updater.checkAppUpdates(false);
-                if (updateInfo && updateInfo.updateAvailable && mainWindow && !mainWindow.isDestroyed()) {
-                    mainWindow.webContents.send('update-available', updateInfo);
-                }
-            } catch (e) {}
-        }, 6000);
-    });
-
-    ipcMain.on('is-trusted-domain', (event, hostname) => {
-        event.returnValue = security.isTrustedDomain(hostname);
-    });
-
-    ipcMain.on('get-webrtc-policy', (event) => {
-        const cfg = loadBrowserConfig();
-        event.returnValue = cfg.webrtc_policy || 'default_public_interface_only';
-    });
-
-    ipcMain.on('get-google-signin-user-agent', (event, hostname) => {
-        event.returnValue = security.getGoogleSignInUserAgent(hostname);
-    });
-
-    ipcMain.handle('clear-google-auth-cookies', async (event, partitionName) => {
-        if (partitionName !== undefined && partitionName !== null) {
-            if (!security.isValidPartitionName(partitionName)) {
-                return false;
-            }
-        }
-        const targetSession = partitionName ? session.fromPartition(partitionName) : session.fromPartition('MisePrivateProfile');
-        await security.clearGoogleAuthCookies(targetSession);
-        return true;
-    });
-
-    userContent.initializeUserContent(CONFIG_DIR, mainWindow);
-
-    webContentsPolicy.attachWebviewSecurityGuards(mainWindow.webContents, {
-        configureAndHardenSession
-    });
-
-    ipcMain.on('bubble-webview-key', (event, action) => {
-        if (typeof action !== 'string' || action.length > 64) return;
-        const metadata = keybinds.getActionMetadata();
-        if (!metadata || !Object.prototype.hasOwnProperty.call(metadata, action)) return;
-        if (mainWindow && mainWindow.webContents) {
-            mainWindow.webContents.send('master-shortcut', action);
-        }
-    });
-
-    mainWindow.webContents.on('before-input-event', (event, input) => {
-        if (input.type !== 'keyDown') return;
-
-        const action = keybinds.getActionForInput(input);
-        if (action) {
-            event.preventDefault();
-            handleAppAction(action, mainWindow.webContents);
-        }
-    });
-}
+ipcMain.on('bubble-webview-key', (event, action) => {
+    if (typeof action !== 'string' || action.length > 64) return;
+    const metadata = keybinds.getActionMetadata();
+    if (!metadata || !Object.prototype.hasOwnProperty.call(metadata, action)) return;
+    const win = getMainWindow();
+    if (win && win.webContents) {
+        win.webContents.send('master-shortcut', action);
+    }
+});
 
 webContentsPolicy.setupWebContentsPolicy(app, {
-    getMainWindow: () => mainWindow,
+    getMainWindow,
     configureAndHardenSession,
     handleAppAction
 });
 
 if (gotSingleInstanceLock) {
     app.on('second-instance', (event, commandLine) => {
-        if (mainWindow) {
-            if (mainWindow.isMinimized()) mainWindow.restore();
-            mainWindow.show();
-            mainWindow.focus();
+        const win = getMainWindow();
+        if (win) {
+            if (win.isMinimized()) win.restore();
+            win.show();
+            win.focus();
 
             const incomingUrls = extractUrlsFromArgs(commandLine);
             incomingUrls.forEach(url => {
@@ -728,10 +508,11 @@ if (gotSingleInstanceLock) {
 
     app.on('open-url', (event, url) => {
         event.preventDefault();
-        if (mainWindow) {
-            if (mainWindow.isMinimized()) mainWindow.restore();
-            mainWindow.show();
-            mainWindow.focus();
+        const win = getMainWindow();
+        if (win) {
+            if (win.isMinimized()) win.restore();
+            win.show();
+            win.focus();
         }
         if (security.isSafeTabUrl(url)) {
             dispatchTabUrl(url);
@@ -752,8 +533,23 @@ if (gotSingleInstanceLock) {
         if (isCrashRecoveryState()) {
             diagnostics.logEvent('warn', 'session', 'Detected previous unclean shutdown or crash, initialising recovery mode');
         }
-        createWindow();
-        systemIpc.initializeMemoryWatcher({ getMainWindow: () => mainWindow });
+        createMainWindow({
+            CONFIG_DIR,
+            onClose: () => {
+                markSentinelState(true);
+                flushSessionToDisk();
+                flushHistoryToDisk();
+            },
+            configureAndHardenSession,
+            getWorkspacePartition,
+            readCurrentSession,
+            attachWebviewSecurityGuards: (wc) => {
+                webContentsPolicy.attachWebviewSecurityGuards(wc, {
+                    configureAndHardenSession
+                });
+            }
+        });
+        systemIpc.initializeMemoryWatcher({ getMainWindow });
     });
 }
 

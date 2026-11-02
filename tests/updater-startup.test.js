@@ -8,25 +8,28 @@ const updater = require('../main/updater');
 
 console.log('Running Mise startup background updater regression tests...');
 
-// 1. Verify main.js invokes updater.checkAppUpdates without unbound reference
+// 1. Verify windowManager.js invokes updater.checkAppUpdates without unbound reference
 {
-    const mainSource = fs.readFileSync(path.join(__dirname, '../main.js'), 'utf8');
+    const windowManagerPath = path.join(__dirname, '../main/windowManager.js');
+    const targetSource = fs.existsSync(windowManagerPath)
+        ? fs.readFileSync(windowManagerPath, 'utf8')
+        : fs.readFileSync(path.join(__dirname, '../main.js'), 'utf8');
 
-    // Ensure there is no unbound checkAppUpdates call in main.js
-    const unboundMatches = mainSource.match(/(?<!updater\.)checkAppUpdates\s*\(/g);
+    // Ensure there is no unbound checkAppUpdates call in windowManager.js
+    const unboundMatches = targetSource.match(/(?<!updater\.)checkAppUpdates\s*\(/g);
     assert.equal(
         unboundMatches,
         null,
-        'main.js must not invoke unbound checkAppUpdates() reference'
+        'windowManager.js must not invoke unbound checkAppUpdates() reference'
     );
 
-    // Verify main.js calls updater.checkAppUpdates(false) in background startup check
+    // Verify windowManager.js calls updater.checkAppUpdates(false) in background startup check
     assert(
-        mainSource.includes('await updater.checkAppUpdates(false)'),
-        'main.js must invoke updater.checkAppUpdates(false) via imported updater module'
+        targetSource.includes('await updater.checkAppUpdates(false)'),
+        'windowManager.js must invoke updater.checkAppUpdates(false) via imported updater module'
     );
 
-    console.log('✓ main.js startup updater invocation and scope resolution verified');
+    console.log('✓ windowManager.js startup updater invocation and scope resolution verified');
 }
 
 // 2. Functional verification of startup background update dispatch logic

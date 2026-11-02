@@ -7,13 +7,16 @@ const path = require('node:path');
 
 console.log('Running Mise main window navigation and window open guard tests...');
 
-// 1. Verify main.js registers will-navigate and setWindowOpenHandler on mainWindow
+// 1. Verify windowManager.js registers will-navigate and setWindowOpenHandler on mainWindow
 {
-    const mainSource = fs.readFileSync(path.join(__dirname, '../main.js'), 'utf8');
-    assert(mainSource.includes("mainWindow.webContents.on('will-navigate'"), 'main.js must register will-navigate on mainWindow');
-    assert(mainSource.includes('mainWindow.webContents.setWindowOpenHandler('), 'main.js must register setWindowOpenHandler on mainWindow');
+    const windowManagerPath = path.join(__dirname, '../main/windowManager.js');
+    const targetSource = fs.existsSync(windowManagerPath)
+        ? fs.readFileSync(windowManagerPath, 'utf8')
+        : fs.readFileSync(path.join(__dirname, '../main.js'), 'utf8');
+    assert(targetSource.includes("mainWindow.webContents.on('will-navigate'"), 'windowManager.js must register will-navigate on mainWindow');
+    assert(targetSource.includes('mainWindow.webContents.setWindowOpenHandler('), 'windowManager.js must register setWindowOpenHandler on mainWindow');
 
-    console.log('✓ main.js mainWindow navigation listeners registration verified');
+    console.log('✓ mainWindow navigation listeners registration verified');
 }
 
 // 2. Verify will-navigate handler logic: allow app index.html, block external and route safe URLs
