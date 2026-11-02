@@ -80,6 +80,7 @@ const {
     showWebviewContextMenu
 } = contextMenus;
 const systemIpc = require('./main/systemIpc');
+const webContentsPolicy = require('./main/webContentsPolicy');
 
 // Initialise keybinds configuration
 keybinds.initializeKeybinds(CONFIG_DIR);
@@ -679,19 +680,8 @@ function createWindow() {
 
     userContent.initializeUserContent(CONFIG_DIR, mainWindow);
 
-    mainWindow.webContents.on('will-attach-webview', (event, webPreferences, params) => {
-        const attachDecision = security.prepareWebviewAttach(webPreferences, params, {
-            preloadPath: path.join(__dirname, 'webview-preload.js')
-        });
-        if (!attachDecision.allowed) {
-            event.preventDefault();
-            diagnostics.logEvent('warn', 'security', 'Blocked webview attach', { reason: attachDecision.reason });
-            return;
-        }
-        const partitionStr = (webPreferences && webPreferences.partition) || (params && params.partition);
-        if (partitionStr) {
-            configureAndHardenSession(session.fromPartition(partitionStr));
-        }
+    webContentsPolicy.attachWebviewSecurityGuards(mainWindow.webContents, {
+        configureAndHardenSession
     });
 
     ipcMain.on('bubble-webview-key', (event, action) => {
@@ -714,128 +704,10 @@ function createWindow() {
     });
 }
 
-app.on('web-contents-created', (event, webContents) => {
-    if (webContents.session) {
-        configureAndHardenSession(webContents.session);
-    }
-
-    if (webContents.getType() === 'webview') {
-        webContents.setMaxListeners(30);
-
-        const isPrivate = webContents.session === session.fromPartition('MisePrivateProfile');
-
-        webContents.on('will-navigate', (navEvent, navigationUrl) => {
-            if (!navigationUrl || typeof navigationUrl !== 'string') {
-                navEvent.preventDefault();
-                return;
-            }
-
-            if (navigationUrl === 'about:blank') return;
-
-            if (security.isSafeTabUrl(navigationUrl)) return;
-
-            // Allow local application asset pages (such as vendored PDF viewer and welcome documentation)
-            try {
-                const parsed = new URL(navigationUrl);
-                if (parsed.protocol === 'file:') {
-                    const targetFilePath = path.resolve(decodeURIComponent(parsed.pathname));
-                    const allowedAssetsDir = path.resolve(__dirname, 'assets');
-                    if (targetFilePath.startsWith(allowedAssetsDir + path.sep)) {
-                        return;
-                    }
-                }
-            } catch (e) {}
-
-            navEvent.preventDefault();
-            diagnostics.logEvent('warn', 'navigation', 'Blocked unsafe webview navigation', { url: navigationUrl });
-        });
-
-        webContents.on('did-navigate', (navEvent, url) => {
-            if (!isPrivate) {
-                logVisit(webContents.getTitle(), url);
-            }
-            if (url) {
-                try {
-                    const parsedUrl = new URL(url);
-                    if ((parsedUrl.hostname === 'accounts.google.com' || parsedUrl.hostname.endsWith('.accounts.google.com')) &&
-                        parsedUrl.pathname.includes('signin/rejected')) {
-                        security.clearGoogleAuthCookies(webContents.session);
-                    }
-                } catch (e) {
-                    // Ignore URL parsing errors
-                }
-            }
-        });
-
-        webContents.on('did-navigate-in-page', (navEvent, url) => {
-            if (!isPrivate) {
-                logVisit(webContents.getTitle(), url);
-            }
-        });
-
-        webContents.on('context-menu', (contextEvent, params) => {
-            showWebviewContextMenu(contextEvent, params, webContents, {
-                getMainWindow: () => mainWindow
-            });
-        });
-
-        webContents.setWindowOpenHandler((details) => {
-            if (details.url && details.url !== 'about:blank') {
-                if (security.isSafeTabUrl(details.url)) {
-                    if (mainWindow && mainWindow.webContents) {
-                        mainWindow.webContents.send('master-shortcut', 'spawn-tab-with-url', details.url);
-                    }
-                } else {
-                    let scheme = 'unknown';
-                    try {
-                        scheme = new URL(details.url).protocol;
-                    } catch (e) {
-                        if (typeof details.url === 'string') {
-                            scheme = details.url.split(':')[0] || 'unknown';
-                        }
-                    }
-                    diagnostics.logEvent('warn', 'navigation', 'Blocked popup URL', { scheme });
-                }
-            }
-            return { action: 'deny' };
-        });
-
-        webContents.on('before-input-event', (inputEvent, input) => {
-            if (input.type !== 'keyDown') return;
-            if (!mainWindow || !mainWindow.webContents) return;
-
-            const action = keybinds.getActionForInput(input);
-            if (action) {
-                inputEvent.preventDefault();
-                handleAppAction(action, webContents);
-            }
-        });
-
-        webContents.on('render-process-gone', (event, details) => {
-            diagnostics.logEvent('error', 'webview', `Webview render process terminated: reason=${details.reason} exitCode=${details.exitCode}`);
-        });
-
-        webContents.on('unresponsive', () => {
-            diagnostics.logEvent('warn', 'performance', 'Webview became unresponsive');
-        });
-
-        webContents.on('responsive', () => {
-            diagnostics.logEvent('info', 'performance', 'Webview regained responsiveness');
-        });
-
-        webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
-            if (errorCode === -3) return;
-            diagnostics.logEvent('warn', 'network', `Navigation failed: code=${errorCode} description=${errorDescription}`, { url: validatedURL });
-        });
-    }
-});
-
-app.on('render-process-gone', (event, wc, details) => {
-    diagnostics.logEvent('error', 'process', `Render process gone: reason=${details.reason} exitCode=${details.exitCode}`);
-});
-
-app.on('child-process-gone', (event, details) => {
-    diagnostics.logEvent('warn', 'process', `Child process gone: type=${details.type} reason=${details.reason} exitCode=${details.exitCode}`);
+webContentsPolicy.setupWebContentsPolicy(app, {
+    getMainWindow: () => mainWindow,
+    configureAndHardenSession,
+    handleAppAction
 });
 
 if (gotSingleInstanceLock) {

@@ -7,15 +7,18 @@ const path = require('node:path');
 
 console.log('Running Mise guest webview will-navigate security tests...');
 
-// 1. Verify main.js registers will-navigate on webview webContents
+// 1. Verify will-navigate registration on webview webContents
 {
-    const mainSource = fs.readFileSync(path.join(__dirname, '../main.js'), 'utf8');
-    const webviewBlockStart = mainSource.indexOf("if (webContents.getType() === 'webview')");
-    assert(webviewBlockStart !== -1, 'main.js must contain webview webContents block');
-    const webviewBlockSlice = mainSource.slice(webviewBlockStart, webviewBlockStart + 800);
-    assert(webviewBlockSlice.includes("webContents.on('will-navigate'"), 'main.js must register will-navigate on webview webContents');
+    const policyPath = path.join(__dirname, '../main/webContentsPolicy.js');
+    const targetSource = fs.existsSync(policyPath)
+        ? fs.readFileSync(policyPath, 'utf8')
+        : fs.readFileSync(path.join(__dirname, '../main.js'), 'utf8');
+    const webviewBlockStart = targetSource.indexOf("if (webContents.getType() === 'webview')");
+    assert(webviewBlockStart !== -1, 'webContentsPolicy.js must contain webview webContents block');
+    const webviewBlockSlice = targetSource.slice(webviewBlockStart, webviewBlockStart + 800);
+    assert(webviewBlockSlice.includes("webContents.on('will-navigate'"), 'webContentsPolicy.js must register will-navigate on webview webContents');
 
-    console.log('✓ main.js guest webview will-navigate listener registration verified');
+    console.log('✓ guest webview will-navigate listener registration verified');
 }
 
 // 2. Verify will-navigate navigation policy logic
