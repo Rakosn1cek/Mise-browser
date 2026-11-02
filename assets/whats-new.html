@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>What's New in Mise v1.4.0</title>
+    <title>What's New in Mise v1.5.0</title>
     <link rel="icon" type="image/png" href="icons/Mise-logo48.png">
     <style>
         :root {
@@ -133,6 +133,14 @@
             border-color: var(--border-hover);
         }
 
+        .feedback-card {
+            border-color: var(--accent-dim);
+        }
+
+        .feedback-title {
+            color: var(--accent);
+        }
+
         .feature-title {
             font-size: 16px;
             font-weight: 600;
@@ -242,72 +250,70 @@
         <header>
             <div class="tag-row">
                 <span class="badge">Feature Release</span>
-                <span class="version-date">October 2026</span>
+                <span class="version-date">November 2026</span>
                 <a href="https://github.com/Rakosn1cek/Mise-browser/releases" target="_blank" rel="noopener noreferrer" class="github-link">
                     Full Release on GitHub ↗
                 </a>
             </div>
             <div class="title-group">
                 <img src="icons/Mise-logo48.png" alt="Mise Logo">
-                <h1>What's New in Mise v1.4.0</h1>
+                <h1>What's New in Mise v1.5.0</h1>
             </div>
-            <p class="subtitle">The v1.4.0 Privacy Shield & Ephemeral Peek Update: Introducing the granular domain permission vault with Zero-Trust sensor isolation, transient Glance modal previews, DNS-over-HTTPS resolver controls, WebRTC privacy policies, workspace active tab persistence, and the latest Chromium/Electron 45.1.0 engine.</p>
+            <p class="subtitle">The v1.5.0 Architecture &amp; Keyboard Polish Update: Codebase modularisation across stylesheets, renderer controllers, and webview managers, alongside hardened keyboard navigation, overlay focus trapping, direct webview navigation dispatch, and expanded automated test verification.</p>
         </header>
 
         <section class="feature-card">
-            <h2 class="feature-title">Granular Permission Vault & Zero-Trust Sensor Lockdown</h2>
+            <h2 class="feature-title">Codebase Modularisation &amp; Vanilla Architecture</h2>
             <p class="feature-desc">
-                Fine-grained per-domain access control for camera, microphone, geolocation, notifications, and clipboard sensors.
+                Comprehensive architectural refactoring decomposing monolithic files into clean, specialised domain modules without bundler overhead.
             </p>
             <ul class="feature-points">
-                <li>Dedicated Permissions Vault in Preferences (<kbd>F1</kbd> or <kbd>Ctrl + H</kbd>) with search filtering, domain status cards, and individual or bulk access revocation.</li>
-                <li>Zero-Trust sensor lockdown in Private Profile (<kbd>MisePrivateProfile</kbd>): all sensor requests are blocked unconditionally to prevent fingerprinting leaks.</li>
-                <li>Quick status bar indicator and interactive popover displaying real-time domain permissions with instant toggle overrides.</li>
-                <li>Atomic disk persistence with automatic corruption recovery ensuring your privacy rules are never lost.</li>
+                <li><strong>Stylesheet Modularisation:</strong> Decomposed monolithic <code>style.css</code> (reduced from 4,845 lines to a 9-line master aggregator) into domain-specific modules under <code>styles/</code> and 8 dedicated overlay sheets under <code>styles/overlays/</code> using native CSS imports.</li>
+                <li><strong>Renderer Process Modularisation:</strong> Decomposed monolithic <code>renderer.js</code> (reduced from 1,407 lines to a 249-line entry orchestrator) into 5 specialised ES controllers under <code>modules/renderer/</code> for browser initialisation, sidebar controls, workspaces, theming, and in-page search.</li>
+                <li><strong>Webview Subsystem Modularisation:</strong> Extracted webview tab lifecycle, split view, memory sleep management, and audio control into discrete controllers under <code>modules/webview/</code>.</li>
+                <li><strong>Zero Runtime Overhead:</strong> Preserved pure vanilla ES modules and standard CSS without bundlers, maintaining ultra-low CPU and memory footprints.</li>
             </ul>
         </section>
 
         <section class="feature-card">
-            <h2 class="feature-title">Ephemeral Tab Peek ("Glance")</h2>
+            <h2 class="feature-title">Overlay Keyboard Trapping &amp; Navigation Polish</h2>
             <p class="feature-desc">
-                Lightning-fast, keyboard-driven preview modal that inspects links without adding permanent tabs to your tab list.
+                Hardened keyboard focus loops, robust keyboard traversal, and layout stability across all full-page overlays.
             </p>
             <ul class="feature-points">
-                <li>Trigger instantaneously using <kbd>Shift + Click</kbd> or the <kbd>gh</kbd> link hint chord.</li>
-                <li>Detaches cleanly from the DOM on dismissal (<kbd>Escape</kbd>) with zero memory residue.</li>
-                <li>Promote any previewed link to a full permanent tab with a single keystroke (<kbd>Enter</kbd>).</li>
-                <li>Full sandboxing and isolated navigation guards prevent untrusted frames from breaking out.</li>
+                <li><strong>Command Palette Navigation:</strong> Fixed category filter chip jitter with stable layout rules. Arrow keys cycle through filter chips and commands cleanly, whilst circular Tab trapping ensures focus never escapes the palette.</li>
+                <li><strong>Notes Overlay Focus Trapping:</strong> Webviews are safely hidden on open, Tab and Shift + Tab cycle strictly through all note controls without focus leakage, Enter toggles edit mode or clicks actions, and Escape cleans up state upon dismissal.</li>
+                <li><strong>Workspace Dashboard Navigation:</strong> Full keyboard navigation across workspace cards, direct delete button delegation with safe fallback protection to prevent accidental deletion of active or default workspaces.</li>
+                <li><strong>Workspace Palette Commands:</strong> Added dedicated Command Palette actions under a new "Workspaces &amp; Dashboard" category to create, rename, and delete workspaces directly.</li>
             </ul>
         </section>
 
         <section class="feature-card">
-            <h2 class="feature-title">DNS-over-HTTPS (DoH) Resolver</h2>
+            <h2 class="feature-title">Direct Webview Navigation &amp; Visual Feedback</h2>
             <p class="feature-desc">
-                Protect domain lookups from local network eavesdropping and ISP tracking with encrypted DNS resolution.
+                Instantaneous navigation dispatch, responsive loading states, and automatic keyboard focus return.
             </p>
             <ul class="feature-points">
-                <li>Integrated privacy-focused providers: Cloudflare, Quad9, Google, and Mullvad.</li>
-                <li>Full support for custom RFC 8484 DoH HTTPS endpoints with input validation.</li>
-                <li>Dynamic resolver switching in Preferences without requiring a browser restart.</li>
+                <li><strong>Direct Webview Navigation API:</strong> Upgraded address bar submission to trigger native webview <code>loadURL()</code> alongside <code>src</code> attribute updates, guaranteeing immediate navigation dispatch.</li>
+                <li><strong>Immediate Tab Loading Feedback:</strong> Actively updates the active tab label in the sidebar with the target host and a "Loading..." indicator upon submission so navigation dispatch is visibly acknowledged.</li>
+                <li><strong>Webview Focus Restoration:</strong> Automatically restores keyboard focus to the active guest webview after address bar submission and Escape cancellation, enabling immediate Vim normal-mode shortcuts (<kbd>f</kbd>, <kbd>j</kbd>, <kbd>k</kbd>) without mouse clicks.</li>
+                <li><strong>Status Bar Mode Synchronisation:</strong> Real-time synchronisation of the status bar mode indicator with link hint overlay activation.</li>
             </ul>
         </section>
 
         <section class="feature-card">
-            <h2 class="feature-title">WebRTC Privacy Controls & Active Tab Persistence</h2>
+            <h2 class="feature-title">Expanded Automated Regression Suite</h2>
             <p class="feature-desc">
-                Advanced leak prevention, enhanced workspace session restoration across restarts, and upstream engine updates.
+                Comprehensive automated test verification protecting stability, architecture boundaries, and user interactions.
             </p>
             <ul class="feature-points">
-                <li>Configurable WebRTC policies including <kbd>default_public_interface_only</kbd> and <kbd>disable_non_proxied_udp</kbd> to eliminate local IP address leakage.</li>
-                <li>Remembers active tab indexes per workspace, waking only your active tab on startup whilst keeping background tabs asleep.</li>
-                <li>Optimised native auto-step scrolling navigation.</li>
-                <li>Upgraded to Electron 45.1.0 with the latest Chromium security enhancements and Wayland stability improvements.</li>
-                <li>All 61 automated test suites passing with 100% verification across security, UI, and storage modules.</li>
+                <li>Expanded test coverage to 70 comprehensive test suites, all passing with 100% verification across security, storage, navigation, and modular controllers.</li>
+                <li>Strict architectural guardrails verified in tests, ensuring renderer line budget caps, master stylesheet import integrity, and anti-pastejacking barriers remain inviolate.</li>
             </ul>
         </section>
 
-        <section class="feature-card" style="border-color: var(--accent-dim);">
-            <h2 class="feature-title" style="color: var(--accent);">Your Voice Shapes Mise</h2>
+        <section class="feature-card feedback-card">
+            <h2 class="feature-title feedback-title">Your Voice Shapes Mise</h2>
             <p class="feature-desc">
                 Mise collects zero telemetry and never tracks your browsing. Because we do not monitor you, your direct feedback is the only way we know how the browser performs across different Linux distributions and desktop setups.
             </p>
