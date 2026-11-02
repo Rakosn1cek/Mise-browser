@@ -1,5 +1,30 @@
-const { app, BrowserWindow, ipcMain, session, Menu, MenuItem, nativeTheme, Notification, clipboard, shell, webContents, dialog, net } = require('electron');
-const { installIpcGuard, GUEST_CHANNELS } = require('./main/ipcGuard');
+const path = require('path');
+const fs = require('fs');
+const v8 = require('v8');
+const vm = require('vm');
+const { app, ipcMain, session, nativeTheme, Notification, shell } = require('electron');
+
+const security = require('./security');
+const keybinds = require('./keybinds');
+const diagnostics = require('./diagnostics');
+const config = require('./main/config');
+const { CONFIG_DIR, loadBrowserConfig, writeConfigFile } = config;
+const sessionStore = require('./main/sessionStore');
+const {
+    checkAndInitializeSentinel,
+    markSentinelState,
+    isCrashRecoveryState,
+    flushSessionToDisk,
+    readCurrentSession
+} = sessionStore;
+const storage = require('./main/storage');
+const { flushHistoryToDisk } = storage;
+const updater = require('./main/updater');
+const dohResolver = require('./main/dohResolver');
+const { applyDoHConfiguration } = dohResolver;
+const contextMenus = require('./main/contextMenus');
+const systemIpc = require('./main/systemIpc');
+const webContentsPolicy = require('./main/webContentsPolicy');
 const windowManager = require('./main/windowManager');
 const {
     createMainWindow,
@@ -9,87 +34,14 @@ const {
     handleAppAction,
     registerWindowIpc
 } = windowManager;
+const permissions = require('./main/permissions');
+const downloads = require('./main/downloads');
+const { installIpcGuard, GUEST_CHANNELS } = require('./main/ipcGuard');
 
 installIpcGuard(ipcMain, {
     getMainWindow,
     guestChannels: GUEST_CHANNELS
 });
-
-const path = require('path');
-const fs = require('fs');
-const { exec, spawn, execSync, spawnSync } = require('child_process');
-const v8 = require('v8');
-const vm = require('vm');
-
-// Expose GC in Node main process for memory compaction
-try {
-    v8.setFlagsFromString(['-', '-', 'expose-gc'].join(''));
-    global.gc = vm.runInNewContext('gc');
-} catch (e) {
-    // Ignore if flag modification is not supported
-}
-
-// Single instance lock to prevent duplicate windows when opening external links
-const gotSingleInstanceLock = app.requestSingleInstanceLock();
-if (!gotSingleInstanceLock) {
-    app.quit();
-}
-
-// Canonical application identity for Wayland and X11 desktop integration
-app.setName('mise-browser');
-app.setAppUserModelId('io.github.rakosn1cek.mise-browser');
-
-// Require the security config module to isolate filtering and hardening rules
-const security = require('./security');
-const keybinds = require('./keybinds');
-const userContent = require('./userContent');
-const diagnostics = require('./diagnostics');
-const downloads = require('./main/downloads');
-const permissions = require('./main/permissions');
-const config = require('./main/config');
-const {
-    CONFIG_DIR,
-    CONFIG_PATH,
-    DEFAULT_CONFIG,
-    DEFAULT_THEME_COLORS,
-    loadBrowserConfig,
-    saveBrowserConfig,
-    writeConfigFile,
-    updateBrowserConfig,
-    restartApp
-} = config;
-
-const sessionStore = require('./main/sessionStore');
-const {
-    sessionPath,
-    sessionBackupPath,
-    sentinelPath,
-    checkAndInitializeSentinel,
-    markSentinelState,
-    isCrashRecoveryState,
-    flushSessionToDisk,
-    scheduleSessionSave,
-    readCurrentSession,
-    registerSessionIpc
-} = sessionStore;
-
-const storage = require('./main/storage');
-const {
-    flushHistoryToDisk,
-    logVisit
-} = storage;
-
-const updater = require('./main/updater');
-const dohResolver = require('./main/dohResolver');
-const { applyDoHConfiguration } = dohResolver;
-const contextMenus = require('./main/contextMenus');
-const {
-    buildSettingsSubmenu,
-    openSettingsMenu,
-    showWebviewContextMenu
-} = contextMenus;
-const systemIpc = require('./main/systemIpc');
-const webContentsPolicy = require('./main/webContentsPolicy');
 
 // Initialise keybinds configuration
 keybinds.initializeKeybinds(CONFIG_DIR);
@@ -402,10 +354,6 @@ ipcMain.handle('reload-keybinds', async () => {
     return keybinds.initializeKeybinds(CONFIG_DIR);
 });
 
-
-
-
-
 ipcMain.handle('get-system-diagnostics', async (event, sessionStats) => {
     return diagnostics.gatherSystemDiagnostics(sessionStats);
 });
@@ -443,10 +391,6 @@ ipcMain.handle('log-diagnostics-event', async (event, data) => {
     diagnostics.logEvent(data.level, data.category, data.message, data.details);
     return true;
 });
-
-
-
-
 
 // Register session security and Google auth IPC channels
 ipcMain.on('is-trusted-domain', (event, hostname) => {
