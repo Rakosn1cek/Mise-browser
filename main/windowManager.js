@@ -218,7 +218,25 @@ function createMainWindow(options = {}) {
         return { action: 'deny' };
     });
 
-    mainWindow.loadFile('index.html');
+    if (options && typeof options.attachWebviewSecurityGuards === 'function') {
+        options.attachWebviewSecurityGuards(mainWindow.webContents);
+    }
+
+    if (options && options.CONFIG_DIR) {
+        userContent.initializeUserContent(options.CONFIG_DIR, mainWindow);
+    }
+
+    mainWindow.webContents.on('before-input-event', (event, input) => {
+        if (input.type !== 'keyDown') return;
+
+        const action = keybinds.getActionForInput(input);
+        if (action) {
+            event.preventDefault();
+            handleAppAction(action, mainWindow.webContents);
+        }
+    });
+
+    mainWindow.loadFile(appIndexPath);
 
     mainWindow.on('close', () => {
         if (options && typeof options.onClose === 'function') {
@@ -257,24 +275,6 @@ function createMainWindow(options = {}) {
                 }
             } catch (e) {}
         }, 6000);
-    });
-
-    if (options && typeof options.attachWebviewSecurityGuards === 'function') {
-        options.attachWebviewSecurityGuards(mainWindow.webContents);
-    }
-
-    if (options && options.CONFIG_DIR) {
-        userContent.initializeUserContent(options.CONFIG_DIR, mainWindow);
-    }
-
-    mainWindow.webContents.on('before-input-event', (event, input) => {
-        if (input.type !== 'keyDown') return;
-
-        const action = keybinds.getActionForInput(input);
-        if (action) {
-            event.preventDefault();
-            handleAppAction(action, mainWindow.webContents);
-        }
     });
 
     return mainWindow;

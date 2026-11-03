@@ -107,10 +107,6 @@ export function destroyGuestWebview(webview) {
     } catch (err) {}
 
     try {
-        webview.src = 'about:blank';
-    } catch (err) {}
-
-    try {
         if (typeof webview.remove === 'function') {
             webview.remove();
         }

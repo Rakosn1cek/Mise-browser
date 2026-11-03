@@ -69,7 +69,6 @@ export function transferTab(state, source, index, target, requestedIndex) {
             if (typeof value.stop === 'function') {
                 try { value.stop(); } catch (e) {}
             }
-            try { value.src = 'about:blank'; } catch (e) {}
             if (typeof value.remove === 'function') {
                 value.remove();
             }

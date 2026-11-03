@@ -114,6 +114,13 @@ const mainFile = path.join(__dirname, '../main.js');
     assert(systemContent.includes('security.sanitiseTerminalCommand'), 'systemIpc must sanitise terminal commands');
     assert(systemContent.includes('security.validatePdfAccess'), 'systemIpc must validate PDF access tokens');
 
+    // Single instance lock and Wayland desktop identity
+    assert(mainContent.includes('const gotSingleInstanceLock = app.requestSingleInstanceLock();'), 'main.js must acquire single instance lock');
+    assert(mainContent.includes('if (!gotSingleInstanceLock)'), 'main.js must quit on failed single instance lock');
+    assert(mainContent.includes('if (gotSingleInstanceLock)'), 'main.js must guard application startup with single instance lock');
+    assert(mainContent.includes("app.setName('mise-browser');"), 'main.js must register canonical app name');
+    assert(mainContent.includes("app.setAppUserModelId('io.github.rakosn1cek.mise-browser');"), 'main.js must register app user model ID');
+
     console.log('✓ Security invariants and container isolation rules verified across modules');
 }
 

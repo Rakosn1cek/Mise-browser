@@ -50,7 +50,6 @@ console.log('Running Mise guest webview lifecycle and teardown regression tests.
     assert.equal(mockWebview.__miseAbortController, null, 'Webview abort controller reference must be cleared');
     assert.equal(muted, true, 'Audio stream must be muted on teardown');
     assert.equal(stopped, true, 'Pending network requests must be stopped');
-    assert.equal(mockWebview.src, 'about:blank', 'Source must be assigned to about:blank to release memory');
     assert.equal(removed, true, 'Webview node must be removed from the DOM');
     assert.equal(injectedScripts.size, 0, 'Injected script identifier cache must be cleared');
 
@@ -58,7 +57,7 @@ console.log('Running Mise guest webview lifecycle and teardown regression tests.
     assert.doesNotThrow(() => runner(null), 'destroyGuestWebview must safely handle null inputs');
     assert.doesNotThrow(() => runner(undefined), 'destroyGuestWebview must safely handle undefined inputs');
 
-    console.log('✓ destroyGuestWebview halts media, aborts listeners, navigates to about:blank, and unmounts');
+    console.log('✓ destroyGuestWebview halts media, aborts listeners, stops network, and unmounts');
 }
 
 // 2. Verify AbortSignal integration prevents lingering listener callbacks after destruction

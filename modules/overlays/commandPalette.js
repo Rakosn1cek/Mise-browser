@@ -1591,7 +1591,18 @@ export function setupPreferencesListeners() {
 
             const trustedDomains = field.value
                 .split(/[\n,]/)
-                .map(d => d.trim().toLowerCase())
+                .map(d => {
+                    let domain = d.trim().toLowerCase();
+                    if (domain.startsWith('http://') || domain.startsWith('https://')) {
+                        try {
+                            domain = new URL(domain).hostname;
+                        } catch (e) {}
+                    }
+                    if (domain.endsWith('.')) {
+                        domain = domain.slice(0, -1);
+                    }
+                    return domain;
+                })
                 .filter(Boolean);
 
             try {

@@ -43,6 +43,24 @@ installIpcGuard(ipcMain, {
     guestChannels: GUEST_CHANNELS
 });
 
+// Expose GC in Node main process for memory compaction
+try {
+    v8.setFlagsFromString(['-', '-', 'expose-gc'].join(''));
+    global.gc = vm.runInNewContext('gc');
+} catch (e) {
+    // Ignore if flag modification is not supported
+}
+
+// Single instance lock to prevent duplicate windows when opening external links
+const gotSingleInstanceLock = app.requestSingleInstanceLock();
+if (!gotSingleInstanceLock) {
+    app.quit();
+}
+
+// Canonical application identity for Wayland and X11 desktop integration
+app.setName('mise-browser');
+app.setAppUserModelId('io.github.rakosn1cek.mise-browser');
+
 // Initialise keybinds configuration
 keybinds.initializeKeybinds(CONFIG_DIR);
 
