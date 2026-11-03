@@ -8,9 +8,12 @@ const vm = require('node:vm');
 
 console.log('Running Mise Preferences 6-tab navigation & focus trap regression tests...');
 
-const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
+const prefTemplatePath = path.join(__dirname, '../templates/preferences.html');
+const html = fs.existsSync(prefTemplatePath)
+    ? fs.readFileSync(prefTemplatePath, 'utf8')
+    : fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
 
-// 1. Verify all specified tabs and sections exist in index.html
+// 1. Verify all specified tabs and sections exist in modular preferences template
 const expectedTabs = [
     { id: 'tab-performance', label: 'Performance & Hardware' },
     { id: 'tab-external-tools', label: 'External Tools [Notes]' },

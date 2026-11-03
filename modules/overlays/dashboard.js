@@ -2,6 +2,8 @@ import { state } from '../state.js';
 import { focusActiveWebview, getWorkspacePartition, isReservedWorkspaceName } from '../utils.js';
 import { renderWorkspaceUI, switchTabFocus, spawnTabWithUrl, spawnNewBlankTab, handleTabRemoval, moveTabState, destroyGuestWebview } from '../webview.js';
 import { transferTab } from '../tabTransfer.js';
+import { ensureOverlayMounted, mountOverlaySync } from '../templateLoader.js';
+import { setupWorkspaceListeners } from '../renderer/workspaceController.js';
 
 let currentDialogMode = 'create';
 let renameTargetWorkspace = '';
@@ -14,7 +16,13 @@ export function toggleDashboardView() {
         window.togglePreferencesView();
     }
     
-    const overlay = document.getElementById('DashboardOverlay');
+    let overlay = document.getElementById('DashboardOverlay');
+    if (!overlay && typeof mountOverlaySync === 'function') {
+        overlay = mountOverlaySync('DashboardOverlay', 'dashboard', '#webview-container');
+        if (overlay) setupWorkspaceListeners();
+    }
+    if (!overlay) return;
+
     state.dashboardActive = !state.dashboardActive;
 
     if (state.dashboardActive) {

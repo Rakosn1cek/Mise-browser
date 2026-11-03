@@ -1,0 +1,60 @@
+<!-- templates/diagnostics.html -->
+                <div id="DiagnosticsOverlay" tabindex="0" style="display: none;">
+                    <div class="diag-page">
+                        <div class="diag-header">
+                            <div class="diag-header-left">
+                                <div class="diag-title-group">
+                                    <h1 class="diag-title"><i class="fa-solid fa-stethoscope"></i> Diagnostics & Health Hub</h1>
+                                    <span class="diag-subtitle">Local operational metrics, runtime telemetry and privacy-preserving bug reporting</span>
+                                </div>
+                            </div>
+                            <div class="diag-header-right">
+                                <div class="diag-recording-toggle-group">
+                                    <label class="toggle-switch" title="Toggle In-Memory Diagnostics Recording">
+                                        <input type="checkbox" id="diag-header-recording-toggle">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                    <span id="diag-status-badge" class="diag-status-badge inactive"><i class="fa-solid fa-circle-pause"></i> Recording Disabled</span>
+                                </div>
+                                <button type="button" id="diag-refresh-btn" class="nav-icon-button" title="Refresh Metrics">
+                                    <i class="fa-solid fa-arrows-rotate"></i>
+                                </button>
+                                <button type="button" id="CloseDiagnosticsBtn" class="nav-icon-button" title="Close Diagnostics (Esc)">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="diag-nav-tabs">
+                            <button type="button" class="diag-nav-tab active" data-tab="system">
+                                <i class="fa-solid fa-cube"></i> System & Runtimes
+                            </button>
+                            <button type="button" class="diag-nav-tab" data-tab="processes">
+                                <i class="fa-solid fa-microchip"></i> Processes & Memory
+                            </button>
+                            <button type="button" class="diag-nav-tab" data-tab="logs">
+                                <i class="fa-solid fa-list-ul"></i> In-Memory Logs
+                            </button>
+                            <button type="button" class="diag-nav-tab" data-tab="report">
+                                <i class="fa-solid fa-file-shield"></i> Bug Report Generator
+                            </button>
+                        </div>
+
+                        <div class="diag-body">
+                            <div id="diag-tab-system" class="diag-tab-content" style="display: block;"></div>
+                            <div id="diag-tab-processes" class="diag-tab-content" style="display: none;"></div>
+                            <div id="diag-tab-logs" class="diag-tab-content" style="display: none;"></div>
+                            <div id="diag-tab-report" class="diag-tab-content" style="display: none;"></div>
+                        </div>
+
+                        <div class="diag-footer">
+                            <div class="diag-footer-left">
+                                <span class="diag-footer-hint"><kbd>Esc</kbd> Close Overlay</span>
+                                <span class="diag-footer-hint"><i class="fa-solid fa-shield-halved"></i> 100% Local: Zero External Pings</span>
+                            </div>
+                            <div class="diag-footer-right">
+                                <span class="diag-footer-note">All metrics reset when closing Mise</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>

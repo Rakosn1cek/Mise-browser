@@ -1,6 +1,7 @@
 import { state } from '../state.js';
 import { escapeHtml, focusActiveWebview, isSafeTabUrl } from '../utils.js';
 import { spawnTabWithUrl, switchTabFocus } from '../webview.js';
+import { ensureOverlayMounted, mountOverlaySync } from '../templateLoader.js';
 
 let notesSaveTimeout = null;
 
@@ -415,7 +416,11 @@ export function toggleNotesOverlay() {
         state.notesActive = !state.notesActive;
         return;
     }
-    const overlay = document.getElementById('NotesOverlay');
+    let overlay = document.getElementById('NotesOverlay');
+    if (!overlay && typeof mountOverlaySync === 'function') {
+        overlay = mountOverlaySync('NotesOverlay', 'notes', 'body');
+        if (overlay) setupNotesListeners();
+    }
     const textarea = document.getElementById('NotesTextArea');
     const mdView = document.getElementById('NotesMarkdownView');
 

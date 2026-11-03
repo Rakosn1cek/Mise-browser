@@ -50,11 +50,14 @@ assert.ok(
     'commandPalette.js must define delete-workspace'
 );
 
-// 3. Verify index.html category chip
-const htmlSource = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
+// 3. Verify category chip in command palette template or index shell
+const cpTemplatePath = path.join(__dirname, '../templates/command-palette.html');
+const htmlSource = fs.existsSync(cpTemplatePath)
+    ? fs.readFileSync(cpTemplatePath, 'utf8')
+    : fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
 assert.ok(
     htmlSource.includes('data-category="Workspaces & Dashboard"'),
-    'index.html must include category chip for Workspaces & Dashboard'
+    'command palette template must include category chip for Workspaces & Dashboard'
 );
 
 console.log('✓ Command Palette definitions and filter chip verified');

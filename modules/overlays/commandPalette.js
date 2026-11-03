@@ -5,6 +5,7 @@ import { renderWorkspaceUI, switchTabFocus, spawnTabWithUrl, spawnNewBlankTab, h
 import { toggleBookmarksOverlay, promptQuickmark, addCurrentPageToBookmarks } from './bookmarks.js';
 import { syncVisualSettingsInputs, setupVisualSettingsListeners } from '../theme.js';
 import { renderSearchAliasesUI } from './searchEngine.js';
+import { ensureOverlayMounted } from '../templateLoader.js';
 
 function returnFocusToWebview() {
     if (state.paletteActive || state.dashboardActive || state.preferencesActive || state.historyActive || state.notesActive || state.bookmarksActive || state.diagnosticsActive) {
@@ -1174,6 +1175,26 @@ export async function syncPreferencesUI() {
         } catch (err) {}
     }
 
+    const versionBadge = document.getElementById('MiseVersionBadge');
+    if (versionBadge) {
+        if (window.__miseVersionFullText) {
+            versionBadge.textContent = window.__miseVersionFullText;
+        } else if (window.miseAPI && typeof window.miseAPI.getAppVersion === 'function') {
+            try {
+                const info = await window.miseAPI.getAppVersion();
+                const appVer = typeof info === 'object' ? info.version : info;
+                const electronVer = typeof info === 'object' ? info.electron : '';
+                const chromeVer = typeof info === 'object' ? info.chrome : '';
+                let text = `Mise v${appVer}`;
+                if (electronVer && chromeVer) {
+                    text += ` · Electron ${electronVer} · Chromium ${chromeVer}`;
+                }
+                versionBadge.textContent = text;
+                window.__miseVersionFullText = text;
+            } catch (_) {}
+        }
+    }
+
     if (typeof window.renderPermissionsVaultView === 'function') {
         window.renderPermissionsVaultView();
     }
@@ -1367,6 +1388,46 @@ export function setupPreferencesListeners() {
     if (themeToggle) {
         themeToggle.onchange = () => {
             if (window.toggleInterfaceTheme) window.toggleInterfaceTheme();
+        };
+    }
+
+    const badge = document.getElementById('MiseVersionBadge');
+    if (badge) {
+        if (window.__miseVersionFullText) {
+            badge.textContent = window.__miseVersionFullText;
+        } else if (window.miseAPI && typeof window.miseAPI.getAppVersion === 'function') {
+            window.miseAPI.getAppVersion().then((info) => {
+                const appVer = typeof info === 'object' ? info.version : info;
+                const electronVer = typeof info === 'object' ? info.electron : '';
+                const chromeVer = typeof info === 'object' ? info.chrome : '';
+                let text = `Mise v${appVer}`;
+                if (electronVer && chromeVer) {
+                    text += ` · Electron ${electronVer} · Chromium ${chromeVer}`;
+                }
+                badge.textContent = text;
+                window.__miseVersionFullText = text;
+            }).catch(() => {});
+        }
+    }
+
+    const whatsNewBtn = document.getElementById('WhatsNewOpenBtn');
+    if (whatsNewBtn) {
+        whatsNewBtn.onclick = () => {
+            if (typeof window.openWhatsNewTab === 'function') {
+                window.openWhatsNewTab();
+                if (typeof window.togglePreferencesView === 'function') {
+                    window.togglePreferencesView();
+                }
+            }
+        };
+    }
+
+    const checkUpdatesBtn = document.getElementById('CheckForUpdatesBtn');
+    if (checkUpdatesBtn) {
+        checkUpdatesBtn.onclick = () => {
+            if (typeof window.checkForUpdates === 'function') {
+                window.checkForUpdates(true);
+            }
         };
     }
 
@@ -1647,13 +1708,22 @@ export function setupPreferencesListeners() {
 }
 
 export async function togglePreferencesView() {
-    const overlay = document.getElementById('PreferencesOverlay');
+    let overlay = document.getElementById('PreferencesOverlay');
+    if (!overlay) {
+        overlay = await ensureOverlayMounted('PreferencesOverlay', 'preferences', '#webview-container', () => {
+            setupPreferencesListeners();
+            if (typeof window.renderPermissionsVaultView === 'function') {
+                window.renderPermissionsVaultView();
+            }
+        });
+    }
     if (!overlay) return;
 
     preferencesActive = !preferencesActive;
     if (preferencesActive) {
         if (state.paletteActive) toggleCommandPaletteView();
-        if (state.dashboardActive) document.getElementById('DashboardOverlay').style.display = 'none';
+        const dash = document.getElementById('DashboardOverlay');
+        if (state.dashboardActive && dash) dash.style.display = 'none';
 
         overlay.style.display = 'block';
         switchPreferencesTab(activePreferencesTab);
@@ -1681,7 +1751,10 @@ export function closeCommandPalette() {
 }
 
 export async function openCommandPalette() {
-    const overlay = document.getElementById('CommandPaletteOverlay');
+    let overlay = document.getElementById('CommandPaletteOverlay');
+    if (!overlay) {
+        overlay = await ensureOverlayMounted('CommandPaletteOverlay', 'command-palette', '#webview-container', setupCommandPaletteOverlayListeners);
+    }
     const input = document.getElementById('PaletteInput');
     if (!overlay || !input) return;
 

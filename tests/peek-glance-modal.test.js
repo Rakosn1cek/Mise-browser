@@ -116,13 +116,16 @@ console.log('Running Mise Ephemeral Tab Peek ("Glance") regression tests...');
         'commandPalette.js must include trigger-glance entry'
     );
 
-    const indexSource = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
+    const prefTemplatePath = path.join(__dirname, '../templates/preferences.html');
+    const indexSource = fs.existsSync(prefTemplatePath)
+        ? fs.readFileSync(prefTemplatePath, 'utf8')
+        : fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
     assert(
         indexSource.includes(">gh</kbd>"),
-        'index.html must include gh in Vim Modal Navigation reference'
+        'preferences template must include gh in Vim Modal Navigation reference'
     );
 
-    console.log('✓ modules/webview.js IPC handler, renderer.js, keybinds.js, and index.html verified');
+    console.log('✓ modules/webview.js IPC handler, renderer.js, keybinds.js, and preferences template verified');
 }
 
 // 4. Functional DOM and lifecycle simulation

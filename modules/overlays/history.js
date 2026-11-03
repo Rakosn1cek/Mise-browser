@@ -1,9 +1,14 @@
 import { state } from '../state.js';
 import { escapeHtml, focusActiveWebview } from '../utils.js';
 import { renderWorkspaceUI, switchTabFocus, spawnTabWithUrl, spawnNewBlankTab, handleTabRemoval } from '../webview.js';
+import { ensureOverlayMounted, mountOverlaySync } from '../templateLoader.js';
 
 export function toggleHistoryOverlay() {
-    const overlay = document.getElementById('HistoryOverlay');
+    let overlay = document.getElementById('HistoryOverlay');
+    if (!overlay && typeof mountOverlaySync === 'function') {
+        overlay = mountOverlaySync('HistoryOverlay', 'history', 'body');
+        if (overlay) setupHistoryOverlayListeners();
+    }
     const input = document.getElementById('HistorySearchInput');
     if (!overlay) return;
     

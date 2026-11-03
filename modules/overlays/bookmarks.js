@@ -1,6 +1,7 @@
 import { state } from '../state.js';
 import { escapeHtml, focusActiveWebview, getActiveWebview, isSafeTabUrl } from '../utils.js';
 import { renderWorkspaceUI, switchTabFocus, spawnTabWithUrl, spawnNewBlankTab, handleTabRemoval } from '../webview.js';
+import { ensureOverlayMounted } from '../templateLoader.js';
 
 export async function loadBookmarksAndQuickmarks() {
     if (window.miseAPI) {
@@ -78,7 +79,10 @@ export async function addCurrentPageToBookmarks() {
 }
 
 export async function toggleBookmarksOverlay() {
-    const overlay = document.getElementById('BookmarksOverlay');
+    let overlay = document.getElementById('BookmarksOverlay');
+    if (!overlay) {
+        overlay = await ensureOverlayMounted('BookmarksOverlay', 'bookmarks', '#webview-container', setupBookmarkOverlayListeners);
+    }
     const input = document.getElementById('BookmarkSearchInput');
 
     if (!overlay) return;

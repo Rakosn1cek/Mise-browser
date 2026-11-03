@@ -33,6 +33,7 @@ import { initThemeState, toggleWebviewTheme } from './themeController.js';
 import { applySidebarMode, setupSidebarListeners } from './sidebarController.js';
 import { setupWorkspaceListeners } from './workspaceController.js';
 import { setupPageSearchListeners } from './pageSearch.js';
+import { preloadTemplates } from '../templateLoader.js';
 
 export function setupCoreUIListeners() {
     document.getElementById('reader-view-btn')?.addEventListener('click', toggleReaderViewOnActiveTab);
@@ -258,6 +259,7 @@ export async function initializeBrowser() {
                 if (electronVer && chromeVer) {
                     text += ` · Electron ${electronVer} · Chromium ${chromeVer}`;
                 }
+                window.__miseVersionFullText = text;
                 if (badge) badge.textContent = text;
                 if (welcomeBadge) welcomeBadge.textContent = text;
 
@@ -319,6 +321,8 @@ export async function initializeBrowser() {
             window.checkForUpdates(true);
         }
     });
+
+    preloadTemplates();
 
     if (window.miseAPI && typeof window.miseAPI.signalRendererReady === 'function') {
         window.miseAPI.signalRendererReady();

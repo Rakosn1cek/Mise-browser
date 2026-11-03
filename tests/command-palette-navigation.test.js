@@ -8,8 +8,11 @@ const vm = require('node:vm');
 
 console.log('Running Mise Command Palette navigation & focus trap regression tests...');
 
-// 1. Verify index.html markup for category chips and list tabindex
-const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
+// 1. Verify Command Palette markup for category chips and list tabindex
+const cpTemplatePath = path.join(__dirname, '../templates/command-palette.html');
+const html = fs.existsSync(cpTemplatePath)
+    ? fs.readFileSync(cpTemplatePath, 'utf8')
+    : fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
 
 assert.ok(
     html.includes('id="CommandPaletteOverlay" tabindex="0"'),

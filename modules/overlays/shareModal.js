@@ -1,9 +1,13 @@
 import { state } from '../state.js';
 import { getWorkspacePartition } from '../utils.js';
 import { destroyGuestWebview } from '../webview.js';
+import { mountOverlaySync } from '../templateLoader.js';
 
 export function openTransientShareModal(targetUrl) {
-    const overlay = document.getElementById('ShareModalOverlay');
+    let overlay = document.getElementById('ShareModalOverlay');
+    if (!overlay && typeof mountOverlaySync === 'function') {
+        overlay = mountOverlaySync('ShareModalOverlay', 'share-modal', 'body');
+    }
     const container = document.getElementById('ShareModalWebviewContainer');
     if (!overlay || !container || !targetUrl) return;
 

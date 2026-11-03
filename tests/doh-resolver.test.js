@@ -257,12 +257,15 @@ const dohResolver = require('../main/dohResolver');
             console.log('✓ onDoHChange hook dispatching and deduplication verified');
         }
 
-        // 8. Verify index.html UI markup constraints
+        // 8. Verify Preferences UI markup constraints
         {
-            const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
+            const prefTemplatePath = path.join(__dirname, '../templates/preferences.html');
+            const html = fs.existsSync(prefTemplatePath)
+                ? fs.readFileSync(prefTemplatePath, 'utf8')
+                : fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
 
             // Selector must exist with all 5 options
-            assert.match(html, /id="setting-doh-provider"/, 'Selector #setting-doh-provider must exist in index.html');
+            assert.match(html, /id="setting-doh-provider"/, 'Selector #setting-doh-provider must exist in preferences template');
             assert.match(html, /<option value="off">/, 'Option off must exist');
             assert.match(html, /<option value="quad9">/, 'Option quad9 must exist');
             assert.match(html, /<option value="mullvad">/, 'Option mullvad must exist');

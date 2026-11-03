@@ -165,11 +165,14 @@ const security = require('../security');
 
         // 7. Verify Preferences [F1] UI markup and commandPalette.js synchronisation
         {
-            const indexHtml = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+            const prefTemplatePath = path.join(__dirname, '..', 'templates', 'preferences.html');
+            const indexHtml = fs.existsSync(prefTemplatePath)
+                ? fs.readFileSync(prefTemplatePath, 'utf8')
+                : fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
             assert.strictEqual(
                 indexHtml.includes('id="setting-webrtc-policy"'),
                 true,
-                'index.html must include setting-webrtc-policy select'
+                'preferences template must include setting-webrtc-policy select'
             );
             assert.strictEqual(
                 indexHtml.includes('value="default_public_interface_only"'),

@@ -9,8 +9,10 @@ const { escapeHtml } = require('../modules/utils.js');
 
 console.log('Running Mise Permissions Vault overlay regression tests...');
 
-// 1. Verify index.html contains tab button, panel, and prompt banner
-const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
+// 1. Verify index.html shell and preferences template contain tab button, panel, and prompt banner
+const prefTemplatePath = path.join(__dirname, '../templates/preferences.html');
+const prefHtml = fs.existsSync(prefTemplatePath) ? fs.readFileSync(prefTemplatePath, 'utf8') : '';
+const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8') + '\n' + prefHtml;
 
 assert.match(
     html,

@@ -4,6 +4,7 @@
 
 import { state } from '../state.js';
 import { focusActiveWebview, escapeHtml } from '../utils.js';
+import { ensureOverlayMounted } from '../templateLoader.js';
 
 let activeDiagTab = 'system';
 let cachedDiagnostics = null;
@@ -86,7 +87,10 @@ export async function refreshDiagnosticsData() {
  * Toggles visibility of the Diagnostics modal overlay.
  */
 export async function toggleDiagnosticsView() {
-    const overlay = document.getElementById('DiagnosticsOverlay');
+    let overlay = document.getElementById('DiagnosticsOverlay');
+    if (!overlay) {
+        overlay = await ensureOverlayMounted('DiagnosticsOverlay', 'diagnostics', '#webview-container', setupDiagnosticsListeners);
+    }
     if (!overlay) return;
 
     state.diagnosticsActive = !state.diagnosticsActive;

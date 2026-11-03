@@ -1,9 +1,14 @@
 import { getActiveWebview, focusActiveWebview } from '../utils.js';
+import { mountOverlaySync } from '../templateLoader.js';
 
 export let findActive = false;
 
 export function toggleInPageSearch() {
-    const overlay = document.getElementById('FindBarOverlay');
+    let overlay = document.getElementById('FindBarOverlay');
+    if (!overlay && typeof mountOverlaySync === 'function') {
+        overlay = mountOverlaySync('FindBarOverlay', 'find-bar', '#webview-container');
+        if (overlay) setupPageSearchListeners();
+    }
     const input = document.getElementById('FindInput');
     const count = document.getElementById('FindMatchCount');
 
