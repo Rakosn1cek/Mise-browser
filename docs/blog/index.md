@@ -38,6 +38,14 @@ How strict multi-account container partitions caused IPC collisions in the adblo
 
 ---
 
+### [The Modularisation Minefield: 5 Hidden Traps That Almost Broke the Main Process](./the-modularisation-minefield.md)
+
+Why extracting a monolithic `main.js` into clean subsystems is fraught with runtime hazards: circular dependencies, webview teardown races, IPC friendly fire, and shutdown sentinel corruption.
+
+`Refactoring` · `Process Isolation` · `IPC Architecture` · `Race Conditions` · `Electron` · `Mise Browser`
+
+---
+
 ### [The Silent Truncation Trap: How Mid-Write Crashes and Naive Fallbacks Destroyed User Data](./the-silent-truncation-trap.md)
 
 Why direct synchronous file writes and silent default fallbacks caused catastrophic data loss, and how atomic filesystem guarantees and corrupt file snapshotting resolved it.

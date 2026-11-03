@@ -45,6 +45,7 @@ export default defineConfig({
         text: 'Engineering Chronicles',
         items: [
           { text: 'The Ghostery IPC Civil War', link: '/blog/the-ghostery-ipc-civil-war' },
+          { text: 'The Modularisation Minefield', link: '/blog/the-modularisation-minefield' },
           { text: 'The Silent Truncation Trap', link: '/blog/the-silent-truncation-trap' },
           { text: 'Leak-Proof Private Workspace', link: '/blog/the-anatomy-of-a-leak-proof-private-workspace' },
           { text: 'Taming the Main Process', link: '/blog/taming-the-electron-main-process' },
