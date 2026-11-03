@@ -56,7 +56,7 @@ It was evident that the main process needed the same modular discipline already 
 
 Refactoring the central coordinator of an active browser carrying live user sessions is inherently delicate. A single broken IPC handler can freeze the user interface, whilst a misplaced session flush can erase active tabs.
 
-To eliminate risk, we established three strict refactoring principles:
+To eliminate risk, three strict refactoring principleswere established:
 
 * **One Subsystem per Phase**: Never refactor two domains simultaneously. Each subsystem must be extracted into its own module under a dedicated `main/` directory.
 * **The Orchestrator Pattern**: `main.js` must remain the top-level lifecycle coordinator and event router, delegating execution to pure domain helpers.
@@ -64,7 +64,11 @@ To eliminate risk, we established three strict refactoring principles:
 
 ```mermaid
 graph TD
-    Main["main.js (Lifecycle Orchestrator)"]
+    Main["main.js (Bootstrap Coordinator)"]
+    Main --> WindowMgr["main/windowManager.js<br/>Window Lifecycle & Navigation"]
+    Main --> Policy["main/webContentsPolicy.js<br/>Web Contents Security & Windows"]
+    Main --> Menus["main/contextMenus.js<br/>Context Menus & Link Actions"]
+    Main --> SystemIPC["main/systemIpc.js<br/>System IPC & Pastejacking Guard"]
     Main --> Config["main/config.js<br/>Settings & Atomic Disk Config"]
     Main --> Downloads["main/downloads.js<br/>Download Tracking & D-Bus / XDG"]
     Main --> Session["main/sessionStore.js<br/>Session Persistence & Sentinel"]
@@ -77,7 +81,7 @@ graph TD
 
 ### The Roadmap in Practice
 
-We executed the refactoring across five dedicated phases:
+Executed the refactoring across six dedicated phases:
 
 * **Phase 1: Downloads and File Manager (`main/downloads.js`)**  
   Carved out active download maps, speed calculations, and desktop environment file manager discovery via D-Bus (`org.freedesktop.FileManager1`) and XDG desktop entry parsing. Added [`tests/downloads.test.js`](file:///home/rk1/arch-projects/MiseBrowser/tests/downloads.test.js) and verified package build inclusions.
@@ -89,14 +93,16 @@ We executed the refactoring across five dedicated phases:
   Consolidated visit history caching, 500-item deduplication, case-insensitive search queries, Bookmarks, Quickmarks, notes, and Reader View article clippings into a standalone storage module. Created [`tests/storage.test.js`](file:///home/rk1/arch-projects/MiseBrowser/tests/storage.test.js).
 * **Phase 5: Version Checking & Updater (`main/updater.js`)**  
   Extracted semantic version comparison (`isNewerVersion`) and GitHub REST API queries, removing unused Node `https` imports from `main.js`. Created [`tests/updater.test.js`](file:///home/rk1/arch-projects/MiseBrowser/tests/updater.test.js).
+* **Phase 6: Coordinator Modularisation (`main/windowManager.js`, `main/webContentsPolicy.js`, `main/contextMenus.js`, `main/systemIpc.js`)**  
+  In the final phase of main process modularisation, the remaining monolithic blocks in `main.js` (window lifecycle, context menus, system IPC endpoints, and security policies) were factored into dedicated subsystems under `main/`. This reduced `main.js` from 1,411 lines down to ~518 lines as a clean bootstrap coordinator. Created [`tests/main-modularisation.test.js`](file:///home/rk1/arch-projects/MiseBrowser/tests/main-modularisation.test.js).
 
-By the end of Phase 5, the regression test harness had expanded from 17 to 20 comprehensive test suites, all passing with zero regressions.
+By the completion of the architectural roadmap, the regression test harness had expanded to 72 comprehensive test suites, all passing with zero regressions.
 
 ---
 
 ## 4. Preserving the Sacred Boundaries
 
-During a large-scale refactoring, the temptation often arises to "improve" adjacent logic while touching the code. We deliberately resisted this urge, establishing explicit boundaries around features that were forbidden from being altered:
+During a large-scale refactoring, the temptation often arises to "improve" adjacent logic while touching the code. Deliberately resisted this urge, establishing explicit boundaries around features that were forbidden from being altered:
 
 ### Tab Hibernation Was Left Untouched
 
@@ -122,8 +128,8 @@ In reality, CommonJS modules in Node.js work through a simple caching mechanism:
 
 What *did* change dramatically was developer velocity and safety:
 
-* **File Size Reduction**: `main.js` shrank from 2,106 lines to 1,262 lines (a 40% reduction).
-* **Isolated Testing**: Subsystems like semantic version parsing and history search queries can now be tested headlessly in pure Node in under 5 milliseconds without spawning full Electron browser windows.
+* **File Size Reduction**: `main.js` shrank from 2,106 lines to ~518 lines (an overall 75% reduction).
+* **Isolated Testing**: Subsystems like semantic version parsing, history search queries, window managers, and security policies can now be tested headlessly in pure Node in under 5 milliseconds without spawning full Electron browser windows.
 * **Cognitive Clarity**: Each domain has a single, unambiguous home. A developer working on bookmarks touches only `main/storage.js`, with zero chance of introducing a syntax error in download notifications or session crash recovery.
 
 ---
@@ -131,6 +137,7 @@ What *did* change dramatically was developer velocity and safety:
 ## 6. Key Takeaways
 
 1. **Monoliths Grow Silently**: Nobody sets out to write a 2,000-line file. It happens one convenient helper and one quick IPC listener at a time. Periodic architectural audits are essential to identify when a file has outgrown its original purpose.
-2. **Modularise Under Test**: Never attempt a wide-ranging refactor without an automated regression harness. Having 20 dedicated test suites verifying atomic config writes, link hints, and tab transfers gave us total confidence after every single phase.
+2. **Modularise Under Test**: Never attempt a wide-ranging refactor without an automated regression harness. Having comprehensive test suites verifying atomic config writes, link hints, and tab transfers gave us total confidence after every single phase.
 3. **Respect Proven Subsystems**: Do not bundle performance tuning or logic rewrites into a structural refactoring. Isolate the structure first, verify stability, and keep critical paths like tab hibernation firmly protected.
 4. **The Orchestrator Pattern Wins**: Making `main.js` an event dispatcher and lifecycle coordinator while delegating business logic to pure helper modules creates an architecture that is maintainable, auditable, and resilient.
+5. **Architectural Parity Across Processes**: Applying the same modular discipline across the entire codebase (main subsystems under `main/*`, renderer controllers under `modules/renderer/*`, and interface shell in `index.html` reduced to 176 lines with `templates/*`) creates a cohesive architecture that is maintainable, auditable, and resilient.
