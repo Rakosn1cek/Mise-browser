@@ -12,6 +12,18 @@ Mise integrates an in-process network request blocker powered by Ghostery's bloc
 - Operates at the network intercept layer, conserving CPU cycles and network bandwidth on slow or metered connections.
 - Requires no external extensions or third-party web store plugins.
 
+### Community Filter List Subscriptions
+
+In Preferences (**F1** or **Ctrl + H**) under **Privacy & Protection**, you can customise your active filter list subscriptions:
+
+* **EasyList (Core Ad Protection)**: Enabled by default. Blocks advertisements, banners, video ads, and intrusive promotional media.
+* **EasyPrivacy (Tracking & Telemetry Protection)**: Enabled by default. Neutralises analytics beacons, telemetry endpoints, and behavioural scripts.
+* **uBlock & EasyList Annoyances**: Optional toggle. Dismisses cookie consent dialogues, GDPR banners, newsletter overlay popups, and anti-adblock nags.
+* **Fanboy's Social Media Protection**: Optional toggle. Neutralises third-party social share buttons, like widgets, and embedded platform tracking scripts.
+* **Custom Filter Subscriptions**: Subscribe to additional community filter lists (such as regional lists like EasyList Germany or specialised blocklists). Custom subscriptions must strictly use the `https://` protocol and are guarded against SSRF and private IP disclosures.
+
+All filter list compilation executes asynchronously off-thread in worker threads without freezing the browser interface. Serialised rule sets are cached locally on disk with deterministic SHA-256 keys, and updated rules are dynamically hot-swapped across all active container sessions without requiring a browser restart.
+
 ---
 
 ## Permanent Private Workspace (`Ctrl + Shift + P`)

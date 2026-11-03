@@ -24,6 +24,20 @@ const userDataDir = (app && typeof app.getPath === 'function')
     : path.join(require('os').tmpdir(), 'mise-browser');
 const CACHE_PATH = path.join(userDataDir, 'adblock_cache.bin');
 
+function getFilterCachePath(recipeUrls) {
+    if (!recipeUrls) return CACHE_PATH;
+    try {
+        const { adsAndTrackingLists } = require('@ghostery/adblocker-electron');
+        if (recipeUrls === adsAndTrackingLists) return CACHE_PATH;
+    } catch (_) {}
+    const sorted = Array.from(recipeUrls).sort().join('\n');
+    const hash = crypto.createHash('sha256').update(sorted).digest('hex').slice(0, 16);
+    return path.join(userDataDir, `adblock_cache_${hash}.bin`);
+}
+
+const attachedSessions = new Set();
+let currentFilterLists = null;
+
 // Infrastructure domains required for Google authentication and bot detection
 const GOOGLE_AUTH_DOMAINS = [
     'accounts.google.com',
@@ -285,9 +299,9 @@ function applyWebRTCPolicy(targetSession, policy = 'default_public_interface_onl
     }
 }
 
-function hardenSession(targetSession, spellLang = 'en-GB', webrtcPolicy = 'default_public_interface_only') {
+function hardenSession(targetSession, spellLang = 'en-GB', webrtcPolicy = 'default_public_interface_only', filterLists = null) {
     applySpellcheckerLanguage(targetSession, spellLang);
-    initialiseAdblocker(targetSession);
+    initialiseAdblocker(targetSession, filterLists);
 
     // Apply WebRTC IP handling policy
     applyWebRTCPolicy(targetSession, webrtcPolicy);
@@ -382,11 +396,11 @@ function attachNetworkHandlers(targetSession) {
     });
 }
 
-async function applyTrustedDomainExceptions() {
-    if (!blockerInstance) return;
+async function applyTrustedDomainExceptions(targetBlocker = blockerInstance) {
+    if (!targetBlocker || typeof targetBlocker.updateFromDiff !== 'function') return;
     const newFilters = buildExceptionFilters(trustedDomains);
     try {
-        blockerInstance.updateFromDiff({
+        targetBlocker.updateFromDiff({
             removed: appliedExceptionFilters,
             added: newFilters
         });
@@ -412,39 +426,69 @@ const GHOSTERY_IPC_CHANNELS = [
     '@ghostery/adblocker/cosmetic-filters'
 ];
 
+function applyDefaultExceptions(blocker) {
+    if (!blocker || typeof blocker.updateFromDiff !== 'function') return;
+    try {
+        blocker.updateFromDiff({
+            added: [
+                'youtube.com#@#+js()',
+                'x.com#@#+js()',
+                'twitter.com#@#+js()'
+            ]
+        });
+    } catch (diffErr) {
+        console.warn('Failed to apply adblocker exception rules:', diffErr);
+    }
+}
+
+function getFilterRuleCount(blocker) {
+    if (!blocker || typeof blocker.getFilters !== 'function') return 0;
+    try {
+        const filters = blocker.getFilters();
+        const networkCount = Array.isArray(filters?.networkFilters) ? filters.networkFilters.length : 0;
+        const cosmeticCount = Array.isArray(filters?.cosmeticFilters) ? filters.cosmeticFilters.length : 0;
+        return networkCount + cosmeticCount;
+    } catch (_) {
+        return 0;
+    }
+}
+
 // Sessions start together on startup. Share the pending engine build so
 // they cannot download, deserialise, and retain separate copies of the filter set.
-function getAdblocker() {
+function getAdblocker(filterLists) {
+    if (filterLists !== undefined) {
+        currentFilterLists = filterLists;
+    }
     if (!blockerInitialisation) {
         blockerInitialisation = (async () => {
-            if (fs.existsSync(CACHE_PATH)) {
+            const buildFn = require('./adblocker-build');
+            const urls = typeof buildFn.resolveListUrls === 'function'
+                ? buildFn.resolveListUrls(currentFilterLists)
+                : undefined;
+            const cachePath = getFilterCachePath(urls);
+
+            if (fs.existsSync(cachePath)) {
                 try {
-                    const buffer = fs.readFileSync(CACHE_PATH);
+                    const buffer = fs.readFileSync(cachePath);
                     blockerInstance = ElectronBlocker.deserialize(buffer);
                 } catch (_) {
                     console.warn('Adblocker cache version mismatch or corrupted file. Rebuilding cache...');
-                    if (fs.existsSync(CACHE_PATH)) {
-                        try { fs.unlinkSync(CACHE_PATH); } catch (e) {}
+                    if (fs.existsSync(cachePath)) {
+                        try { fs.unlinkSync(cachePath); } catch (e) {}
                     }
                 }
             }
             if (!blockerInstance) {
-                const built = await require('./adblocker-build')();
+                const built = await buildFn(currentFilterLists);
                 blockerInstance = built.blocker;
-                fs.writeFileSync(CACHE_PATH, built.cacheBytes);
+                try {
+                    fs.writeFileSync(cachePath, built.cacheBytes);
+                } catch (writeErr) {
+                    console.warn('Failed to write adblocker cache:', writeErr);
+                }
             }
-            try {
-                blockerInstance.updateFromDiff({
-                    added: [
-                        'youtube.com#@#+js()',
-                        'x.com#@#+js()',
-                        'twitter.com#@#+js()'
-                    ]
-                });
-            } catch (diffErr) {
-                console.warn('Failed to apply adblocker exception rules:', diffErr);
-            }
-            await applyTrustedDomainExceptions();
+            applyDefaultExceptions(blockerInstance);
+            await applyTrustedDomainExceptions(blockerInstance);
             return blockerInstance;
         })().catch(err => {
             blockerInstance = null;
@@ -456,8 +500,11 @@ function getAdblocker() {
     return blockerInitialisation;
 }
 
-async function initialiseAdblocker(targetSession) {
-    if (!await getAdblocker()) return;
+async function initialiseAdblocker(targetSession, filterLists = null) {
+    if (targetSession) {
+        attachedSessions.add(targetSession);
+    }
+    if (!await getAdblocker(filterLists)) return;
 
     try {
         if (ipcInitialized) {
@@ -471,6 +518,78 @@ async function initialiseAdblocker(targetSession) {
     } catch (err) {
         console.error('Failed to attach network filters to session:', err);
     }
+}
+
+async function reloadAdblocker(filterLists, extraSessions = []) {
+    currentFilterLists = filterLists;
+    blockerInitialisation = null;
+
+    const buildFn = require('./adblocker-build');
+    const urls = typeof buildFn.resolveListUrls === 'function'
+        ? buildFn.resolveListUrls(filterLists)
+        : undefined;
+    const cachePath = getFilterCachePath(urls);
+
+    let newBlocker = null;
+    if (fs.existsSync(cachePath)) {
+        try {
+            const buffer = fs.readFileSync(cachePath);
+            newBlocker = ElectronBlocker.deserialize(buffer);
+        } catch (_) {
+            try { fs.unlinkSync(cachePath); } catch (e) {}
+        }
+    }
+
+    if (!newBlocker) {
+        const built = await buildFn(filterLists);
+        newBlocker = built.blocker;
+        try {
+            fs.writeFileSync(cachePath, built.cacheBytes);
+        } catch (writeErr) {
+            console.warn('Failed to persist filter cache:', writeErr);
+        }
+    }
+
+    applyDefaultExceptions(newBlocker);
+    await applyTrustedDomainExceptions(newBlocker);
+
+    const sessionsToUpdate = new Set(attachedSessions);
+    if (Array.isArray(extraSessions)) {
+        extraSessions.forEach(s => s && sessionsToUpdate.add(s));
+    }
+
+    GHOSTERY_IPC_CHANNELS.forEach(channel => {
+        try { ipcMain.removeHandler(channel); } catch (e) {}
+    });
+
+    blockerInstance = newBlocker;
+
+    for (const targetSession of sessionsToUpdate) {
+        if (!targetSession || (typeof targetSession.isDestroyed === 'function' && targetSession.isDestroyed())) {
+            attachedSessions.delete(targetSession);
+            continue;
+        }
+        try {
+            blockerInstance.enableBlockingInSession(targetSession);
+            attachNetworkHandlers(targetSession);
+        } catch (sessErr) {
+            console.error('Failed to attach recompiled filter list to session:', sessErr);
+        }
+    }
+
+    ipcInitialized = true;
+    return {
+        success: true,
+        ruleCount: getFilterRuleCount(blockerInstance)
+    };
+}
+
+function getFilterStatus() {
+    return {
+        ready: !!blockerInstance,
+        ruleCount: getFilterRuleCount(blockerInstance),
+        activeSessions: attachedSessions.size
+    };
 }
 
 function hardenWebviewPreferences(webPreferences) {
@@ -660,5 +779,10 @@ module.exports = {
     mintPdfViewerUrl,
     validatePdfAccess,
     isSafeTabUrl,
-    sanitiseTerminalCommand
+    sanitiseTerminalCommand,
+    reloadAdblocker,
+    initialiseAdblocker,
+    getFilterStatus,
+    getFilterRuleCount,
+    getFilterCachePath
 };

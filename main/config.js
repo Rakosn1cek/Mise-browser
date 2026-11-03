@@ -21,6 +21,14 @@ const DEFAULT_THEME_COLORS = {
     }
 };
 
+const DEFAULT_FILTER_LISTS = {
+    easylist: true,
+    easyprivacy: true,
+    annoyances: false,
+    social: false,
+    custom_urls: []
+};
+
 const DEFAULT_CONFIG = {
     disable_gpu: false,
     background_throttling: true,
@@ -45,7 +53,8 @@ const DEFAULT_CONFIG = {
     doh_provider: 'off',
     doh_custom_url: '',
     startup_behavior: 'restore',
-    last_seen_version: null
+    last_seen_version: null,
+    filter_lists: { ...DEFAULT_FILTER_LISTS }
 };
 
 function resolveConfigDir() {
@@ -88,6 +97,10 @@ function loadBrowserConfig(targetDir = CONFIG_DIR, targetPath = CONFIG_PATH) {
             doh_provider: parsed.doh_provider || 'off',
             doh_custom_url: typeof parsed.doh_custom_url === 'string' ? parsed.doh_custom_url : '',
             startup_behavior: ['restore', 'dashboard', 'new-tab'].includes(parsed.startup_behavior) ? parsed.startup_behavior : 'restore',
+            filter_lists: {
+                ...DEFAULT_FILTER_LISTS,
+                ...(parsed.filter_lists && typeof parsed.filter_lists === 'object' && !Array.isArray(parsed.filter_lists) ? parsed.filter_lists : {})
+            },
             theme_colors: {
                 dark: { ...DEFAULT_THEME_COLORS.dark, ...(parsed.theme_colors?.dark || {}) },
                 light: { ...DEFAULT_THEME_COLORS.light, ...(parsed.theme_colors?.light || {}) }
@@ -185,6 +198,60 @@ function validateCustomSearchAliases(aliases) {
         if (!isValidHttpUrlTemplate(val)) return false;
     }
     return true;
+}
+
+function isPrivateOrLocalHost(hostname) {
+    const host = String(hostname || '').toLowerCase().trim();
+    if (!host || host === 'localhost' || host === '127.0.0.1' || host === '::1' || host === '0.0.0.0') {
+        return true;
+    }
+    if (host.startsWith('10.') || host.startsWith('192.168.') || host.startsWith('169.254.')) {
+        return true;
+    }
+    const match172 = host.match(/^172\.(\d+)\./);
+    if (match172) {
+        const secondOctet = parseInt(match172[1], 10);
+        if (secondOctet >= 16 && secondOctet <= 31) return true;
+    }
+    return false;
+}
+
+function validateFilterLists(fl) {
+    if (!fl || typeof fl !== 'object' || Array.isArray(fl)) return null;
+
+    const boolKeys = ['easylist', 'easyprivacy', 'annoyances', 'social'];
+    const result = {};
+
+    for (const key of boolKeys) {
+        if (key in fl) {
+            if (typeof fl[key] !== 'boolean') return null;
+            result[key] = fl[key];
+        } else {
+            result[key] = DEFAULT_FILTER_LISTS[key];
+        }
+    }
+
+    const cleanUrls = [];
+    if ('custom_urls' in fl) {
+        if (!Array.isArray(fl.custom_urls)) return null;
+        if (fl.custom_urls.length > 10) return null;
+
+        for (const rawUrl of fl.custom_urls) {
+            if (typeof rawUrl !== 'string' || rawUrl.length > 2048) return null;
+            const trimmed = rawUrl.trim();
+            if (!trimmed) continue;
+            try {
+                const parsed = new URL(trimmed);
+                if (parsed.protocol !== 'https:') return null;
+                if (!parsed.hostname || isPrivateOrLocalHost(parsed.hostname)) return null;
+                cleanUrls.push(parsed.href);
+            } catch (_) {
+                return null;
+            }
+        }
+    }
+    result.custom_urls = cleanUrls;
+    return result;
 }
 
 function validateConfigPatch(patch) {
@@ -369,6 +436,16 @@ function validateConfigPatch(patch) {
                 break;
             }
 
+            case 'filter_lists': {
+                const validFl = validateFilterLists(val);
+                if (validFl) {
+                    clean[key] = validFl;
+                } else {
+                    rejected.push(key);
+                }
+                break;
+            }
+
             default:
                 rejected.push(key);
                 break;
@@ -456,6 +533,11 @@ function registerConfigIpc(ipcMain, hooks = {}) {
             if (dohChanged && typeof hooks.onDoHChange === 'function') {
                 hooks.onDoHChange(merged.doh_provider, merged.doh_custom_url);
             }
+            const filterListsChanged = Object.prototype.hasOwnProperty.call(payload, 'filter_lists') &&
+                JSON.stringify(before.filter_lists) !== JSON.stringify(merged.filter_lists);
+            if (filterListsChanged && typeof hooks.onFilterListsChange === 'function') {
+                hooks.onFilterListsChange(merged.filter_lists);
+            }
             return true;
         } catch (e) {
             return false;
@@ -465,6 +547,7 @@ function registerConfigIpc(ipcMain, hooks = {}) {
 
 module.exports = {
     DEFAULT_THEME_COLORS,
+    DEFAULT_FILTER_LISTS,
     DEFAULT_CONFIG,
     CONFIG_DIR,
     CONFIG_PATH,
@@ -475,5 +558,6 @@ module.exports = {
     updateBrowserConfig,
     registerConfigIpc,
     restartApp,
-    validateConfigPatch
+    validateConfigPatch,
+    validateFilterLists
 };

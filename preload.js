@@ -108,6 +108,8 @@ contextBridge.exposeInMainWorld('miseAPI', {
         const handler = (event, requestData) => callback(requestData);
         ipcRenderer.on('permission-prompt-requested', handler);
         return () => ipcRenderer.removeListener('permission-prompt-requested', handler);
-    }
+    },
+    getFilterListsStatus: () => ipcRenderer.invoke('get-filter-lists-status'),
+    refreshFilterLists: () => ipcRenderer.invoke('refresh-filter-lists')
 });
 

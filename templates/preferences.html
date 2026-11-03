@@ -413,6 +413,73 @@
                                         <button id="setting-save-trusted-domains-btn" class="settings-action-btn">Save Trusted Sites</button>
                                     </div>
                                 </div>
+
+                                <!-- Community Filter List Subscriptions -->
+                                <div style="margin-top: 20px; padding-top: 15px; border-top: 1px dashed var(--border);">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                        <h3 style="margin: 0; font-size: 15px; color: var(--accent); display: flex; align-items: center; gap: 8px;">
+                                            <i class="fa-solid fa-filter"></i>
+                                            <span>Network Filters & Community Subscriptions</span>
+                                        </h3>
+                                        <span id="setting-filters-rule-badge" class="slider-val-badge" style="background: rgba(122, 162, 247, 0.15); color: var(--accent); border: 1px solid rgba(122, 162, 247, 0.3); font-size: 11px;">Active Rules: 0</span>
+                                    </div>
+                                </div>
+
+                                <div class="setting-item">
+                                    <div class="setting-info">
+                                        <span class="setting-label">EasyList (Core Ad Protection)</span>
+                                        <span class="setting-desc">Blocks web advertisements, promotional banners, video pre-rolls, and malicious redirection scripts.</span>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="setting-filter-easylist" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+
+                                <div class="setting-item">
+                                    <div class="setting-info">
+                                        <span class="setting-label">EasyPrivacy (Tracking & Telemetry Protection)</span>
+                                        <span class="setting-desc">Neutralises behavioural trackers, web analytics beacons, telemetry endpoints, and fingerprinting scripts.</span>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="setting-filter-easyprivacy" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+
+                                <div class="setting-item">
+                                    <div class="setting-info">
+                                        <span class="setting-label">uBlock & EasyList Annoyances</span>
+                                        <span class="setting-desc">Blocks cookie consent banners, GDPR dialogue popups, newsletter overlay nags, and in-page notifications.</span>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="setting-filter-annoyances">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+
+                                <div class="setting-item">
+                                    <div class="setting-info">
+                                        <span class="setting-label">Fanboy's Social Media Protection</span>
+                                        <span class="setting-desc">Neutralises third-party social share buttons, embedded profile widgets, and cross-site social tracking scripts.</span>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="setting-filter-social">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+
+                                <div class="setting-item setting-item-stacked">
+                                    <div class="setting-info">
+                                        <span class="setting-label">Custom Filter Subscriptions</span>
+                                        <span class="setting-desc">Subscribe to additional community filter lists (e.g. regional lists or specialized blocklists). One HTTPS URL per line.</span>
+                                    </div>
+                                    <textarea id="setting-filter-custom-urls" class="settings-textarea" rows="3" placeholder="https://easylist-downloads.adblockplus.org/easylistgermany.txt"></textarea>
+                                    <div style="display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-top: 6px;">
+                                        <span id="setting-filters-note" class="settings-save-note"></span>
+                                        <button id="setting-apply-filters-btn" class="settings-action-btn">Apply & Update Filters</button>
+                                    </div>
+                                </div>
                             </section>
                 
                             <!-- Granular Permissions Vault Section -->

@@ -1138,6 +1138,34 @@ export async function syncPreferencesUI() {
                 state.customSearchAliases = { ...cfg.custom_search_aliases };
             }
             renderSearchAliasesUI();
+
+            const filterLists = cfg.filter_lists || {};
+            const easylistToggle = document.getElementById('setting-filter-easylist');
+            if (easylistToggle) easylistToggle.checked = filterLists.easylist !== false;
+
+            const easyprivacyToggle = document.getElementById('setting-filter-easyprivacy');
+            if (easyprivacyToggle) easyprivacyToggle.checked = filterLists.easyprivacy !== false;
+
+            const annoyancesToggle = document.getElementById('setting-filter-annoyances');
+            if (annoyancesToggle) annoyancesToggle.checked = !!filterLists.annoyances;
+
+            const socialToggle = document.getElementById('setting-filter-social');
+            if (socialToggle) socialToggle.checked = !!filterLists.social;
+
+            const customUrlsField = document.getElementById('setting-filter-custom-urls');
+            if (customUrlsField) {
+                customUrlsField.value = Array.isArray(filterLists.custom_urls) ? filterLists.custom_urls.join('\n') : '';
+            }
+
+            if (window.miseAPI && typeof window.miseAPI.getFilterListsStatus === 'function') {
+                try {
+                    const status = await window.miseAPI.getFilterListsStatus();
+                    const badge = document.getElementById('setting-filters-rule-badge');
+                    if (badge && status && typeof status.ruleCount === 'number') {
+                        badge.textContent = `Active Rules: ${status.ruleCount.toLocaleString('en-GB')}`;
+                    }
+                } catch (_) {}
+            }
         }
     } catch (err) {}
 
@@ -1685,6 +1713,70 @@ export function setupPreferencesListeners() {
                 }
             }
         };
+    }
+
+    const applyFiltersBtn = document.getElementById('setting-apply-filters-btn');
+    if (applyFiltersBtn) {
+        applyFiltersBtn.onclick = async () => {
+            const note = document.getElementById('setting-filters-note');
+            const badge = document.getElementById('setting-filters-rule-badge');
+            const easylist = document.getElementById('setting-filter-easylist')?.checked !== false;
+            const easyprivacy = document.getElementById('setting-filter-easyprivacy')?.checked !== false;
+            const annoyances = !!document.getElementById('setting-filter-annoyances')?.checked;
+            const social = !!document.getElementById('setting-filter-social')?.checked;
+            const customUrlsVal = document.getElementById('setting-filter-custom-urls')?.value || '';
+
+            const customUrls = customUrlsVal
+                .split(/[\n,]/)
+                .map(u => u.trim())
+                .filter(u => u.length > 0 && u.startsWith('https://'));
+
+            const filterLists = {
+                easylist,
+                easyprivacy,
+                annoyances,
+                social,
+                custom_urls: customUrls
+            };
+
+            if (note) {
+                note.textContent = 'Compiling and hot-swapping filters in worker thread...';
+                note.classList.add('visible');
+            }
+
+            try {
+                if (window.miseAPI && typeof window.miseAPI.updateBrowserSettings === 'function') {
+                    const currentCfg = (typeof window.miseAPI.getBrowserSettings === 'function')
+                        ? (await window.miseAPI.getBrowserSettings()) || {}
+                        : {};
+                    await window.miseAPI.updateBrowserSettings({
+                        ...currentCfg,
+                        filter_lists: filterLists
+                    });
+                }
+
+                if (window.miseAPI && typeof window.miseAPI.refreshFilterLists === 'function') {
+                    const res = await window.miseAPI.refreshFilterLists();
+                    if (badge && res && typeof res.ruleCount === 'number') {
+                        badge.textContent = `Active Rules: ${res.ruleCount.toLocaleString('en-GB')}`;
+                    }
+                }
+
+                if (note) {
+                    note.textContent = 'Filters updated and hot-swapped successfully.';
+                    setTimeout(() => note.classList.remove('visible'), 3000);
+                }
+            } catch (err) {
+                if (note) {
+                    note.textContent = 'Failed to compile or update filter lists.';
+                }
+            }
+        };
+
+        ['setting-filter-easylist', 'setting-filter-easyprivacy', 'setting-filter-annoyances', 'setting-filter-social'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.onchange = () => applyFiltersBtn.click();
+        });
     }
 
     const diagToggle = document.getElementById('setting-diagnostics-toggle');

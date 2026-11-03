@@ -213,7 +213,8 @@ function configureAndHardenSession(targetSession) {
     security.hardenSession(
         targetSession,
         cfg.spellchecker_language || 'en-GB',
-        cfg.webrtc_policy || 'default_public_interface_only'
+        cfg.webrtc_policy || 'default_public_interface_only',
+        cfg.filter_lists
     );
     permissions.configureSessionPermissions(targetSession, {
         getMainWindow,
@@ -337,7 +338,14 @@ config.registerConfigIpc(ipcMain, {
     onSpellcheckerChange: applySpellcheckerToAllSessions,
     onDiagnosticsChange: diagnostics.setDiagnosticsEnabled,
     onWebRTCPolicyChange: applyWebRTCPolicyToAllSessions,
-    onDoHChange: (provider, customUrl) => applyDoHConfiguration(app, provider, customUrl)
+    onDoHChange: (provider, customUrl) => applyDoHConfiguration(app, provider, customUrl),
+    onFilterListsChange: (lists) => security.reloadAdblocker(lists, Array.from(activeSessions))
+});
+
+ipcMain.handle('get-filter-lists-status', async () => security.getFilterStatus());
+ipcMain.handle('refresh-filter-lists', async () => {
+    const cfg = loadBrowserConfig();
+    return security.reloadAdblocker(cfg.filter_lists, Array.from(activeSessions));
 });
 
 // Register window lifecycle and management IPC channels
