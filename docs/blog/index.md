@@ -30,6 +30,14 @@ Deep dives into the most challenging bugs, feature failures, and architectural l
 
 Each chronicle follows the development anatomy: **Problem** → **Attempted Solution** → **The Bug / Fail** → **The Architectural Fix**.
 
+### [The Ghostery IPC Civil War: Adblocking Across Isolated Partitions](./the-ghostery-ipc-civil-war.md)
+
+How strict multi-account container partitions caused IPC collisions in the adblocking engine, why compiling 150,000 rules froze the user interface, and how off-thread compilation and dynamic hot-swapping restored harmony.
+
+`Content Blocking` · `Chromium Partitions` · `IPC Architecture` · `Worker Threads` · `Electron` · `Mise Browser`
+
+---
+
 ### [The Silent Truncation Trap: How Mid-Write Crashes and Naive Fallbacks Destroyed User Data](./the-silent-truncation-trap.md)
 
 Why direct synchronous file writes and silent default fallbacks caused catastrophic data loss, and how atomic filesystem guarantees and corrupt file snapshotting resolved it.
@@ -111,9 +119,6 @@ How chasing zero memory usage broke tabs with the `about:blank` amnesia trap, wh
 ---
 
 ### Upcoming Chronicles
-
-- **The Ghostery IPC Civil War: Adblocking Across Isolated Partitions**  
-  How strict multi-account container partitions caused IPC channel collisions in the adblocking engine and the session detachment fix that resolved it.
 
 - **Taming the Userscript Engine: SSRF and DNS Rebinding Defences**  
   Closing critical security holes in `GM_xmlhttpRequest` by enforcing `@connect` rules, private IP blocking, and pre-resolution socket pinning.
