@@ -58,11 +58,26 @@ If you wish to enable active security scanning and paging:
 
 ***
 
+## Supported Input Methods
+
+You can trigger terminal command execution from either primary interface:
+
+1. **Status Bar Address Bar (`Ctrl + L` / `o`)**:
+   - Type commands directly (e.g. `pacman -Syu`, `btop`, `git status`).
+   - Use explicit shell prefixes: `$ ls -la`, `> btop`, `:sh cargo check`, or `term fastfetch`.
+   - Scripts and high-risk commands automatically receive the `oversight` prefix.
+   - Live upward suggestions display a `Run in terminal` option with a dedicated terminal indicator badge.
+2. **Command Palette (`Ctrl + P` / `:`)**:
+   - Any query not matching an internal Mise command displays a `Run in terminal` fallback action.
+   - Pressing Enter or clicking Execute triggers clipboard staging and terminal launching.
+
+***
+
 ## Terminal Emulator Detection
 
 Mise detects your host platform and terminal emulator dynamically:
 
-- **Linux**: Scans for installed emulators in priority order:
-  `kitty` -> `alacritty` -> `foot` -> `st` -> `xterm` -> `xdg-terminal-exec`.
+- **Linux**: Respects your `$TERMINAL` environment variable first, then prioritises installed emulators across Wayland and X11:
+  `$TERMINAL` -> `kitty` -> `alacritty` -> `foot` -> `ghostty` -> `wezterm` -> `konsole` -> `gnome-terminal` -> `terminator` -> `xfce4-terminal` -> `st` -> `xterm` -> `xdg-terminal-exec`.
 - **macOS**: Automatically interfaces with the native `Terminal.app`.
 - **Windows**: Prefers `Windows Terminal` (`wt.exe`) with graceful fallback to `cmd.exe`.

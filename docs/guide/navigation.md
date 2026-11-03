@@ -47,6 +47,7 @@ Press **Ctrl + L** or **o** at any time to focus the centered address bar fixed 
 - **Direct Calculator**: Type any arithmetic expression (e.g. `240 * 1.2`, `15% of 200`, `sqrt(144)`) to compute the answer live in the upward dropdown menu. Press **Enter** to copy the answer to your clipboard, or press the **Down Arrow** or **Tab** to put the result into the address bar and continue calculating.
 - **DuckDuckGo Bangs**: Type any DuckDuckGo bang (e.g. `!w Arch Linux`, `!gh MiseBrowser`, `!yt ambient`) to route directly to thousands of external search destinations.
 - **Workspace Switching**: Type `ws` followed by a workspace name (e.g. `ws work`) to switch workspaces instantly from the address bar.
+- **Terminal Execution & Oversight**: Type terminal commands directly (e.g. `pacman -Syu`, `btop`, `git status`) or with explicit prefixes (`$`, `>`, `:sh`, `term`). High-risk system calls (`sudo`, `curl`, `wget`) and script files (`.sh`, `.py`, etc.) are automatically formatted with the `oversight` prefix for scanning, copied safely to your clipboard, and an external terminal is spawned for deliberate pasting.
 - **Local File Containment**: Entering local file paths (starting with `/` or `file://`) is strictly restricted to valid PDF documents, automatically mediating them through the offline PDF viewer. Navigation to arbitrary local file paths is blocked with a status bar alert to protect system security.
 - Press **Escape** to blur the address bar, dismiss suggestions, and return focus directly to the active web page.
 

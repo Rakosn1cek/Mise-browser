@@ -1,5 +1,5 @@
 import { state } from '../state.js';
-import { focusActiveWebview, getActiveWebview, isTargetScript, isDarkMode, escapeHtml, showNotificationToast } from '../utils.js';
+import { focusActiveWebview, getActiveWebview, isTargetScript, isDarkMode, escapeHtml, showNotificationToast, prepareTerminalCommand } from '../utils.js';
 import { setTargetUrl } from '../statusBar.js';
 import { renderWorkspaceUI, switchTabFocus, spawnTabWithUrl, spawnNewBlankTab, handleTabRemoval, hibernateInactiveTabs, wakeAllTabsInWorkspace } from '../webview.js';
 import { toggleBookmarksOverlay, promptQuickmark, addCurrentPageToBookmarks } from './bookmarks.js';
@@ -2287,14 +2287,8 @@ export function handlePaletteInputNavigation(e) {
 
 function executeTerminalFallback(rawInputText) {
     if (!rawInputText) return;
-    let finalCommandToCopy = rawInputText;
-    const lowerInput = rawInputText.toLowerCase();
-    const isRawWebUrl = lowerInput.startsWith('http://') || lowerInput.startsWith('https://');
-    const isDangerousSysCall = lowerInput.startsWith('sudo ') || lowerInput.startsWith('curl ') || lowerInput.startsWith('wget ');
-
-    if (isTargetScript(rawInputText) || isRawWebUrl || isDangerousSysCall) {
-        finalCommandToCopy = `oversight ${rawInputText}`;
-    }
+    const finalCommandToCopy = prepareTerminalCommand(rawInputText);
+    if (!finalCommandToCopy) return;
 
     if (window.miseAPI && typeof window.miseAPI.executeTerminalCommand === 'function') {
         window.miseAPI.executeTerminalCommand(finalCommandToCopy);

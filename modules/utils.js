@@ -174,4 +174,87 @@ export function showNotificationToast(message, icon = 'fa-shield-halved') {
     }, 3200);
 }
 
+// Recognised terminal executables and shell tools
+export const COMMON_TERMINAL_COMMANDS = [
+    'sudo', 'pacman', 'yay', 'paru', 'apt', 'apt-get', 'dnf', 'zypper', 'apk',
+    'systemctl', 'journalctl', 'hyprctl',
+    'git', 'cargo', 'npm', 'pnpm', 'yarn', 'bun', 'deno', 'rustc', 'python', 'python3', 'pip', 'pip3',
+    'make', 'cmake', 'ninja', 'gcc', 'clang',
+    'btop', 'htop', 'top', 'nvtop', 'neofetch', 'fastfetch',
+    'docker', 'podman', 'kubectl',
+    'cat', 'grep', 'rg', 'sed', 'awk', 'find', 'chmod', 'chown', 'kill', 'pkill', 'killall',
+    'ssh', 'scp', 'rsync', 'tar', 'unzip', 'zip', 'curl', 'wget',
+    'ping', 'traceroute', 'ip', 'ifconfig', 'netstat', 'ss',
+    'ls', 'cd', 'pwd', 'mkdir', 'rm', 'cp', 'mv', 'touch', 'clear', 'man', 'echo'
+];
+
+// Checks whether an input string represents a terminal or shell execution
+export function isTerminalCommand(inputText) {
+    if (!inputText || typeof inputText !== 'string') return false;
+    const trimmed = inputText.trim();
+    if (!trimmed) return false;
+
+    // Explicit command prefix indicators ($ or >)
+    if (trimmed.startsWith('$') || trimmed.startsWith('>')) return true;
+
+    const lower = trimmed.toLowerCase();
+    if (lower.startsWith(':sh ') || lower.startsWith(':term ')) return true;
+    if (lower.startsWith('term ') || lower.startsWith('terminal ')) return true;
+    if (lower.startsWith('oversight ') || lower.startsWith('oversight:')) return true;
+
+    // High-risk system calls that trigger the Oversight protocol
+    if (lower.startsWith('sudo ') || lower.startsWith('curl ') || lower.startsWith('wget ')) return true;
+
+    // Relative script paths
+    if (trimmed.startsWith('./') || trimmed.startsWith('../')) return true;
+
+    // Executable script files (avoid web URLs and absolute file paths handled by local file guard)
+    if (!lower.startsWith('http://') && !lower.startsWith('https://') && !trimmed.startsWith('/')) {
+        const cleanPath = trimmed.split('?')[0].split('#')[0].toLowerCase();
+        if (SCRIPT_EXTENSIONS.some(ext => cleanPath.endsWith(ext))) {
+            return true;
+        }
+    }
+
+    // CLI-only utilities
+    const firstWord = lower.split(/[\s=]+/)[0];
+    const cliOnly = ['btop', 'htop', 'nvtop', 'neofetch', 'fastfetch'];
+    if (cliOnly.includes(firstWord)) return true;
+
+    // Multi-token commands matching known terminal utilities
+    if (COMMON_TERMINAL_COMMANDS.includes(firstWord) && trimmed.includes(' ')) {
+        return true;
+    }
+
+    return false;
+}
+
+// Prepares a command string for clipboard staging with optional Oversight scanning
+export function prepareTerminalCommand(rawInputText) {
+    if (!rawInputText || typeof rawInputText !== 'string') return '';
+    let cleanCommand = rawInputText.trim();
+    if (cleanCommand.startsWith('$') || cleanCommand.startsWith('>')) {
+        cleanCommand = cleanCommand.slice(1).trim();
+    } else if (/^:sh\s+/i.test(cleanCommand)) {
+        cleanCommand = cleanCommand.replace(/^:sh\s+/i, '').trim();
+    } else if (/^:(term|terminal)\s+/i.test(cleanCommand)) {
+        cleanCommand = cleanCommand.replace(/^:(term|terminal)\s+/i, '').trim();
+    } else if (/^(term|terminal)\s+/i.test(cleanCommand)) {
+        cleanCommand = cleanCommand.replace(/^(term|terminal)\s+/i, '').trim();
+    }
+
+    if (!cleanCommand) return '';
+
+    let finalCommandToCopy = cleanCommand;
+    const lowerInput = cleanCommand.toLowerCase();
+    const isRawWebUrl = lowerInput.startsWith('http://') || lowerInput.startsWith('https://');
+    const isDangerousSysCall = lowerInput.startsWith('sudo ') || lowerInput.startsWith('curl ') || lowerInput.startsWith('wget ');
+
+    if ((isTargetScript(cleanCommand) || isRawWebUrl || isDangerousSysCall) && !lowerInput.startsWith('oversight ') && !lowerInput.startsWith('oversight:')) {
+        finalCommandToCopy = `oversight ${cleanCommand}`;
+    }
+
+    return finalCommandToCopy;
+}
+
 

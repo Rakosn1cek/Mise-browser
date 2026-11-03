@@ -1,5 +1,5 @@
 import { state } from './state.js';
-import { escapeHtml, focusActiveWebview, getActiveWebview, isPdfUrl, getPdfViewerUrl } from './utils.js';
+import { escapeHtml, focusActiveWebview, getActiveWebview, isPdfUrl, getPdfViewerUrl, showNotificationToast, isTerminalCommand, prepareTerminalCommand } from './utils.js';
 import { renderWorkspaceUI, switchTabFocus, spawnTabWithUrl, spawnNewBlankTab, handleTabRemoval, wakeTab } from './webview.js';
 import { formatSearchUrl, resolveSearchAliasUrl, getEffectiveSearchAliases } from './overlays/searchEngine.js';
 import { evaluateMathExpression } from './calculator.js';
@@ -164,6 +164,65 @@ export function displayAddressOverlay() {
     }
 }
 
+const checkTerminalCmd = (typeof isTerminalCommand === 'function')
+    ? isTerminalCommand
+    : (input) => {
+        if (!input || typeof input !== 'string') return false;
+        const trimmed = input.trim();
+        if (trimmed.startsWith('$') || trimmed.startsWith('>')) return true;
+        const lower = trimmed.toLowerCase();
+        if (lower.startsWith(':sh ') || lower.startsWith(':term ')) return true;
+        if (lower.startsWith('term ') || lower.startsWith('terminal ')) return true;
+        if (lower.startsWith('oversight ') || lower.startsWith('oversight:')) return true;
+        if (lower.startsWith('sudo ') || lower.startsWith('curl ') || lower.startsWith('wget ')) return true;
+        if (trimmed.startsWith('./') || trimmed.startsWith('../')) return true;
+        const firstWord = lower.split(/[\s=]+/)[0];
+        const cliOnly = ['btop', 'htop', 'nvtop', 'neofetch', 'fastfetch'];
+        if (cliOnly.includes(firstWord)) return true;
+        const common = ['sudo', 'pacman', 'yay', 'paru', 'systemctl', 'git', 'cargo', 'npm', 'btop', 'htop', 'neofetch', 'fastfetch', 'cat', 'grep', 'ls'];
+        if (common.includes(firstWord) && trimmed.includes(' ')) return true;
+        return false;
+    };
+
+const prepTerminalCmd = (typeof prepareTerminalCommand === 'function')
+    ? prepareTerminalCommand
+    : (raw) => {
+        if (!raw || typeof raw !== 'string') return '';
+        let clean = raw.trim();
+        if (clean.startsWith('$') || clean.startsWith('>')) clean = clean.slice(1).trim();
+        const lower = clean.toLowerCase();
+        const isDangerous = lower.startsWith('sudo ') || lower.startsWith('curl ') || lower.startsWith('wget ');
+        const isScript = clean.endsWith('.sh') || clean.endsWith('.py') || clean.endsWith('.js');
+        if ((isDangerous || isScript) && !lower.startsWith('oversight ')) {
+            return `oversight ${clean}`;
+        }
+        return clean;
+    };
+
+function executeAddressBarTerminalCommand(rawInput) {
+    if (!rawInput) return;
+    const prepared = prepTerminalCmd(rawInput);
+    if (!prepared) return;
+
+    if (typeof window !== 'undefined' && window.miseAPI && typeof window.miseAPI.executeTerminalCommand === 'function') {
+        window.miseAPI.executeTerminalCommand(prepared);
+    }
+
+    if (typeof setTargetUrl === 'function') {
+        setTargetUrl(`Terminal: Copied "${prepared}" to clipboard`, 4000);
+    }
+
+    if (typeof showNotificationToast === 'function') {
+        showNotificationToast('Command copied to clipboard. Paste in terminal to run.', 'fa-terminal');
+    }
+
+    const addressBar = typeof document !== 'undefined' ? document.getElementById('WideAddressBar') : null;
+    dismissAddressBar(addressBar);
+    if (typeof focusActiveWebview === 'function') {
+        focusActiveWebview();
+    }
+}
+
 export async function handleNavigation(input) {
     if (!input) return;
     
@@ -208,6 +267,12 @@ export async function handleNavigation(input) {
     if (bangMatch) {
         const targetUrl = `https://duckduckgo.com/?q=${encodeURIComponent(trimmedInput)}`;
         applyTargetUrl(targetUrl);
+        return;
+    }
+
+    // Terminal command execution
+    if (checkTerminalCmd(trimmedInput)) {
+        executeAddressBarTerminalCommand(trimmedInput);
         return;
     }
 
@@ -368,6 +433,24 @@ export function setupAddressBarAutocomplete() {
             }
         });
 
+        // 4. Terminal command suggestion
+        const cleanTermCmd = query.replace(/^[$>]\s*/, '').replace(/^:(sh|term|terminal)\s+/i, '').replace(/^(term|terminal)\s+/i, '').trim();
+        if (cleanTermCmd && !query.toLowerCase().startsWith('http://') && !query.toLowerCase().startsWith('https://')) {
+            const isExplicit = checkTerminalCmd(query);
+            const termItem = {
+                title: `Run in terminal: "${cleanTermCmd}"`,
+                value: query,
+                type: 'Terminal',
+                isTerminal: true,
+                command: cleanTermCmd
+            };
+            if (isExplicit) {
+                matches.unshift(termItem);
+            } else {
+                matches.push(termItem);
+            }
+        }
+
         renderSuggestions(matches);
     });
 
@@ -473,6 +556,7 @@ export function renderSuggestions(items) {
         let typeClass = 'suggestion-type';
         if (item.type === 'Calculator') typeClass += ' calculator';
         else if (item.type === 'Bang') typeClass += ' bang';
+        else if (item.type === 'Terminal') typeClass += ' terminal';
 
         const titleHtml = item.type === 'Calculator'
             ? `<strong>${escapeHtml(item.title)}</strong>`
@@ -531,6 +615,11 @@ export async function selectSuggestion(item) {
         }
         dismissAddressBar(addressBar);
         focusActiveWebview();
+        return;
+    }
+
+    if (item.isTerminal || item.type === 'Terminal') {
+        executeAddressBarTerminalCommand(item.command || item.value);
         return;
     }
 

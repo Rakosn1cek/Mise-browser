@@ -228,19 +228,38 @@ function registerSystemIpc(ipcMain, options = {}) {
 
         const platform = process.platform;
         if (platform === 'linux') {
-            const emulators = ['kitty', 'alacritty', 'foot', 'st', 'xterm'];
+            const emulators = ['kitty', 'alacritty', 'foot', 'ghostty', 'wezterm', 'konsole', 'gnome-terminal', 'terminator', 'xfce4-terminal', 'st', 'xterm'];
             exec('which ' + emulators.join(' '), (err, stdout) => {
                 let chosenTerm = '';
-                if (stdout) {
-                    const paths = stdout.trim().split('\n');
-                    if (paths.length > 0) {
-                        chosenTerm = paths[0].split('/').pop();
+                if (process.env.TERMINAL) {
+                    chosenTerm = process.env.TERMINAL;
+                }
+                if (!chosenTerm && stdout) {
+                    const validPaths = stdout
+                        .trim()
+                        .split('\n')
+                        .map(p => p.trim())
+                        .filter(p => p.startsWith('/') && fs.existsSync(p));
+                    if (validPaths.length > 0) {
+                        chosenTerm = validPaths[0];
                     }
                 }
                 if (!chosenTerm) {
                     chosenTerm = 'xdg-terminal-exec';
                 }
-                spawn(chosenTerm, [], { detached: true, stdio: 'ignore' }).unref();
+                try {
+                    const child = spawn(chosenTerm, [], { detached: true, stdio: 'ignore' });
+                    child.on('error', () => {
+                        if (chosenTerm !== 'xdg-terminal-exec') {
+                            try {
+                                const fb = spawn('xdg-terminal-exec', [], { detached: true, stdio: 'ignore' });
+                                fb.on('error', () => {});
+                                fb.unref();
+                            } catch (_) {}
+                        }
+                    });
+                    child.unref();
+                } catch (_) {}
             });
         } else if (platform === 'darwin') {
             spawn('open', ['-a', 'Terminal'], { detached: true, stdio: 'ignore' }).unref();

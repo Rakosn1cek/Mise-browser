@@ -118,10 +118,16 @@ async function runFunctionalTests() {
         `${strippedNav}\nreturn { setupAddressBarAutocomplete, handleNavigation, selectSuggestion };`
     );
 
+    let executedTerminalCommand = null;
     const scope = factory(
         mockState,
         mockDoc,
-        { miseAPI: { saveSession: () => {} } },
+        {
+            miseAPI: {
+                saveSession: () => {},
+                executeTerminalCommand: (cmd) => { executedTerminalCommand = cmd; }
+            }
+        },
         () => false,
         () => '',
         () => {},
@@ -193,6 +199,36 @@ async function runFunctionalTests() {
         preventDefault: () => { mouseupPrevented = true; }
     });
     assert.equal(mouseupPrevented, true, 'Mouseup with existing selection must preserve highlight');
+
+    // Test F: Enter key triggers terminal command with prefix ($ ls -la)
+    executedTerminalCommand = null;
+    mockAddressBar.value = '$ ls -la';
+    mockState.addressSelectionIdx = -1;
+    await listeners.keydown({
+        key: 'Enter',
+        preventDefault: () => {}
+    });
+    assert.equal(executedTerminalCommand, 'ls -la', 'Entering terminal command must trigger executeTerminalCommand without prefix');
+
+    // Test G: Enter key triggers Oversight prefix for dangerous syscalls
+    executedTerminalCommand = null;
+    mockAddressBar.value = 'sudo pacman -Syu';
+    mockState.addressSelectionIdx = -1;
+    await listeners.keydown({
+        key: 'Enter',
+        preventDefault: () => {}
+    });
+    assert.equal(executedTerminalCommand, 'oversight sudo pacman -Syu', 'Dangerous system commands must be prefixed with oversight');
+
+    // Test H: Selecting a Terminal suggestion executes the command
+    executedTerminalCommand = null;
+    mockState.addressSelectionIdx = 0;
+    mockState.addressSuggestions = [{ title: 'Run in terminal: "btop"', value: '$ btop', type: 'Terminal', command: 'btop' }];
+    await listeners.keydown({
+        key: 'Enter',
+        preventDefault: () => {}
+    });
+    assert.equal(executedTerminalCommand, 'btop', 'Selecting terminal suggestion must execute the terminal command');
 
     console.log('✓ Functional WideAddressBar keydown, focus, blur, and navigation interactions verified');
 }
