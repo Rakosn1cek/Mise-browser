@@ -103,7 +103,7 @@
     "undici": "^7.30.1"
   },
   "overrides": {
-    "vite": "^6.4.4",
+    "vite": "^6.4.5",
     "global-agent": "^4.1.3"
   }
 }
