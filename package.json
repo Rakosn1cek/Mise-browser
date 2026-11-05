@@ -92,10 +92,10 @@
     }
   },
   "allowScripts": {
-    "electron@45.2.1": true
+    "electron@45.2.3": true
   },
   "devDependencies": {
-    "electron": "^45.2.1",
+    "electron": "^45.2.3",
     "electron-builder": "^26.15.3",
     "vitepress": "^1.6.4"
   },
