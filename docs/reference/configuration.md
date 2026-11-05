@@ -56,6 +56,8 @@ Controls hardware switches, process limits, privacy whitelists, and search prefe
     "webrtc_policy": "default_public_interface_only",
     "doh_provider": "off",
     "doh_custom_url": "",
+    "allow_local_certificates": true,
+    "trusted_certificates": [],
     "trusted_domains": [
         "x.com",
         "amazon.co.uk",
@@ -84,6 +86,8 @@ Controls hardware switches, process limits, privacy whitelists, and search prefe
 - **`spellchecker_language`**: Dictionary language used for input spellchecking (e.g. `en-GB`, `en-US`, `en-CA`, `en-AU`, `cs`, `de`, `fr`, `es`, `it`, `pt`, `nl`, `pl`, or `disabled`).
 - **`theme`**: Interface theme preference (`dark` for Tokyo Night or `light`).
 - **`webview_theme`**: Website native theme preference (`dark` or `light`), toggled via the sidebar theme button.
+- **`allow_local_certificates`**: When `true` (default), permits connections to self-signed TLS certificates on private subnets and local endpoints (192.168.*, 10.*, 172.16-31.*, localhost, .local) for home servers, Cockpit, Proxmox, TrueNAS, and routers.
+- **`trusted_certificates`**: Array of host and port endpoints explicitly permitted to bypass TLS certificate verification (e.g. `["192.168.1.61:9090"]`).
 - **`theme_colors`**: Custom visual colour palette and opacity settings per theme mode:
 
 ![Appearance and Visual Theme Preferences](/screenshots/preferences-2.webp)

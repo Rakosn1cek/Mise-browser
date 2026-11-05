@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Navigation Error</title>
+    <link rel="icon" type="image/png" href="icons/Mise-logo48.png">
+    <link rel="stylesheet" href="fontawesome/css/all.min.css">
+    <style>
+        :root {
+            --bg-main: #1a1b26;
+            --bg-card: #16161e;
+            --text-main: #c0caf5;
+            --text-muted: #9aa5ce;
+            --accent: #7aa2f7;
+            --border: #24283b;
+            --border-hover: #414868;
+            --danger: #f7768e;
+            --warning: #e0af68;
+        }
+
+        body.light-mode {
+            --bg-main: #e5e5e5;
+            --bg-card: #f5f5f5;
+            --text-main: #1a1a1a;
+            --text-muted: #555555;
+            --accent: #2e7d32;
+            --border: #d4d4d4;
+            --border-hover: #b0b0b0;
+            --danger: #c62828;
+            --warning: #ef6c00;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .error-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            max-width: 620px;
+            width: 100%;
+            padding: 36px 32px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .error-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+        }
+
+        .error-icon {
+            font-size: 32px;
+            line-height: 1;
+            padding-top: 4px;
+        }
+
+        .error-icon.danger {
+            color: var(--danger);
+        }
+
+        .error-icon.warning {
+            color: var(--warning);
+        }
+
+        .error-icon.neutral {
+            color: var(--accent);
+        }
+
+        .error-title-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .error-title {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            color: var(--text-main);
+        }
+
+        .error-code {
+            font-family: monospace;
+            font-size: 12px;
+            color: var(--text-muted);
+            opacity: 0.85;
+        }
+
+        .error-body {
+            color: var(--text-main);
+            font-size: 14px;
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .error-url-pill {
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-family: monospace;
+            font-size: 13px;
+            word-break: break-all;
+            color: var(--accent);
+        }
+
+        .error-actions {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-top: 8px;
+            flex-wrap: wrap;
+        }
+
+        .action-group-primary {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            text-decoration: none;
+            border: none;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: #16161e;
+        }
+
+        .btn-primary:hover {
+            filter: brightness(1.1);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-main);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--border-hover);
+        }
+
+        .btn-advanced {
+            background: transparent;
+            color: var(--text-muted);
+            border: 1px solid transparent;
+            font-size: 12px;
+            padding: 6px 10px;
+        }
+
+        .btn-advanced:hover {
+            color: var(--text-main);
+            border-color: var(--border);
+        }
+
+        .btn-danger {
+            background: rgba(247, 118, 142, 0.15);
+            color: var(--danger);
+            border: 1px solid rgba(247, 118, 142, 0.35);
+        }
+
+        .btn-danger:hover {
+            background: rgba(247, 118, 142, 0.25);
+            border-color: var(--danger);
+        }
+
+        .advanced-panel {
+            display: none;
+            flex-direction: column;
+            gap: 12px;
+            padding: 16px;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px dashed var(--border);
+            border-radius: 8px;
+            margin-top: 12px;
+            font-size: 13px;
+        }
+
+        .advanced-panel.visible {
+            display: flex;
+        }
+    </style>
+</head>
+<body>
+    <div class="error-card">
+        <div class="error-header">
+            <div id="error-icon" class="error-icon danger">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <div class="error-title-wrap">
+                <h1 id="error-title" class="error-title">Page Navigation Failed</h1>
+                <div id="error-code" class="error-code">NET::ERR_UNKNOWN</div>
+            </div>
+        </div>
+
+        <div class="error-body">
+            <p id="error-message">Mise Browser was unable to load the requested web page.</p>
+            <div id="error-url" class="error-url-pill">about:blank</div>
+        </div>
+
+        <div class="error-actions">
+            <div class="action-group-primary">
+                <button id="btn-reload" class="btn btn-primary">
+                    <i class="fa-solid fa-rotate-right"></i>
+                    <span>Try Again</span>
+                </button>
+                <button id="btn-back" class="btn btn-secondary">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span>Go Back</span>
+                </button>
+            </div>
+            <button id="btn-advanced" class="btn btn-advanced" style="display: none;">
+                <span>Advanced</span>
+                <i class="fa-solid fa-chevron-down"></i>
+            </button>
+        </div>
+
+        <div id="advanced-panel" class="advanced-panel">
+            <p id="advanced-desc">This server presented an untrusted, expired, or self-signed certificate.</p>
+            <div>
+                <button id="btn-proceed" class="btn btn-danger">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    <span id="btn-proceed-label">Proceed (unsafe)</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            const params = new URLSearchParams(window.location.search);
+            const rawUrl = params.get('url') || '';
+            const code = params.get('code') || '';
+            const desc = params.get('desc') || '';
+
+            const titleEl = document.getElementById('error-title');
+            const codeEl = document.getElementById('error-code');
+            const msgEl = document.getElementById('error-message');
+            const urlEl = document.getElementById('error-url');
+            const iconEl = document.getElementById('error-icon');
+            const btnAdvanced = document.getElementById('btn-advanced');
+            const advancedPanel = document.getElementById('advanced-panel');
+            const advancedDesc = document.getElementById('advanced-desc');
+            const btnProceed = document.getElementById('btn-proceed');
+            const btnProceedLabel = document.getElementById('btn-proceed-label');
+            const btnReload = document.getElementById('btn-reload');
+            const btnBack = document.getElementById('btn-back');
+
+            let parsedHost = '';
+            try {
+                parsedHost = new URL(rawUrl).hostname;
+            } catch (_) {
+                parsedHost = rawUrl;
+            }
+
+            urlEl.textContent = rawUrl || 'about:blank';
+            codeEl.textContent = desc ? `NET::${desc}` : (code ? `Error Code: ${code}` : '');
+
+            const isCertError = desc.includes('CERT') || code === '-200' || code === '-201' || code === '-202' || code === '-203' || code === '-207' || code === '-208';
+
+            if (isCertError) {
+                document.title = 'Security Warning - Mise';
+                titleEl.textContent = 'Your connection is not private';
+                iconEl.className = 'error-icon warning';
+                iconEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
+                msgEl.textContent = `The server at ${parsedHost} presented an untrusted or self-signed certificate. Attackers might be trying to intercept your communication, or the server is a local home service without a public certificate authority.`;
+
+                btnAdvanced.style.display = 'inline-flex';
+                btnProceedLabel.textContent = `Proceed to ${parsedHost} (unsafe)`;
+                advancedDesc.textContent = `Mise Browser prevented this page from loading because its identity could not be verified by your system certificates. If you trust this server (such as a local router, Cockpit, Proxmox, or home NAS), you can bypass this warning.`;
+
+                btnAdvanced.addEventListener('click', () => {
+                    advancedPanel.classList.toggle('visible');
+                    const isVisible = advancedPanel.classList.contains('visible');
+                    btnAdvanced.querySelector('i').className = isVisible ? 'fa-solid fa-chevron-up' : 'fa-solid fa-chevron-down';
+                });
+
+                btnProceed.addEventListener('click', (e) => {
+                    if (!e || !e.isTrusted) return;
+                    window.dispatchEvent(new CustomEvent('mise-error-action', {
+                        detail: { action: 'trust-and-reload', url: rawUrl }
+                    }));
+                });
+            } else if (desc.includes('CONNECTION_REFUSED')) {
+                document.title = 'Unable to connect - Mise';
+                titleEl.textContent = 'Unable to connect';
+                iconEl.className = 'error-icon danger';
+                iconEl.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i>';
+                msgEl.textContent = `Mise Browser cannot establish a connection to ${parsedHost}. The service may be stopped or a firewall may be blocking access.`;
+            } else if (desc.includes('NAME_NOT_RESOLVED')) {
+                document.title = 'Server not found - Mise';
+                titleEl.textContent = 'Server not found';
+                iconEl.className = 'error-icon neutral';
+                iconEl.innerHTML = '<i class="fa-solid fa-globe"></i>';
+                msgEl.textContent = `Mise Browser cannot resolve the host ${parsedHost}. Please check the hostname spelling or your DNS configuration.`;
+            } else if (desc.includes('INTERNET_DISCONNECTED')) {
+                document.title = 'Offline - Mise';
+                titleEl.textContent = 'No Internet connection';
+                iconEl.className = 'error-icon neutral';
+                iconEl.innerHTML = '<i class="fa-solid fa-wifi"></i>';
+                msgEl.textContent = 'Your computer appears to be offline. Please verify your network cables and Wi-Fi connection.';
+            } else {
+                document.title = 'Error - Mise';
+                titleEl.textContent = 'Page navigation failed';
+                iconEl.className = 'error-icon danger';
+                iconEl.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i>';
+                msgEl.textContent = `Mise Browser was unable to load ${parsedHost} due to a network error.`;
+            }
+
+            btnReload.addEventListener('click', (e) => {
+                if (!e || !e.isTrusted) return;
+                window.dispatchEvent(new CustomEvent('mise-error-action', {
+                    detail: { action: 'reload', url: rawUrl }
+                }));
+            });
+
+            btnBack.addEventListener('click', (e) => {
+                if (!e || !e.isTrusted) return;
+                window.dispatchEvent(new CustomEvent('mise-error-action', {
+                    detail: { action: 'back', url: rawUrl }
+                }));
+            });
+        })();
+    </script>
+</body>
+</html>

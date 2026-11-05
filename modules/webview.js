@@ -238,6 +238,9 @@ export function createWebView(url, currentWS, idx) {
         if (liveIdx < 0) return;
 
         const cleanUrl = extractOriginalUrl(e.url);
+        if (cleanUrl && cleanUrl.includes('error.html')) {
+            return;
+        }
         if (state.sessionState.workspaces[currentWS] && state.sessionState.workspaces[currentWS][liveIdx] !== undefined) {
             if (isPersistableTabUrl(cleanUrl)) {
                 state.sessionState.workspaces[currentWS][liveIdx] = cleanUrl;
@@ -267,6 +270,9 @@ export function createWebView(url, currentWS, idx) {
         if (liveIdx < 0) return;
 
         const cleanUrl = extractOriginalUrl(e.url);
+        if (cleanUrl && cleanUrl.includes('error.html')) {
+            return;
+        }
         if (state.sessionState.workspaces[currentWS] && state.sessionState.workspaces[currentWS][liveIdx] !== undefined) {
             if (isPersistableTabUrl(cleanUrl)) {
                 state.sessionState.workspaces[currentWS][liveIdx] = cleanUrl;
@@ -467,7 +473,7 @@ export function createWebView(url, currentWS, idx) {
         }
     }, listenerOptions);
 
-    webview.addEventListener('ipc-message', (e) => {
+    webview.addEventListener('ipc-message', async (e) => {
         const liveIdx = getLiveTabIndex(webview, currentWS, idx);
         if (liveIdx < 0) return;
 
@@ -500,6 +506,48 @@ export function createWebView(url, currentWS, idx) {
             const action = e.args[0];
             const extra = e.args[1];
             handleNormalModeAction(action, extra, webview, currentWS, liveIdx);
+        } else if (e.channel === 'trust-certificate-and-reload') {
+            const currentUrl = webview.getURL() || '';
+            if (!currentUrl.startsWith('file:') || !currentUrl.includes('error.html')) {
+                return;
+            }
+            const targetUrl = e.args[0];
+            if (targetUrl && isSafeTabUrl(targetUrl)) {
+                try {
+                    const host = new URL(targetUrl).host;
+                    if (window.miseAPI && typeof window.miseAPI.trustCertificateHost === 'function') {
+                        await window.miseAPI.trustCertificateHost(host);
+                    }
+                    webview.loadURL(targetUrl).catch(() => {});
+                } catch (_) {}
+            }
+        } else if (e.channel === 'reload-failed-page') {
+            const currentUrl = webview.getURL() || '';
+            if (!currentUrl.startsWith('file:') || !currentUrl.includes('error.html')) {
+                return;
+            }
+            const targetUrl = e.args[0];
+            if (targetUrl && isSafeTabUrl(targetUrl)) {
+                webview.loadURL(targetUrl).catch(() => {});
+            }
+        }
+    }, listenerOptions);
+
+    webview.addEventListener('did-fail-load', (e) => {
+        if (e.errorCode === -3) return;
+        if (e.isMainFrame === false) return;
+
+        const failedUrl = e.validatedURL;
+        if (!failedUrl || failedUrl === 'about:blank' || (failedUrl.startsWith('file:') && failedUrl.includes('error.html'))) {
+            return;
+        }
+
+        if (window.miseAPI && typeof window.miseAPI.getErrorPageUrl === 'function') {
+            const errorPageUrl = window.miseAPI.getErrorPageUrl(failedUrl, e.errorCode, e.errorDescription);
+            if (errorPageUrl) {
+                webview.__failedTargetUrl = failedUrl;
+                webview.loadURL(errorPageUrl).catch(() => {});
+            }
         }
     }, listenerOptions);
 

@@ -335,6 +335,8 @@ ipcMain.on('set-native-theme', (event, mode) => {
 // Register configuration and preference IPC handlers
 config.registerConfigIpc(ipcMain, {
     onTrustedDomainsChange: security.setTrustedDomains,
+    onAllowLocalCertificatesChange: security.setAllowLocalCertificates,
+    onTrustedCertificatesChange: security.setTrustedCertificates,
     onSpellcheckerChange: applySpellcheckerToAllSessions,
     onDiagnosticsChange: diagnostics.setDiagnosticsEnabled,
     onWebRTCPolicyChange: applyWebRTCPolicyToAllSessions,
@@ -498,6 +500,8 @@ if (gotSingleInstanceLock) {
     app.whenReady().then(() => {
         checkAndInitializeSentinel();
         const cfg = loadBrowserConfig();
+        security.setAllowLocalCertificates(cfg.allow_local_certificates !== false);
+        security.setTrustedCertificates(cfg.trusted_certificates || []);
         applyDoHConfiguration(app, cfg.doh_provider, cfg.doh_custom_url);
         diagnostics.initDiagnostics(cfg);
         if (isCrashRecoveryState()) {

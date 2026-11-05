@@ -414,6 +414,29 @@
                                     </div>
                                 </div>
 
+                                <div class="setting-item">
+                                    <div class="setting-info">
+                                        <span class="setting-label">Trust Local Network Certificates</span>
+                                        <span class="setting-desc">Permits self-signed TLS certificates on private subnets and local endpoints (192.168.*, 10.*, 172.16-31.*, localhost, .local) for home servers, Cockpit, Proxmox, and routers.</span>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="setting-allow-local-certificates" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+
+                                <div class="setting-item setting-item-stacked">
+                                    <div class="setting-info">
+                                        <span class="setting-label">Trusted Certificate Exceptions</span>
+                                        <span class="setting-desc">Hosts explicitly permitted to bypass TLS certificate verification (e.g. <code>192.168.1.61:9090</code>). One host per line.</span>
+                                    </div>
+                                    <textarea id="setting-trusted-certificates" class="settings-textarea" rows="3" placeholder="192.168.1.61:9090&#10;my-nas.local:5001"></textarea>
+                                    <div style="display: flex; justify-content: flex-end; align-items: center; gap: 10px;">
+                                        <span id="setting-trusted-certificates-note" class="settings-save-note"></span>
+                                        <button id="setting-save-trusted-certificates-btn" class="settings-action-btn">Save Certificate Exceptions</button>
+                                    </div>
+                                </div>
+
                                 <!-- Community Filter List Subscriptions -->
                                 <div style="margin-top: 20px; padding-top: 15px; border-top: 1px dashed var(--border);">
                                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">

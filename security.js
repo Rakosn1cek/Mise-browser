@@ -5,6 +5,7 @@ const { ElectronBlocker } = require('@ghostery/adblocker-electron');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const net = require('net');
 const { app, ipcMain } = require('electron');
 
 let blockerInstance = null;
@@ -757,6 +758,143 @@ function sanitiseTerminalCommand(commandStr, maxLength = 4096) {
     return clean.slice(0, limit).trim();
 }
 
+let allowLocalCertificates = true;
+let trustedCertificates = new Set();
+
+function isLocalOrPrivateHost(hostname) {
+    if (!hostname || typeof hostname !== 'string') return false;
+    const cleanHost = hostname.trim().toLowerCase().replace(/^\[|\]$/g, '');
+
+    if (cleanHost === 'localhost' || cleanHost === '127.0.0.1' || cleanHost === '::1') {
+        return true;
+    }
+
+    const localSuffixes = ['.local', '.lan', '.home.arpa', '.internal', '.localhost'];
+    for (const suffix of localSuffixes) {
+        if (cleanHost.endsWith(suffix)) {
+            return true;
+        }
+    }
+
+    if (net.isIPv4(cleanHost)) {
+        const parts = cleanHost.split('.').map(Number);
+        if (parts.length !== 4 || parts.some(n => isNaN(n) || n < 0 || n > 255)) {
+            return false;
+        }
+
+        // Loopback 127.0.0.0/8
+        if (parts[0] === 127) return true;
+
+        // RFC 1918 10.0.0.0/8
+        if (parts[0] === 10) return true;
+
+        // RFC 1918 172.16.0.0/12 (172.16.0.0 to 172.31.255.255)
+        if (parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31) return true;
+
+        // RFC 1918 192.168.0.0/16
+        if (parts[0] === 192 && parts[1] === 168) return true;
+
+        // Link local 169.254.0.0/16
+        if (parts[0] === 169 && parts[1] === 254) return true;
+
+        return false;
+    }
+
+    if (net.isIPv6(cleanHost)) {
+        // Unique Local Address fc00::/7
+        if (/^f[cd][0-9a-f]{2}:/i.test(cleanHost)) return true;
+
+        // Link local fe80::/10
+        if (/^fe[89ab][0-9a-f]:/i.test(cleanHost)) return true;
+
+        // IPv4 mapped loopback or private
+        if (cleanHost.startsWith('::ffff:')) {
+            const mapped = cleanHost.slice(7);
+            if (net.isIPv4(mapped)) {
+                return isLocalOrPrivateHost(mapped);
+            }
+        }
+
+        return false;
+    }
+
+    return false;
+}
+
+function setAllowLocalCertificates(enabled) {
+    allowLocalCertificates = enabled !== false;
+}
+
+function getAllowLocalCertificates() {
+    return allowLocalCertificates;
+}
+
+function setTrustedCertificates(certList) {
+    trustedCertificates = new Set(
+        Array.isArray(certList)
+            ? certList.map(h => String(h || '').trim().toLowerCase()).filter(Boolean)
+            : []
+    );
+}
+
+function getTrustedCertificates() {
+    return Array.from(trustedCertificates);
+}
+
+function addTrustedCertificate(host) {
+    if (!host || typeof host !== 'string') return false;
+    const clean = host.trim().toLowerCase();
+    if (clean) {
+        trustedCertificates.add(clean);
+        return true;
+    }
+    return false;
+}
+
+function removeTrustedCertificate(host) {
+    if (!host || typeof host !== 'string') return false;
+    const clean = host.trim().toLowerCase();
+    return trustedCertificates.delete(clean);
+}
+
+function isCertificateAllowed(urlString, context = {}) {
+    if (!urlString || typeof urlString !== 'string') return false;
+    try {
+        const parsed = new URL(urlString);
+        const host = parsed.host.toLowerCase();
+        const hostname = parsed.hostname.toLowerCase();
+
+        if (trustedCertificates.has(host) || trustedCertificates.has(hostname)) {
+            return true;
+        }
+
+        if (allowLocalCertificates && isLocalOrPrivateHost(hostname)) {
+            // Guard against public websites attempting to scan or interact with private network endpoints
+            // A local certificate error is only bypassed for top-level user tab navigations (isMainFrame),
+            // or when the calling webContents is already running on a local or private origin.
+            const isMainFrame = !!context.isMainFrame;
+            const topLevelUrl = context.topLevelUrl || '';
+            let isTopLevelLocal = false;
+            if (topLevelUrl) {
+                try {
+                    const topHost = new URL(topLevelUrl).hostname;
+                    isTopLevelLocal = isLocalOrPrivateHost(topHost);
+                } catch (_) {}
+            }
+
+            if (isMainFrame || isTopLevelLocal || !topLevelUrl) {
+                return true;
+            }
+
+            // Cross-origin request from an untrusted public web page into local network: block certificate bypass
+            return false;
+        }
+    } catch (_) {
+        return false;
+    }
+    return false;
+}
+
 module.exports = {
     isValidPartitionName,
     decidePermission,
@@ -784,5 +922,13 @@ module.exports = {
     initialiseAdblocker,
     getFilterStatus,
     getFilterRuleCount,
-    getFilterCachePath
+    getFilterCachePath,
+    isLocalOrPrivateHost,
+    setAllowLocalCertificates,
+    getAllowLocalCertificates,
+    setTrustedCertificates,
+    getTrustedCertificates,
+    addTrustedCertificate,
+    removeTrustedCertificate,
+    isCertificateAllowed
 };

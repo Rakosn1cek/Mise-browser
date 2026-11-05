@@ -77,12 +77,18 @@ Mise Browser is designed with multiple defence-in-depth layers:
 * **Selectable Protection Levels:** Users can choose between Balanced (default public interface only), Strict / Proxy Safe (`disable_non_proxied_udp`), Disabled (neutralising `RTCPeerConnection`, `RTCSessionDescription`, and `RTCIceCandidate` on untrusted sites), and Permissive standard Chromium mode.
 * **Dynamic Hot-Reloading:** Changing the WebRTC policy in Preferences or cycling it via the Command Palette reconfigures active sessions in real time without requiring an application restart.
 
-### F. Native Request Filtering
+### F. TLS Certificate Policy & Local Network Trust
+* **Local Network Certificate Trust:** Self-signed TLS certificates on private subnets and local endpoints (RFC 1918 `192.168.0.0/16`, `10.0.0.0/8`, `172.16.0.0/12`, loopback `127.0.0.0/8` / `localhost` / `::1`, link-local `169.254.0.0/16`, RFC 4193 `fc00::/7`, and local suffixes `.local`, `.lan`, `.home.arpa`, `.internal`) are automatically trusted via `allow_local_certificates` (default: `true`). This eliminates blank page load failures and allows seamless access to home servers, Cockpit, Proxmox, TrueNAS, and router interfaces out of the box.
+* **Informative Navigation Error Interstitial:** When network connections fail or untrusted certificates are encountered on public domains, Mise displays a themed Tokyo Night interstitial page (`assets/error.html`) detailing the exact failure code with options to retry, navigate back, or proceed past certificate warnings.
+* **Granular Certificate Exception Allowlist:** Specific hosts and port endpoints can be granted explicit certificate trust via the `trusted_certificates` configuration setting in Preferences.
+* **Visual Status Bar Auditing:** Local self-signed connections and certificate exceptions are highlighted on the status bar with a dedicated `LOCAL TLS` badge, ensuring encrypted connections remain transparent.
+
+### G. Native Request Filtering
 * Network requests are intercepted in-process via Ghostery's blocking engine before departing the local machine.
 * Known malicious hosts, tracking scripts, and cryptominers are dropped at the network interceptor layer.
 * **Userscript SSRF Network Protection:** Cross-origin `GM_xmlhttpRequest` calls dispatched by userscripts are inspected in the main process and validated against an expanded IP blocklist covering loopback (`127.0.0.0/8`, `::1`), private subnets (`10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`), link-local endpoints (`169.254.0.0/16`, `fe80::/10`), unique local IPv6 (`fc00::/7`), carrier-grade NAT (`100.64.0.0/10`), benchmark subnets (`198.18.0.0/15`), documentation ranges (`192.0.2.0/24`, `198.51.100.0/24`, `203.0.113.0/24`, `2001:db8::/32`), multicast (`224.0.0.0/4`, `ff00::/8`), reserved blocks (`240.0.0.0/4`), discard prefixes (`100::/64`), and IPv4-translated ranges (`64:ff9b::/96`, `::ffff:0:0/96`). Hostname pre-resolution and socket IP pinning eliminate DNS rebinding risks.
 
-### G. Session & Data Storage Architecture
+### H. Session & Data Storage Architecture
 * **Transparent Plaintext User Data:** Configuration (`config.json`), keybindings (`keybinds.json`), workspaces (`session.json`), history (`history.json`), bookmarks (`bookmarks.json`), and notes (`notes.md`) are stored in transparent, human-readable JSON and Markdown files under `~/.config/mise-browser/`, protected by standard user-only filesystem permissions (`0600`/`0700`). Users retain full ownership to inspect, edit, or back up files using standard tools.
 * **Session Persistence Integrity & Snapshot Rotation:** Tab URL persistence is strictly guarded by `isPersistableTabUrl` across navigation events, capturing only valid web and local file schemes (`http:`, `https:`, and `file:`) and rejecting transient blank or error schemes. Suspect blank session states are quarantined to `session.suspect.json` to prevent session corruption. Atomic backups (`session.json.bak`) are updated solely on valid non-blank writes, and timestamped recovery snapshots (`session.snap-YYYYMMDD-HHMMSS.json`) are automatically rotated, retaining the 10 newest snapshots with a 10-minute rate limit.
 * **Path Traversal Containment:** Local filesystem integrations, including opening Markdown notes in external editors, enforce strict path resolution confined to the application configuration directory (`resolveSafeNotesPath`). File paths supplied by renderer IPC requests are stripped or rejected to prevent directory traversal.
@@ -97,7 +103,7 @@ Mise Browser is designed with multiple defence-in-depth layers:
 * **Zero Cloud Synchronisation:** No remote telemetry, no cloud profile syncing, and zero analytics.
 * **Surgical Cookie Clearing:** Dedicated cache controls allow wiping tracking tokens for specific domains without invalidating sessions in unrelated tabs.
 
-### H. Credential & Password Management Philosophy
+### I. Credential & Password Management Philosophy
 * **Zero Embedded Password Manager:** Mise intentionally excludes built-in password saving, autofill prompts, and credential vaults.
 * **Elimination of Malware Targets:** Browser-bundled password vaults (such as Chromium's `Login Data` file) represent the primary attack target for infostealers and credential extraction malware. By omitting internal password storage entirely, Mise removes this high-value vulnerability surface.
 * **User Autonomy & External Tools:** Users retain full discretion to employ their preferred dedicated password managers (such as Pass, KeePassXC, Bitwarden, or system keychains) outside the browser's execution perimeter.

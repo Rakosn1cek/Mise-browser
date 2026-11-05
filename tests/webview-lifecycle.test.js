@@ -183,13 +183,13 @@ console.log('Running Mise guest webview lifecycle and teardown regression tests.
 
     const allListenersRegex = /webview\.addEventListener\(\s*['"]([a-z-]+)['"]/g;
     const allListeners = [...createWvBody.matchAll(allListenersRegex)].map(m => m[1]);
-    assert.equal(allListeners.length, 17, `Expected exactly 17 addEventListener registrations in createWebView, found ${allListeners.length}`);
+    assert.equal(allListeners.length, 18, `Expected exactly 18 addEventListener registrations in createWebView, found ${allListeners.length}`);
 
     const wiredListenersRegex = /webview\.addEventListener\(\s*['"]([a-z-]+)['"],[\s\S]*?, listenerOptions\);/g;
     const wiredListeners = [...createWvBody.matchAll(wiredListenersRegex)].map(m => m[1]);
-    assert.equal(wiredListeners.length, 17, `All 17 addEventListener registrations must pass listenerOptions, found ${wiredListeners.length}`);
+    assert.equal(wiredListeners.length, 18, `All 18 addEventListener registrations must pass listenerOptions, found ${wiredListeners.length}`);
 
-    console.log('✓ All 17 createWebView event listeners wired with AbortController signal');
+    console.log('✓ All 18 createWebView event listeners wired with AbortController signal');
 }
 
 // 6. Verify getFaviconUrl returns null to eliminate external favicon queries

@@ -87,6 +87,28 @@ window.addEventListener('mise-glance-request', (e) => {
     }
 });
 
+// Error page action bridge (restricted strictly to offline error page)
+window.addEventListener('mise-error-action', (e) => {
+    if (window.location.protocol !== 'file:' || !window.location.pathname.endsWith('error.html')) {
+        return;
+    }
+    const action = e && e.detail ? e.detail.action : '';
+    const targetUrl = e && e.detail ? e.detail.url : '';
+    if (action === 'trust-and-reload' && targetUrl) {
+        try {
+            ipcRenderer.sendToHost('trust-certificate-and-reload', targetUrl);
+        } catch (_) {}
+    } else if (action === 'reload' && targetUrl) {
+        try {
+            ipcRenderer.sendToHost('reload-failed-page', targetUrl);
+        } catch (_) {}
+    } else if (action === 'back') {
+        try {
+            ipcRenderer.sendToHost('normal-mode-action', 'go-back');
+        } catch (_) {}
+    }
+});
+
 // Expose minimal, secure GM bridge for userscript execution
 try {
     if (contextBridge && typeof contextBridge.exposeInMainWorld === 'function') {

@@ -81,6 +81,12 @@ Mise Browser is designed with multiple defence-in-depth layers:
 * **Selectable Protection Levels:** Users can choose between Balanced (default public interface only), Strict / Proxy Safe (`disable_non_proxied_udp`), Disabled (neutralising `RTCPeerConnection`, `RTCSessionDescription`, and `RTCIceCandidate` on untrusted sites), and Permissive standard Chromium mode.
 * **Dynamic Hot-Reloading:** Changing the WebRTC policy in Preferences or cycling it via the Command Palette reconfigures active sessions in real time without requiring an application restart.
 
+### TLS Certificate Policy & Local Network Trust
+* **Local Network Certificate Trust:** Self-signed TLS certificates on private subnets and local endpoints (RFC 1918 `192.168.0.0/16`, `10.0.0.0/8`, `172.16.0.0/12`, loopback `127.0.0.0/8` / `localhost` / `::1`, link-local `169.254.0.0/16`, RFC 4193 `fc00::/7`, and local suffixes `.local`, `.lan`, `.home.arpa`, `.internal`) are automatically trusted via `allow_local_certificates` (enabled by default). This eliminates blank page load failures and allows seamless access to home servers, Cockpit, Proxmox, TrueNAS, and router interfaces out of the box.
+* **Informative Navigation Error Interstitial:** When network connections fail or untrusted certificates are encountered on public domains, Mise displays a themed Tokyo Night interstitial page (`assets/error.html`) detailing the exact failure code (e.g. `NET::ERR_CERT_AUTHORITY_INVALID`, `NET::ERR_CONNECTION_REFUSED`) with options to retry, navigate back, or proceed past certificate warnings.
+* **Granular Certificate Exception Allowlist:** Specific hosts and port endpoints can be granted explicit certificate trust via the `trusted_certificates` configuration setting in Preferences.
+* **Visual Status Bar Auditing:** Local self-signed connections and certificate exceptions are highlighted on the status bar with a dedicated `LOCAL TLS` badge, ensuring encrypted connections remain transparent.
+
 ### Native Request Filtering
 * Network requests are intercepted in-process via Ghostery's blocking engine before departing the local machine.
 * Known malicious hosts, tracking scripts, and cryptominers are dropped at the network interceptor layer.

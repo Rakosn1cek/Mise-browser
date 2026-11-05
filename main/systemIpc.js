@@ -281,6 +281,37 @@ function registerSystemIpc(ipcMain, options = {}) {
     ipcMain.handle('compact-memory', () => {
         return compactMemory();
     });
+
+    ipcMain.on('get-error-page-url', (event, targetUrl, errorCode, errorDesc) => {
+        const errorPath = path.join(appDir, 'assets', 'error.html');
+        const query = new URLSearchParams({
+            url: String(targetUrl || ''),
+            code: String(errorCode || ''),
+            desc: String(errorDesc || '')
+        });
+        event.returnValue = `file://${errorPath}?${query.toString()}`;
+    });
+
+    ipcMain.handle('trust-certificate-host', async (event, host) => {
+        if (!host || typeof host !== 'string' || host.length > 255) return false;
+        const cleanHost = host.trim().toLowerCase();
+        security.addTrustedCertificate(cleanHost);
+        try {
+            const { loadBrowserConfig, writeConfigFile } = require('./config');
+            const cfg = loadBrowserConfig();
+            const existing = Array.isArray(cfg.trusted_certificates) ? cfg.trusted_certificates : [];
+            if (!existing.includes(cleanHost)) {
+                existing.push(cleanHost);
+                cfg.trusted_certificates = existing;
+                writeConfigFile(cfg);
+            }
+        } catch (_) {}
+        return true;
+    });
+
+    ipcMain.on('is-local-or-private-host', (event, host) => {
+        event.returnValue = security.isLocalOrPrivateHost(host);
+    });
 }
 
 module.exports = {

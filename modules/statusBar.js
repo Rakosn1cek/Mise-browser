@@ -190,12 +190,29 @@ export function updateSecurityStatus(url) {
         return;
     }
 
+    if (url.includes('error.html')) {
+        securityBadgeEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i><span class="status-badge-text">LOAD ERROR</span>';
+        securityBadgeEl.className = 'status-badge status-badge-security security-insecure';
+        securityBadgeEl.title = 'Page navigation failed';
+        return;
+    }
+
     try {
         const parsed = new URL(url);
         if (parsed.protocol === 'https:') {
-            securityBadgeEl.innerHTML = '<i class="fa-solid fa-lock"></i><span class="status-badge-text">HTTPS</span>';
-            securityBadgeEl.className = 'status-badge status-badge-security security-secure';
-            securityBadgeEl.title = `Secure connection (TLS) | Host: ${parsed.hostname}`;
+            const isLocal = typeof window !== 'undefined' && window.miseAPI && typeof window.miseAPI.isLocalOrPrivateHost === 'function'
+                ? window.miseAPI.isLocalOrPrivateHost(parsed.hostname)
+                : false;
+
+            if (isLocal) {
+                securityBadgeEl.innerHTML = '<i class="fa-solid fa-shield-halved"></i><span class="status-badge-text">LOCAL TLS</span>';
+                securityBadgeEl.className = 'status-badge status-badge-security security-local';
+                securityBadgeEl.title = `Local connection with self-signed certificate | Host: ${parsed.hostname}`;
+            } else {
+                securityBadgeEl.innerHTML = '<i class="fa-solid fa-lock"></i><span class="status-badge-text">HTTPS</span>';
+                securityBadgeEl.className = 'status-badge status-badge-security security-secure';
+                securityBadgeEl.title = `Secure connection (TLS) | Host: ${parsed.hostname}`;
+            }
         } else if (parsed.protocol === 'http:') {
             securityBadgeEl.innerHTML = '<i class="fa-solid fa-lock-open"></i><span class="status-badge-text">HTTP</span>';
             securityBadgeEl.className = 'status-badge status-badge-security security-insecure';

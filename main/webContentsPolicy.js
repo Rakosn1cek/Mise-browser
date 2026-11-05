@@ -160,6 +160,28 @@ function setupWebContentsPolicy(app, options = {}) {
     app.on('child-process-gone', (event, details) => {
         diagnostics.logEvent('warn', 'process', `Child process gone: type=${details.type} reason=${details.reason} exitCode=${details.exitCode}`);
     });
+
+    app.on('certificate-error', (event, webContents, url, error, certificate, callback, isMainFrame) => {
+        let topLevelUrl = '';
+        try {
+            if (webContents && typeof webContents.getURL === 'function') {
+                topLevelUrl = webContents.getURL();
+            }
+        } catch (_) {}
+
+        if (security.isCertificateAllowed(url, { isMainFrame, topLevelUrl })) {
+            event.preventDefault();
+            try {
+                const parsed = new URL(url);
+                diagnostics.logEvent('info', 'security', `Permitted certificate exception for ${parsed.hostname}`, { error });
+            } catch (_) {}
+            callback(true);
+            return;
+        }
+
+        diagnostics.logEvent('warn', 'security', `Rejected untrusted certificate for ${url}`, { error });
+        callback(false);
+    });
 }
 
 module.exports = {

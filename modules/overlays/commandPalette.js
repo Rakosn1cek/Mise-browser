@@ -1129,6 +1129,16 @@ export async function syncPreferencesUI() {
                 trustedDomainsField.value = Array.isArray(cfg.trusted_domains) ? cfg.trusted_domains.join('\n') : '';
             }
 
+            const allowLocalCertsToggle = document.getElementById('setting-allow-local-certificates');
+            if (allowLocalCertsToggle) {
+                allowLocalCertsToggle.checked = cfg.allow_local_certificates !== false;
+            }
+
+            const trustedCertsField = document.getElementById('setting-trusted-certificates');
+            if (trustedCertsField) {
+                trustedCertsField.value = Array.isArray(cfg.trusted_certificates) ? cfg.trusted_certificates.join('\n') : '';
+            }
+
             const notesCmdField = document.getElementById('setting-notes-command');
             if (notesCmdField) {
                 notesCmdField.value = cfg.external_notes_command || '';
@@ -1709,6 +1719,45 @@ export function setupPreferencesListeners() {
             } catch (err) {
                 if (note) {
                     note.textContent = 'Failed to save trusted sites.';
+                    note.classList.add('visible');
+                }
+            }
+        };
+    }
+
+    const allowLocalCertsToggle = document.getElementById('setting-allow-local-certificates');
+    if (allowLocalCertsToggle) {
+        allowLocalCertsToggle.onchange = async () => {
+            if (window.miseAPI && typeof window.miseAPI.updateBrowserSettings === 'function') {
+                await window.miseAPI.updateBrowserSettings({
+                    allow_local_certificates: allowLocalCertsToggle.checked
+                });
+            }
+        };
+    }
+
+    const saveTrustedCertsBtn = document.getElementById('setting-save-trusted-certificates-btn');
+    if (saveTrustedCertsBtn) {
+        saveTrustedCertsBtn.onclick = async () => {
+            const field = document.getElementById('setting-trusted-certificates');
+            const note = document.getElementById('setting-trusted-certificates-note');
+            if (!field || !window.miseAPI || typeof window.miseAPI.updateBrowserSettings !== 'function') return;
+
+            const trustedCerts = field.value
+                .split(/[\n,]/)
+                .map(d => d.trim().toLowerCase())
+                .filter(Boolean);
+
+            try {
+                await window.miseAPI.updateBrowserSettings({ trusted_certificates: trustedCerts });
+                if (note) {
+                    note.textContent = 'Saved: certificate exceptions updated.';
+                    note.classList.add('visible');
+                    setTimeout(() => note.classList.remove('visible'), 2500);
+                }
+            } catch (err) {
+                if (note) {
+                    note.textContent = 'Failed to save certificate exceptions.';
                     note.classList.add('visible');
                 }
             }

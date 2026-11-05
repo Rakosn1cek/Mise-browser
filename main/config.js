@@ -40,6 +40,8 @@ const DEFAULT_CONFIG = {
     theme: 'dark',
     webview_theme: 'dark',
     trusted_domains: ['accounts.google.com'],
+    allow_local_certificates: true,
+    trusted_certificates: [],
     tab_sleep_timeout_minutes: 15,
     sidebar_auto_collapse: true,
     show_status_bar: true,
@@ -94,6 +96,8 @@ function loadBrowserConfig(targetDir = CONFIG_DIR, targetPath = CONFIG_PATH) {
             spellchecker_language: parsed.spellchecker_language || 'en-GB',
             webrtc_policy: parsed.webrtc_policy || 'default_public_interface_only',
             webview_theme: parsed.webview_theme || 'dark',
+            allow_local_certificates: typeof parsed.allow_local_certificates === 'boolean' ? parsed.allow_local_certificates : true,
+            trusted_certificates: Array.isArray(parsed.trusted_certificates) ? parsed.trusted_certificates : [],
             doh_provider: parsed.doh_provider || 'off',
             doh_custom_url: typeof parsed.doh_custom_url === 'string' ? parsed.doh_custom_url : '',
             startup_behavior: ['restore', 'dashboard', 'new-tab'].includes(parsed.startup_behavior) ? parsed.startup_behavior : 'restore',
@@ -399,6 +403,24 @@ function validateConfigPatch(patch) {
                 break;
             }
 
+            case 'allow_local_certificates': {
+                if (typeof val === 'boolean') {
+                    clean[key] = val;
+                } else {
+                    rejected.push(key);
+                }
+                break;
+            }
+
+            case 'trusted_certificates': {
+                if (Array.isArray(val) && val.length <= 200 && val.every(d => typeof d === 'string' && d.length <= 253)) {
+                    clean[key] = [...val];
+                } else {
+                    rejected.push(key);
+                }
+                break;
+            }
+
             case 'theme_colors': {
                 if (validateThemeColors(val)) {
                     clean[key] = val;
@@ -507,6 +529,17 @@ function registerConfigIpc(ipcMain, hooks = {}) {
                 Array.isArray(merged.trusted_domains) &&
                 typeof hooks.onTrustedDomainsChange === 'function') {
                 hooks.onTrustedDomainsChange(merged.trusted_domains);
+            }
+            if (Object.prototype.hasOwnProperty.call(payload, 'allow_local_certificates') &&
+                before.allow_local_certificates !== merged.allow_local_certificates &&
+                typeof hooks.onAllowLocalCertificatesChange === 'function') {
+                hooks.onAllowLocalCertificatesChange(merged.allow_local_certificates);
+            }
+            if (Object.prototype.hasOwnProperty.call(payload, 'trusted_certificates') &&
+                JSON.stringify(before.trusted_certificates) !== JSON.stringify(merged.trusted_certificates) &&
+                Array.isArray(merged.trusted_certificates) &&
+                typeof hooks.onTrustedCertificatesChange === 'function') {
+                hooks.onTrustedCertificatesChange(merged.trusted_certificates);
             }
             if (Object.prototype.hasOwnProperty.call(payload, 'spellchecker_language') &&
                 JSON.stringify(before.spellchecker_language) !== JSON.stringify(merged.spellchecker_language) &&
