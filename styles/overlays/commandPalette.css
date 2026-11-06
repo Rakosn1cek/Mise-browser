@@ -128,9 +128,20 @@
     cursor: pointer;
     transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease;
     user-select: none;
+    outline: none;
 }
 
 .palette-filter-chip:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.palette-filter-chip:focus,
+.palette-filter-chip:focus-visible {
+    outline: none;
+}
+
+.palette-filter-chip:focus-visible:not(.active) {
     border-color: var(--accent);
     color: var(--accent);
 }

@@ -397,4 +397,17 @@ assert.match(cpCss, /\.palette-list-column\s*\{[^}]*flex:\s*1 1 0%;/, '.palette-
 assert.match(cpCss, /\.palette-inspector-column\s*\{[^}]*flex:\s*0 0 420px;/, '.palette-inspector-column must maintain stable width across category views');
 console.log('✓ CSS layout rules enforce rock-solid width stability across all category groups');
 
+// 12. Verify category chips eliminate native focus outline rings to prevent double borders
+assert.match(
+    cpCss,
+    /\.palette-filter-chip\s*\{[^}]*outline:\s*none;/,
+    '.palette-filter-chip must enforce outline: none to prevent browser outline rings'
+);
+assert.match(
+    cpCss,
+    /\.palette-filter-chip:focus,\s*\.palette-filter-chip:focus-visible\s*\{[^}]*outline:\s*none;/,
+    '.palette-filter-chip focus pseudo-classes must enforce outline: none'
+);
+console.log('✓ Category filter chip focus outline suppression verified');
+
 console.log('All Command Palette navigation & focus trap regression tests passed successfully!');
