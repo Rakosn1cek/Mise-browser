@@ -89,13 +89,25 @@ You can adjust the active policy in Preferences under **Privacy & Protection**, 
 
 ---
 
-## Active Site Data Clearing
+## Site Data & Container Cookie Management
 
-When debugging web applications or purging lingering sessions:
+Mise provides a two-tier approach to cookie and cache management, avoiding the indiscriminate "login amnesia" of traditional privacy browsers:
+
+### 1. Active Tab Domain Purging (Preferences)
+
+When debugging a specific website or clearing lingering session tokens for the active page:
 
 1. Open **Preferences** (**F1** or **Ctrl + H**) and navigate to **Privacy & Protection**.
-2. **Clear Site Cookies**: Surgically deletes cookies specifically matching the active tab's domain without logging you out of unrelated sites in other tabs.
-3. **Clear Cache**: Flushes the local Chromium disk and memory cache.
+2. **Clear Site Cookies**: Surgically deletes cookies matching the active tab's domain without logging you out of unrelated sites in other tabs.
+3. **Clear Cache**: Flushes the local Chromium disk and memory cache for the active container.
+
+### 2. Workspace Container Cookie Inspector (Dashboard)
+
+To audit and manage storage across entire profiles without affecting other workspaces:
+
+1. Open the **Workspace Dashboard** (**Ctrl + Shift + W**).
+2. Every workspace displays an active partition pill (e.g. `persist:work` or `volatile`) and its real-time stored cookie count.
+3. Click the cookie purge icon button next to any workspace to clear all stored cookies in that container partition. An explicit confirmation dialogue ensures you do not inadvertently sign out of active workflows.
 
 ---
 

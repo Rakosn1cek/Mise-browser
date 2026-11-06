@@ -23,7 +23,7 @@ import { toggleDiagnosticsView, toggleDiagnosticsRecording } from './modules/ove
 import { toggleWindowControls } from './modules/windowControls.js';
 import { toggleWebviewTheme, toggleInterfaceTheme } from './modules/renderer/themeController.js';
 import { toggleInPageSearch } from './modules/renderer/pageSearch.js';
-import { togglePrivateWorkspace, handlePrivateBrowsingStateShift, executeSurgicalCookieWipe, executeGlobalCacheWipe, testCleanGoogleSignIn } from './modules/renderer/workspaceController.js';
+import { togglePrivateWorkspace, handlePrivateBrowsingStateShift, executeSurgicalCookieWipe, executeGlobalCacheWipe, testCleanGoogleSignIn, purgeWorkspaceCookies } from './modules/renderer/workspaceController.js';
 import { applySidebarMode, toggleSidebarExpansion, toggleSidebarPin, focusSidebar, defaultOverlayIds } from './modules/renderer/sidebarController.js';
 import { initializeBrowser } from './modules/renderer/browserInit.js';
 
@@ -152,7 +152,7 @@ Object.assign(window, {
     toggleCommandPaletteView, toggleGlobalMediaPlayback, toggleActiveTabAudioMute,
     toggleGlobalAudioMute, togglePinActiveTab, toggleSplitView, cycleSplitOrientation,
     switchSplitFocus, swapSplitPanes, closeSplitView, openUrlInSplit, toggleBookmarksOverlay,
-    promptQuickmark, addCurrentPageToBookmarks, focusSidebar, testCleanGoogleSignIn, checkForUpdates: triggerUpdateCheck, promptWorkspaceCreation, promptWorkspaceRename, confirmWorkspaceDeletion
+    promptQuickmark, addCurrentPageToBookmarks, focusSidebar, testCleanGoogleSignIn, checkForUpdates: triggerUpdateCheck, promptWorkspaceCreation, promptWorkspaceRename, confirmWorkspaceDeletion, purgeWorkspaceCookies
 });
 
 if (window.miseAPI && typeof window.miseAPI.onMasterShortcut === 'function') {

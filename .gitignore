@@ -31,6 +31,7 @@ dist/
 # Local planning and roadmaps
 ROADMAP.md
 BUG_HUNT_AND_FIX_PLAN.md
+BROWSER-AUDIT.md
 
 # Local maintenance scripts
 scripts/update-aur.zsh

@@ -150,6 +150,7 @@ export function initStatusBar() {
 }
 
 export function setTargetUrl(url, timeoutMs = 0) {
+    if (typeof document === 'undefined') return;
     if (targetUrlClearTimer) {
         clearTimeout(targetUrlClearTimer);
         targetUrlClearTimer = null;

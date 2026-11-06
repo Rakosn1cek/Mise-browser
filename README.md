@@ -19,7 +19,7 @@ Named after the Czech word for *"mission"*, Mise leverages the Chromium renderin
 
 * **True Tab Hibernation**: Detaches idle `<webview>` tags completely from the DOM across all workspaces, terminating idle Chromium renderer processes and reducing RAM usage by 60% or more. Live URLs, page titles, and scroll offsets are restored on demand.
 * **Auto-Collapsing Vertical Strip**: The vertical sidebar collapses into a 36px icon strip displaying workspace badges and tab favicons, expanding smoothly as an overlay on hover or via shortcut without triggering webview layout shifts.
-* **Multi-Account Container Partitions**: Each workspace runs in its own isolated Electron persistent partition (`persist:work`, `persist:personal`), preventing cookie cross-contamination across accounts.
+* **Multi-Account Container Partitions**: Each workspace runs in its own isolated Electron persistent partition (`persist:work`, `persist:personal`), preventing cookie cross-contamination across accounts, with live stored cookie auditing and on-demand container purging in the Workspace Dashboard.
 * **Mouse-Free Navigation**: Complete keyboard control via Link Hints, centered status bar address bar with search aliases, and customisable shortcuts in `keybinds.json`.
 * **Ephemeral Tab Peek ("Glance")**: Transient keyboard-driven link preview modal (`Shift + Click` or `gh` hint) over the active tab, dismissing instantly on `Escape` without memory residue, or promoting to a permanent tab with `Ctrl + Enter`.
 * **Clipboard-Mediated Terminal Oversight**: High-risk script execution and raw web commands trigger a clipboard-mediated security handshake, sanitising and staging vetted commands to your clipboard for deliberate user review and execution in an external terminal.

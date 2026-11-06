@@ -22,7 +22,7 @@ features:
   - title: Dual-Split View
     details: Browse two pages side-by-side with customisable partition ratios. Swap panes, open links directly into split view, or toggle seamlessly via keyboard shortcuts.
   - title: Multi-Account Containers
-    details: Every workspace runs inside an isolated persistent Chromium partition. Run multiple corporate and personal logins simultaneously with zero cookie cross-contamination.
+    details: Every workspace runs inside an isolated persistent Chromium partition. Audit stored cookie counts per workspace and purge containers on demand with zero cross-contamination.
   - title: Mouse-Free Navigation
     details: Full Vim-inspired link hints (f), quickmark speed-dial (go), status bar omnibar, and granular shortcut remapping in keybinds.json.
   - title: Native Privacy Shields

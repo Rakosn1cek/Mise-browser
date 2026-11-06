@@ -116,3 +116,14 @@
     border-color: var(--border);
 }
 
+.workspace-cookie-tag {
+    display: inline-flex;
+    align-items: center;
+    user-select: none;
+}
+
+.workspace-purge-btn:hover {
+    color: #f7768e;
+}
+
+

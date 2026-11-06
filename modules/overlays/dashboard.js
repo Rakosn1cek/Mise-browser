@@ -3,7 +3,7 @@ import { focusActiveWebview, getWorkspacePartition, isReservedWorkspaceName } fr
 import { renderWorkspaceUI, switchTabFocus, spawnTabWithUrl, spawnNewBlankTab, handleTabRemoval, moveTabState, destroyGuestWebview } from '../webview.js';
 import { transferTab } from '../tabTransfer.js';
 import { ensureOverlayMounted, mountOverlaySync } from '../templateLoader.js';
-import { setupWorkspaceListeners } from '../renderer/workspaceController.js';
+import { setupWorkspaceListeners, fetchWorkspaceCookieCounts, purgeWorkspaceCookies } from '../renderer/workspaceController.js';
 
 let currentDialogMode = 'create';
 let renameTargetWorkspace = '';
@@ -284,6 +284,32 @@ export function buildDashboardTree() {
             }
         }
 
+        // Dedicated Cookie Purge Button
+        const purgeCookiesBtn = document.createElement('button');
+        purgeCookiesBtn.type = 'button';
+        purgeCookiesBtn.className = 'nav-icon-button workspace-purge-btn';
+        purgeCookiesBtn.innerHTML = '<i class="fa-solid fa-cookie-bite"></i>';
+        purgeCookiesBtn.title = `Purge stored cookies for ${wsName}`;
+        purgeCookiesBtn.style.width = '24px';
+        purgeCookiesBtn.style.height = '24px';
+        purgeCookiesBtn.style.fontSize = '11px';
+        purgeCookiesBtn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            try {
+                const purged = await purgeWorkspaceCookies(wsName);
+                if (purged) {
+                    await updateDashboardCookieCounts();
+                }
+            } finally {
+                purgeCookiesBtn.blur();
+                const overlay = document.getElementById('DashboardOverlay');
+                if (overlay && state.dashboardActive) {
+                    overlay.focus();
+                }
+            }
+        });
+        actionsDiv.appendChild(purgeCookiesBtn);
+
         const containerTag = document.createElement('span');
         containerTag.className = 'workspace-container-tag';
         const partitionName = getWorkspacePartition(wsName);
@@ -297,8 +323,22 @@ export function buildDashboardTree() {
         containerTag.style.marginRight = '8px';
         containerTag.title = isPrivate ? 'Volatile partition: MisePrivateProfile' : `Container Partition: ${partitionName}`;
 
+        const cookieBadge = document.createElement('span');
+        cookieBadge.className = 'workspace-cookie-tag';
+        cookieBadge.dataset.ws = wsName;
+        cookieBadge.style.fontSize = '11px';
+        cookieBadge.style.fontFamily = 'monospace';
+        cookieBadge.style.color = isPrivate ? '#f7768e' : 'var(--accent)';
+        cookieBadge.style.background = isPrivate ? 'rgba(247, 118, 142, 0.12)' : 'rgba(255,255,255,0.06)';
+        cookieBadge.style.padding = '1px 6px';
+        cookieBadge.style.borderRadius = '3px';
+        cookieBadge.style.marginRight = '8px';
+        cookieBadge.title = isPrivate ? 'Volatile partition: in-memory cookies only' : `Stored cookies in ${partitionName}`;
+        cookieBadge.innerHTML = '<i class="fa-solid fa-cookie-bite" style="margin-right: 4px;"></i><span class="cookie-count-val">0 cookies</span>';
+
         headerContainer.appendChild(titleSpan);
         headerContainer.appendChild(containerTag);
+        headerContainer.appendChild(cookieBadge);
         headerContainer.appendChild(actionsDiv);
         
         const wsPayload = ['workspace', wsName, null];
@@ -409,6 +449,28 @@ export function buildDashboardTree() {
     if (state.dashboardActive && overlay) {
         overlay.focus();
     }
+
+    updateDashboardCookieCounts();
+}
+
+export async function updateDashboardCookieCounts() {
+    const wsKeys = Object.keys(state.sessionState.workspaces || {});
+    if (wsKeys.length === 0) return;
+    try {
+        const counts = await fetchWorkspaceCookieCounts(wsKeys);
+        if (!counts || typeof counts !== 'object') return;
+        const badges = document.querySelectorAll('.workspace-cookie-tag');
+        badges.forEach((b) => {
+            const ws = b.dataset.ws;
+            if (ws && Object.prototype.hasOwnProperty.call(counts, ws)) {
+                const count = counts[ws] || 0;
+                const valEl = b.querySelector('.cookie-count-val');
+                if (valEl) {
+                    valEl.textContent = `${count} ${count === 1 ? 'cookie' : 'cookies'}`;
+                }
+            }
+        });
+    } catch (_) {}
 }
 
 export function updateDashboardVisualSelection() {

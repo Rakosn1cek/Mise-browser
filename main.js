@@ -311,10 +311,38 @@ ipcMain.handle('clear-domain-cookies', async (event, data) => {
 });
 
 ipcMain.handle('get-workspace-partition', (event, name) => {
-    if (!security.isValidPartitionName(name)) {
+    if (!security.isValidPartitionName(name)) return false;
+    return getWorkspacePartition(name);
+});
+
+ipcMain.handle('get-workspace-cookie-counts', async (event, workspaces) => {
+    if (!Array.isArray(workspaces)) return {};
+    const counts = {};
+    for (const ws of workspaces.slice(0, 50)) {
+        if (typeof ws !== 'string' || ws.length > 100) continue;
+        try {
+            const targetSession = getSessionForContext({ workspace: ws });
+            const list = targetSession?.cookies ? await targetSession.cookies.get({}) : [];
+            counts[ws] = Array.isArray(list) ? list.length : 0;
+        } catch (_) {
+            counts[ws] = 0;
+        }
+    }
+    return counts;
+});
+
+ipcMain.handle('clear-workspace-cookies', async (event, workspace) => {
+    try {
+        if (typeof workspace !== 'string' || workspace.length > 100) return false;
+        const targetSession = getSessionForContext({ workspace });
+        await targetSession.clearStorageData({ storages: ['cookies'] });
+        if (targetSession?.cookies?.flushStore) await targetSession.cookies.flushStore();
+        sendSystemNotification('Mise Browser', `Cookies cleared for workspace: ${workspace}`);
+        return true;
+    } catch (err) {
+        sendSystemNotification('Mise Error', `Workspace cookie wipe failed: ${err.message}`);
         return false;
     }
-    return getWorkspacePartition(name);
 });
 
 ipcMain.on('toggle-active-devtools', () => {
@@ -403,19 +431,11 @@ ipcMain.handle('set-diagnostics-enabled', async (event, enabled) => {
 });
 
 ipcMain.handle('log-diagnostics-event', async (event, data) => {
-    if (!data || typeof data !== 'object' || Array.isArray(data)) {
-        return false;
-    }
+    if (!data || typeof data !== 'object' || Array.isArray(data)) return false;
     const allowedLevels = ['info', 'warn', 'error'];
-    if (!allowedLevels.includes(data.level)) {
-        return false;
-    }
-    if (typeof data.category !== 'string' || data.category.length > 200) {
-        return false;
-    }
-    if (typeof data.message !== 'string' || data.message.length > 200) {
-        return false;
-    }
+    if (!allowedLevels.includes(data.level)) return false;
+    if (typeof data.category !== 'string' || data.category.length > 200) return false;
+    if (typeof data.message !== 'string' || data.message.length > 200) return false;
     diagnostics.logEvent(data.level, data.category, data.message, data.details);
     return true;
 });
@@ -435,10 +455,8 @@ ipcMain.on('get-google-signin-user-agent', (event, hostname) => {
 });
 
 ipcMain.handle('clear-google-auth-cookies', async (event, partitionName) => {
-    if (partitionName !== undefined && partitionName !== null) {
-        if (!security.isValidPartitionName(partitionName)) {
-            return false;
-        }
+    if (partitionName !== undefined && partitionName !== null && !security.isValidPartitionName(partitionName)) {
+        return false;
     }
     const targetSession = partitionName ? session.fromPartition(partitionName) : session.fromPartition('MisePrivateProfile');
     await security.clearGoogleAuthCookies(targetSession);

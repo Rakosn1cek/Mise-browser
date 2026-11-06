@@ -24,6 +24,8 @@ contextBridge.exposeInMainWorld('miseAPI', {
     getGlobalNotificationsState: () => ipcRenderer.invoke('get-global-notifications-state'),
     clearDomainCookies: (data) => ipcRenderer.invoke('clear-domain-cookies', data),
     clearActiveCache: (options) => ipcRenderer.invoke('clear-active-cache', options),
+    getWorkspaceCookieCounts: (workspaces) => ipcRenderer.invoke('get-workspace-cookie-counts', workspaces),
+    clearWorkspaceCookies: (workspace) => ipcRenderer.invoke('clear-workspace-cookies', workspace),
     executeTerminalCommand: (commandStr) => ipcRenderer.send('execute-terminal-command', commandStr),
     searchHistory: (query) => ipcRenderer.invoke('search-history', query),
     purgeHistory: () => ipcRenderer.invoke('purge-history'),

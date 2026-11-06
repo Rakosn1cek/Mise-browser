@@ -83,6 +83,38 @@ export async function executeGlobalCacheWipe() {
     focusActiveWebview();
 }
 
+export async function fetchWorkspaceCookieCounts(workspaces) {
+    if (!window.miseAPI || typeof window.miseAPI.getWorkspaceCookieCounts !== 'function') {
+        return {};
+    }
+    try {
+        return await window.miseAPI.getWorkspaceCookieCounts(workspaces);
+    } catch (_) {
+        return {};
+    }
+}
+
+export async function purgeWorkspaceCookies(workspaceName) {
+    if (!workspaceName) return false;
+    const isPrivate = workspaceName === 'Private';
+    const message = isPrivate
+        ? 'Purge volatile cookies for Private profile? Active sessions in Private will be signed out.'
+        : `Purge all stored cookies for workspace "${workspaceName}"? Active sessions in this workspace will be signed out.`;
+
+    if (typeof window.confirm === 'function' && !window.confirm(message)) {
+        return false;
+    }
+
+    if (window.miseAPI && typeof window.miseAPI.clearWorkspaceCookies === 'function') {
+        const success = await window.miseAPI.clearWorkspaceCookies(workspaceName);
+        if (success) {
+            setTargetUrl(`Cookies purged for workspace: ${workspaceName}`, 3000);
+            return true;
+        }
+    }
+    return false;
+}
+
 export async function testCleanGoogleSignIn() {
     try {
         if (window.miseAPI && typeof window.miseAPI.clearGoogleAuthCookies === 'function') {
@@ -133,10 +165,18 @@ export function setupWorkspaceListeners() {
 
             if (e.key === 'ArrowDown') {
                 e.preventDefault();
+                if (document.activeElement && document.activeElement.tagName === 'BUTTON') {
+                    document.activeElement.blur();
+                    overlay.focus();
+                }
                 state.dashboardSelectionIdx = (state.dashboardSelectionIdx + 1) % state.dashboardItems.length;
                 updateDashboardVisualSelection();
             } else if (e.key === 'ArrowUp') {
                 e.preventDefault();
+                if (document.activeElement && document.activeElement.tagName === 'BUTTON') {
+                    document.activeElement.blur();
+                    overlay.focus();
+                }
                 state.dashboardSelectionIdx = (state.dashboardSelectionIdx - 1 + state.dashboardItems.length) % state.dashboardItems.length;
                 updateDashboardVisualSelection();
             } else if (e.key === 'Enter') {
