@@ -93,6 +93,7 @@ function loadBrowserConfig(targetDir = CONFIG_DIR, targetPath = CONFIG_PATH) {
         return {
             ...DEFAULT_CONFIG,
             ...parsed,
+            email_handler: normalizeEmailHandler(parsed.email_handler || 'system'),
             spellchecker_language: parsed.spellchecker_language || 'en-GB',
             webrtc_policy: parsed.webrtc_policy || 'default_public_interface_only',
             webview_theme: parsed.webview_theme || 'dark',
@@ -156,12 +157,69 @@ function updateBrowserConfig(newCfg, targetDir = CONFIG_DIR, targetPath = CONFIG
 function isValidHttpUrlTemplate(val) {
     if (typeof val !== 'string' || val.length > 2048) return false;
     try {
-        const dummy = val.replace(/%s/g, 'query');
+        const dummy = val.replace(/%[a-zA-Z]/g, 'query');
         const parsed = new URL(dummy);
         return parsed.protocol === 'http:' || parsed.protocol === 'https:';
     } catch (e) {
         return false;
     }
+}
+
+function normalizeEmailHandler(handler) {
+    if (!handler || typeof handler !== 'string') return 'system';
+    if (handler === 'system') return 'system';
+    if (handler.includes('mail.google.com') && (handler.includes('#inbox?compose') || !handler.includes('view=cm'))) {
+        return 'https://mail.google.com/mail/?view=cm&fs=1&to=%t&su=%s&body=%b';
+    }
+    if (handler.includes('mail.zoho.eu') && (handler.includes('originalMode=compose') || (!handler.includes('ct=') && !handler.includes('%m')))) {
+        return 'https://mail.zoho.eu/zm/comp.do?ct=%m';
+    }
+    if (handler.includes('mail.zoho.com') && (handler.includes('originalMode=compose') || (!handler.includes('ct=') && !handler.includes('%m')))) {
+        return 'https://mail.zoho.com/zm/comp.do?ct=%m';
+    }
+    return handler;
+}
+
+function buildEmailComposeUrl(template, { to = '', subject = '', body = '' } = {}) {
+    if (!template || template === 'system') return null;
+
+    let url = normalizeEmailHandler(template);
+    const encTo = encodeURIComponent(to);
+    const encSubject = encodeURIComponent(subject);
+    const encBody = encodeURIComponent(body);
+
+    const rawMailto = `mailto:${to}${subject || body ? '?' : ''}${subject ? `subject=${encSubject}` : ''}${subject && body ? '&' : ''}${body ? `body=${encBody}` : ''}`;
+    const encMailto = encodeURIComponent(rawMailto);
+
+    if (url.includes('%m')) {
+        url = url.replace(/%m/g, encMailto);
+    }
+
+    if (url.includes('%t')) {
+        url = url.replace(/%t/g, encTo);
+    } else if (url.includes('%to')) {
+        url = url.replace(/%to/g, encTo);
+    } else if (to && !url.includes(encTo)) {
+        if (url.includes('&subject=')) {
+            url = url.replace('&subject=', `&to=${encTo}&subject=`);
+        } else if (url.includes('?subject=')) {
+            url = url.replace('?subject=', `?to=${encTo}&subject=`);
+        } else if (url.includes('&su=')) {
+            url = url.replace('&su=', `&to=${encTo}&su=`);
+        } else if (url.includes('?su=')) {
+            url = url.replace('?su=', `?to=${encTo}&su=`);
+        }
+    }
+
+    if (url.includes('%s')) {
+        url = url.replace(/%s/g, encSubject);
+    }
+
+    if (url.includes('%b')) {
+        url = url.replace(/%b/g, encBody);
+    }
+
+    return url;
 }
 
 function validateThemeColors(tc) {
@@ -592,5 +650,7 @@ module.exports = {
     registerConfigIpc,
     restartApp,
     validateConfigPatch,
-    validateFilterLists
+    validateFilterLists,
+    normalizeEmailHandler,
+    buildEmailComposeUrl
 };

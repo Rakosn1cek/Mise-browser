@@ -4,7 +4,7 @@
 import { state } from '../state.js';
 import { getWorkspacePartition, focusActiveWebview, isSafeTabUrl } from '../utils.js';
 import { destroyGuestWebview } from '../webview.js';
-import { mountOverlaySync } from '../templateLoader.js';
+import { mountOverlaySync, ensureOverlayMounted } from '../templateLoader.js';
 
 let activeEscListener = null;
 let currentPeekUrl = null;
@@ -16,8 +16,20 @@ export function isPeekModalActive() {
 
 export function openPeekModal(targetUrl) {
     let overlay = document.getElementById('PeekModalOverlay');
-    if (!overlay && typeof mountOverlaySync === 'function') {
-        overlay = mountOverlaySync('PeekModalOverlay', 'peek-modal', 'body');
+    if (!overlay) {
+        if (typeof mountOverlaySync === 'function') {
+            overlay = mountOverlaySync('PeekModalOverlay', 'peek-modal', 'body');
+        }
+        if (!overlay && typeof ensureOverlayMounted === 'function') {
+            ensureOverlayMounted('PeekModalOverlay', 'peek-modal', 'body').then((mounted) => {
+                if (mounted && targetUrl) {
+                    openPeekModal(targetUrl);
+                }
+            }).catch((err) => {
+                console.error('[PeekModal] Failed to mount PeekModalOverlay:', err);
+            });
+            return;
+        }
     }
     const container = document.getElementById('PeekModalWebviewContainer');
     if (!overlay || !container || !targetUrl) return;

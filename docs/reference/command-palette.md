@@ -123,6 +123,8 @@ The Command Centre gives you rapid, searchable access to all Mise operations, in
 | **Show Welcome & Quick Start Guide** | — | `show-welcome` | Opens the offline onboarding guide and keyboard cheat sheet. |
 | **Show What's New** | — | — | Opens offline release highlights and changelog for the active version. |
 | **Submit Feedback or Report Bug** | — | `submit-feedback-or-report-bug` | Opens GitHub Issues in a new tab to report bugs or submit feedback. |
+| **Send Feedback via Email** | — | `contact-developer-email` | Opens default desktop email client addressed to the developer with pre-filled version details. |
+| **Join Matrix Community Chat** | — | `open-matrix-community` | Opens official Mise Browser Matrix community room in a new tab. |
 | **Open GitHub Discussions** | — | `open-github-discussions` | Opens GitHub Discussions in a new tab to share setups and ideas. |
 | **Test Clean Google Sign-In Flow** | — | `test-google-signin` | Launches Google Sign-In in a clean, volatile scratch partition to audit authentication health. |
 | **Toggle Colour Theme (Dark / Light)** | — | — | Swaps UI styling and webview shader inversion between dark and light. |

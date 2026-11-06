@@ -5,6 +5,7 @@
 import { state } from '../state.js';
 import { focusActiveWebview, escapeHtml } from '../utils.js';
 import { ensureOverlayMounted } from '../templateLoader.js';
+import { launchEmailComposer } from './commandPalette.js';
 
 let activeDiagTab = 'system';
 let cachedDiagnostics = null;
@@ -533,6 +534,9 @@ function renderReportPane(data) {
                 <button type="button" id="diag-copy-report-btn" class="diag-btn-action primary">
                     <i class="fa-solid fa-copy"></i> Copy Markdown Report
                 </button>
+                <button type="button" id="diag-email-report-btn" class="diag-btn-action">
+                    <i class="fa-solid fa-envelope"></i> Email Report
+                </button>
                 <button type="button" id="diag-export-json-btn" class="diag-btn-action">
                     <i class="fa-solid fa-download"></i> Export JSON
                 </button>
@@ -561,6 +565,28 @@ function renderReportPane(data) {
             } catch (err) {
                 console.error('Failed to copy to clipboard:', err);
             }
+        };
+    }
+
+    const emailBtn = document.getElementById('diag-email-report-btn');
+    if (emailBtn) {
+        emailBtn.onclick = async () => {
+            try {
+                await navigator.clipboard.writeText(mdReport);
+                emailBtn.innerHTML = '<i class="fa-solid fa-check"></i> Copied & Opened Composer!';
+                emailBtn.classList.add('success');
+                setTimeout(() => {
+                    emailBtn.innerHTML = '<i class="fa-solid fa-envelope"></i> Email Report';
+                    emailBtn.classList.remove('success');
+                }, 2000);
+            } catch (err) {
+                console.error('Failed to copy to clipboard:', err);
+            }
+            launchEmailComposer({
+                to: 'rakosn1cek@zohomail.eu',
+                subject: '[Mise Bug Report] Diagnostic Log',
+                body: 'Hi,\n\nI encountered an issue in Mise Browser. The complete sanitised diagnostic report has been copied to my clipboard.\n\nSummary of what happened:\n[Describe issue here]\n\n'
+            });
         };
     }
 

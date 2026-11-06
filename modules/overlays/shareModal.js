@@ -1,12 +1,24 @@
 import { state } from '../state.js';
 import { getWorkspacePartition } from '../utils.js';
 import { destroyGuestWebview } from '../webview.js';
-import { mountOverlaySync } from '../templateLoader.js';
+import { mountOverlaySync, ensureOverlayMounted } from '../templateLoader.js';
 
 export function openTransientShareModal(targetUrl) {
     let overlay = document.getElementById('ShareModalOverlay');
-    if (!overlay && typeof mountOverlaySync === 'function') {
-        overlay = mountOverlaySync('ShareModalOverlay', 'share-modal', 'body');
+    if (!overlay) {
+        if (typeof mountOverlaySync === 'function') {
+            overlay = mountOverlaySync('ShareModalOverlay', 'share-modal', 'body');
+        }
+        if (!overlay && typeof ensureOverlayMounted === 'function') {
+            ensureOverlayMounted('ShareModalOverlay', 'share-modal', 'body').then((mounted) => {
+                if (mounted && targetUrl) {
+                    openTransientShareModal(targetUrl);
+                }
+            }).catch((err) => {
+                console.error('[ShareModal] Failed to mount ShareModalOverlay:', err);
+            });
+            return;
+        }
     }
     const container = document.getElementById('ShareModalWebviewContainer');
     if (!overlay || !container || !targetUrl) return;

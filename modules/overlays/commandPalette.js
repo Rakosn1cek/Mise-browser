@@ -6,13 +6,120 @@ import { toggleBookmarksOverlay, promptQuickmark, addCurrentPageToBookmarks } fr
 import { syncVisualSettingsInputs, setupVisualSettingsListeners } from '../theme.js';
 import { renderSearchAliasesUI } from './searchEngine.js';
 import { ensureOverlayMounted } from '../templateLoader.js';
+import { openTransientShareModal } from './shareModal.js';
 
 function returnFocusToWebview() {
+    const shareModal = document.getElementById('ShareModalOverlay');
+    if (shareModal && shareModal.style.display === 'flex') {
+        return;
+    }
     if (state.paletteActive || state.dashboardActive || state.preferencesActive || state.historyActive || state.notesActive || state.bookmarksActive || state.diagnosticsActive) {
         return;
     }
     window.miseAllowWebviewFocus = true;
     focusActiveWebview();
+}
+
+export function normalizeEmailHandler(handler) {
+    if (!handler || typeof handler !== 'string') return 'system';
+    if (handler === 'system') return 'system';
+    if (handler.includes('mail.google.com') && (handler.includes('#inbox?compose') || !handler.includes('view=cm'))) {
+        return 'https://mail.google.com/mail/?view=cm&fs=1&to=%t&su=%s&body=%b';
+    }
+    if (handler.includes('mail.zoho.eu') && (handler.includes('originalMode=compose') || (!handler.includes('ct=') && !handler.includes('%m')))) {
+        return 'https://mail.zoho.eu/zm/comp.do?ct=%m';
+    }
+    if (handler.includes('mail.zoho.com') && (handler.includes('originalMode=compose') || (!handler.includes('ct=') && !handler.includes('%m')))) {
+        return 'https://mail.zoho.com/zm/comp.do?ct=%m';
+    }
+    return handler;
+}
+
+export function buildEmailComposeUrl(template, { to = '', subject = '', body = '' } = {}) {
+    if (!template || template === 'system') return null;
+
+    let url = normalizeEmailHandler(template);
+    const encTo = encodeURIComponent(to);
+    const encSubject = encodeURIComponent(subject);
+    const encBody = encodeURIComponent(body);
+
+    const rawMailto = `mailto:${to}${subject || body ? '?' : ''}${subject ? `subject=${encSubject}` : ''}${subject && body ? '&' : ''}${body ? `body=${encBody}` : ''}`;
+    const encMailto = encodeURIComponent(rawMailto);
+
+    if (url.includes('%m')) {
+        url = url.replace(/%m/g, encMailto);
+    }
+
+    if (url.includes('%t')) {
+        url = url.replace(/%t/g, encTo);
+    } else if (url.includes('%to')) {
+        url = url.replace(/%to/g, encTo);
+    } else if (to && !url.includes(encTo)) {
+        if (url.includes('&subject=')) {
+            url = url.replace('&subject=', `&to=${encTo}&subject=`);
+        } else if (url.includes('?subject=')) {
+            url = url.replace('?subject=', `?to=${encTo}&subject=`);
+        } else if (url.includes('&su=')) {
+            url = url.replace('&su=', `&to=${encTo}&su=`);
+        } else if (url.includes('?su=')) {
+            url = url.replace('?su=', `?to=${encTo}&su=`);
+        }
+    }
+
+    if (url.includes('%s')) {
+        url = url.replace(/%s/g, encSubject);
+    }
+
+    if (url.includes('%b')) {
+        url = url.replace(/%b/g, encBody);
+    }
+
+    return url;
+}
+
+export async function launchEmailComposer({
+    to = 'rakosn1cek@zohomail.eu',
+    subject = '[Mise Browser Feedback]',
+    body = 'Hi,\n\nHere is my feedback for Mise Browser:\n\n\nEnvironment:\n- Window Manager / Desktop: \n- Mise Version: 1.5.0\n'
+} = {}) {
+    let cfg = {};
+    try {
+        if (window.miseAPI && typeof window.miseAPI.getBrowserSettings === 'function') {
+            cfg = (await window.miseAPI.getBrowserSettings()) || {};
+        }
+    } catch (e) {
+        cfg = {};
+    }
+
+    const handler = cfg.email_handler || 'system';
+    const encSubject = encodeURIComponent(subject);
+    const encBody = encodeURIComponent(body);
+
+    if (handler && handler !== 'system') {
+        const composeUrl = buildEmailComposeUrl(handler, { to, subject, body });
+        if (composeUrl) {
+            openTransientShareModal(composeUrl);
+            return;
+        }
+    }
+
+    const mailtoUrl = `mailto:${to}?subject=${encSubject}&body=${encBody}`;
+    let opened = false;
+    if (window.miseAPI && typeof window.miseAPI.openExternal === 'function') {
+        try {
+            opened = await window.miseAPI.openExternal(mailtoUrl);
+        } catch (e) {
+            opened = false;
+        }
+    }
+
+    if (!opened) {
+        const composeUrl = buildEmailComposeUrl(
+            'https://mail.google.com/mail/?view=cm&fs=1&to=%t&su=%s&body=%b',
+            { to, subject, body }
+        );
+        openTransientShareModal(composeUrl);
+    }
 }
 
 export const COMMAND_DEFINITIONS = [
@@ -844,6 +951,32 @@ export const COMMAND_DEFINITIONS = [
         action: () => spawnTabWithUrl('https://github.com/Rakosn1cek/Mise-browser/issues')
     },
     {
+        id: 'contact-developer-email',
+        title: 'Send Feedback via Email',
+        desc: 'Open email client or configured webmail to send feedback directly to the developer',
+        details: 'Launches your configured email composer pre-addressed to rakosn1cek@zohomail.eu. Supports webmail compose modals (Zoho, Gmail, Outlook, Proton, Fastmail) and system mailto.',
+        tip: 'Ideal for reporting visual glitches, subtle quirks, or sharing quick thoughts directly.',
+        category: 'Preferences & System',
+        icon: 'fa-solid fa-envelope',
+        actionId: 'contact-developer-email',
+        keywords: ['email', 'mail', 'feedback', 'contact', 'developer', 'support', 'paper cut', 'bug', 'report', 'webmail'],
+        action: () => {
+            launchEmailComposer();
+        }
+    },
+    {
+        id: 'open-matrix-community',
+        title: 'Join Matrix Community Chat',
+        desc: 'Connect with other Mise users on Matrix (#mise-browser:matrix.org)',
+        details: 'Opens the official Mise Browser Matrix community room in a new tab via matrix.to. Chat, share customisations, or report quirks in real time.',
+        tip: 'Matrix is open and federated. Accessible directly in the browser via Element Web.',
+        category: 'Preferences & System',
+        icon: 'fa-solid fa-comments',
+        actionId: 'open-matrix-community',
+        keywords: ['matrix', 'chat', 'community', 'element', 'forum', 'feedback', 'discussion', 'support', 'room'],
+        action: () => spawnTabWithUrl('https://matrix.to/#/#mise-browser:matrix.org')
+    },
+    {
         id: 'open-github-discussions',
         title: 'Open GitHub Discussions',
         desc: 'Join the community forum to share setups, ask questions, and suggest ideas',
@@ -1098,7 +1231,7 @@ export async function syncPreferencesUI() {
             if (gpuToggle) gpuToggle.checked = !cfg.disable_gpu;
             if (throttleToggle) throttleToggle.checked = !!cfg.background_throttling;
             if (processSelect) processSelect.value = String(cfg.process_limit || 3);
-            if (emailSelect) emailSelect.value = cfg.email_handler || 'system';
+            if (emailSelect) emailSelect.value = normalizeEmailHandler(cfg.email_handler || 'system');
             if (sleepSelect) sleepSelect.value = String(cfg.tab_sleep_timeout_minutes ?? 15);
             if (sidebarToggle) sidebarToggle.checked = cfg.sidebar_auto_collapse !== false;
             if (startupSelect) startupSelect.value = cfg.startup_behavior || 'restore';
@@ -1465,6 +1598,36 @@ export function setupPreferencesListeners() {
         checkUpdatesBtn.onclick = () => {
             if (typeof window.checkForUpdates === 'function') {
                 window.checkForUpdates(true);
+            }
+        };
+    }
+
+    const helpEmailBtn = document.getElementById('HelpEmailFeedbackBtn');
+    if (helpEmailBtn) {
+        helpEmailBtn.onclick = () => {
+            if (typeof window.togglePreferencesView === 'function') {
+                window.togglePreferencesView();
+            }
+            launchEmailComposer();
+        };
+    }
+
+    const helpMatrixBtn = document.getElementById('HelpMatrixCommunityBtn');
+    if (helpMatrixBtn) {
+        helpMatrixBtn.onclick = () => {
+            spawnTabWithUrl('https://matrix.to/#/#mise-browser:matrix.org');
+            if (typeof window.togglePreferencesView === 'function') {
+                window.togglePreferencesView();
+            }
+        };
+    }
+
+    const helpGithubBtn = document.getElementById('HelpGithubIssuesBtn');
+    if (helpGithubBtn) {
+        helpGithubBtn.onclick = () => {
+            spawnTabWithUrl('https://github.com/Rakosn1cek/Mise-browser/issues');
+            if (typeof window.togglePreferencesView === 'function') {
+                window.togglePreferencesView();
             }
         };
     }

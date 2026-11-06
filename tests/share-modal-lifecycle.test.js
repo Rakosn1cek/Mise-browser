@@ -218,4 +218,115 @@ console.log('Running Mise transient share modal lifecycle regression tests...');
     console.log('✓ Transient share modal webview creation, teardown, and Escape dismissal verified');
 }
 
+// 3. Verify launchEmailComposer integration with configured webmail handlers
+{
+    const cpSource = fs.readFileSync(path.join(__dirname, '../modules/overlays/commandPalette.js'), 'utf8');
+
+    assert(
+        cpSource.includes('export async function launchEmailComposer('),
+        'commandPalette.js must export launchEmailComposer function'
+    );
+    assert(
+        cpSource.includes("import { openTransientShareModal } from './shareModal.js';"),
+        'commandPalette.js must import openTransientShareModal from shareModal.js'
+    );
+    assert(
+        cpSource.includes('cfg.email_handler'),
+        'launchEmailComposer must inspect cfg.email_handler configuration'
+    );
+    assert(
+        cpSource.includes('getBrowserSettings'),
+        'launchEmailComposer must invoke window.miseAPI.getBrowserSettings'
+    );
+    assert(
+        cpSource.includes('openTransientShareModal(composeUrl)'),
+        'launchEmailComposer must route webmail compose URLs to openTransientShareModal'
+    );
+
+    const shareSource = fs.readFileSync(path.join(__dirname, '../modules/overlays/shareModal.js'), 'utf8');
+    assert(
+        shareSource.includes('ensureOverlayMounted'),
+        'shareModal.js must import and fall back to ensureOverlayMounted'
+    );
+
+    console.log('✓ launchEmailComposer webmail share modal routing verified');
+}
+
+// 4. Verify buildEmailComposeUrl and normalizeEmailHandler across providers
+{
+    const config = require('../main/config');
+    const { buildEmailComposeUrl, normalizeEmailHandler } = config;
+
+    assert.equal(typeof buildEmailComposeUrl, 'function', 'config must export buildEmailComposeUrl');
+    assert.equal(typeof normalizeEmailHandler, 'function', 'config must export normalizeEmailHandler');
+
+    // System handler returns null (delegated to native OS handler)
+    assert.strictEqual(buildEmailComposeUrl('system', { to: 'dev@example.com' }), null);
+
+    // Gmail standalone compose endpoint verification
+    const gmailUrl = buildEmailComposeUrl(
+        'https://mail.google.com/mail/?view=cm&fs=1&to=%t&su=%s&body=%b',
+        { to: 'rakosn1cek@zohomail.eu', subject: 'Feedback', body: 'Hello world' }
+    );
+    assert(gmailUrl.includes('view=cm&fs=1'), 'Gmail compose must include view=cm and fs=1');
+    assert(gmailUrl.includes('to=rakosn1cek%40zohomail.eu'), 'Gmail compose must prefill to recipient');
+    assert(gmailUrl.includes('su=Feedback'), 'Gmail compose must prefill su subject parameter');
+    assert(gmailUrl.includes('body=Hello%20world'), 'Gmail compose must prefill body');
+
+    // Legacy Gmail hash route auto-migration
+    const legacyGmailMigrated = normalizeEmailHandler('https://mail.google.com/mail/u/0/#inbox?compose=new&subject=%s&body=%b');
+    assert.strictEqual(
+        legacyGmailMigrated,
+        'https://mail.google.com/mail/?view=cm&fs=1&to=%t&su=%s&body=%b',
+        'Legacy Gmail hash route must migrate to standalone compose template'
+    );
+
+    const legacyGmailUrl = buildEmailComposeUrl(
+        'https://mail.google.com/mail/u/0/#inbox?compose=new&subject=%s&body=%b',
+        { to: 'rakosn1cek@zohomail.eu', subject: 'Feedback', body: 'Hello' }
+    );
+    assert(legacyGmailUrl.includes('view=cm&fs=1'), 'Legacy Gmail input must produce working standalone compose URL');
+    assert(legacyGmailUrl.includes('to=rakosn1cek%40zohomail.eu'), 'Legacy Gmail input must preserve recipient');
+
+    // Zoho Mail EU compose envelope verification
+    const zohoUrl = buildEmailComposeUrl(
+        'https://mail.zoho.eu/zm/comp.do?ct=%m',
+        { to: 'rakosn1cek@zohomail.eu', subject: 'Feedback', body: 'Hello world' }
+    );
+    assert(zohoUrl.includes('mail.zoho.eu/zm/comp.do?ct=mailto'), 'Zoho EU compose must wrap target in ct mailto envelope');
+    assert(zohoUrl.includes('rakosn1cek%40zohomail.eu'), 'Zoho EU compose must include encoded recipient');
+
+    // Legacy Zoho Mail auto-migration
+    const legacyZohoMigrated = normalizeEmailHandler('https://mail.zoho.eu/zm/comp.do?originalMode=compose&app=6&subject=%s&body=%b');
+    assert.strictEqual(
+        legacyZohoMigrated,
+        'https://mail.zoho.eu/zm/comp.do?ct=%m',
+        'Legacy Zoho compose URL must migrate to ct mailto envelope template'
+    );
+
+    const legacyZohoUrl = buildEmailComposeUrl(
+        'https://mail.zoho.eu/zm/comp.do?originalMode=compose&app=6&subject=%s&body=%b',
+        { to: 'rakosn1cek@zohomail.eu', subject: 'Feedback', body: 'Hello' }
+    );
+    assert(legacyZohoUrl.includes('mail.zoho.eu/zm/comp.do?ct=mailto'), 'Legacy Zoho input must produce working ct envelope URL');
+
+    // Outlook Web compose parameter verification
+    const outlookUrl = buildEmailComposeUrl(
+        'https://outlook.live.com/mail/0/deeplink/compose?to=%t&subject=%s&body=%b',
+        { to: 'rakosn1cek@zohomail.eu', subject: 'Feedback', body: 'Hello' }
+    );
+    assert(outlookUrl.includes('to=rakosn1cek%40zohomail.eu'), 'Outlook compose must populate to parameter');
+    assert(outlookUrl.includes('subject=Feedback'), 'Outlook compose must populate subject parameter');
+    assert(outlookUrl.includes('body=Hello'), 'Outlook compose must populate body parameter');
+
+    // Empty recipient handling for context menu sharing
+    const shareUrl = buildEmailComposeUrl(
+        'https://mail.google.com/mail/?view=cm&fs=1&to=%t&su=%s&body=%b',
+        { to: '', subject: 'Shared link', body: 'https://mise.app' }
+    );
+    assert(shareUrl.includes('to=&su=Shared%20link'), 'Empty recipient must produce clean compose query without placeholder leak');
+
+    console.log('✓ buildEmailComposeUrl webmail parameter construction and migration verified');
+}
+
 console.log('All transient share modal lifecycle regression tests passed successfully!');

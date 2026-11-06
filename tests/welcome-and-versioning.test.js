@@ -73,11 +73,15 @@ const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
     assert(cpContent.includes("id: 'show-welcome'"), 'Command Palette must register show-welcome command');
     assert(cpContent.includes("title: 'Show Welcome & Quick Start Guide'"), 'show-welcome must have human readable title');
     assert(cpContent.includes("id: 'submit-feedback-or-report-bug'"), 'Command Palette must register submit-feedback-or-report-bug command');
+    assert(cpContent.includes("id: 'contact-developer-email'"), 'Command Palette must register contact-developer-email command');
+    assert(cpContent.includes("id: 'open-matrix-community'"), 'Command Palette must register open-matrix-community command');
     assert(cpContent.includes("id: 'open-github-discussions'"), 'Command Palette must register open-github-discussions command');
 
     const whatsNewPath = path.join(rootDir, 'assets', 'whats-new.html');
     const whatsNewContent = fs.readFileSync(whatsNewPath, 'utf8');
     assert(whatsNewContent.includes('Your Voice Shapes Mise'), "What's New must include the community feedback invitation card");
+    assert(whatsNewContent.includes('href="mailto:rakosn1cek@zohomail.eu?subject=%5BMise%20Browser%20Feedback%5D"'), "What's New must link to developer email");
+    assert(whatsNewContent.includes('href="https://matrix.to/#/#mise-browser:matrix.org"'), "What's New must link to Matrix Community");
     assert(whatsNewContent.includes('href="https://github.com/Rakosn1cek/Mise-browser/discussions"'), "What's New must link to GitHub Discussions");
 
     console.log('✓ Command Palette actions and What\'s New feedback section verified');

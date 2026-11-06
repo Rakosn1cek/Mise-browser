@@ -7,7 +7,8 @@ const {
     loadBrowserConfig,
     saveBrowserConfig,
     updateBrowserConfig,
-    restartApp
+    restartApp,
+    buildEmailComposeUrl
 } = config;
 const security = require('../security');
 
@@ -335,17 +336,22 @@ function buildWebviewContextMenu(params, webContents, options = {}) {
             if (handler === 'system') {
                 const mailto = `mailto:?subject=${encSubject}&body=${encBody}`;
                 shell.openExternal(mailto).catch(() => {
-                    openShareModal(`https://mail.google.com/mail/?view=cm&fs=1&su=${encSubject}&body=${encBody}`);
+                    const fallbackUrl = buildEmailComposeUrl('https://mail.google.com/mail/?view=cm&fs=1&to=%t&su=%s&body=%b', {
+                        to: '',
+                        subject: emailSubject,
+                        body: emailBody
+                    });
+                    openShareModal(fallbackUrl);
                 });
             } else {
-                let composeUrl = handler;
-                if (composeUrl.includes('%s')) {
-                    composeUrl = composeUrl.replace('%s', encSubject);
+                const composeUrl = buildEmailComposeUrl(handler, {
+                    to: '',
+                    subject: emailSubject,
+                    body: emailBody
+                });
+                if (composeUrl) {
+                    openShareModal(composeUrl);
                 }
-                if (composeUrl.includes('%b')) {
-                    composeUrl = composeUrl.replace('%b', encBody);
-                }
-                openShareModal(composeUrl);
             }
         }
     }));

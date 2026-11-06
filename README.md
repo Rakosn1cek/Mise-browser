@@ -154,9 +154,11 @@ Active command and script scanning is handled exclusively by [Oversight](https:/
 
 ## Community & Discussion
 
+* [Matrix Community (#mise-browser:matrix.org)](https://matrix.to/#/#mise-browser:matrix.org)
+* [Email Developer (rakosn1cek@zohomail.eu)](mailto:rakosn1cek@zohomail.eu?subject=%5BMise%20Browser%20Feedback%5D)
+* [GitHub Discussions](https://github.com/Rakosn1cek/Mise-browser/discussions)
 * [Reddit (r/mise_browser)](https://www.reddit.com/r/mise_browser/)
 * [Mastodon (@misebrowser@mastodon.social)](https://mastodon.social/@misebrowser)
-* [GitHub Discussions](https://github.com/Rakosn1cek/Mise-browser/discussions)
 
 ***
 
