@@ -42,17 +42,21 @@ console.log('Running Mise theming and accent colour regression tests...');
     assert(Array.isArray(presets.dark) && presets.dark.length >= 8, 'Dark presets array must have at least 8 entries');
     assert(Array.isArray(presets.light) && presets.light.length >= 8, 'Light presets array must have at least 8 entries');
 
-    // Verify dark palette contains distinct hues
+    // Verify dark palette contains distinct hues and neutral options
     const darkColors = presets.dark.map(p => p.color.toLowerCase());
     assert(darkColors.includes('#7aa2f7'), 'Dark presets must include Tokyo Blue (#7aa2f7)');
+    assert(darkColors.includes('#e0e2ea'), 'Dark presets must include Chalk White (#e0e2ea)');
+    assert(darkColors.includes('#d5d6db'), 'Dark presets must include Ash Grey (#d5d6db)');
     assert(darkColors.includes('#9ece6a'), 'Dark presets must include Emerald Green (#9ece6a)');
     assert(darkColors.includes('#e0af68'), 'Dark presets must include Amber Gold (#e0af68)');
     assert(darkColors.includes('#c48b71'), 'Dark presets must include Roasted Mocha (#c48b71)');
     assert(darkColors.includes('#e07a5f'), 'Dark presets must include Warm Terracotta (#e07a5f)');
 
-    // Verify light palette prominently features darker earth tones and browns
+    // Verify light palette prominently features dark neutrals and earth tones
     const lightColors = presets.light.map(p => p.color.toLowerCase());
     assert(lightColors.includes('#6d3b09'), 'Light presets must include Amber Chestnut (#6d3b09)');
+    assert(lightColors.includes('#18181b'), 'Light presets must include Obsidian Black (#18181b)');
+    assert(lightColors.includes('#1f2335'), 'Light presets must include Tokyo Charcoal (#1f2335)');
     assert(lightColors.includes('#7b3f28'), 'Light presets must include Warm Chestnut (#7b3f28)');
     assert(lightColors.includes('#5c3d2e'), 'Light presets must include Espresso Brown (#5c3d2e)');
     assert(lightColors.includes('#a64b2a'), 'Light presets must include Terracotta Rust (#a64b2a)');
@@ -113,12 +117,16 @@ console.log('Running Mise theming and accent colour regression tests...');
     renderFn('light', '#6d3b09');
     assert(containerHtml.includes('data-color="#6d3b09"'), 'Light mode swatches must render Amber Chestnut');
     assert(containerHtml.includes('class="swatch-btn active"'), 'Active swatch must have active class');
+    assert(containerHtml.includes('data-color="#18181b"'), 'Light mode swatches must render Obsidian Black');
+    assert(containerHtml.includes('title="Tokyo Charcoal"'), 'Light mode swatches must render Tokyo Charcoal');
     assert(containerHtml.includes('data-color="#7b3f28"'), 'Light mode swatches must render Warm Chestnut');
     assert(containerHtml.includes('title="Espresso Brown"'), 'Light mode swatches must render Espresso Brown');
 
     // Test dark mode rendering
     renderFn('dark', '#7aa2f7');
     assert(containerHtml.includes('data-color="#7aa2f7"'), 'Dark mode swatches must render Tokyo Blue');
+    assert(containerHtml.includes('data-color="#e0e2ea"'), 'Dark mode swatches must render Chalk White');
+    assert(containerHtml.includes('data-color="#d5d6db"'), 'Dark mode swatches must render Ash Grey');
     assert(containerHtml.includes('data-color="#9ece6a"'), 'Dark mode swatches must render Emerald Green');
     assert(containerHtml.includes('data-color="#c48b71"'), 'Dark mode swatches must render Roasted Mocha');
 

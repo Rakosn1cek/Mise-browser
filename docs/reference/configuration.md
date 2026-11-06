@@ -91,7 +91,7 @@ Controls hardware switches, process limits, privacy whitelists, and search prefe
 - **`theme_colors`**: Custom visual colour palette and opacity settings per theme mode:
 
 ![Appearance and Visual Theme Preferences](/screenshots/preferences-2.webp)
-  - **`accent`**: Primary highlight colour for active tabs, borders, and controls (defaults to `#7aa2f7` in dark, `#6d3b09` in light, with curated mode-tailored preset palettes).
+  - **`accent`**: Primary highlight colour for active tabs, borders, and controls (defaults to `#7aa2f7` in dark, `#6d3b09` in light, with curated mode-tailored preset palettes including neutral washed out white, light grey, and black tones).
   - **`bg_main`**: Base window and modal canvas background colour.
   - **`bg_sidebar`**: Vertical sidebar background colour.
   - **`text`**: Primary text and icon foreground colour.

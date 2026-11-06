@@ -603,7 +603,7 @@
 }
 
 .slider-group:focus-within .slider-val-badge {
-    color: #ffffff;
+    color: var(--bg-main);
     background-color: var(--accent);
     border-color: var(--accent);
     box-shadow: 0 0 8px color-mix(in srgb, var(--accent) 60%, transparent);

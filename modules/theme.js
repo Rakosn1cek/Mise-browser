@@ -23,6 +23,8 @@ export const DEFAULT_THEME_COLORS = {
 export const ACCENT_PRESETS = {
     dark: [
         { name: 'Tokyo Blue', color: '#7aa2f7' },
+        { name: 'Chalk White', color: '#e0e2ea' },
+        { name: 'Ash Grey', color: '#d5d6db' },
         { name: 'Emerald Green', color: '#9ece6a' },
         { name: 'Amber Gold', color: '#e0af68' },
         { name: 'Roasted Mocha', color: '#c48b71' },
@@ -35,6 +37,8 @@ export const ACCENT_PRESETS = {
     ],
     light: [
         { name: 'Amber Chestnut', color: '#6d3b09' },
+        { name: 'Obsidian Black', color: '#18181b' },
+        { name: 'Tokyo Charcoal', color: '#1f2335' },
         { name: 'Warm Chestnut', color: '#7b3f28' },
         { name: 'Espresso Brown', color: '#5c3d2e' },
         { name: 'Terracotta Rust', color: '#a64b2a' },
