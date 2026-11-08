@@ -138,8 +138,7 @@ console.log('Running Mise TLS certificate policy and local network trust regress
 {
     setTrustedCertificates(['custom-server.internal:4433', 'remote-device.com:8443']);
     const current = getTrustedCertificates();
-    assert.strictEqual(current.includes('custom-server.internal:4433'), true);
-    assert.strictEqual(current.includes('remote-device.com:8443'), true);
+    assert.deepStrictEqual(current, ['custom-server.internal:4433', 'remote-device.com:8443']);
 
     assert.strictEqual(isCertificateAllowed('https://remote-device.com:8443/app'), true);
     assert.strictEqual(isCertificateAllowed('https://remote-device.com/other'), false);

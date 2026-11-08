@@ -23,14 +23,24 @@ function returnFocusToWebview() {
 export function normalizeEmailHandler(handler) {
     if (!handler || typeof handler !== 'string') return 'system';
     if (handler === 'system') return 'system';
-    if (handler.includes('mail.google.com') && (handler.includes('#inbox?compose') || !handler.includes('view=cm'))) {
-        return 'https://mail.google.com/mail/?view=cm&fs=1&to=%t&su=%s&body=%b';
-    }
-    if (handler.includes('mail.zoho.eu') && (handler.includes('originalMode=compose') || (!handler.includes('ct=') && !handler.includes('%m')))) {
-        return 'https://mail.zoho.eu/zm/comp.do?ct=%m';
-    }
-    if (handler.includes('mail.zoho.com') && (handler.includes('originalMode=compose') || (!handler.includes('ct=') && !handler.includes('%m')))) {
-        return 'https://mail.zoho.com/zm/comp.do?ct=%m';
+    try {
+        const parsed = new URL(handler);
+        const host = parsed.hostname.toLowerCase();
+        if (host === 'mail.google.com') {
+            if (parsed.hash.includes('compose') || parsed.searchParams.get('view') !== 'cm') {
+                return 'https://mail.google.com/mail/?view=cm&fs=1&to=%t&su=%s&body=%b';
+            }
+        } else if (host === 'mail.zoho.eu') {
+            if (parsed.searchParams.get('originalMode') === 'compose' || (!parsed.searchParams.has('ct') && !handler.includes('%m'))) {
+                return 'https://mail.zoho.eu/zm/comp.do?ct=%m';
+            }
+        } else if (host === 'mail.zoho.com') {
+            if (parsed.searchParams.get('originalMode') === 'compose' || (!parsed.searchParams.has('ct') && !handler.includes('%m'))) {
+                return 'https://mail.zoho.com/zm/comp.do?ct=%m';
+            }
+        }
+    } catch (_) {
+        return handler;
     }
     return handler;
 }

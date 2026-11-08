@@ -326,6 +326,13 @@ console.log('Running Mise transient share modal lifecycle regression tests...');
     );
     assert(shareUrl.includes('to=&su=Shared%20link'), 'Empty recipient must produce clean compose query without placeholder leak');
 
+    // Verify hostname spoofing guard against substring hijacking
+    assert.strictEqual(
+        normalizeEmailHandler('https://evil.com/mail.zoho.com'),
+        'https://evil.com/mail.zoho.com',
+        'Spoofed host containing target domain in path must not be normalized'
+    );
+
     console.log('✓ buildEmailComposeUrl webmail parameter construction and migration verified');
 }
 
