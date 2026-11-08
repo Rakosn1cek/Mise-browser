@@ -263,7 +263,7 @@ More importantly, we authored a dedicated regression test (`tests/main-modularis
 
 ## 7. Lessons Learned & Key Takeaways
 
-1. **Late-Bound Closures Defeat Circular Deadlocks**: When modularising monolithic codebases, avoid importing coordinators circularly. Pass functional getters (`getMainWindow`) during initialization so resolution occurs at execution time.
+1. **Late-Bound Closures Defeat Circular Deadlocks**: When modularising monolithic codebases, avoid importing coordinators circularly. Pass functional getters (`getMainWindow`) during initialisation so resolution occurs at execution time.
 2. **Defend Against C++ Object Destruction**: In Electron, Chromium WebContents can be destroyed while Node.js events are still queued in the microtask pipeline. Always guard callbacks with `!wc.isDestroyed()`.
 3. **Formalise IPC Security Boundaries Early**: If you introduce a security guard to block untrusted frames, document and freeze an explicit allowlist of legitimate guest channels before flipping the switch to enforce mode.
 4. **Exit Ordering Must Be Deterministic**: Shutdown state persistence cannot be left to floating asynchronous promises. Coordinate sentinel updates and disk flushes synchronously.

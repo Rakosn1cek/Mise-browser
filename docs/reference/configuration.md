@@ -58,6 +58,13 @@ Controls hardware switches, process limits, privacy whitelists, and search prefe
     "doh_custom_url": "",
     "allow_local_certificates": true,
     "trusted_certificates": [],
+    "filter_lists": {
+        "easylist": true,
+        "easyprivacy": true,
+        "annoyances": false,
+        "social": false,
+        "custom_urls": []
+    },
     "trusted_domains": [
         "x.com",
         "amazon.co.uk",
@@ -88,6 +95,12 @@ Controls hardware switches, process limits, privacy whitelists, and search prefe
 - **`webview_theme`**: Website native theme preference (`dark` or `light`), toggled via the sidebar theme button.
 - **`allow_local_certificates`**: When `true` (default), permits connections to self-signed TLS certificates on private subnets and local endpoints (192.168.*, 10.*, 172.16-31.*, localhost, .local) for home servers, Cockpit, Proxmox, TrueNAS, and routers.
 - **`trusted_certificates`**: Array of host and port endpoints explicitly permitted to bypass TLS certificate verification (e.g. `["192.168.1.61:9090"]`).
+- **`filter_lists`**: Object configuring active adblocking and tracker filter list subscriptions:
+  - **`easylist`**: Enables core EasyList ad and banner blocking rules (default: `true`).
+  - **`easyprivacy`**: Enables EasyPrivacy tracker and analytics blocking rules (default: `true`).
+  - **`annoyances`**: Enables uBlock and EasyList annoyances rules for cookie notices and popups (default: `false`).
+  - **`social`**: Enables Fanboy social media widget blocking rules (default: `false`).
+  - **`custom_urls`**: Array of custom HTTPS community filter list URLs.
 - **`theme_colors`**: Custom visual colour palette and opacity settings per theme mode:
 
 ![Appearance and Visual Theme Preferences](/screenshots/preferences-2.webp)

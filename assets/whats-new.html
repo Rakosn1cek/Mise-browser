@@ -259,56 +259,71 @@
                 <img src="icons/Mise-logo48.png" alt="Mise Logo">
                 <h1>What's New in Mise v1.5.0</h1>
             </div>
-            <p class="subtitle">The v1.5.0 Architecture &amp; Keyboard Polish Update: Codebase modularisation across stylesheets, renderer controllers, and webview managers, alongside hardened keyboard navigation, overlay focus trapping, direct webview navigation dispatch, and expanded automated test verification.</p>
+            <p class="subtitle">The v1.6.0 Modular Architecture &amp; Network Filtering Update: Full main process subsystem modularisation, on-demand shell overlay templates, community filter list subscriptions with off-thread worker compilation, workspace cookie auditing and purging, address bar terminal execution, local network TLS certificate trust, neutral theme presets, and direct developer feedback channels.</p>
         </header>
 
         <section class="feature-card">
-            <h2 class="feature-title">Codebase Modularisation &amp; Vanilla Architecture</h2>
+            <h2 class="feature-title">Community Filter List Subscriptions</h2>
             <p class="feature-desc">
-                Comprehensive architectural refactoring decomposing monolithic files into clean, specialised domain modules without bundler overhead.
+                Comprehensive content filtering enhancements introducing granular community filter list subscriptions with asynchronous worker thread compilation and instant hot-swapping.
             </p>
             <ul class="feature-points">
-                <li><strong>Stylesheet Modularisation:</strong> Decomposed monolithic <code>style.css</code> (reduced from 4,845 lines to a 9-line master aggregator) into domain-specific modules under <code>styles/</code> and 8 dedicated overlay sheets under <code>styles/overlays/</code> using native CSS imports.</li>
-                <li><strong>Renderer Process Modularisation:</strong> Decomposed monolithic <code>renderer.js</code> (reduced from 1,407 lines to a 249-line entry orchestrator) into 5 specialised ES controllers under <code>modules/renderer/</code> for browser initialisation, sidebar controls, workspaces, theming, and in-page search.</li>
-                <li><strong>Webview Subsystem Modularisation:</strong> Extracted webview tab lifecycle, split view, memory sleep management, and audio control into discrete controllers under <code>modules/webview/</code>.</li>
-                <li><strong>Zero Runtime Overhead:</strong> Preserved pure vanilla ES modules and standard CSS without bundlers, maintaining ultra-low CPU and memory footprints.</li>
+                <li><strong>Configurable Filter Lists:</strong> Enable or disable specialised community blocklists directly in Preferences under Privacy &amp; Protection: EasyList, EasyPrivacy, uBlock Annoyances (cookie consent popups and GDPR banners), and Fanboy's Social Media protection.</li>
+                <li><strong>Custom HTTPS Subscriptions:</strong> Subscribe to custom regional or specialised HTTPS filter lists, guarded by strict URL validation and SSRF network protections.</li>
+                <li><strong>Off-Thread Rule Compilation:</strong> Filter lists compile in background worker threads (<code>adblocker-build.js</code>), preventing UI lag and interface hitching during compilation of over 150,000 filtering rules.</li>
+                <li><strong>Dynamic Hot-Swapping &amp; Caching:</strong> Serialised rule sets are cached to disk using deterministic SHA-256 keys and hot-swapped dynamically across all active container sessions without requiring a browser restart.</li>
             </ul>
         </section>
 
         <section class="feature-card">
-            <h2 class="feature-title">Overlay Keyboard Trapping &amp; Navigation Polish</h2>
+            <h2 class="feature-title">Main Process &amp; Shell Overlay Modularisation</h2>
             <p class="feature-desc">
-                Hardened keyboard focus loops, robust keyboard traversal, and layout stability across all full-page overlays.
+                Major architectural refactoring decomposing the monolithic Electron main process and application shell into lightweight, specialised subsystems without bundler weight.
             </p>
             <ul class="feature-points">
-                <li><strong>Command Palette Navigation:</strong> Fixed category filter chip jitter with stable layout rules. Arrow keys cycle through filter chips and commands cleanly, whilst circular Tab trapping ensures focus never escapes the palette.</li>
-                <li><strong>Notes Overlay Focus Trapping:</strong> Webviews are safely hidden on open, Tab and Shift + Tab cycle strictly through all note controls without focus leakage, Enter toggles edit mode or clicks actions, and Escape cleans up state upon dismissal.</li>
-                <li><strong>Workspace Dashboard Navigation:</strong> Full keyboard navigation across workspace cards, direct delete button delegation with safe fallback protection to prevent accidental deletion of active or default workspaces.</li>
-                <li><strong>Workspace Palette Commands:</strong> Added dedicated Command Palette actions under a new "Workspaces &amp; Dashboard" category to create, rename, and delete workspaces directly.</li>
+                <li><strong>Main Process Coordinator:</strong> Decomposed monolithic <code>main.js</code> (reduced from 1,411 lines down to ~518 lines) into 4 specialised domain modules under <code>main/</code>: window management (<code>windowManager.js</code>), web contents security policy (<code>webContentsPolicy.js</code>), context menus (<code>contextMenus.js</code>), and system IPC (<code>systemIpc.js</code>).</li>
+                <li><strong>Interface Shell &amp; Lazy Templates:</strong> Streamlined <code>index.html</code> (reduced from 1,025 lines down to 176 lines) preserving only core persistent scaffolding, with all 10 full-page overlays extracted into modular HTML templates under <code>templates/</code> mounted on demand via <code>modules/templateLoader.js</code> with background idle preloading.</li>
+                <li><strong>Lifecycle &amp; Navigation Fixes:</strong> Resolved guest webview teardown race conditions on tab closure and cleaned trusted domain exemptions.</li>
             </ul>
         </section>
 
         <section class="feature-card">
-            <h2 class="feature-title">Direct Webview Navigation &amp; Visual Feedback</h2>
+            <h2 class="feature-title">Workspace Cookie Inspector &amp; Purge</h2>
             <p class="feature-desc">
-                Instantaneous navigation dispatch, responsive loading states, and automatic keyboard focus return.
+                Live container storage auditing and surgical cookie clearing directly within the Workspace Dashboard.
             </p>
             <ul class="feature-points">
-                <li><strong>Direct Webview Navigation API:</strong> Upgraded address bar submission to trigger native webview <code>loadURL()</code> alongside <code>src</code> attribute updates, guaranteeing immediate navigation dispatch.</li>
-                <li><strong>Immediate Tab Loading Feedback:</strong> Actively updates the active tab label in the sidebar with the target host and a "Loading..." indicator upon submission so navigation dispatch is visibly acknowledged.</li>
-                <li><strong>Webview Focus Restoration:</strong> Automatically restores keyboard focus to the active guest webview after address bar submission and Escape cancellation, enabling immediate Vim normal-mode shortcuts (<kbd>f</kbd>, <kbd>j</kbd>, <kbd>k</kbd>) without mouse clicks.</li>
-                <li><strong>Status Bar Mode Synchronisation:</strong> Real-time synchronisation of the status bar mode indicator with link hint overlay activation.</li>
+                <li><strong>Live Container Cookie Auditing:</strong> Every workspace card in the Workspace Dashboard (<kbd>Ctrl + Shift + W</kbd>) displays its real-time stored cookie count alongside its active partition badge.</li>
+                <li><strong>Surgical Per-Workspace Purge:</strong> Click the cookie purge button next to any workspace to clear stored cookies for that specific container partition without logging you out of adjacent workspaces.</li>
+                <li><strong>Explicit Safety Dialogue:</strong> Purge requests require confirmation before dispatching, preventing accidental session loss in critical workflows.</li>
             </ul>
         </section>
 
         <section class="feature-card">
-            <h2 class="feature-title">Expanded Automated Regression Suite</h2>
+            <h2 class="feature-title">Address Bar Terminal Execution &amp; Local TLS Trust</h2>
             <p class="feature-desc">
-                Comprehensive automated test verification protecting stability, architecture boundaries, and user interactions.
+                Seamless command execution directly from the address bar alongside automatic trust for local network TLS certificates.
             </p>
             <ul class="feature-points">
-                <li>Expanded test coverage to 70 comprehensive test suites, all passing with 100% verification across security, storage, navigation, and modular controllers.</li>
-                <li>Strict architectural guardrails verified in tests, ensuring renderer line budget caps, master stylesheet import integrity, and anti-pastejacking barriers remain inviolate.</li>
+                <li><strong>Address Bar Terminal Execution:</strong> Type terminal commands directly into the status bar address bar (<kbd>Ctrl + L</kbd> or <kbd>!</kbd>) with shell prefixes (<code>$</code>, <code>&gt;</code>, <code>:sh</code>, <code>term</code>). Heuristic command classification stages vetted instructions to your system clipboard and launches your external terminal emulator.</li>
+                <li><strong>Pastejacking Protection:</strong> Clipboard-staged terminal commands are sanitised via <code>security.sanitiseTerminalCommand</code>, neutralising embedded line breaks and null bytes to prevent automatic command execution upon pasting.</li>
+                <li><strong>Local Network TLS Certificate Trust:</strong> Enabled by default (<code>allow_local_certificates</code>), automatically trusting self-signed certificates on private subnets (RFC 1918 <code>192.168.0.0/16</code>, <code>10.0.0.0/8</code>, <code>172.16.0.0/12</code>), loopback (<code>127.0.0.0/8</code> / <code>localhost</code>), and local domains (<code>.local</code>, <code>.lan</code>) for home servers, Cockpit, Proxmox, TrueNAS, and router portals.</li>
+                <li><strong>Informative Error Interstitial:</strong> Beautiful Tokyo Night error interstitial page (<code>assets/error.html</code>) displaying exact Chromium failure codes with retry and certificate exception options, accompanied by a <code>LOCAL TLS</code> badge on the status bar.</li>
+            </ul>
+        </section>
+
+        <section class="feature-card">
+            <h2 class="feature-title">Community Feedback, Neutral Themes &amp; Polish</h2>
+            <p class="feature-desc">
+                Dedicated feedback channels, minimalist visual themes, and upstream framework upgrades.
+            </p>
+            <ul class="feature-points">
+                <li><strong>Direct Community Channels:</strong> Connect with the developer and users via the official Matrix community (<a href="https://matrix.to/#/#mise-browser:matrix.org" target="_blank" rel="noopener noreferrer">#mise-browser:matrix.org</a>) or direct email (<a href="mailto:rakosn1cek@zohomail.eu">rakosn1cek@zohomail.eu</a>), accessible from Preferences (<kbd>Ctrl + H</kbd>) and the Command Palette (<kbd>Ctrl + P</kbd>).</li>
+                <li><strong>Configurable Webmail Compose:</strong> Choose between system <code>mailto:</code> or webmail providers (Gmail, Zoho Mail, Outlook, ProtonMail, Fastmail) for sharing links and sending pre-filled feedback.</li>
+                <li><strong>Sanitised Diagnostic Bug Reports:</strong> One-click "Email Sanitised Report" in the Diagnostics overlay prepares a scrubbed diagnostic report for troubleshooting.</li>
+                <li><strong>Neutral White &amp; Black Themes:</strong> Added clean neutral white and black accent presets in Preferences for minimalist styling.</li>
+                <li><strong>Upstream Engine Upgrades:</strong> Upgraded to Electron v45.2.3 and Vite v6.4.5, delivering the latest Chromium security patches and Wayland stability enhancements.</li>
+                <li><strong>Comprehensive Test Coverage:</strong> Expanded automated test suite to 74 comprehensive test suites, all passing with 100% verification across security, storage, navigation, and modular controllers.</li>
             </ul>
         </section>
 

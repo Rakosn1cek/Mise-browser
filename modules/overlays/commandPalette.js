@@ -80,8 +80,21 @@ export function buildEmailComposeUrl(template, { to = '', subject = '', body = '
 export async function launchEmailComposer({
     to = 'rakosn1cek@zohomail.eu',
     subject = '[Mise Browser Feedback]',
-    body = 'Hi,\n\nHere is my feedback for Mise Browser:\n\n\nEnvironment:\n- Window Manager / Desktop: \n- Mise Version: 1.5.0\n'
+    body = null
 } = {}) {
+    let appVer = '1.6.0';
+    try {
+        if (window.miseAPI && typeof window.miseAPI.getAppVersion === 'function') {
+            const v = await window.miseAPI.getAppVersion();
+            if (v) appVer = v;
+        }
+    } catch (e) {
+        appVer = '1.6.0';
+    }
+    if (!body) {
+        body = `Hi,\n\nHere is my feedback for Mise Browser:\n\n\nEnvironment:\n- Window Manager / Desktop: \n- Mise Version: ${appVer}\n`;
+    }
+
     let cfg = {};
     try {
         if (window.miseAPI && typeof window.miseAPI.getBrowserSettings === 'function') {

@@ -43,7 +43,7 @@ The Command & Script security scanner and interactive pager used in this workflo
 
 Oversight is **strictly optional** and is **not bundled** into the Mise Browser application package:
 
-* **With Oversight Installed**: When you paste and execute a command prefixed with `oversight`, the tool intercepts the command, analyzes Shannon entropy for obfuscated payloads, checks for CVE vulnerabilities via the OSV.dev database, and renders an interactive TUI pager allowing line-by-line inspection before confirming execution.
+* **With Oversight Installed**: When you paste and execute a command prefixed with `oversight`, the tool intercepts the command, analyses Shannon entropy for obfuscated payloads, checks for CVE vulnerabilities via the OSV.dev database, and renders an interactive TUI pager allowing line-by-line inspection before confirming execution.
 * **Without Oversight Installed (Running at Your Own Risk)**: If you choose not to install the standalone Oversight tool, any commands staged to the clipboard and executed in the terminal will run without safety checks, warnings, or heuristic auditing. You execute them entirely at your own risk.
 
 ### Installation & Integration

@@ -112,7 +112,7 @@ Touching hibernation parameters or making unmounting more aggressive during the 
 
 ### Hardened Engine Switches and Session Partitions
 
-Chromium engine switches (such as capping compositor GPU texture allocations to 512MB and forcing WebRTC to bind only to public default interfaces) remained anchored directly in `main.js` during the early boot phase, ensuring engine hardening applies before the Chromium renderer initializes.
+Chromium engine switches (such as capping compositor GPU texture allocations to 512MB and forcing WebRTC to bind only to public default interfaces) remained anchored directly in `main.js` during the early boot phase, ensuring engine hardening applies before the Chromium renderer initialises.
 
 ---
 
