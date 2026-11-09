@@ -72,10 +72,36 @@ To distinguish container profiles instantly in the vertical sidebar, each worksp
 
 - **Sidebar Badge Customisation**: The 28x28px `#WorkspaceBadge` in the sidebar immediately adopts the custom glyph (e.g. `1`, `W`, `💼`, `★`, `⚡`) and accent colour, tinting its border, text, and translucent background.
 - **Immediate Peripheral Feedback**: Even in the auto-collapsed 36px sidebar strip, the custom badge gives immediate peripheral visual feedback on which container context is active, preventing accidental cross-context actions.
-- **Tokyo Night Harmonious Palette**: Choose from 9 curated Tokyo Night palette swatches (Tokyo Blue, Cyan, Emerald Green, Amber Orange, Lavender Purple, Magenta Rose, Teal, Warm Yellow, Silver) or input a custom hex code.
-- **Dashboard Customisation & Editing**: In the Workspace Dashboard (`Ctrl + Shift + W`), each workspace displays its glyph badge and colour swatch. Click the palette icon button on any workspace node to open the visual identity editor, or configure colours and glyphs during new workspace creation.
-- **Zero-Trust Security & XSS Guards**: Colours are strictly validated against hex regex patterns, and glyphs are sanitised to strip control codes and bidirectional overrides. Glyphs are bounded to a single grapheme cluster via native `Intl.Segmenter` and rendered safely via `textContent`.
-- **Private Profile Immunity**: The permanent `Private` profile retains an immutable rose accent (`#f7768e`) and shield badge to prevent persistent workspaces from masquerading as the private container.
+- **Status Bar Container Sync**: The bottom status bar's container partition indicator (`#StatusBarPartition`) automatically inherits the active workspace's accent border and displays its glyph, providing redundant peripheral context.
+- **Tokyo Night Harmonious Palette**: Choose from 9 curated Tokyo Night palette swatches or input a custom hex code:
+
+| Swatch Name | Hex Code | Ideal Container Use Case |
+| :- | :- | :- |
+| **Tokyo Blue** | `#7aa2f7` | Default persistent workspaces and general browsing |
+| **Cyan** | `#7dcfff` | Technical documentation, research, and API consoles |
+| **Emerald Green** | `#9ece6a` | Financial portals, banking, and online commerce |
+| **Amber Orange** | `#ff9e64` | Development, staging, and local web servers |
+| **Lavender Purple**| `#bb9af7` | Media, streaming, music, and entertainment |
+| **Magenta Rose** | `#f7768e` | Reserved for the permanent volatile Private Profile |
+| **Teal** | `#2ac3de` | Communications, Slack, Discord, and Matrix chat |
+| **Warm Yellow** | `#e0af68` | Observability, metrics, log portals, and monitoring |
+| **Silver Storm** | `#a9b1d6` | Administrative utilities, email, and scratch containers |
+
+### Configuring Visual Identity in the Dashboard
+
+Visual identity is configured directly within the Workspace Dashboard (`Ctrl + Shift + W`):
+
+1. **During Workspace Creation**: Click **+ New Workspace** (or press Enter on the button). In addition to entering a workspace name, pick any colour from the swatch row (or type a custom 3-digit or 6-digit hex code) and optionally specify a single-character glyph or emoji.
+2. **Editing Existing Workspaces**: Every persistent workspace node in the dashboard tree features a dedicated palette icon button (`<i class="fa-solid fa-palette"></i>`). Clicking this button opens the visual identity editor with current values pre-populated. Press **Tab** to navigate between fields, pick an accent colour, and press **Enter** to apply changes instantly across the interface.
+3. **Keyboard Ergonomics**: Press **Escape** at any time to cancel changes without modifying container state.
+
+### Security and Privacy Safeguards
+
+- **Strict Colour Sanitisation**: Custom hex values are validated against `/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/`. Arbitrary CSS injections, `url(...)` declarations, or JavaScript schemes are rejected outright with fallback to Tokyo Blue.
+- **Single Grapheme Cluster Bounds**: Glyphs are normalised via `NFC`, stripped of control codes (`\u0000` to `\u001F`, `\u007F` to `\u009F`) and bidirectional override characters (`\u202A` to `\u202E`, `\u2066` to `\u2069`), and strictly bounded to one visual grapheme cluster using native `Intl.Segmenter`.
+- **Zero-Trust XSS Protection**: Glyphs are inserted exclusively via `element.textContent`, preventing DOM injection attacks.
+- **Private Profile Immunity**: The permanent `Private` profile (`MisePrivateProfile`) retains an immutable rose accent (`#f7768e`) and shield badge. Persistent workspaces cannot override or spoof the private container's identity.
+- **Zero External Network Leaks**: All glyphs and colours render locally using host system font stacks and CSS variables without external CDN or web font queries.
 
 ***
 

@@ -173,13 +173,23 @@ Maintains persistent workspaces, URLs, titles, Dark Reader preferences, and slee
     "tab_favicons": {
         "Work": ["https://github.com/favicon.ico"],
         "Personal": ["https://archlinux.org/favicon.ico"]
+    },
+    "workspace_visuals": {
+        "Work": {
+            "color": "#9ece6a",
+            "glyph": "💼"
+        },
+        "Personal": {
+            "color": "#7aa2f7",
+            "glyph": "1"
+        }
     }
 }
 ```
 
 ### Session Files & Atomic Resilience
 
-- **`session.json`**: The primary session state file. To prevent data corruption during sudden system shutdowns or power cuts, Mise writes updates to a temporary file (`session.json.tmp`) and swaps it via an atomic POSIX rename operation.
+- **`session.json`**: The primary session state file. To prevent data corruption during sudden system shutdowns or power cuts, Mise writes updates to a temporary file (`session.json.tmp`) and swaps it via an atomic POSIX rename operation. Contains persistent tab URLs, active tab indices, titles, dark reader preferences, pinned tabs, and `workspace_visuals` (custom accent colours and single-character glyph badges per workspace). Visual identities for the volatile Private profile are filtered out on disk.
 - **`session.json.bak`**: A rolling backup journal automatically updated before every primary session flush. If `session.json` is missing or corrupted, Mise automatically recovers the previous state from this journal.
 - **`session_sentinel.json`**: A lifecycle sentinel file recording whether the previous browser process terminated cleanly (`"clean_exit": true`). If an abrupt crash, kill signal, or power failure occurs, the sentinel detects `clean_exit: false` on startup, engages crash recovery mode, forces background tabs to sleep to avert memory spikes, and displays a status bar notice.
 
