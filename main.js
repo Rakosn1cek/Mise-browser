@@ -134,20 +134,19 @@ initializeEngineSwitches();
 contextMenus.setMainWindowGetter(getMainWindow);
 
 // Queue initial command line URLs received on cold start
-extractUrlsFromArgs(process.argv).forEach(url => dispatchTabUrl(url));
-
+const coldBootCfg = loadBrowserConfig();
+security.setAllowLocalDocuments(coldBootCfg.allow_local_documents === true);
+extractUrlsFromArgs(process.argv).forEach(url => {
+    if (security.isSafeTabUrl(url) || security.isAllowedLocalDocumentUrl(url)) dispatchTabUrl(url);
+});
 
 function sendSystemNotification(title, body) {
     if (!Notification.isSupported()) return;
-
     const notification = new Notification({
-        title: title,
-        body: body,
+        title, body,
         icon: path.join(__dirname, 'assets', 'icons', 'Mise-logo256.png'),
-        urgency: 'low',
-        silent: true
+        urgency: 'low', silent: true
     });
-
     notification.show();
 }
 
@@ -364,6 +363,7 @@ ipcMain.on('set-native-theme', (event, mode) => {
 config.registerConfigIpc(ipcMain, {
     onTrustedDomainsChange: security.setTrustedDomains,
     onAllowLocalCertificatesChange: security.setAllowLocalCertificates,
+    onAllowLocalDocumentsChange: security.setAllowLocalDocuments,
     onTrustedCertificatesChange: security.setTrustedCertificates,
     onSpellcheckerChange: applySpellcheckerToAllSessions,
     onDiagnosticsChange: diagnostics.setDiagnosticsEnabled,
@@ -489,7 +489,7 @@ if (gotSingleInstanceLock) {
 
             const incomingUrls = extractUrlsFromArgs(commandLine);
             incomingUrls.forEach(url => {
-                if (security.isSafeTabUrl(url)) {
+                if (security.isSafeTabUrl(url) || security.isAllowedLocalDocumentUrl(url)) {
                     dispatchTabUrl(url);
                 }
             });
@@ -504,7 +504,7 @@ if (gotSingleInstanceLock) {
             win.show();
             win.focus();
         }
-        if (security.isSafeTabUrl(url)) {
+        if (security.isSafeTabUrl(url) || security.isAllowedLocalDocumentUrl(url)) {
             dispatchTabUrl(url);
         }
     });
@@ -519,6 +519,7 @@ if (gotSingleInstanceLock) {
         checkAndInitializeSentinel();
         const cfg = loadBrowserConfig();
         security.setAllowLocalCertificates(cfg.allow_local_certificates !== false);
+        security.setAllowLocalDocuments(cfg.allow_local_documents === true);
         security.setTrustedCertificates(cfg.trusted_certificates || []);
         applyDoHConfiguration(app, cfg.doh_provider, cfg.doh_custom_url);
         diagnostics.initDiagnostics(cfg);

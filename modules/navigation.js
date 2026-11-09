@@ -76,13 +76,21 @@ function applyTargetUrl(targetUrl) {
     if (!targetUrl || typeof targetUrl !== 'string') return;
 
     if ((targetUrl.startsWith('file:') || targetUrl.startsWith('/')) && !isPdfUrl(targetUrl)) {
-        if (typeof setTargetUrl === 'function') {
-            setTargetUrl('Local file access restricted to PDF documents.', 4000);
+        let isAllowed = false;
+        if (window.miseAPI && typeof window.miseAPI.isAllowedLocalDocumentUrl === 'function') {
+            try {
+                isAllowed = window.miseAPI.isAllowedLocalDocumentUrl(targetUrl);
+            } catch (_) {}
         }
-        const addressBar = document.getElementById('WideAddressBar');
-        dismissAddressBar(addressBar);
-        focusActiveWebview();
-        return;
+        if (!isAllowed) {
+            if (typeof setTargetUrl === 'function') {
+                setTargetUrl('Local file access restricted to PDF documents.', 4000);
+            }
+            const addressBar = document.getElementById('WideAddressBar');
+            dismissAddressBar(addressBar);
+            focusActiveWebview();
+            return;
+        }
     }
 
     const currentWS = state.sessionState.current_workspace;
@@ -288,11 +296,39 @@ export async function handleNavigation(input) {
     if (!targetUrl) {
         if (trimmedInput.startsWith('/') || trimmedInput.startsWith('file://')) {
             const candidateUrl = trimmedInput.startsWith('/') ? 'file://' + trimmedInput : trimmedInput;
+            let allowLocalDocs = false;
+            if (window.miseAPI && typeof window.miseAPI.getBrowserSettings === 'function') {
+                try {
+                    const cfg = await window.miseAPI.getBrowserSettings();
+                    allowLocalDocs = !!(cfg && cfg.allow_local_documents);
+                } catch (e) {}
+            }
             if (isPdfUrl(candidateUrl)) {
                 targetUrl = candidateUrl;
+            } else if (allowLocalDocs) {
+                const validation = (window.miseAPI && typeof window.miseAPI.validateLocalDocumentPath === 'function')
+                    ? window.miseAPI.validateLocalDocumentPath(candidateUrl)
+                    : { allowed: false, reason: 'api_unavailable' };
+                if (validation && validation.allowed) {
+                    targetUrl = candidateUrl;
+                } else {
+                    if (typeof setTargetUrl === 'function') {
+                        setTargetUrl('Local document rejected: invalid type or sensitive path.', 4000);
+                    }
+                    if (typeof showNotificationToast === 'function') {
+                        showNotificationToast('Local document rejected: invalid type or sensitive path.', 'fa-triangle-exclamation');
+                    }
+                    const addressBar = document.getElementById('WideAddressBar');
+                    dismissAddressBar(addressBar);
+                    focusActiveWebview();
+                    return;
+                }
             } else {
                 if (typeof setTargetUrl === 'function') {
                     setTargetUrl('Local file access restricted to PDF documents.', 4000);
+                }
+                if (typeof showNotificationToast === 'function') {
+                    showNotificationToast('Local document access disabled. Enable in Preferences.', 'fa-shield-halved');
                 }
                 const addressBar = document.getElementById('WideAddressBar');
                 dismissAddressBar(addressBar);

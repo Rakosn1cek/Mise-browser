@@ -758,6 +758,198 @@ function sanitiseTerminalCommand(commandStr, maxLength = 4096) {
     return clean.slice(0, limit).trim();
 }
 
+let allowLocalDocuments = false;
+
+const ALLOWED_LOCAL_DOCUMENT_EXTENSIONS = new Set([
+    '.html',
+    '.htm',
+    '.xhtml',
+    '.txt',
+    '.svg',
+    '.pdf'
+]);
+
+const FORBIDDEN_SYSTEM_PATHS = [
+    '/etc',
+    '/proc',
+    '/sys',
+    '/dev',
+    '/boot',
+    '/root',
+    '/bin',
+    '/sbin',
+    '/lib',
+    '/lib64',
+    '/run',
+    '/var/run',
+    '/var/log',
+    '/var/lib',
+    '/lost+found'
+];
+
+const FORBIDDEN_USR_PATHS = [
+    '/usr/bin',
+    '/usr/sbin',
+    '/usr/lib',
+    '/usr/libexec',
+    '/usr/local/bin',
+    '/usr/local/sbin'
+];
+
+const FORBIDDEN_CREDENTIAL_SEGMENTS = new Set([
+    '.ssh',
+    '.gnupg',
+    '.gpg',
+    '.aws',
+    '.azure',
+    '.kube',
+    '.docker',
+    '.password-store',
+    '.pki',
+    'keyrings'
+]);
+
+function setAllowLocalDocuments(enabled) {
+    allowLocalDocuments = enabled === true;
+}
+
+function getAllowLocalDocuments() {
+    return allowLocalDocuments;
+}
+
+function validateLocalDocumentPath(inputPath) {
+    if (!inputPath || typeof inputPath !== 'string' || inputPath.length === 0 || inputPath.length > 4096) {
+        return { allowed: false, reason: 'invalid_input' };
+    }
+    if (inputPath.includes('\0')) {
+        return { allowed: false, reason: 'null_byte' };
+    }
+
+    let filePath = inputPath;
+    if (filePath.startsWith('file://')) {
+        try {
+            filePath = new URL(filePath).pathname;
+        } catch (_) {
+            filePath = filePath.replace(/^file:\/\//, '');
+        }
+    }
+    filePath = decodeURIComponent(filePath);
+
+    // Extension validation
+    const cleanPath = filePath.split('?')[0].split('#')[0];
+    const ext = path.extname(cleanPath).toLowerCase();
+    if (!ALLOWED_LOCAL_DOCUMENT_EXTENSIONS.has(ext)) {
+        return { allowed: false, reason: 'unsupported_extension' };
+    }
+
+    // Path resolution and symlink canonicalisation
+    let resolvedPath = path.resolve(cleanPath);
+    if (fs.existsSync(resolvedPath)) {
+        try {
+            resolvedPath = fs.realpathSync(resolvedPath);
+        } catch (_) {
+            return { allowed: false, reason: 'unresolvable_path' };
+        }
+
+        try {
+            const stats = fs.statSync(resolvedPath);
+            if (!stats.isFile()) {
+                return { allowed: false, reason: 'not_a_file' };
+            }
+            if (stats.size > 0) {
+                let fd;
+                try {
+                    fd = fs.openSync(resolvedPath, 'r');
+                    const buf = Buffer.alloc(4);
+                    const bytesRead = fs.readSync(fd, buf, 0, 4, 0);
+                    if (bytesRead >= 4 && buf[0] === 0x7f && buf[1] === 0x45 && buf[2] === 0x4c && buf[3] === 0x46) {
+                        return { allowed: false, reason: 'executable_binary' };
+                    }
+                    if (bytesRead >= 2 && buf[0] === 0x4d && buf[1] === 0x5a) {
+                        return { allowed: false, reason: 'executable_binary' };
+                    }
+                } finally {
+                    if (fd !== undefined) fs.closeSync(fd);
+                }
+            }
+        } catch (_) {
+            return { allowed: false, reason: 'stat_failed' };
+        }
+    }
+
+    // Reject hidden files
+    const basename = path.basename(resolvedPath);
+    if (basename.startsWith('.')) {
+        return { allowed: false, reason: 'hidden_file' };
+    }
+
+    // Reject forbidden system root paths
+    for (const sysPrefix of FORBIDDEN_SYSTEM_PATHS) {
+        if (resolvedPath === sysPrefix || resolvedPath.startsWith(sysPrefix + path.sep)) {
+            return { allowed: false, reason: 'forbidden_system_path' };
+        }
+    }
+
+    // Reject forbidden executable directories under /usr
+    for (const usrPrefix of FORBIDDEN_USR_PATHS) {
+        if (resolvedPath === usrPrefix || resolvedPath.startsWith(usrPrefix + path.sep)) {
+            return { allowed: false, reason: 'forbidden_system_path' };
+        }
+    }
+
+    // Reject sensitive credential and configuration segments
+    const normalised = path.normalize(resolvedPath);
+    const segments = normalised.split(path.sep).filter(Boolean);
+    for (const seg of segments) {
+        if (FORBIDDEN_CREDENTIAL_SEGMENTS.has(seg.toLowerCase())) {
+            return { allowed: false, reason: 'forbidden_credential_store' };
+        }
+    }
+
+    // Reject browser configuration and storage directories across any user profile
+    for (let i = 0; i < segments.length - 1; i++) {
+        if (segments[i] === '.config') {
+            const nextSeg = segments[i + 1].toLowerCase();
+            if (['mise-browser', 'google-chrome', 'chromium', 'bravesoftware', 'librewolf'].includes(nextSeg)) {
+                return { allowed: false, reason: 'forbidden_browser_config' };
+            }
+        }
+        if (segments[i] === '.local' && segments[i + 1] === 'share' && i + 2 < segments.length && segments[i + 2] === 'keyrings') {
+            return { allowed: false, reason: 'forbidden_credential_store' };
+        }
+    }
+    if (segments.some(s => s.toLowerCase() === '.mozilla')) {
+        return { allowed: false, reason: 'forbidden_browser_store' };
+    }
+
+    try {
+        const home = process.env.HOME || process.env.USERPROFILE || '';
+        if (home) {
+            const browserConfig = path.join(home, '.config', 'mise-browser');
+            if (resolvedPath === browserConfig || resolvedPath.startsWith(browserConfig + path.sep)) {
+                return { allowed: false, reason: 'forbidden_browser_config' };
+            }
+        }
+    } catch (_) {}
+
+    return { allowed: true, reason: '', resolvedPath };
+}
+
+function isAllowedLocalDocumentUrl(url) {
+    if (!url || typeof url !== 'string') return false;
+    if (!url.startsWith('file:') && !url.startsWith('/')) return false;
+
+    // PDFs are permissible local documents via built-in PDF viewer
+    if (isPdfExtension(url)) {
+        const val = validateLocalDocumentPath(url);
+        return val.allowed;
+    }
+
+    if (!allowLocalDocuments) return false;
+    const val = validateLocalDocumentPath(url);
+    return val.allowed;
+}
+
 let allowLocalCertificates = true;
 let trustedCertificates = new Set();
 
@@ -930,5 +1122,10 @@ module.exports = {
     getTrustedCertificates,
     addTrustedCertificate,
     removeTrustedCertificate,
-    isCertificateAllowed
+    isCertificateAllowed,
+    setAllowLocalDocuments,
+    getAllowLocalDocuments,
+    validateLocalDocumentPath,
+    isAllowedLocalDocumentUrl,
+    ALLOWED_LOCAL_DOCUMENT_EXTENSIONS
 };

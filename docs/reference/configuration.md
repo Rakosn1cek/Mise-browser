@@ -57,6 +57,7 @@ Controls hardware switches, process limits, privacy whitelists, and search prefe
     "doh_provider": "off",
     "doh_custom_url": "",
     "allow_local_certificates": true,
+    "allow_local_documents": false,
     "trusted_certificates": [],
     "filter_lists": {
         "easylist": true,
@@ -94,6 +95,7 @@ Controls hardware switches, process limits, privacy whitelists, and search prefe
 - **`theme`**: Interface theme preference (`dark` for Tokyo Night or `light`).
 - **`webview_theme`**: Website native theme preference (`dark` or `light`), toggled via the sidebar theme button.
 - **`allow_local_certificates`**: When `true` (default), permits connections to self-signed TLS certificates on private subnets and local endpoints (192.168.*, 10.*, 172.16-31.*, localhost, .local) for home servers, Cockpit, Proxmox, TrueNAS, and routers.
+- **`allow_local_documents`**: When `true`, permits viewing local documents (`.html`, `.htm`, `.xhtml`, `.txt`, `.svg`, `.pdf`) on demand. Kept `false` by default to uphold Zero-Trust local filesystem isolation, restricting access to safe user directories whilst rejecting sensitive system paths (`/etc`, `/proc`, `/sys`), hidden credential stores, and executable scripts.
 - **`trusted_certificates`**: Array of host and port endpoints explicitly permitted to bypass TLS certificate verification (e.g. `["192.168.1.61:9090"]`).
 - **`filter_lists`**: Object configuring active adblocking and tracker filter list subscriptions:
   - **`easylist`**: Enables core EasyList ad and banner blocking rules (default: `true`).

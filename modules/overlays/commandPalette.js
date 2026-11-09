@@ -1290,6 +1290,11 @@ export async function syncPreferencesUI() {
                 allowLocalCertsToggle.checked = cfg.allow_local_certificates !== false;
             }
 
+            const allowLocalDocsToggle = document.getElementById('setting-allow-local-documents');
+            if (allowLocalDocsToggle) {
+                allowLocalDocsToggle.checked = !!cfg.allow_local_documents;
+            }
+
             const trustedCertsField = document.getElementById('setting-trusted-certificates');
             if (trustedCertsField) {
                 trustedCertsField.value = Array.isArray(cfg.trusted_certificates) ? cfg.trusted_certificates.join('\n') : '';
@@ -1917,6 +1922,17 @@ export function setupPreferencesListeners() {
             if (window.miseAPI && typeof window.miseAPI.updateBrowserSettings === 'function') {
                 await window.miseAPI.updateBrowserSettings({
                     allow_local_certificates: allowLocalCertsToggle.checked
+                });
+            }
+        };
+    }
+
+    const allowLocalDocsToggle = document.getElementById('setting-allow-local-documents');
+    if (allowLocalDocsToggle) {
+        allowLocalDocsToggle.onchange = async () => {
+            if (window.miseAPI && typeof window.miseAPI.updateBrowserSettings === 'function') {
+                await window.miseAPI.updateBrowserSettings({
+                    allow_local_documents: allowLocalDocsToggle.checked
                 });
             }
         };

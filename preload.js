@@ -14,6 +14,8 @@ contextBridge.exposeInMainWorld('miseAPI', {
     getErrorPageUrl: (targetUrl, errorCode, errorDesc) => ipcRenderer.sendSync('get-error-page-url', targetUrl, errorCode, errorDesc),
     trustCertificateHost: (host) => ipcRenderer.invoke('trust-certificate-host', host),
     isLocalOrPrivateHost: (host) => ipcRenderer.sendSync('is-local-or-private-host', host),
+    validateLocalDocumentPath: (targetPath) => ipcRenderer.sendSync('validate-local-document-path', targetPath),
+    isAllowedLocalDocumentUrl: (url) => ipcRenderer.sendSync('is-allowed-local-document-url', url),
     readHinterCode: () => ipcRenderer.invoke('read-hinter-code'),
     readReaderCode: () => ipcRenderer.invoke('read-reader-code'),
     showContextMenu: (params) => ipcRenderer.send('show-context-menu', params),

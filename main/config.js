@@ -56,7 +56,8 @@ const DEFAULT_CONFIG = {
     doh_custom_url: '',
     startup_behavior: 'restore',
     last_seen_version: null,
-    filter_lists: { ...DEFAULT_FILTER_LISTS }
+    filter_lists: { ...DEFAULT_FILTER_LISTS },
+    allow_local_documents: false
 };
 
 function resolveConfigDir() {
@@ -98,6 +99,7 @@ function loadBrowserConfig(targetDir = CONFIG_DIR, targetPath = CONFIG_PATH) {
             webrtc_policy: parsed.webrtc_policy || 'default_public_interface_only',
             webview_theme: parsed.webview_theme || 'dark',
             allow_local_certificates: typeof parsed.allow_local_certificates === 'boolean' ? parsed.allow_local_certificates : true,
+            allow_local_documents: typeof parsed.allow_local_documents === 'boolean' ? parsed.allow_local_documents : false,
             trusted_certificates: Array.isArray(parsed.trusted_certificates) ? parsed.trusted_certificates : [],
             doh_provider: parsed.doh_provider || 'off',
             doh_custom_url: typeof parsed.doh_custom_url === 'string' ? parsed.doh_custom_url : '',
@@ -356,7 +358,8 @@ function validateConfigPatch(patch) {
             case 'show_status_bar':
             case 'show_clock':
             case 'enable_diagnostics':
-            case 'show_window_controls': {
+            case 'show_window_controls':
+            case 'allow_local_documents': {
                 if (typeof val === 'boolean') {
                     clean[key] = val;
                 } else {
@@ -602,6 +605,11 @@ function registerConfigIpc(ipcMain, hooks = {}) {
                 before.allow_local_certificates !== merged.allow_local_certificates &&
                 typeof hooks.onAllowLocalCertificatesChange === 'function') {
                 hooks.onAllowLocalCertificatesChange(merged.allow_local_certificates);
+            }
+            if (Object.prototype.hasOwnProperty.call(payload, 'allow_local_documents') &&
+                before.allow_local_documents !== merged.allow_local_documents &&
+                typeof hooks.onAllowLocalDocumentsChange === 'function') {
+                hooks.onAllowLocalDocumentsChange(merged.allow_local_documents);
             }
             if (Object.prototype.hasOwnProperty.call(payload, 'trusted_certificates') &&
                 JSON.stringify(before.trusted_certificates) !== JSON.stringify(merged.trusted_certificates) &&

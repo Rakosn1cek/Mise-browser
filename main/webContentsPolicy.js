@@ -64,6 +64,9 @@ function setupWebContentsPolicy(app, options = {}) {
                         if (targetFilePath.startsWith(allowedAssetsDir + path.sep)) {
                             return;
                         }
+                        if (security.isAllowedLocalDocumentUrl(navigationUrl)) {
+                            return;
+                        }
                     }
                 } catch (e) {}
 

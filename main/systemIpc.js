@@ -312,6 +312,14 @@ function registerSystemIpc(ipcMain, options = {}) {
     ipcMain.on('is-local-or-private-host', (event, host) => {
         event.returnValue = security.isLocalOrPrivateHost(host);
     });
+
+    ipcMain.on('validate-local-document-path', (event, inputPath) => {
+        event.returnValue = security.validateLocalDocumentPath(inputPath);
+    });
+
+    ipcMain.on('is-allowed-local-document-url', (event, url) => {
+        event.returnValue = security.isAllowedLocalDocumentUrl(url);
+    });
 }
 
 module.exports = {
