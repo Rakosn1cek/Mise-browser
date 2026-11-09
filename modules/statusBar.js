@@ -5,6 +5,7 @@ import { state } from './state.js';
 import { escapeHtml, getWorkspacePartition } from './utils.js';
 import { isSplitActive, getSplitState } from './splitView.js';
 import { updateDarkReaderButtonUI, isWebviewDarkReaderActive } from './darkReader.js';
+import { resolveWorkspaceVisual } from './workspaceVisuals.js';
 
 let statusBarEl = null;
 let modeBadgeEl = null;
@@ -458,20 +459,31 @@ export function updatePartitionBadge(workspaceName, isPrivate) {
 
     const privateProfile = isPrivate || workspaceName === 'Private' || getWorkspacePartition(workspaceName) === 'MisePrivateProfile' || state.globalPrivateModeActive;
     const ws = privateProfile ? null : workspaceName || state.sessionState.current_workspace || 'Workspace 1';
-    const key = privateProfile ? 'private' : `workspace:${ws}`;
+    const visual = (typeof resolveWorkspaceVisual === 'function' && !privateProfile)
+        ? resolveWorkspaceVisual(ws, state.sessionState)
+        : null;
+    const key = privateProfile ? 'private' : `workspace:${ws}:${visual?.color}:${visual?.glyph}`;
     if (key === lastPartitionKey) return;
     lastPartitionKey = key;
 
     if (privateProfile) {
         partitionBadgeEl.innerHTML = '<i class="fa-solid fa-user-secret"></i><span class="status-badge-text">Private Profile</span>';
         partitionBadgeEl.className = 'status-badge status-badge-partition partition-private';
+        partitionBadgeEl.style.borderColor = '';
         partitionBadgeEl.title = 'Partition: MisePrivateProfile (Click to manage workspaces)';
         return;
     }
 
     const partitionStr = getWorkspacePartition(ws);
     const safeWs = typeof escapeHtml === 'function' ? escapeHtml(ws) : ws;
-    partitionBadgeEl.innerHTML = `<i class="fa-solid fa-box-archive"></i><span class="status-badge-text">${safeWs}</span>`;
+    if (visual) {
+        const safeGlyph = typeof escapeHtml === 'function' ? escapeHtml(visual.glyph) : visual.glyph;
+        partitionBadgeEl.innerHTML = `<span class="status-ws-glyph" style="margin-right: 5px; color: ${visual.color}; font-weight: 700;">${safeGlyph}</span><span class="status-badge-text">${safeWs}</span>`;
+        partitionBadgeEl.style.borderColor = visual.color;
+    } else {
+        partitionBadgeEl.innerHTML = `<i class="fa-solid fa-box-archive"></i><span class="status-badge-text">${safeWs}</span>`;
+        partitionBadgeEl.style.borderColor = '';
+    }
     partitionBadgeEl.className = 'status-badge status-badge-partition partition-container';
     partitionBadgeEl.title = `Container partition: ${partitionStr} (Click to manage workspaces)`;
 }

@@ -5,10 +5,18 @@
         <button id="add-ws-btn" class="dashboard-action-btn">+ New Workspace</button>
     </div>
     
-    <div id="WorkspaceInputBox">
-        <input type="text" id="NewWorkspaceTitleInput" placeholder="Workspace name...">
-        <button id="submit-ws-btn" class="dashboard-action-btn submit-btn">Save</button>
-        <button id="cancel-ws-btn" class="dashboard-action-btn cancel-btn">Cancel</button>
+    <div id="WorkspaceInputBox" class="workspace-input-box">
+        <div class="workspace-input-row">
+            <input type="text" id="NewWorkspaceTitleInput" placeholder="Workspace name..." autocomplete="off">
+            <input type="text" id="WorkspaceGlyphInput" class="workspace-glyph-input" placeholder="Glyph" maxlength="4" title="Single-character glyph or emoji" autocomplete="off">
+            <button id="submit-ws-btn" class="dashboard-action-btn submit-btn">Save</button>
+            <button id="cancel-ws-btn" class="dashboard-action-btn cancel-btn">Cancel</button>
+        </div>
+        <div id="WorkspaceVisualPickerRow" class="workspace-palette-row">
+            <span class="palette-label">Accent:</span>
+            <div id="WorkspacePaletteSwatches" class="palette-swatches"></div>
+            <input type="text" id="WorkspaceCustomColorInput" class="workspace-custom-color-input" placeholder="#7aa2f7" maxlength="7" title="Custom hex colour" autocomplete="off">
+        </div>
     </div>
 
     <div id="DashboardTreeContainer"></div>

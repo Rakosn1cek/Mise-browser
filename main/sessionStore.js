@@ -79,7 +79,7 @@ function migrateLegacyPrivateWorkspace(sessionData) {
         delete sessionData.workspaces[oldKey];
 
         // Migrate tab metadata collections
-        for (const metaKey of ['tab_titles', 'tab_favicons', 'tab_sleep_states', 'tab_dark_reader', 'tab_pinned', 'active_tabs']) {
+        for (const metaKey of ['tab_titles', 'tab_favicons', 'tab_sleep_states', 'tab_dark_reader', 'tab_pinned', 'active_tabs', 'workspace_visuals']) {
             if (sessionData[metaKey] && typeof sessionData[metaKey] === 'object' && sessionData[metaKey][oldKey]) {
                 sessionData[metaKey][targetName] = sessionData[metaKey][oldKey];
                 delete sessionData[metaKey][oldKey];
@@ -95,7 +95,7 @@ function sanitizeSessionForDisk(sessionData) {
     const clone = JSON.parse(JSON.stringify(sessionData));
     const isPrivateWS = (k) => String(k).trim().toLowerCase() === 'private';
 
-    for (const key of ['workspaces', 'tab_titles', 'tab_favicons', 'tab_sleep_states', 'tab_dark_reader', 'tab_pinned', 'active_tabs']) {
+    for (const key of ['workspaces', 'tab_titles', 'tab_favicons', 'tab_sleep_states', 'tab_dark_reader', 'tab_pinned', 'active_tabs', 'workspace_visuals']) {
         if (clone[key] && typeof clone[key] === 'object') {
             for (const ws of Object.keys(clone[key])) {
                 if (isPrivateWS(ws)) {
@@ -358,6 +358,23 @@ function registerSessionIpc(ipcMain) {
             }
             for (const [ws, idx] of Object.entries(sessionData.active_tabs)) {
                 if (typeof ws !== 'string' || ws.length > 200 || !Number.isInteger(idx) || idx < 0) {
+                    return false;
+                }
+            }
+        }
+
+        if (sessionData.workspace_visuals !== undefined) {
+            if (!sessionData.workspace_visuals || typeof sessionData.workspace_visuals !== 'object' || Array.isArray(sessionData.workspace_visuals)) {
+                return false;
+            }
+            for (const [ws, visual] of Object.entries(sessionData.workspace_visuals)) {
+                if (typeof ws !== 'string' || ws.length > 200 || !visual || typeof visual !== 'object' || Array.isArray(visual)) {
+                    return false;
+                }
+                if (visual.color !== undefined && (typeof visual.color !== 'string' || visual.color.length > 32)) {
+                    return false;
+                }
+                if (visual.glyph !== undefined && (typeof visual.glyph !== 'string' || visual.glyph.length > 16)) {
                     return false;
                 }
             }

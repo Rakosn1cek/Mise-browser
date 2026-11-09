@@ -132,7 +132,7 @@ export function setupWorkspaceListeners() {
     document.getElementById('submit-ws-btn')?.addEventListener('click', processWorkspaceCreation);
     document.getElementById('cancel-ws-btn')?.addEventListener('click', hideWorkspaceInputDialog);
 
-    document.getElementById('NewWorkspaceTitleInput')?.addEventListener('keydown', (e) => {
+    const handleInputKeydown = (e) => {
         e.stopPropagation();
         if (e.key === 'Enter') {
             e.preventDefault();
@@ -141,7 +141,11 @@ export function setupWorkspaceListeners() {
             e.preventDefault();
             hideWorkspaceInputDialog();
         }
-    });
+    };
+
+    document.getElementById('NewWorkspaceTitleInput')?.addEventListener('keydown', handleInputKeydown);
+    document.getElementById('WorkspaceGlyphInput')?.addEventListener('keydown', handleInputKeydown);
+    document.getElementById('WorkspaceCustomColorInput')?.addEventListener('keydown', handleInputKeydown);
 
     const overlay = document.getElementById('DashboardOverlay');
     if (overlay) {
@@ -153,7 +157,12 @@ export function setupWorkspaceListeners() {
                 return;
             }
 
-            if (document.activeElement === document.getElementById('NewWorkspaceTitleInput') || document.activeElement?.classList.contains('dashboard-rename-input')) return;
+            if (
+                document.activeElement === document.getElementById('NewWorkspaceTitleInput') ||
+                document.activeElement === document.getElementById('WorkspaceGlyphInput') ||
+                document.activeElement === document.getElementById('WorkspaceCustomColorInput') ||
+                document.activeElement?.classList.contains('dashboard-rename-input')
+            ) return;
 
             if (e.key === 'Enter' && document.activeElement && document.activeElement.tagName === 'BUTTON') {
                 e.preventDefault();

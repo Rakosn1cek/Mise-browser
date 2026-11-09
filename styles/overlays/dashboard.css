@@ -87,12 +87,19 @@
 
 #WorkspaceInputBox {
     display: none;
-    gap: 8px;
+    flex-direction: column;
+    gap: 10px;
     margin-bottom: 20px;
     background-color: var(--bg-sidebar);
     padding: 12px;
     border: 1px solid var(--border);
     border-radius: 6px;
+}
+
+.workspace-input-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
 }
 
 #NewWorkspaceTitleInput {
@@ -103,6 +110,95 @@
     padding: 6px 10px;
     border-radius: 4px;
     outline: none;
+}
+
+.workspace-glyph-input {
+    width: 60px;
+    background-color: var(--bg-main);
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 6px 8px;
+    border-radius: 4px;
+    outline: none;
+    text-align: center;
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.workspace-glyph-input:focus {
+    border-color: var(--accent);
+}
+
+.workspace-palette-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    padding-top: 4px;
+    font-size: 13px;
+}
+
+.palette-label {
+    color: var(--text);
+    opacity: 0.8;
+    font-size: 12px;
+    min-width: 48px;
+}
+
+.palette-swatches {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.palette-swatch-btn {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: transform 0.15s ease, border-color 0.15s ease;
+    outline: none;
+    padding: 0;
+}
+
+.palette-swatch-btn:hover {
+    transform: scale(1.15);
+}
+
+.palette-swatch-btn.selected {
+    border-color: #ffffff;
+    box-shadow: 0 0 0 2px var(--selected);
+}
+
+.workspace-custom-color-input {
+    width: 84px;
+    background-color: var(--bg-main);
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 4px 8px;
+    border-radius: 4px;
+    outline: none;
+    font-family: monospace;
+    font-size: 12px;
+}
+
+.workspace-custom-color-input:focus {
+    border-color: var(--accent);
+}
+
+.dashboard-ws-badge {
+    width: 24px;
+    min-width: 24px;
+    height: 24px;
+    border-radius: 5px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 11px;
+    border: 1px solid var(--accent);
+    margin-right: 8px;
+    text-transform: uppercase;
 }
 
 

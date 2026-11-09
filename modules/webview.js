@@ -38,6 +38,7 @@ import {
     reapplyActiveUserStyles,
     attachShieldToggleListener
 } from './webview/tabLifecycle.js';
+import { applyWorkspaceVisuals } from './workspaceVisuals.js';
 
 export {
     toggleGlobalMediaPlayback,
@@ -707,7 +708,7 @@ export function renderWorkspaceUI(targetTabToFocus = null) {
     }
     const wsBadge = document.getElementById('WorkspaceBadge');
     if (wsBadge) {
-        wsBadge.textContent = isPrivateWS ? 'PR' : getWorkspaceBadgeText(currentWS);
+        applyWorkspaceVisuals(currentWS, wsBadge, isPrivateWS, state.sessionState);
         wsBadge.title = `Workspace: ${currentWS} (Container: ${getWorkspacePartition(currentWS)})`;
     }
     const wsHeader = document.getElementById('WorkspaceHeader');

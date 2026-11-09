@@ -3,7 +3,8 @@ export const state = {
     sessionState: {
         current_workspace: "Workspace 1",
         workspaces: { "Workspace 1": ["https://duckduckgo.com"] },
-        active_tabs: { "Workspace 1": 0 }
+        active_tabs: { "Workspace 1": 0 },
+        workspace_visuals: {}
     },
     activeViewsCache: {},
     activeTitlesCache: {},

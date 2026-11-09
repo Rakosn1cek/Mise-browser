@@ -52,6 +52,7 @@ The Workspace Dashboard provides a structural tree view of all open tabs across 
 - **Focus Trapping & Action Delegation**: Pressing **Tab** cycles keyboard focus smoothly through interactive action buttons (`+ New Workspace`, Rename, Purge Cookies, and Delete). Pressing **Enter** while focused on an action button triggers that button directly without inadvertently activating the virtual tree cursor.
 - **Automatic Focus Restoration**: Focus returns automatically to `#DashboardOverlay` after tree rebuilds, prompt dismissals, or deletions, ensuring arrow navigation remains active without requiring mouse clicks.
 - **Workspace Creation**: Click the **+ New Workspace** button, press Enter on the button, or run **Create New Workspace** in the Command Palette to register a new isolated container partition.
+- **Workspace Visual Identity & Palette Customisation**: In the workspace creation dialogue, select an accent colour from the curated Tokyo Night swatches or enter a custom hex code, and assign an optional single-character glyph or emoji badge. Existing workspaces can be customised at any time by clicking the dedicated palette icon button in the workspace tree row.
 - **Workspace Renaming**: Click the rename icon button, double-click a workspace header, or trigger **Rename Active Workspace** in the Command Palette.
 - **Safe Workspace Deletion**:
   - The `Private` workspace and the final persistent workspace are strictly protected from deletion.
@@ -63,7 +64,20 @@ The Workspace Dashboard provides a structural tree view of all open tabs across 
   - Move tabs between different workspaces by dragging a tab item and dropping it onto another workspace node. When moved across workspaces, the tab automatically adapts to the target container partition.
 - **Tab Deletion**: Press **Delete** or **Ctrl + W** on any highlighted tab node in the dashboard tree to close it immediately.
 
----
+***
+
+## Workspace Visual Identity (Accent Colours & Glyph Badges)
+
+To distinguish container profiles instantly in the vertical sidebar, each workspace can be customised with a distinctive accent colour and a single-character glyph badge:
+
+- **Sidebar Badge Customisation**: The 28x28px `#WorkspaceBadge` in the sidebar immediately adopts the custom glyph (e.g. `1`, `W`, `💼`, `★`, `⚡`) and accent colour, tinting its border, text, and translucent background.
+- **Immediate Peripheral Feedback**: Even in the auto-collapsed 36px sidebar strip, the custom badge gives immediate peripheral visual feedback on which container context is active, preventing accidental cross-context actions.
+- **Tokyo Night Harmonious Palette**: Choose from 9 curated Tokyo Night palette swatches (Tokyo Blue, Cyan, Emerald Green, Amber Orange, Lavender Purple, Magenta Rose, Teal, Warm Yellow, Silver) or input a custom hex code.
+- **Dashboard Customisation & Editing**: In the Workspace Dashboard (`Ctrl + Shift + W`), each workspace displays its glyph badge and colour swatch. Click the palette icon button on any workspace node to open the visual identity editor, or configure colours and glyphs during new workspace creation.
+- **Zero-Trust Security & XSS Guards**: Colours are strictly validated against hex regex patterns, and glyphs are sanitised to strip control codes and bidirectional overrides. Glyphs are bounded to a single grapheme cluster via native `Intl.Segmenter` and rendered safely via `textContent`.
+- **Private Profile Immunity**: The permanent `Private` profile retains an immutable rose accent (`#f7768e`) and shield badge to prevent persistent workspaces from masquerading as the private container.
+
+***
 
 ## Session Persistence & Snapshot Rotation
 

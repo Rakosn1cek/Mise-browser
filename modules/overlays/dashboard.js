@@ -4,9 +4,11 @@ import { renderWorkspaceUI, switchTabFocus, spawnTabWithUrl, spawnNewBlankTab, h
 import { transferTab } from '../tabTransfer.js';
 import { ensureOverlayMounted, mountOverlaySync } from '../templateLoader.js';
 import { setupWorkspaceListeners, fetchWorkspaceCookieCounts, purgeWorkspaceCookies } from '../renderer/workspaceController.js';
+import { resolveWorkspaceVisual, validateAccentColor, sanitizeGlyph, TOKYO_NIGHT_PALETTE, DEFAULT_ACCENT_COLOR } from '../workspaceVisuals.js';
 
 let currentDialogMode = 'create';
 let renameTargetWorkspace = '';
+let selectedVisualColor = DEFAULT_ACCENT_COLOR;
 
 export function toggleDashboardView() {
     if (state.paletteActive && typeof window.toggleCommandPaletteView === 'function') {
@@ -45,7 +47,7 @@ export function toggleDashboardView() {
     }
 }
 
-export function renameWorkspace(oldName, newName) {
+export function renameWorkspace(oldName, newName, visual = null) {
     if (String(oldName).trim().toLowerCase() === 'private') return;
     if (isReservedWorkspaceName(oldName)) return;
     const trimmed = newName ? newName.trim() : '';
@@ -97,6 +99,15 @@ export function renameWorkspace(oldName, newName) {
     if (state.sessionState.tab_sleep_states?.[oldName]) {
         state.sessionState.tab_sleep_states[trimmed] = state.sessionState.tab_sleep_states[oldName];
         delete state.sessionState.tab_sleep_states[oldName];
+    }
+
+    if (!state.sessionState.workspace_visuals) state.sessionState.workspace_visuals = {};
+    if (visual) {
+        state.sessionState.workspace_visuals[trimmed] = visual;
+        if (trimmed !== oldName) delete state.sessionState.workspace_visuals[oldName];
+    } else if (state.sessionState.workspace_visuals[oldName]) {
+        state.sessionState.workspace_visuals[trimmed] = state.sessionState.workspace_visuals[oldName];
+        delete state.sessionState.workspace_visuals[oldName];
     }
 
     if (state.sessionState.active_tabs?.[oldName] !== undefined) {
@@ -152,6 +163,7 @@ export function deleteWorkspace(wsName) {
     if (state.sessionState.tab_titles?.[wsName]) delete state.sessionState.tab_titles[wsName];
     if (state.sessionState.tab_sleep_states?.[wsName]) delete state.sessionState.tab_sleep_states[wsName];
     if (state.sessionState.active_tabs?.[wsName] !== undefined) delete state.sessionState.active_tabs[wsName];
+    if (state.sessionState.workspace_visuals?.[wsName]) delete state.sessionState.workspace_visuals[wsName];
     delete state.sessionState.workspaces[wsName];
     
     window.miseAPI.saveSession(state.sessionState);
@@ -193,6 +205,21 @@ export function buildDashboardTree() {
         headerContainer.style.display = 'flex';
         headerContainer.style.alignItems = 'center';
         headerContainer.style.justifyContent = 'space-between';
+
+        const wsBadgeSpan = document.createElement('span');
+        wsBadgeSpan.className = 'dashboard-ws-badge';
+        if (isPrivate) {
+            wsBadgeSpan.textContent = 'PR';
+            wsBadgeSpan.style.borderColor = '#f7768e';
+            wsBadgeSpan.style.color = '#f7768e';
+            wsBadgeSpan.style.backgroundColor = 'color-mix(in srgb, #f7768e 18%, #16161e)';
+        } else {
+            const visual = resolveWorkspaceVisual(wsName, state.sessionState);
+            wsBadgeSpan.textContent = visual.glyph;
+            wsBadgeSpan.style.borderColor = visual.color;
+            wsBadgeSpan.style.color = visual.color;
+            wsBadgeSpan.style.backgroundColor = `color-mix(in srgb, ${visual.color} 18%, #16161e)`;
+        }
 
         const titleSpan = document.createElement('span');
         if (isPrivate) {
@@ -266,6 +293,20 @@ export function buildDashboardTree() {
             });
             actionsDiv.appendChild(renameBtn);
 
+            // Dedicated Palette Button
+            const paletteBtn = document.createElement('button');
+            paletteBtn.className = 'nav-icon-button';
+            paletteBtn.innerHTML = '<i class="fa-solid fa-palette"></i>';
+            paletteBtn.title = 'Customise Workspace Visual Identity';
+            paletteBtn.style.width = '24px';
+            paletteBtn.style.height = '24px';
+            paletteBtn.style.fontSize = '11px';
+            paletteBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                showWorkspaceInputDialog('visual', wsName);
+            });
+            actionsDiv.appendChild(paletteBtn);
+
             // Dedicated Delete Button
             const nonPrivateCount = wsKeys.filter(k => k !== 'Private' && !isReservedWorkspaceName(k)).length;
             if (nonPrivateCount > 1) {
@@ -336,6 +377,7 @@ export function buildDashboardTree() {
         cookieBadge.title = isPrivate ? 'Volatile partition: in-memory cookies only' : `Stored cookies in ${partitionName}`;
         cookieBadge.innerHTML = '<i class="fa-solid fa-cookie-bite" style="margin-right: 4px;"></i><span class="cookie-count-val">0 cookies</span>';
 
+        headerContainer.appendChild(wsBadgeSpan);
         headerContainer.appendChild(titleSpan);
         headerContainer.appendChild(containerTag);
         headerContainer.appendChild(cookieBadge);
@@ -504,23 +546,88 @@ export function executeDashboardItemActivation(payload) {
     }
 }
 
+export function renderPaletteSwatches(activeColor = DEFAULT_ACCENT_COLOR) {
+    const container = document.getElementById('WorkspacePaletteSwatches');
+    if (!container) return;
+    container.innerHTML = '';
+    selectedVisualColor = validateAccentColor(activeColor);
+
+    TOKYO_NIGHT_PALETTE.forEach(p => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'palette-swatch-btn';
+        if (p.hex.toLowerCase() === selectedVisualColor.toLowerCase()) {
+            btn.classList.add('selected');
+        }
+        btn.style.backgroundColor = p.hex;
+        btn.title = `${p.name} (${p.hex})`;
+        btn.addEventListener('click', () => {
+            selectedVisualColor = p.hex;
+            const customInput = document.getElementById('WorkspaceCustomColorInput');
+            if (customInput) customInput.value = p.hex;
+            container.querySelectorAll('.palette-swatch-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+        });
+        container.appendChild(btn);
+    });
+
+    const customInput = document.getElementById('WorkspaceCustomColorInput');
+    if (customInput) {
+        customInput.value = selectedVisualColor;
+        if (!customInput._hasListener) {
+            customInput._hasListener = true;
+            customInput.addEventListener('input', () => {
+                const val = customInput.value.trim();
+                if (/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(val)) {
+                    selectedVisualColor = val.toLowerCase();
+                    container.querySelectorAll('.palette-swatch-btn').forEach(b => {
+                        b.classList.toggle('selected', b.title.toLowerCase().includes(selectedVisualColor));
+                    });
+                }
+            });
+        }
+    }
+}
+
 export function showWorkspaceInputDialog(mode = 'create', targetWs = '') {
     const container = document.getElementById('WorkspaceInputBox');
     const input = document.getElementById('NewWorkspaceTitleInput');
+    const glyphInput = document.getElementById('WorkspaceGlyphInput');
     const submitBtn = document.getElementById('submit-ws-btn');
     if (container && input) {
         currentDialogMode = mode;
         renameTargetWorkspace = targetWs;
         container.style.display = 'flex';
-        input.value = mode === 'rename' ? targetWs : '';
-        input.placeholder = mode === 'rename' ? 'New workspace name...' : 'Workspace name...';
-        if (submitBtn) submitBtn.textContent = mode === 'rename' ? 'Rename' : 'Save';
-        input.focus();
-        if (mode === 'rename') input.select();
+
+        let initialColor = DEFAULT_ACCENT_COLOR;
+        let initialGlyph = '';
+
+        if (mode === 'rename' || mode === 'visual') {
+            input.value = targetWs;
+            input.placeholder = 'Workspace name...';
+            const currentVisual = resolveWorkspaceVisual(targetWs, state.sessionState);
+            initialColor = currentVisual.color;
+            initialGlyph = currentVisual.glyph;
+            if (submitBtn) submitBtn.textContent = mode === 'visual' ? 'Apply' : 'Rename';
+        } else {
+            input.value = '';
+            input.placeholder = 'Workspace name...';
+            if (submitBtn) submitBtn.textContent = 'Save';
+        }
+
+        if (glyphInput) {
+            glyphInput.value = initialGlyph;
+        }
+
+        renderPaletteSwatches(initialColor);
+
+        const targetFocus = mode === 'visual' ? (glyphInput || input) : input;
+        targetFocus.focus();
+        if (targetFocus.select) targetFocus.select();
         setTimeout(() => {
-            if (document.activeElement !== input) {
-                input.focus();
-                if (mode === 'rename') input.select();
+            if (document.activeElement !== targetFocus) {
+                targetFocus.focus();
+                if (targetFocus.select) targetFocus.select();
             }
         }, 50);
     }
@@ -537,20 +644,42 @@ export function hideWorkspaceInputDialog() {
 
 export function processWorkspaceCreation() {
     const input = document.getElementById('NewWorkspaceTitleInput');
+    const glyphInput = document.getElementById('WorkspaceGlyphInput');
+    const customColorInput = document.getElementById('WorkspaceCustomColorInput');
+
     const name = input ? input.value.trim() : '';
     if (!name || name.toLowerCase() === 'private' || isReservedWorkspaceName(name)) {
         hideWorkspaceInputDialog();
         return;
     }
 
+    const rawColor = customColorInput ? customColorInput.value : selectedVisualColor;
+    const color = validateAccentColor(rawColor || selectedVisualColor);
+    const rawGlyph = glyphInput ? glyphInput.value : '';
+    const glyph = sanitizeGlyph(rawGlyph, name);
+
+    if (!state.sessionState.workspace_visuals) {
+        state.sessionState.workspace_visuals = {};
+    }
+
+    if (currentDialogMode === 'visual' && renameTargetWorkspace) {
+        state.sessionState.workspace_visuals[renameTargetWorkspace] = { color, glyph };
+        window.miseAPI.saveSession(state.sessionState);
+        hideWorkspaceInputDialog();
+        renderWorkspaceUI();
+        buildDashboardTree();
+        return;
+    }
+
     if (currentDialogMode === 'rename' && renameTargetWorkspace) {
-        renameWorkspace(renameTargetWorkspace, name);
+        renameWorkspace(renameTargetWorkspace, name, { color, glyph });
         hideWorkspaceInputDialog();
         return;
     }
 
     if (!state.sessionState.workspaces[name]) {
         state.sessionState.workspaces[name] = [];
+        state.sessionState.workspace_visuals[name] = { color, glyph };
         state.sessionState.current_workspace = name;
         window.miseAPI.saveSession(state.sessionState);
         hideWorkspaceInputDialog();

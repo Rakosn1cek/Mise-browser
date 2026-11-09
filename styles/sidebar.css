@@ -215,7 +215,7 @@ body.sidebar-auto-collapse #Sidebar:not(:hover):not(.expanded):not(:focus-within
     text-transform: uppercase;
     box-shadow: 0 1px 3px rgba(0,0,0,0.3);
     margin: 0 auto;
-    transition: margin 0.2s ease, border-color 0.2s ease;
+    transition: margin 0.2s ease, border-color 0.2s ease, color 0.2s ease, background-color 0.2s ease;
 }
 
 /* Private workspace subtle Tokyo Night rose styling */
