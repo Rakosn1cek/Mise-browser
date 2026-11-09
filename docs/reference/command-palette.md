@@ -45,7 +45,7 @@ The Command Centre gives you rapid, searchable access to all Mise operations, in
 | **Direct Tab Jump (Tabs 1 to 9)** | `Ctrl+1` - `Ctrl+9` | `jump-to-tab-1` - `jump-to-tab-9` | Jumps directly to tab 1 through 9 from anywhere in the browser. |
 | **Reset Tab Zoom Level** | — | — | Restores webview zoom factor back to 100% default. |
 | **Focus Sidebar Tab List** | `Ctrl+S` | `focus-sidebar` | Moves keyboard focus directly into the vertical tab list. |
-| **Focus Navigation Buttons** | `Ctrl+Shift+N` | `focus-nav-buttons` | Cycles keyboard focus across toolbar navigation controls. |
+| **Focus Navigation Buttons** | `Ctrl+Tab` | `focus-nav-buttons` | Cycles keyboard focus across toolbar navigation controls. |
 | **Focus Active Webview** | `Ctrl+W` | `focus-webview` | Returns keyboard and typing focus directly to the guest webpage. |
 | **Toggle Sidebar (Expand / Collapse)** | `Ctrl+Shift+Z` | `toggle-zen-mode` | Alternates sidebar between 220px expanded width and 48px icon strip. |
 | **Toggle Status & Mode Bar** | `Ctrl+/` | `toggle-status-bar` | 22px footer status bar displaying modal state, target URL, and TLS encryption. |
@@ -91,6 +91,7 @@ The Command Centre gives you rapid, searchable access to all Mise operations, in
 | **Bookmark Current Page** | `Ctrl+Shift+A` | `add-bookmark` | Saves current webpage title and URL into bookmarks collection. |
 | **Set Quickmark** | `Ctrl+Shift+Q` | `set-quickmark` | Binds active webpage to an instant single-key navigation shortcut. |
 | **Jump to Quickmark** | `Ctrl+J` | `jump-quickmark` | Prompts for assigned quickmark character to navigate immediately. |
+| **Toggle Notifications & Activity** | `Ctrl+Shift+N` | `toggle-notifications` | Central activity feed for downloads, update alerts, permissions, and web notifications. |
 | **Toggle Downloads Shelf** | `Ctrl+Shift+D` | `toggle-downloads` | Bottom drawer showing transfer speed, progress bars, and file links. |
 | **Toggle Active Webview DevTools** | `F12` / `Ctrl+Shift+I` | `toggle-devtools` | Chromium developer tools for inspecting DOM, network, and console. |
 | **Toggle Global Media Playback** | `Ctrl+Shift+0` / `F10` | `toggle-global-media` | Global play and pause toggle across all active media streams. |

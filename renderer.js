@@ -32,7 +32,7 @@ export { applySidebarMode, toggleSidebarExpansion, toggleSidebarPin, focusSideba
 export const overlayIds = [
     'PaletteInput', 'PaletteList', 'PreferencesOverlay', 'BookmarksOverlay', 'BookmarkSearchInput',
     'HistoryOverlay', 'HistorySearchInput', 'NotesOverlay', 'NotesTextArea', 'DashboardOverlay',
-    'ShareModalOverlay', 'PeekModalOverlay', 'FindBarOverlay', 'DiagnosticsOverlay'
+    'ShareModalOverlay', 'PeekModalOverlay', 'FindBarOverlay', 'DiagnosticsOverlay', 'NotificationsOverlay'
 ];
 
 function dispatchHintMode(opts) {
@@ -237,10 +237,10 @@ if (window.miseAPI && typeof window.miseAPI.onMasterShortcut === 'function') {
             }
             case 'toggle-dark-reader': toggleDarkReaderOnActiveTab(); break;
             case 'toggle-reader-view': toggleReaderViewOnActiveTab(); break;
-            case 'go-back': case 'go-back-signal': navigateFrameBack(); break;
-            case 'go-forward': case 'go-forward-signal': navigateFrameForward(); break;
+            case 'go-back': case 'go-back-signal': navigateFrameBack(); break; case 'go-forward': case 'go-forward-signal': navigateFrameForward(); break;
             case 'toggle-private-mode': togglePrivateWorkspace(); break;
             case 'hibernate-inactive-tabs': hibernateInactiveTabs(); break;
+            case 'toggle-notifications': window.toggleNotificationsOverlay?.(); break;
         }
     });
 }

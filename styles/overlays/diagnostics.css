@@ -120,36 +120,61 @@ i.spinning {
 .diag-nav-tabs {
     display: flex;
     gap: 8px;
+    align-items: center;
     border-bottom: 1px solid var(--border);
-    padding-bottom: 8px;
+    padding-bottom: 12px;
     overflow-x: auto;
+    white-space: nowrap;
+}
+
+.diag-nav-tabs::-webkit-scrollbar {
+    display: none;
 }
 
 .diag-nav-tab {
-    background: transparent;
-    border: 1px solid transparent;
+    background-color: var(--bg-sidebar);
+    border: 1px solid var(--border);
     color: var(--text);
-    opacity: 0.75;
-    padding: 8px 16px;
-    border-radius: 6px;
+    padding: 5px 13px;
+    border-radius: 20px;
     cursor: pointer;
-    font-size: 13px;
-    font-weight: 600;
-    display: flex;
+    font-size: 11.5px;
+    font-weight: 500;
+    display: inline-flex;
     align-items: center;
-    gap: 8px;
-    transition: all 0.15s ease;
+    gap: 7px;
+    transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+    outline: none;
+    box-shadow: none;
+    white-space: nowrap;
+    user-select: none;
 }
 
 .diag-nav-tab:hover {
-    background: var(--hover);
-    opacity: 1;
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.diag-nav-tab:focus,
+.diag-nav-tab:focus-visible {
+    outline: none;
+    box-shadow: none;
+}
+
+.diag-nav-tab:focus-visible:not(.active) {
+    border-color: var(--accent);
+    color: var(--accent);
 }
 
 .diag-nav-tab.active {
-    background: var(--selected);
+    background-color: var(--accent);
+    color: var(--bg-main);
     border-color: var(--accent);
-    color: var(--accent);
+    font-weight: 500;
+}
+
+.diag-nav-tab.active i {
+    color: var(--bg-main);
     opacity: 1;
 }
 

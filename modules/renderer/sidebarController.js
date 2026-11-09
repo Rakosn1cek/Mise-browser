@@ -15,7 +15,7 @@ export const defaultOverlayIds = [
     'BookmarksOverlay', 'BookmarkSearchInput', 'HistoryOverlay',
     'HistorySearchInput', 'NotesOverlay', 'NotesTextArea',
     'DashboardOverlay', 'ShareModalOverlay', 'PeekModalOverlay',
-    'FindBarOverlay', 'DiagnosticsOverlay'
+    'FindBarOverlay', 'DiagnosticsOverlay', 'NotificationsOverlay'
 ];
 
 export function applySidebarMode(autoCollapse) {
@@ -305,7 +305,13 @@ export function setupSidebarListeners(overlayIds = defaultOverlayIds) {
 
     const notiBtn = document.getElementById('noti-toggle-btn');
     if (notiBtn) {
-        notiBtn.addEventListener('click', async () => {
+        notiBtn.addEventListener('click', () => {
+            if (typeof window.toggleNotificationsOverlay === 'function') {
+                window.toggleNotificationsOverlay();
+            }
+        });
+        notiBtn.addEventListener('contextmenu', async (e) => {
+            e.preventDefault();
             const isMuted = !!notiBtn.querySelector('.fa-bell-slash');
             const targetState = isMuted;
 
@@ -318,9 +324,6 @@ export function setupSidebarListeners(overlayIds = defaultOverlayIds) {
             } else {
                 notiBtn.innerHTML = '<i class="fa-solid fa-bell-slash"></i>';
             }
-
-            window.miseAllowWebviewFocus = true;
-            focusActiveWebview();
         });
     }
 }

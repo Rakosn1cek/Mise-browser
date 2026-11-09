@@ -13,7 +13,7 @@ function returnFocusToWebview() {
     if (shareModal && shareModal.style.display === 'flex') {
         return;
     }
-    if (state.paletteActive || state.dashboardActive || state.preferencesActive || state.historyActive || state.notesActive || state.bookmarksActive || state.diagnosticsActive) {
+    if (state.paletteActive || state.dashboardActive || state.preferencesActive || state.historyActive || state.notesActive || state.bookmarksActive || state.diagnosticsActive || state.notificationsActive) {
         return;
     }
     window.miseAllowWebviewFocus = true;
@@ -337,11 +337,11 @@ export const COMMAND_DEFINITIONS = [
         title: 'Focus Navigation Buttons',
         desc: 'Cycle focus across Back, Forward, Sidebar, Split, and Menu buttons',
         details: 'Places keyboard focus onto the primary toolbar buttons, allowing navigation using left and right arrow keys.',
-        tip: 'Press Ctrl+Shift+N to jump straight to the Back and Forward navigation cluster.',
+        tip: 'Press Ctrl+Tab to jump straight to the Back and Forward navigation cluster.',
         category: 'Tabs & Navigation',
         icon: 'fa-solid fa-arrow-right-arrow-left',
         actionId: 'focus-nav-buttons',
-        shortcut: ['Ctrl+Shift+N', 'Ctrl+Tab'],
+        shortcut: 'Ctrl+Tab',
         keywords: ['buttons', 'back', 'forward', 'top', 'controls'],
         action: () => {
             const btn = document.getElementById('back-btn') || document.getElementById('toggle-nav-btn');
@@ -661,6 +661,19 @@ export const COMMAND_DEFINITIONS = [
         shortcut: 'Ctrl+Shift+D',
         keywords: ['downloads', 'files', 'shelf', 'drawer'],
         action: () => window.toggleDownloadShelf && window.toggleDownloadShelf()
+    },
+    {
+        id: 'toggle-notifications',
+        title: 'Toggle Notifications & Activity',
+        desc: 'Open central activity feed for downloads, alerts, and system events',
+        details: 'Displays the Notifications & Activity overlay with filterable feeds for downloads, system alerts, permissions, and web notifications.',
+        tip: 'Press Ctrl+Shift+N to open notifications or navigate with arrow keys.',
+        category: 'Tools & Notes',
+        icon: 'fa-solid fa-bell',
+        actionId: 'toggle-notifications',
+        shortcut: 'Ctrl+Shift+N',
+        keywords: ['notifications', 'activity', 'alerts', 'downloads', 'feed', 'events'],
+        action: () => window.toggleNotificationsOverlay && window.toggleNotificationsOverlay()
     },
     {
         id: 'toggle-devtools',

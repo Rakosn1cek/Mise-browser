@@ -29,6 +29,9 @@ export const state = {
     isNotesExpanded: false,
     bookmarksActive: false,
     diagnosticsActive: false,
+    notificationsActive: false,
+    notificationsFilter: 'all',
+    notificationsSelectionIdx: 0,
     awaitingQuickmarkKey: false,
     quickmarkMode: null,
 

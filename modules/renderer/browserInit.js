@@ -22,6 +22,12 @@ import { toggleCommandPaletteView } from '../overlays/commandPalette.js';
 import { setupNotesListeners, toggleNotesOverlay } from '../overlays/notes.js';
 import { setupHistoryOverlayListeners } from '../overlays/history.js';
 import { setupDiagnosticsListeners } from '../overlays/diagnostics.js';
+import { 
+    toggleNotificationsOverlay, 
+    openNotificationsOverlay, 
+    closeNotificationsOverlay,
+    addNotificationItem 
+} from '../overlays/notifications.js';
 import { initSearchEnginePreference } from '../overlays/searchEngine.js';
 import { initDownloadShelf } from '../downloads.js';
 import { initStatusBar, toggleStatusBar, setTargetUrl } from '../statusBar.js';
@@ -304,6 +310,23 @@ export async function initializeBrowser() {
             if (typeof window.displayUpdateNotification === 'function') {
                 window.displayUpdateNotification(info);
             }
+            if (info && info.updateAvailable) {
+                addNotificationItem({
+                    id: `update-${info.latestVersion}`,
+                    category: 'system',
+                    title: 'Update Available',
+                    message: `Mise v${info.latestVersion} is available.`,
+                    details: 'Click to open release download page.',
+                    timestamp: Date.now(),
+                    icon: 'fa-solid fa-arrow-up-from-bracket',
+                    actionLabel: 'Review',
+                    action: () => {
+                        if (window.miseAPI?.openExternal && info.releaseUrl) {
+                            window.miseAPI.openExternal(info.releaseUrl);
+                        }
+                    }
+                });
+            }
         });
     }
 
@@ -322,9 +345,15 @@ export async function initializeBrowser() {
         }
     });
 
+    window.toggleNotificationsOverlay = toggleNotificationsOverlay;
+    window.openNotificationsOverlay = openNotificationsOverlay;
+    window.closeNotificationsOverlay = closeNotificationsOverlay;
+
     preloadTemplates();
 
     if (window.miseAPI && typeof window.miseAPI.signalRendererReady === 'function') {
         window.miseAPI.signalRendererReady();
     }
 }
+
+export { toggleNotificationsOverlay, openNotificationsOverlay, closeNotificationsOverlay };

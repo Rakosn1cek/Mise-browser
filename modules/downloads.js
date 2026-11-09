@@ -1,4 +1,5 @@
 import { escapeHtml } from './utils.js';
+import { addNotificationItem } from './overlays/notifications.js';
 
 function getFileIcon(filename) {
     if (!filename) return 'fa-regular fa-file';
@@ -181,6 +182,19 @@ export function handleDownloadStarted(data) {
         card = createDownloadCardElement(data);
         itemsContainer.prepend(card);
     }
+
+    const activeFilename = getEffectiveFilename(data.savePath, data.filename);
+    addNotificationItem({
+        id: `download-${data.id}`,
+        category: 'downloads',
+        title: 'Download Started',
+        message: activeFilename,
+        details: data.totalBytes > 0 ? formatBytes(data.totalBytes) : '',
+        timestamp: Date.now(),
+        icon: 'fa-solid fa-arrow-down',
+        actionLabel: 'Shelf',
+        action: () => toggleDownloadShelf()
+    });
 }
 
 export function handleDownloadProgress(data) {
@@ -317,6 +331,23 @@ export function handleDownloadDone(data) {
                 }
             };
         }
+
+        addNotificationItem({
+            id: `download-${data.id}`,
+            category: 'downloads',
+            title: 'Download Completed',
+            message: currentFilename,
+            details: data.totalBytes > 0 ? formatBytes(data.totalBytes) : '',
+            timestamp: Date.now(),
+            icon: 'fa-solid fa-circle-check',
+            actionLabel: 'Open',
+            action: () => {
+                const activePath = card.getAttribute('data-save-path') || currentSavePath;
+                if (activePath && window.miseAPI && typeof window.miseAPI.openDownload === 'function') {
+                    window.miseAPI.openDownload(activePath);
+                }
+            }
+        });
     } else if (data.state === 'cancelled') {
         card.classList.add('cancelled');
         if (progressTrack) progressTrack.style.display = 'none';
@@ -334,6 +365,16 @@ export function handleDownloadDone(data) {
                 });
             }
         }
+
+        addNotificationItem({
+            id: `download-${data.id}`,
+            category: 'downloads',
+            title: 'Download Cancelled',
+            message: currentFilename,
+            details: 'Cancelled by user',
+            timestamp: Date.now(),
+            icon: 'fa-solid fa-ban'
+        });
     } else {
         card.classList.add('interrupted');
         if (progressTrack) progressTrack.style.display = 'none';
@@ -351,6 +392,16 @@ export function handleDownloadDone(data) {
                 });
             }
         }
+
+        addNotificationItem({
+            id: `download-${data.id}`,
+            category: 'downloads',
+            title: 'Download Failed',
+            message: currentFilename,
+            details: 'Download interrupted',
+            timestamp: Date.now(),
+            icon: 'fa-solid fa-triangle-exclamation'
+        });
     }
 }
 

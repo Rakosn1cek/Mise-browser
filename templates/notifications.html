@@ -1,0 +1,36 @@
+<!-- templates/notifications.html -->
+<div id="NotificationsOverlay" class="notifications-overlay" style="display: none;" tabindex="-1" role="dialog" aria-label="Notifications and Activity">
+    <div class="notifications-card">
+        <div class="notifications-header">
+            <div class="notifications-title">
+                <i class="fa-regular fa-bell"></i>
+                <span>Notifications &amp; Activity</span>
+                <span id="NotificationsCountBadge" class="notifications-count-badge" style="display: none;">0</span>
+            </div>
+            <div class="notifications-header-actions">
+                <button id="ClearNotificationsBtn" class="notifications-action-btn" title="Clear notifications in active view (c)"><i class="fa-solid fa-broom"></i> Clear</button>
+                <button id="CloseNotificationsBtn" class="notifications-action-btn" title="Close (Esc)"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+        </div>
+        <div class="notifications-filter-strip" role="tablist" aria-label="Notification categories">
+            <button class="notifications-filter-chip active" role="tab" aria-selected="true" data-filter="all" title="All notifications (1)">All</button>
+            <button class="notifications-filter-chip" role="tab" aria-selected="false" data-filter="downloads" title="Downloads (2)">Downloads</button>
+            <button class="notifications-filter-chip" role="tab" aria-selected="false" data-filter="system" title="System alerts (3)">System</button>
+            <button class="notifications-filter-chip" role="tab" aria-selected="false" data-filter="web" title="Web events (4)">Web</button>
+        </div>
+        <div id="NotificationsFeed" class="notifications-feed" tabindex="-1"></div>
+        <div id="NotificationsEmptyState" class="notifications-empty-state" style="display: none;">
+            <i class="fa-regular fa-bell-slash notifications-empty-icon"></i>
+            <div class="notifications-empty-title">No notifications</div>
+            <div class="notifications-empty-desc">Recent downloads, system alerts, and web events will appear here.</div>
+        </div>
+        <div class="notifications-footer">
+            <span class="shortcut-legend"><kbd>&larr;</kbd><kbd>&rarr;</kbd> Category</span>
+            <span class="shortcut-legend"><kbd>&uarr;</kbd><kbd>&darr;</kbd> or <kbd>j</kbd><kbd>k</kbd> Navigate</span>
+            <span class="shortcut-legend"><kbd>Enter</kbd> Action</span>
+            <span class="shortcut-legend"><kbd>x</kbd> Dismiss</span>
+            <span class="shortcut-legend"><kbd>c</kbd> Clear</span>
+            <span class="shortcut-legend"><kbd>Esc</kbd> Close</span>
+        </div>
+    </div>
+</div>

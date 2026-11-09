@@ -20,8 +20,8 @@ All keyboard shortcuts in Mise Browser are fully customisable via `~/.config/mis
 | **Ctrl + Shift + F** / **F3** | `toggle-find` | In-page text search overlay across active webview content |
 | **Ctrl + R** / **F5** | `reload-active-tab` | Reloads the active tab |
 | **Ctrl + S** | `focus-sidebar` | Moves focus to the vertical tab sidebar (cycles between tabs and navigation buttons) |
-| **Ctrl + Shift + N** | `focus-nav-buttons` | Moves focus directly to navigation action buttons |
-| **Ctrl + Tab** | `focus-nav-buttons` | Secondary shortcut to focus navigation action buttons |
+| **Ctrl + Tab** | `focus-nav-buttons` | Moves focus directly to navigation action buttons |
+| **Ctrl + Shift + N** | `toggle-notifications` | Opens the Notifications & Activity overlay |
 | **Ctrl + W** | `focus-webview` | Moves focus directly into the active web page |
 | **Ctrl + Shift + Z** | `toggle-zen-mode` | Toggles sidebar expansion or pin mode |
 | **Ctrl + P** | `toggle-palette` | Opens the Command Palette |
@@ -105,6 +105,23 @@ When keyboard focus is inside the sidebar tab list:
 | `x` | Close the tab under the cursor without waking it into memory |
 | `y` | Copy the URL of the tab under the cursor to the clipboard |
 | `Escape` | Dismiss expanded sidebar and return focus to the active webview |
+
+---
+
+## Notifications & Activity Overlay Navigation
+
+When the Notifications & Activity overlay is active (`Ctrl + Shift + N` or clicking the sidebar bell):
+
+| Key | Action |
+| :--- | :--- |
+| `←` / `→` or `h` / `l` | Cycle category filter chips (All, Downloads, System, Web) |
+| `1` - `4` | Switch directly to category (1: All, 2: Downloads, 3: System, 4: Web) |
+| `↓` / `↑` or `j` / `k` | Move cursor through activity items |
+| `Enter` | Trigger primary action of highlighted item |
+| `x` | Dismiss highlighted notification item |
+| `c` | Clear notifications in the active view |
+| `Tab` / `Shift + Tab` | Cycle focus between controls, category chips, and feed items |
+| `Escape` | Dismiss overlay and restore focus to active webview |
 
 ---
 

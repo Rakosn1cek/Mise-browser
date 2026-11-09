@@ -172,6 +172,16 @@ export function showNotificationToast(message, icon = 'fa-shield-halved') {
     toast._timer = setTimeout(() => {
         toast.classList.remove('visible');
     }, 3200);
+
+    if (typeof window !== 'undefined' && typeof window.addNotificationItem === 'function') {
+        window.addNotificationItem({
+            category: 'system',
+            title: 'System Alert',
+            message,
+            timestamp: Date.now(),
+            icon: icon ? `fa-solid ${icon}` : 'fa-solid fa-shield-halved'
+        });
+    }
 }
 
 // Recognised terminal executables and shell tools

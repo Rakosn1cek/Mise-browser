@@ -159,7 +159,7 @@ console.log('Running Mise theming and accent colour regression tests...');
     // Verify key interactive controls use color-mix with var(--accent)
     assert.match(css, /#TabList\s+li:hover\s*\{[^}]*background-color:\s*color-mix\(in srgb,\s*var\(--accent\)\s*15%,\s*transparent\);/, 'Tab hover must use color-mix with accent');
     assert.match(css, /#TabList\s+li:focus:not\(\.selected\)\s*\{[^}]*background-color:\s*color-mix\(in srgb,\s*var\(--accent\)\s*16%,\s*transparent\);/, 'Tab non-selected focus must use color-mix with accent');
-    assert.match(css, /\.settings-tab-btn\.active[^}]*background-color:\s*color-mix\(in srgb,\s*var\(--accent\)\s*15%,\s*transparent\);/, 'Active settings tab button must use color-mix with accent');
+    assert.match(css, /\.settings-tab-btn\.active[^}]*background-color:\s*var\(--accent\);/, 'Active settings tab button must use solid var(--accent) pill background');
     assert.match(css, /\.status-badge-mode\.mode-normal\s*\{[^}]*background:\s*color-mix\(in srgb,\s*var\(--accent\)\s*15%,\s*transparent\);/, 'Normal mode badge must use color-mix with accent');
     assert.match(css, /body\.light-mode\s+\.status-badge-mode\.mode-normal\s*\{[^}]*color:\s*var\(--accent\);/, 'Light mode normal badge must use var(--accent)');
 

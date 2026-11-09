@@ -254,6 +254,26 @@ function setupPermissionPromptListeners() {
         if (iconEl) iconEl.className = `${iconClass} permission-prompt-icon`;
 
         banner.style.display = 'flex';
+
+        if (typeof window !== 'undefined' && typeof window.addNotificationItem === 'function') {
+            window.addNotificationItem({
+                id: `permission-${requestData.requestId}`,
+                category: 'system',
+                title: 'Permission Request',
+                message: `${domain} wants to access your ${readableCap}.`,
+                details: 'Action required via permission prompt banner.',
+                timestamp: Date.now(),
+                icon: iconClass,
+                actionLabel: 'Review',
+                action: () => {
+                    const b = document.getElementById('PermissionPromptBanner');
+                    if (b) {
+                        b.scrollIntoView?.();
+                        b.focus?.();
+                    }
+                }
+            });
+        }
     });
 
     async function handlePromptAction(allow, remember) {
@@ -261,6 +281,10 @@ function setupPermissionPromptListeners() {
         const reqId = activePromptRequestId;
         activePromptRequestId = null;
         banner.style.display = 'none';
+
+        if (typeof window !== 'undefined' && typeof window.dismissNotificationItem === 'function') {
+            window.dismissNotificationItem(`permission-${reqId}`);
+        }
 
         if (window.miseAPI && typeof window.miseAPI.resolvePermissionPrompt === 'function') {
             await window.miseAPI.resolvePermissionPrompt(reqId, allow, remember);
