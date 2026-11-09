@@ -56,6 +56,16 @@ function setupWebContentsPolicy(app, options = {}) {
 
                 if (security.isSafeTabUrl(navigationUrl)) return;
 
+                // Block remote origins from pivoting to local file schemes
+                const currentUrl = webContents.getURL();
+                if (currentUrl && (currentUrl.startsWith('http://') || currentUrl.startsWith('https://'))) {
+                    if (navigationUrl.startsWith('file:') || navigationUrl.startsWith('/')) {
+                        navEvent.preventDefault();
+                        diagnostics.logEvent('warn', 'navigation', 'Blocked cross-scheme navigation from remote origin to local file', { from: currentUrl, to: navigationUrl });
+                        return;
+                    }
+                }
+
                 // Allow local application asset pages such as vendored PDF viewer and welcome documentation
                 try {
                     const parsed = new URL(navigationUrl);
@@ -72,6 +82,30 @@ function setupWebContentsPolicy(app, options = {}) {
 
                 navEvent.preventDefault();
                 diagnostics.logEvent('warn', 'navigation', 'Blocked unsafe webview navigation', { url: navigationUrl });
+            });
+
+            webContents.on('will-frame-navigate', (event) => {
+                const targetUrl = event.url;
+                if (!targetUrl || typeof targetUrl !== 'string') {
+                    event.preventDefault();
+                    return;
+                }
+                if (targetUrl === 'about:blank') return;
+                if (security.isSafeTabUrl(targetUrl)) return;
+                try {
+                    const parsed = new URL(targetUrl);
+                    if (parsed.protocol === 'file:') {
+                        const targetFilePath = path.resolve(decodeURIComponent(parsed.pathname));
+                        if (targetFilePath.startsWith(allowedAssetsDir + path.sep)) {
+                            return;
+                        }
+                        if (security.isAllowedLocalDocumentUrl(targetUrl)) {
+                            return;
+                        }
+                    }
+                } catch (_) {}
+                event.preventDefault();
+                diagnostics.logEvent('warn', 'navigation', 'Blocked unsafe subframe navigation', { url: targetUrl });
             });
 
             webContents.on('did-navigate', (navEvent, url) => {

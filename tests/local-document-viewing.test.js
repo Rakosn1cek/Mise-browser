@@ -224,8 +224,39 @@ const config = require('../main/config.js');
 
         // Rejection of null bytes and malformed inputs
         assert.strictEqual(security.isAllowedLocalDocumentUrl('file:///home/user/doc.html\0.txt'), false);
+        assert.strictEqual(security.isAllowedLocalDocumentUrl('file:///home/user/doc.html%00.txt'), false);
         assert.strictEqual(security.isAllowedLocalDocumentUrl(''), false);
         assert.strictEqual(security.isAllowedLocalDocumentUrl(null), false);
+
+        // Case-insensitive scheme and backslash normalisation
+        assert.strictEqual(security.isAllowedLocalDocumentUrl(`FILE://${testHtml}`), true);
+        assert.strictEqual(security.isAllowedLocalDocumentUrl(`file://${testHtml.replace(/\//g, '\\')}`), true);
+
+        // Multi-level URL encoding traversal rejection
+        assert.strictEqual(security.isAllowedLocalDocumentUrl('file:///%252e%252e/etc/passwd'), false);
+        assert.strictEqual(security.isAllowedLocalDocumentUrl('file:///home/user/%252e%2573%2573%2568/id_rsa.html'), false);
+
+        // .git directory traversal rejection
+        assert.strictEqual(security.isAllowedLocalDocumentUrl('file:///home/user/repo/.git/config.txt'), false);
+
+        // Oversized document rejection (>100 MB)
+        const largeFile = path.join(tmpDir, 'large.txt');
+        fs.writeFileSync(largeFile, 'content');
+        const fakeLargeStats = { isFile: () => true, size: 105 * 1024 * 1024 };
+        const origStatSync = fs.statSync;
+        fs.statSync = (p) => p === largeFile ? fakeLargeStats : origStatSync(p);
+        try {
+            const largeRes = security.validateLocalDocumentPath(largeFile);
+            assert.strictEqual(largeRes.allowed, false);
+            assert.strictEqual(largeRes.reason, 'file_too_large');
+        } finally {
+            fs.statSync = origStatSync;
+        }
+
+        // Verify webview hardening enforces allowFileAccessFromFileURLs = false
+        const dummyPrefs = {};
+        security.hardenWebviewPreferences(dummyPrefs);
+        assert.strictEqual(dummyPrefs.allowFileAccessFromFileURLs, false, 'allowFileAccessFromFileURLs must strictly remain false');
 
         // Reset state to default disabled
         security.setAllowLocalDocuments(false);
@@ -402,9 +433,35 @@ const config = require('../main/config.js');
         }
 
         console.log('✓ Address bar navigation and notification toast dispatch verified');
-        console.log('All configurable local document viewing tests passed successfully!');
     })().catch((err) => {
         console.error('Test execution failed:', err);
         process.exit(1);
     });
+}
+
+// 4. Remote origin cross-scheme pivot prevention and subframe isolation
+{
+    const policySource = fs.readFileSync(path.join(__dirname, '../main/webContentsPolicy.js'), 'utf8');
+
+    // Verify presence of cross-scheme pivot guard
+    assert(
+        policySource.includes('Blocked cross-scheme navigation from remote origin to local file'),
+        'webContentsPolicy.js must guard against remote origin cross-scheme navigation to local files'
+    );
+
+    // Verify subframe navigation guard
+    assert(
+        policySource.includes("webContents.on('will-frame-navigate'"),
+        'webContentsPolicy.js must register will-frame-navigate listener to confine iframes'
+    );
+
+    // Verify main window file drop navigation handler
+    const windowManagerSource = fs.readFileSync(path.join(__dirname, '../main/windowManager.js'), 'utf8');
+    assert(
+        windowManagerSource.includes('security.isAllowedLocalDocumentUrl(navigationUrl)'),
+        'windowManager.js must verify dropped local files against isAllowedLocalDocumentUrl'
+    );
+
+    console.log('✓ Remote origin cross-scheme pivot guard and subframe isolation verified');
+    console.log('All configurable local document viewing tests passed successfully!');
 }

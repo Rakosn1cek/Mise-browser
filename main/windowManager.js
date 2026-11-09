@@ -208,6 +208,8 @@ function createMainWindow(options = {}) {
         event.preventDefault();
         if (security.isSafeTabUrl(navigationUrl) && mainWindow && !mainWindow.isDestroyed() && mainWindow.webContents) {
             mainWindow.webContents.send('master-shortcut', 'spawn-tab-with-url', navigationUrl);
+        } else if (security.isAllowedLocalDocumentUrl(navigationUrl) && mainWindow && !mainWindow.isDestroyed() && mainWindow.webContents) {
+            mainWindow.webContents.send('master-shortcut', 'spawn-tab-with-url', navigationUrl);
         }
     });
 

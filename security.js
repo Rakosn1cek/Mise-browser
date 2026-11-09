@@ -604,6 +604,7 @@ function hardenWebviewPreferences(webPreferences) {
     webPreferences.nodeIntegrationInSubFrames = false;
     webPreferences.webSecurity = true;
     webPreferences.allowRunningInsecureContent = false;
+    webPreferences.allowFileAccessFromFileURLs = false;
     webPreferences.nodeIntegrationInWorker = false;
     webPreferences.webviewTag = false;
     delete webPreferences.preloadURL;
@@ -806,8 +807,11 @@ const FORBIDDEN_CREDENTIAL_SEGMENTS = new Set([
     '.docker',
     '.password-store',
     '.pki',
+    '.git',
     'keyrings'
 ]);
+
+const MAX_LOCAL_DOCUMENT_SIZE = 100 * 1024 * 1024;
 
 function setAllowLocalDocuments(enabled) {
     allowLocalDocuments = enabled === true;
@@ -821,19 +825,32 @@ function validateLocalDocumentPath(inputPath) {
     if (!inputPath || typeof inputPath !== 'string' || inputPath.length === 0 || inputPath.length > 4096) {
         return { allowed: false, reason: 'invalid_input' };
     }
-    if (inputPath.includes('\0')) {
+    if (inputPath.includes('\0') || inputPath.includes('%00')) {
         return { allowed: false, reason: 'null_byte' };
     }
 
-    let filePath = inputPath;
-    if (filePath.startsWith('file://')) {
+    let filePath = inputPath.trim();
+    if (/^file:\/\//i.test(filePath)) {
         try {
             filePath = new URL(filePath).pathname;
         } catch (_) {
-            filePath = filePath.replace(/^file:\/\//, '');
+            filePath = filePath.replace(/^file:\/\//i, '');
         }
     }
-    filePath = decodeURIComponent(filePath);
+    filePath = filePath.replace(/\\/g, '/');
+
+    // Decode URL encoding iteratively to neutralise multi-level percent encoding
+    let prevPath = '';
+    let decodeAttempts = 0;
+    while (filePath !== prevPath && decodeAttempts < 3) {
+        prevPath = filePath;
+        try {
+            filePath = decodeURIComponent(filePath);
+        } catch (_) {
+            break;
+        }
+        decodeAttempts++;
+    }
 
     // Extension validation
     const cleanPath = filePath.split('?')[0].split('#')[0];
@@ -855,6 +872,9 @@ function validateLocalDocumentPath(inputPath) {
             const stats = fs.statSync(resolvedPath);
             if (!stats.isFile()) {
                 return { allowed: false, reason: 'not_a_file' };
+            }
+            if (stats.size > MAX_LOCAL_DOCUMENT_SIZE) {
+                return { allowed: false, reason: 'file_too_large' };
             }
             if (stats.size > 0) {
                 let fd;
@@ -937,7 +957,8 @@ function validateLocalDocumentPath(inputPath) {
 
 function isAllowedLocalDocumentUrl(url) {
     if (!url || typeof url !== 'string') return false;
-    if (!url.startsWith('file:') && !url.startsWith('/')) return false;
+    const cleanLower = url.trim().toLowerCase();
+    if (!cleanLower.startsWith('file:') && !url.trim().startsWith('/')) return false;
 
     // PDFs are permissible local documents via built-in PDF viewer
     if (isPdfExtension(url)) {
