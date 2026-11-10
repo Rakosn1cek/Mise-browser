@@ -188,6 +188,8 @@ Mise Browser provides a Vim-inspired modal navigation engine that frees you from
 | `H` | History Back | Navigates back in page history |
 | `L` | History Forward | Navigates forward in page history |
 | `/` | Find in Page | Opens the in-page search bar |
+| `n` | Find Next Match | Jumps to next search match in page |
+| `N` | Find Previous Match | Jumps to previous search match in page |
 | `f` | Link Hints | Injects two-letter hint tags over clickable links |
 | `e` | Reader View | Toggles native distraction-free reader view |
 | `m` | Mute Tab | Mutes or unmutes audio output on active tab |
@@ -260,4 +262,22 @@ Manage ongoing and completed file downloads directly within the application with
 * **Tracked Path Containment**: Opening or revealing downloads via IPC handlers (`open-download`, `reveal-download`) is strictly restricted to canonical realpaths of tracked active and recent downloads. Untracked or arbitrary renderer-supplied paths are rejected.
 * **Dangerous Extension Safeguards**: Downloaded files matching dangerous executable or script extensions (`.exe`, `.msi`, `.bat`, `.cmd`, `.com`, `.scr`, `.ps1`, `.vbs`, `.js`, `.jse`, `.wsf`, `.lnk`, `.jar`, `.sh`, `.run`, `.appimage`, `.desktop`, `.command`, `.app`, `.dmg`, `.pkg`, `.deb`, `.rpm`) are identified case-insensitively. Opening a dangerous file automatically diverts from direct execution to revealing the file safely inside the system file manager.
 * **Non-Blocking File Manager Integration**: File manager discovery and revelation utilise asynchronous, non-blocking execution with timeouts over D-Bus (`org.freedesktop.FileManager1`) and XDG desktop configurations, ensuring the browser UI never freezes during disk or process operations.
+
+***
+
+## In-Page Search & Match Navigation (`Ctrl + Shift + F` / `F3` / `/`)
+
+Find text across active web content with instant matching and Vim-style navigation:
+
+* **Instant Search Activation**: Press **Ctrl + Shift + F**, **F3**, or press **/** in NORMAL mode to display the floating Tokyo Night search bar (`#FindBarOverlay`).
+* **Live Match Counter**: Displays real-time match statistics as you type (such as `4 of 21 matches`, `1 of 1 match`, or `0 matches` with high-contrast alert styling when no matches are found). Chromium natively highlights all match positions along the vertical scrollbar track.
+* **Automatic Vim SmartCase**: Adopts standard Vim search behaviour. Searching with an all-lowercase query performs case-insensitive matching; typing any uppercase character automatically engages case-sensitive matching.
+* **Case Sensitivity Toggle (`Aa`)**: Click the `Aa` button or navigate to it via keyboard to manually toggle case matching, with an illuminated accent border reflecting active status.
+* **Fluid Keyboard Navigation & Focus Handoff**:
+  * Type a search query and press **Enter** to confirm. Keyboard focus immediately returns to the active webview, enabling single-key cycling with **n** (next match) and **N** (previous match) in NORMAL mode without touching the mouse.
+  * Use **Tab** to cycle keyboard focus through overlay controls within a circular trap: Search Input -> Case Toggle (`Aa`) -> Previous Match (`Chevron Up`) -> Next Match (`Chevron Down`) -> Close (`X`) -> back to Search Input.
+  * Pressing **Enter** or **Space** while focused on any navigation button triggers the action and returns focus directly to the webview.
+  * Pressing **n** or **N** while focused on overlay buttons drops focus back to the webview and jumps to the next or previous match.
+  * Press **Escape** from the search input, overlay buttons, or the webview to dismiss the search bar and clear highlight markers.
+
 

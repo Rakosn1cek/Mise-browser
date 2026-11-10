@@ -22,12 +22,12 @@ import { toggleClock, cycleClockFormat } from './modules/clock.js';
 import { toggleDiagnosticsView, toggleDiagnosticsRecording } from './modules/overlays/diagnostics.js';
 import { toggleWindowControls } from './modules/windowControls.js';
 import { toggleWebviewTheme, toggleInterfaceTheme } from './modules/renderer/themeController.js';
-import { toggleInPageSearch } from './modules/renderer/pageSearch.js';
+import { toggleInPageSearch, findInPageNext, findInPagePrevious } from './modules/renderer/pageSearch.js';
 import { togglePrivateWorkspace, handlePrivateBrowsingStateShift, executeSurgicalCookieWipe, executeGlobalCacheWipe, testCleanGoogleSignIn, purgeWorkspaceCookies } from './modules/renderer/workspaceController.js';
 import { applySidebarMode, toggleSidebarExpansion, toggleSidebarPin, focusSidebar, defaultOverlayIds } from './modules/renderer/sidebarController.js';
 import { initializeBrowser } from './modules/renderer/browserInit.js';
 
-export { applySidebarMode, toggleSidebarExpansion, toggleSidebarPin, focusSidebar, togglePrivateWorkspace, testCleanGoogleSignIn, toggleInPageSearch, toggleWebviewTheme, toggleInterfaceTheme, initializeBrowser };
+export { applySidebarMode, toggleSidebarExpansion, toggleSidebarPin, focusSidebar, togglePrivateWorkspace, testCleanGoogleSignIn, toggleInPageSearch, findInPageNext, findInPagePrevious, toggleWebviewTheme, toggleInterfaceTheme, initializeBrowser };
 
 export const overlayIds = [
     'PaletteInput', 'PaletteList', 'PreferencesOverlay', 'BookmarksOverlay', 'BookmarkSearchInput',
@@ -143,7 +143,7 @@ function toggleZenMode() { document.body.classList.toggle('zen-mode'); }
 Object.assign(window, {
     toggleDarkReaderOnActiveTab, toggleReaderViewOnActiveTab, toggleDashboardView,
     displayAddressOverlay, triggerLinkHints, triggerGlanceHints, openPeekModal, closePeekModal,
-    toggleInPageSearch, toggleDownloadShelf, toggleStatusBar, toggleClock, toggleWindowControls,
+    toggleInPageSearch, findInPageNext, findInPagePrevious, toggleDownloadShelf, toggleStatusBar, toggleClock, toggleWindowControls,
     cycleClockFormat, toggleZenMode, toggleSidebarExpansion, toggleSidebarPin, applySidebarMode,
     toggleInterfaceTheme, toggleWebviewTheme, togglePreferencesView, toggleHistoryOverlay,
     handlePrivateBrowsingStateShift, togglePrivateWorkspace, executeSurgicalCookieWipe,
@@ -176,7 +176,7 @@ if (window.miseAPI && typeof window.miseAPI.onMasterShortcut === 'function') {
             case 'export-reader-to-external': exportActiveTabToExternal(); break;
             case 'open-notes-external': openNotesInExternalApp(); break;
             case 'toggle-downloads': toggleDownloadShelf(); break;
-            case 'toggle-find': toggleInPageSearch(); break;
+            case 'toggle-find': toggleInPageSearch(); break; case 'find-next': findInPageNext(); break; case 'find-previous': findInPagePrevious(); break;
             case 'remove-tab': handleTabRemoval(); break;
             case 'toggle-zen-mode': toggleSidebarExpansion(); break;
             case 'toggle-sidebar-collapse-mode': applySidebarMode(args[0]); break;

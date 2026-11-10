@@ -834,6 +834,14 @@ window.addEventListener('keydown', (e) => {
             consumeEvent(e);
             try { ipcRenderer.sendToHost('normal-mode-action', 'toggle-find'); } catch (err) {}
             break;
+        case 'n':
+            consumeEvent(e);
+            try { ipcRenderer.sendToHost('normal-mode-action', 'find-next'); } catch (err) {}
+            break;
+        case 'N':
+            consumeEvent(e);
+            try { ipcRenderer.sendToHost('normal-mode-action', 'find-previous'); } catch (err) {}
+            break;
         case 'f':
             consumeEvent(e);
             try { ipcRenderer.sendToHost('normal-mode-action', 'trigger-hints'); } catch (err) {}

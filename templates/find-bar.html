@@ -1,5 +1,19 @@
 <!-- templates/find-bar.html -->
-<div id="FindBarOverlay">
-    <input type="text" id="FindInput" placeholder="Find in page...">
-    <span id="FindMatchCount"></span>
+<div id="FindBarOverlay" role="search" aria-label="Find in page">
+    <input type="text" id="FindInput" placeholder="Find in page..." autocomplete="off" spellcheck="false">
+    <button id="FindCaseBtn" class="find-bar-btn find-case-btn" type="button" title="Match Case" aria-label="Match case">
+        Aa
+    </button>
+    <span id="FindMatchCount" class="find-match-count"></span>
+    <div class="find-actions">
+        <button id="FindPrevBtn" class="find-bar-btn" type="button" title="Previous match (N / Shift+Enter)" aria-label="Previous match">
+            <i class="fa-solid fa-chevron-up"></i>
+        </button>
+        <button id="FindNextBtn" class="find-bar-btn" type="button" title="Next match (n / Enter)" aria-label="Next match">
+            <i class="fa-solid fa-chevron-down"></i>
+        </button>
+        <button id="FindCloseBtn" class="find-bar-btn" type="button" title="Close (Escape)" aria-label="Close find bar">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+    </div>
 </div>

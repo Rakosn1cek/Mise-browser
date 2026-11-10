@@ -7,10 +7,13 @@
     right: 24px;
     z-index: 1000;
     background-color: var(--bg-sidebar);
-    padding: 6px 12px;
+    padding: 6px 10px;
     border: 1px solid var(--border);
-    border-radius: 4px;
+    border-radius: 6px;
     align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+    user-select: none;
 }
 
 #FindInput {
@@ -20,12 +23,79 @@
     outline: none;
     width: 180px;
     font-size: 13px;
+    user-select: text;
+}
+
+#FindInput::placeholder {
+    color: var(--text);
+    opacity: 0.5;
 }
 
 #FindMatchCount {
     font-size: 12px;
     color: var(--text);
+    opacity: 0.75;
+    white-space: nowrap;
+    user-select: none;
+}
+
+#FindMatchCount.no-matches {
+    color: #f7768e;
+    opacity: 1;
+}
+
+.find-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.find-bar-btn {
+    background: transparent;
+    border: none;
+    color: var(--text);
     opacity: 0.7;
-    margin-left: 8px;
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 11px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease, opacity 0.15s ease, color 0.15s ease;
+}
+
+.find-case-btn {
+    font-size: 11px;
+    font-weight: 600;
+    font-family: inherit;
+    letter-spacing: -0.5px;
+    width: auto;
+    min-width: 24px;
+    padding: 0 4px;
+}
+
+.find-case-btn.active {
+    background-color: var(--selected);
+    color: var(--accent);
+    opacity: 1;
+    border: 1px solid var(--accent);
+}
+
+.find-bar-btn:hover {
+    background-color: var(--selected);
+    opacity: 1;
+    color: var(--accent);
+}
+
+.find-bar-btn:active {
+    opacity: 1;
+    transform: scale(0.96);
+}
+
+.find-bar-btn:focus-visible {
+    outline: 1px solid var(--accent);
+    opacity: 1;
 }
 

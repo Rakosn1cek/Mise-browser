@@ -71,6 +71,8 @@ const ACTION_METADATA = {
     'toggle-private-mode': { label: 'Switch to / from Private Workspace', category: 'Navigation & Workspaces' },
     'toggle-palette': { label: 'Toggle Command Palette', category: 'Navigation & Workspaces' },
     'toggle-find': { label: 'Find In Page', category: 'Web Interaction' },
+    'find-next': { label: 'Find Next Match', category: 'Web Interaction' },
+    'find-previous': { label: 'Find Previous Match', category: 'Web Interaction' },
     'toggle-devtools': { label: 'Toggle Active Webview DevTools', category: 'Web Interaction' },
     'toggle-notes': { label: 'Open Quick Notes Overlay', category: 'Navigation & Workspaces' },
     'toggle-zen-mode': { label: 'Toggle Sidebar Expansion (Expand/Collapse)', category: 'Navigation & Workspaces' },

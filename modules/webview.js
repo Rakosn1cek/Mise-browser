@@ -345,11 +345,16 @@ export function createWebView(url, currentWS, idx) {
 
     webview.addEventListener('found-in-page', (e) => {
         if (e.result) {
-            const countEl = document.getElementById('FindMatchCount');
-            if (countEl) {
-                const activeMatch = e.result.activeMatchOrdinal || 0;
-                const totalMatches = e.result.matches || 0;
-                countEl.textContent = totalMatches > 0 ? `${activeMatch}/${totalMatches}` : '0/0';
+            if (webview !== getActiveWebview()) return;
+            if (typeof window.updateFindMatchCount === 'function') {
+                window.updateFindMatchCount(e.result.activeMatchOrdinal || 0, e.result.matches || 0);
+            } else {
+                const countEl = document.getElementById('FindMatchCount');
+                if (countEl) {
+                    const activeMatch = e.result.activeMatchOrdinal || 0;
+                    const totalMatches = e.result.matches || 0;
+                    countEl.textContent = totalMatches > 0 ? `${activeMatch} of ${totalMatches} matches` : '0 matches';
+                }
             }
         }
     }, listenerOptions);
@@ -603,6 +608,16 @@ export function handleNormalModeAction(action, extra, webview, currentWS, idx) {
                 window.toggleInPageSearch();
             }
             break;
+        case 'find-next':
+            if (typeof window.findInPageNext === 'function') {
+                window.findInPageNext();
+            }
+            break;
+        case 'find-previous':
+            if (typeof window.findInPagePrevious === 'function') {
+                window.findInPagePrevious();
+            }
+            break;
         case 'trigger-hints':
             if (typeof window.triggerLinkHints === 'function') {
                 window.triggerLinkHints();
@@ -673,6 +688,8 @@ export function handleNormalModeAction(action, extra, webview, currentWS, idx) {
                 window.toggleDashboardView();
             } else if (state.historyActive && typeof window.toggleHistoryOverlay === 'function') {
                 window.toggleHistoryOverlay();
+            } else if (document.getElementById('FindBarOverlay')?.style.display === 'flex' && typeof window.toggleInPageSearch === 'function') {
+                window.toggleInPageSearch(false);
             }
             break;
     }

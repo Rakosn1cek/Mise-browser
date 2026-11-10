@@ -48,6 +48,8 @@ All keyboard shortcuts in Mise Browser are fully customisable via `~/.config/mis
 | **Shift + Click** | `peek-preview` | Opens link in Ephemeral Tab Peek modal preview frame |
 | **Ctrl + D** | `toggle-dark-reader` | Toggles Dark Reader high-contrast dark theme on active tab |
 | **F9** | `toggle-reader-view` | Toggles Native Reader View (distilled readable article format) |
+| **Enter** / **n** | `find-next` | Finds next match in active page |
+| **Shift + Enter** / **N** | `find-previous` | Finds previous match in active page |
 | **Ctrl + Shift + E** | `export-reader-to-notes` | Exports distilled Reader View article or page clipping to Quick Notes |
 | **Ctrl + Shift + Q [key]** | `set-quickmark` | Binds current page URL to any single key |
 | **Ctrl + J [key]** | `jump-quickmark` | Jumps instantly to the URL bound to that key |
@@ -79,6 +81,8 @@ When viewing web content without an active text field or prompt, Mise operates i
 | `r` / `R` | Reload / Force reload current tab |
 | `H` / `L` | History back / History forward |
 | `/` | In-page text search |
+| `n` | Find next match |
+| `N` | Find previous match |
 | `f` | Trigger Link Hints overlay |
 | `gh` | Trigger Ephemeral Tab Peek (Glance) hints to preview link |
 | `e` | Toggle Native Reader View |
