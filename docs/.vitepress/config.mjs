@@ -44,6 +44,7 @@ export default defineConfig({
       {
         text: 'Engineering Chronicles',
         items: [
+          { text: 'Find-in-Page Focus Trap', link: '/blog/the-find-in-page-focus-trap' },
           { text: 'The Ghostery IPC Civil War', link: '/blog/the-ghostery-ipc-civil-war' },
           { text: 'The Modularisation Minefield', link: '/blog/the-modularisation-minefield' },
           { text: 'The Silent Truncation Trap', link: '/blog/the-silent-truncation-trap' },

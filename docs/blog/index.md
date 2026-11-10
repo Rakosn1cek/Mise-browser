@@ -30,6 +30,14 @@ Deep dives into the most challenging bugs, feature failures, and architectural l
 
 Each chronicle follows the development anatomy: **Problem** → **Attempted Solution** → **The Bug / Fail** → **The Architectural Fix**.
 
+### [The Find-in-Page Focus Trap: Why Modal Navigation and Chromium Search Don't Mix](./the-find-in-page-focus-trap.md)
+
+How a routine text search feature opened a hornet's nest of focus trapping, desktop window manager collisions, and case amnesia, and how Vim SmartCase and disciplined focus handoffs restored mouse-free browsing.
+
+`Keyboard Ergonomics` · `Focus Architecture` · `Vim` · `SmartCase` · `Electron` · `Mise Browser`
+
+---
+
 ### [The Ghostery IPC Civil War: Adblocking Across Isolated Partitions](./the-ghostery-ipc-civil-war.md)
 
 How strict multi-account container partitions caused IPC collisions in the adblocking engine, why compiling 150,000 rules froze the user interface, and how off-thread compilation and dynamic hot-swapping restored harmony.
