@@ -30,6 +30,14 @@ Deep dives into the most challenging bugs, feature failures, and architectural l
 
 Each chronicle follows the development anatomy: **Problem** → **Attempted Solution** → **The Bug / Fail** → **The Architectural Fix**.
 
+### [The Webview Focus Limbo: How Out-of-Process Iframes and Display Toggles Stranded Keyboard Input](./the-webview-focus-limbo.md)
+
+How an innocent tab-switching shortcut collided with Chromium out-of-process iframes and Wayland input routing, leaving keyboard focus lost in the void, and why eliminating redundant chords restored architectural purity.
+
+`Keyboard Ergonomics` · `Focus Architecture` · `Process Isolation` · `Wayland` · `Electron` · `Mise Browser`
+
+---
+
 ### [The Find-in-Page Focus Trap: Why Modal Navigation and Chromium Search Don't Mix](./the-find-in-page-focus-trap.md)
 
 How a routine text search feature opened a hornet's nest of focus trapping, desktop window manager collisions, and case amnesia, and how Vim SmartCase and disciplined focus handoffs restored mouse-free browsing.

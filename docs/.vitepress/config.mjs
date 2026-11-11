@@ -44,6 +44,7 @@ export default defineConfig({
       {
         text: 'Engineering Chronicles',
         items: [
+          { text: 'Webview Focus Limbo', link: '/blog/the-webview-focus-limbo' },
           { text: 'Find-in-Page Focus Trap', link: '/blog/the-find-in-page-focus-trap' },
           { text: 'The Ghostery IPC Civil War', link: '/blog/the-ghostery-ipc-civil-war' },
           { text: 'The Modularisation Minefield', link: '/blog/the-modularisation-minefield' },
