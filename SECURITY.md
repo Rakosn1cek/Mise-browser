@@ -107,6 +107,7 @@ Mise Browser is designed with multiple defence-in-depth layers:
 * **Zero Embedded Password Manager:** Mise intentionally excludes built-in password saving, autofill prompts, and credential vaults.
 * **Elimination of Malware Targets:** Browser-bundled password vaults (such as Chromium's `Login Data` file) represent the primary attack target for infostealers and credential extraction malware. By omitting internal password storage entirely, Mise removes this high-value vulnerability surface.
 * **User Autonomy & External Tools:** Users retain full discretion to employ their preferred dedicated password managers (such as Pass, KeePassXC, Bitwarden, or system keychains) outside the browser's execution perimeter.
+* **External Setup Guide:** For step-by-step guidance on pairing standalone tools such as KeePassXC Auto-Type or CLI utilities with automatic clipboard clearing, see the dedicated [External Password Managers Guide](docs/guide/password-managers.md).
 
 ***
 
