@@ -5,6 +5,7 @@
 const os = require('os');
 const path = require('path');
 const { app } = require('electron');
+const widevine = require('./main/widevine');
 
 const MAX_LOGS = 100;
 let diagnosticsEnabled = false;
@@ -205,6 +206,24 @@ async function gatherSystemDiagnostics(sessionStats = {}) {
     const desktopSession = process.env.XDG_CURRENT_DESKTOP || process.env.DESKTOP_SESSION || 'Unknown';
     const sessionType = process.env.XDG_SESSION_TYPE || 'Unknown';
 
+    let widevineReport = null;
+    try {
+        const wv = widevine.getWidevineStatus();
+        widevineReport = {
+            status: wv.status,
+            version: wv.version,
+            path: wv.path ? sanitizeString(wv.path) : null,
+            message: wv.message
+        };
+    } catch (e) {
+        widevineReport = {
+            status: 'unavailable',
+            version: null,
+            path: null,
+            message: 'Failed to inspect Widevine status'
+        };
+    }
+
     return {
         timestamp: new Date().toISOString(),
         diagnosticsEnabled,
@@ -216,6 +235,7 @@ async function gatherSystemDiagnostics(sessionStats = {}) {
             node: process.versions.node,
             v8: process.versions.v8
         },
+        widevine: widevineReport,
         system: {
             platform: os.platform(),
             arch: os.arch(),

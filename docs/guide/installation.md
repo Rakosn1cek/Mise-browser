@@ -151,6 +151,30 @@ This installs `mise.desktop` into `~/.local/share/applications/` and deploys ico
 
 ---
 
+## Widevine DRM & Media Playback
+
+Due to proprietary licensing restrictions, open-source browsers cannot bundle Google Widevine Content Decryption Module (CDM) binaries directly. Mise includes an automated detection helper that scans standard host locations on startup.
+
+### Linux
+Mise automatically inspects host directories on startup for `libwidevinecdm.so` and `manifest.json`:
+- Google Chrome: `/opt/google/chrome/WidevineCdm`
+- Distribution packages: `/usr/lib/chromium/WidevineCdm`, `/usr/lib/widevine`
+- User library directories: `~/.config/google-chrome/WidevineCdm`, `~/.local/lib/widevine`
+
+To enable protected media playback (such as Spotify Web Player or DRM video streams):
+- **Arch Linux**: Install `widevine` or `chromium-widevine` from the AUR:
+  ```bash
+  yay -S widevine
+  ```
+- **Other Distributions**: Install Google Chrome, or set the `WIDEVINE_CDM_PATH` environment variable pointing to your CDM directory.
+
+You can verify detection status at any time in the Diagnostics overlay (via Command Centre `Ctrl+P` -> **Open Diagnostics & System Health**, or in Preferences `Ctrl+H` -> **Diagnostics & System Health**).
+
+### macOS & Windows
+On macOS and Windows, Google enforces Verified Media Path (VMP) code-signing signatures. Protected DRM playback cannot function in vanilla open-source Electron builds on these operating systems. Mise detects this platform boundary and reports the status cleanly in Diagnostics without errors.
+
+---
+
 ## Configuration Location
 
 All runtime configuration and persistent session data are stored locally in standard Linux XDG format:

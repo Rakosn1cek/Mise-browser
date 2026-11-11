@@ -7,16 +7,11 @@ const { app, ipcMain, session, nativeTheme, Notification, shell } = require('ele
 const security = require('./security');
 const keybinds = require('./keybinds');
 const diagnostics = require('./diagnostics');
+const widevine = require('./main/widevine');
 const config = require('./main/config');
 const { CONFIG_DIR, loadBrowserConfig, writeConfigFile } = config;
 const sessionStore = require('./main/sessionStore');
-const {
-    checkAndInitializeSentinel,
-    markSentinelState,
-    isCrashRecoveryState,
-    flushSessionToDisk,
-    readCurrentSession
-} = sessionStore;
+const { checkAndInitializeSentinel, markSentinelState, isCrashRecoveryState, flushSessionToDisk, readCurrentSession } = sessionStore;
 const storage = require('./main/storage');
 const { flushHistoryToDisk } = storage;
 const updater = require('./main/updater');
@@ -26,14 +21,7 @@ const contextMenus = require('./main/contextMenus');
 const systemIpc = require('./main/systemIpc');
 const webContentsPolicy = require('./main/webContentsPolicy');
 const windowManager = require('./main/windowManager');
-const {
-    createMainWindow,
-    getMainWindow,
-    dispatchTabUrl,
-    extractUrlsFromArgs,
-    handleAppAction,
-    registerWindowIpc
-} = windowManager;
+const { createMainWindow, getMainWindow, dispatchTabUrl, extractUrlsFromArgs, handleAppAction, registerWindowIpc } = windowManager;
 const permissions = require('./main/permissions');
 const downloads = require('./main/downloads');
 const { installIpcGuard, GUEST_CHANNELS } = require('./main/ipcGuard');
@@ -127,6 +115,9 @@ function initializeEngineSwitches() {
     // Standardise baseline User-Agent string across all renderers and network requests
     const realChromeMajor = (process.versions && process.versions.chrome) ? process.versions.chrome.split('.')[0] : '132';
     app.userAgentFallback = `Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${realChromeMajor}.0.0.0 Safari/537.36`;
+
+    // Detect host Widevine CDM and register switches before ready
+    widevine.initializeWidevine(app);
 }
 
 initializeEngineSwitches();

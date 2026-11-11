@@ -2082,6 +2082,7 @@ export function setupPreferencesListeners() {
     const openDiagBtn = document.getElementById('setting-open-diagnostics-btn');
     if (openDiagBtn) {
         openDiagBtn.onclick = () => {
+            togglePreferencesView();
             if (window.toggleDiagnosticsView) {
                 window.toggleDiagnosticsView();
             }
@@ -2102,6 +2103,7 @@ export async function togglePreferencesView() {
     if (!overlay) return;
 
     preferencesActive = !preferencesActive;
+    state.preferencesActive = preferencesActive;
     if (preferencesActive) {
         if (state.paletteActive) toggleCommandPaletteView();
         const dash = document.getElementById('DashboardOverlay');

@@ -102,7 +102,10 @@ export async function toggleDiagnosticsView() {
         if (state.dashboardActive && window.toggleDashboardView) window.toggleDashboardView();
         if (state.bookmarksActive && window.toggleBookmarksOverlay) window.toggleBookmarksOverlay();
         if (state.historyActive && window.toggleHistoryOverlay) window.toggleHistoryOverlay();
-        if (state.preferencesActive && window.togglePreferencesView) window.togglePreferencesView();
+        const prefOverlay = document.getElementById('PreferencesOverlay');
+        if ((state.preferencesActive || (prefOverlay && prefOverlay.style.display !== 'none')) && window.togglePreferencesView) {
+            window.togglePreferencesView();
+        }
 
         overlay.style.display = 'flex';
         await refreshDiagnosticsData();
@@ -195,7 +198,18 @@ function renderSystemPane(data) {
     const sys = data.system || {};
     const hw = data.hardware || {};
     const gpu = data.gpu || {};
+    const wv = data.widevine || {};
     const features = gpu.features || {};
+
+    let wvBadgeClass = 'diag-pill-neutral';
+    let wvLabel = 'Unsupported';
+    if (wv.status === 'ready') {
+        wvBadgeClass = 'diag-pill-ok';
+        wvLabel = wv.version && wv.version !== 'unknown' ? `v${wv.version}` : 'Ready';
+    } else if (wv.status === 'unavailable') {
+        wvBadgeClass = 'diag-pill-warn';
+        wvLabel = 'Not Detected';
+    }
 
     const featureKeys = ['2d_canvas', 'gpu_compositing', 'webgl', 'webgl2', 'video_decode', 'rasterization', 'multiple_raster_threads'];
 
@@ -223,6 +237,7 @@ function renderSystemPane(data) {
                     <div class="diag-kv-row"><span class="diag-k">Chromium Engine</span><span class="diag-v">v${escapeHtml(app.chrome)}</span></div>
                     <div class="diag-kv-row"><span class="diag-k">Node.js Runtime</span><span class="diag-v">v${escapeHtml(app.node)}</span></div>
                     <div class="diag-kv-row"><span class="diag-k">V8 Engine</span><span class="diag-v">v${escapeHtml(app.v8)}</span></div>
+                    <div class="diag-kv-row"><span class="diag-k">Widevine DRM</span><span class="diag-v ${wvBadgeClass}" title="${escapeHtml(wv.message || '')}">${escapeHtml(wvLabel)}</span></div>
                 </div>
             </div>
 
@@ -464,6 +479,7 @@ function buildMarkdownIssueReport(data) {
     const sys = data.system || {};
     const hw = data.hardware || {};
     const gpu = data.gpu?.features || {};
+    const wv = data.widevine || {};
     const sess = data.session || {};
     const procs = data.processes || [];
     const logs = data.logs || [];
@@ -473,11 +489,16 @@ function buildMarkdownIssueReport(data) {
     lines.push(`_Generated: ${data.timestamp || new Date().toISOString()}_`);
     lines.push('_Privacy status: 100% local, scrubbed of user paths, auth tokens, and private IPs._\n');
 
+    const wvText = wv.status === 'ready'
+        ? `v${wv.version || 'unknown'} (${wv.path || 'host'})`
+        : (wv.status === 'unavailable' ? 'Not Detected' : 'Unsupported');
+
     lines.push('#### 1. Software Environment');
     lines.push(`- **Mise Version**: v${app.version || 'unknown'}`);
     lines.push(`- **Electron**: v${app.electron || 'unknown'}`);
     lines.push(`- **Chromium**: v${app.chrome || 'unknown'}`);
     lines.push(`- **Node.js**: v${app.node || 'unknown'}`);
+    lines.push(`- **Widevine DRM**: ${wvText}`);
     lines.push(`- **OS**: ${sys.platform} (${sys.arch}) - Kernel ${sys.osRelease}`);
     lines.push(`- **Desktop / Protocol**: ${sys.desktopSession} (${sys.sessionType})\n`);
 
