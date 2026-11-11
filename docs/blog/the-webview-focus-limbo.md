@@ -165,4 +165,4 @@ Rather than adding hundreds of lines of fragile cross-process focus orchestratio
    Adding shortcuts that jump across process boundaries without passing through the application's central focus state machine creates hidden operational traps.
 
 4. **When stuck in complexity, prefer subtraction**:
-   If fixing a minor convenience shortcut requires multi-process IPC bridges, speculative timers, and lifecycle polling, the problem is not your implementation: it is the feature itself. Eliminating redundant chords preserves code clarity, eliminates process bugs, and keeps the browser lightweight and maintainable.
+   If fixing a minor convenience shortcut requires multi-process IPC bridges, speculative timers, and lifecycle polling, the problem is not your implementation: it is the feature itself. Eliminating redundant chords preserves code clarity, eliminates process bugs, and keeps the browser efficient and maintainable.

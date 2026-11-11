@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.rakosn1cek.mise-browser</id>
+  <metadata_license>FSFAP</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+  <name>Mise Browser</name>
+  <summary>Keyboard-centric web browser engineered for Linux</summary>
+  <description>
+    <p>
+      Mise Browser is an intentional, efficient web browser built for Linux. Engineered for fanless hardware and resource efficiency, Mise replaces tab bloat with true DOM detachment hibernation and containerised workspace isolation.
+    </p>
+    <p>Key highlights include:</p>
+    <ul>
+      <li>Keyboard-driven navigation: modal keybindings and link hinting for mouse-free browsing</li>
+      <li>Containerised workspaces: discrete session partitions keeping profiles separated</li>
+      <li>Tab hibernation: true DOM detachment releasing system memory from idle tabs</li>
+      <li>Built-in adblocking: native network-level request filtering without extension bloat</li>
+      <li>Tokyo Night interface: clean vertical sidebar with light and dark mode support</li>
+    </ul>
+  </description>
+  <launchable type="desktop-id">mise-browser.desktop</launchable>
+  <url type="homepage">https://rakosn1cek.github.io/Mise-browser/</url>
+  <url type="bugtracker">https://github.com/Rakosn1cek/Mise-browser/issues</url>
+  <url type="vcs-browser">https://github.com/Rakosn1cek/Mise-browser</url>
+  <url type="help">https://rakosn1cek.github.io/Mise-browser/guide/getting-started.html</url>
+  <url type="faq">https://rakosn1cek.github.io/Mise-browser/guide/installation.html</url>
+  <developer id="io.github.rakosn1cek">
+    <name>Rakosn1cek</name>
+  </developer>
+  <branding>
+    <color type="primary" scheme_preference="dark">#1a1b26</color>
+    <color type="primary" scheme_preference="light">#e1e2e7</color>
+  </branding>
+  <screenshots>
+    <screenshot type="default">
+      <caption>Split view multi-pane browsing in Tokyo Night palette</caption>
+      <image>https://raw.githubusercontent.com/Rakosn1cek/Mise-browser/main/docs/public/screenshots/split-view.webp</image>
+    </screenshot>
+    <screenshot>
+      <caption>Workspace dashboard with containerised profiles</caption>
+      <image>https://raw.githubusercontent.com/Rakosn1cek/Mise-browser/main/docs/public/screenshots/workspace-dashboard.webp</image>
+    </screenshot>
+    <screenshot>
+      <caption>Command centre overlay with keyboard-driven actions</caption>
+      <image>https://raw.githubusercontent.com/Rakosn1cek/Mise-browser/main/docs/public/screenshots/command-centre.webp</image>
+    </screenshot>
+    <screenshot>
+      <caption>Integrated scratchpad notes and research clippings</caption>
+      <image>https://raw.githubusercontent.com/Rakosn1cek/Mise-browser/main/docs/public/screenshots/notes.webp</image>
+    </screenshot>
+    <screenshot>
+      <caption>Searchable browsing history and domain analytics</caption>
+      <image>https://raw.githubusercontent.com/Rakosn1cek/Mise-browser/main/docs/public/screenshots/history.webp</image>
+    </screenshot>
+  </screenshots>
+  <releases>
+    <release version="1.6.1" date="2026-11-11">
+      <description>
+        <p>Introduce Widevine DRM detection, consolidate modal keybindings, and bundle verified AppStream metadata.</p>
+      </description>
+    </release>
+    <release version="1.6.0" date="2026-11-08">
+      <description>
+        <p>Add workspace visual identity customisation, cookie inspector, and notifications overlay.</p>
+      </description>
+    </release>
+    <release version="1.5.0" date="2026-10-31">
+      <description>
+        <p>Implement community filter list subscriptions and modularise renderer templates.</p>
+      </description>
+    </release>
+  </releases>
+  <content_rating type="oars-1.1" />
+  <categories>
+    <category>Network</category>
+    <category>WebBrowser</category>
+  </categories>
+  <keywords>
+    <keyword>browser</keyword>
+    <keyword>web</keyword>
+    <keyword>internet</keyword>
+    <keyword>privacy</keyword>
+    <keyword>minimalist</keyword>
+    <keyword>keyboard</keyword>
+  </keywords>
+  <provides>
+    <binary>mise-browser</binary>
+  </provides>
+</component>

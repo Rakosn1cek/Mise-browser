@@ -11,6 +11,7 @@ const readmePath = path.join(rootDir, 'README.md');
 const whatsNewPath = path.join(rootDir, 'assets', 'whats-new.html');
 const vitepressConfigPath = path.join(rootDir, 'docs', '.vitepress', 'config.mjs');
 const docsIndexPath = path.join(rootDir, 'docs', 'index.md');
+const metainfoPath = path.join(rootDir, 'assets', 'io.github.rakosn1cek.mise-browser.metainfo.xml');
 
 if (!fs.existsSync(pkgPath)) {
     console.error('Error: package.json not found');
@@ -145,6 +146,18 @@ if (fs.existsSync(docsIndexPath)) {
     );
     fs.writeFileSync(docsIndexPath, docsIndex, 'utf8');
     console.log('✓ docs/index.md logo cache version updated');
+}
+
+// 5. Synchronise assets/io.github.rakosn1cek.mise-browser.metainfo.xml release version
+if (fs.existsSync(metainfoPath)) {
+    let metainfo = fs.readFileSync(metainfoPath, 'utf8');
+    if (!metainfo.includes(`version="${version}"`)) {
+        const today = new Date().toISOString().split('T')[0];
+        const newRelease = `    <release version="${version}" date="${today}">\n      <description>\n        <p>Release v${version}.</p>\n      </description>\n    </release>\n`;
+        metainfo = metainfo.replace(/<releases>\n/, `<releases>\n${newRelease}`);
+        fs.writeFileSync(metainfoPath, metainfo, 'utf8');
+        console.log('✓ assets/io.github.rakosn1cek.mise-browser.metainfo.xml release version updated');
+    }
 }
 
 console.log('Version synchronisation complete.');

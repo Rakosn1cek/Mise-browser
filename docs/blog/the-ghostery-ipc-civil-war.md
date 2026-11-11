@@ -225,7 +225,7 @@ In `main/config.js`, custom URLs pass through strict security validation before 
 
 1. **Beware Singleton IPC Handlers in Modular Architectures**: Libraries designed for single-window or single-profile Electron apps often register global IPC handlers naively. When building containerised browsers, wrap third-party registrations with explicit lifecycle guards and cleanup handlers.
 2. **Never Monopolise Exclusive Platform APIs**: When a platform runtime offers only a single listener slot (like Electron's `webRequest`), create an explicit, priority-ordered multiplexer. Trying to let two subsystems register listeners independently will always result in silent breakage.
-3. **Offload Heavy Parsing Before It Hurts**: Parsing text rules and generating ASTs in the main process is a recipe for frame drops. Worker threads are lightweight, safe, and keep keyboard input buttery smooth.
+3. **Offload Heavy Parsing Before It Hurts**: Parsing text rules and generating ASTs in the main process is a recipe for frame drops. Worker threads are efficient, safe, and keep keyboard input buttery smooth.
 4. **Security Must Encircle User Extensibility**: Any feature that allows users to supply URLs that the main process will fetch must be treated as a potential SSRF attack vector. Enforce strict HTTPS protocols and private IP filtering at the configuration boundary.
 
 ---
