@@ -200,10 +200,7 @@ export function setupPageSearchListeners() {
         });
 
         findInput.addEventListener('keydown', (e) => {
-            const isCtrl = e.ctrlKey || e.metaKey;
-            const key = e.key.toLowerCase();
-
-            if (e.key === 'Escape' || (isCtrl && key === 's')) {
+            if (e.key === 'Escape') {
                 e.preventDefault();
                 toggleInPageSearch(false);
             } else if (e.key === 'Enter') {

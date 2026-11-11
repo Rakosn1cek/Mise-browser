@@ -150,12 +150,12 @@ Activation only occurs when the user explicitly commits:
 
 While non-disruptive cursor navigation solved the memory spike of scrolling, moving between distant tabs sequentially still required multiple keystrokes. 
 
-To eliminate mouse usage entirely, we introduced direct random-access tab jumping through two unified mechanisms:
+To eliminate mouse usage entirely, we introduced direct random-access tab jumping via modal sidebar keys:
 
-#### A. Universal Browser Shortcuts (`Ctrl + 1` to `Ctrl + 9`)
-Registered centrally in `keybinds.js` and intercepted via `before-input-event` in the main process, `Ctrl + 1` through `Ctrl + 8` jump directly to tabs 1 through 8 from anywhere: inside guest webviews, form inputs, or overlays. 
+#### Direct Sidebar Jumping (`1` to `9`)
+When keyboard focus is inside the sidebar tab list, modifier keys are unnecessary. Pressing `1` through `9` directly executes `jumpToTabByIndex(num)`. Moving from Tab 5 to Tab 1 is a single keystroke (`1`), waking only Tab 1 and bypassing tabs 2, 3, and 4 completely.
 
-Following standard browser conventions, `Ctrl + 9` intelligently routes to the 9th tab or the final tab if fewer than 9 tabs are open:
+Following standard browser conventions, jumping to index 9 intelligently routes to the 9th tab or the final tab if fewer than 9 tabs are open:
 
 ```javascript
 // modules/webview.js: direct jump boundary calculation
@@ -174,9 +174,6 @@ export function jumpToTabByIndex(oneBasedIdx) {
     switchTabFocus(targetIdx);
 }
 ```
-
-#### B. Single-Key Jumping in Sidebar (`1` to `9`)
-When keyboard focus is inside the sidebar tab list, modifier keys are unnecessary. Pressing `1` through `9` directly executes `jumpToTabByIndex(num)`. Moving from Tab 5 to Tab 1 is now a single keystroke (`1`), waking only Tab 1 and bypassing tabs 2, 3, and 4 completely.
 
 ---
 

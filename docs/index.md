@@ -63,13 +63,13 @@ Keep your hands on the home row. Every major workflow is reachable via concise, 
 | `/` | Find in Page | Search page text with match counter and Vim n/N navigation |
 | `Ctrl + Shift + S` | Dual Split | Toggle side-by-side split screen view |
 | `Ctrl + \` | Swap Panes | Swap active page and split page positions |
-| `Ctrl + 1` to `9` | Tab Jump | Jump directly to tabs 1 through 9 |
+| `1` to `9` (sidebar) | Tab Jump | Jump directly to numbered tabs in the active workspace |
 | `Ctrl + Shift + W` | Workspace Dashboard | Visualise, transfer tabs, and manage isolated containers |
 | `Ctrl + L` / `o` | Omnibar | Focus status bar address bar with search engine aliases |
 | `Ctrl + Shift + H` | History Overlay | Search, reopen, or purge visited history records |
 | `Ctrl + N` | Scratchpad | Open Markdown quick-notes scratchpad |
 | `Ctrl + Shift + P` | Private Window | Open zero-trace volatile browsing container |
-| `F1` / `Ctrl + H` | Preferences | Adjust hardware flags, sleep timeouts, and site shields |
+| `Ctrl + H` / `?` | Preferences | Adjust hardware flags, sleep timeouts, and site shields |
 
 ---
 

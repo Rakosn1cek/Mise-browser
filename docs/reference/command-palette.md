@@ -38,21 +38,20 @@ The Command Centre gives you rapid, searchable access to all Mise operations, in
 | **Toggle Actionable History** | `Ctrl+Shift+H` | `toggle-history` | Local history ledger with domain-level filtering and record purging. |
 | **Toggle Link Hints Overlay** | `Ctrl+F` | `trigger-hints` | Letter tags overlaid on clickable webpage links for keyboard browsing. |
 | **Trigger Glance Hints (Preview)** | `Ctrl+G` / `gh` | `trigger-glance` | Ephemeral Tab Peek link hints for transient modal previews without creating tabs. |
-| **Find In Page** | `Ctrl+Shift+F` / `F3` / `/` | `toggle-find` | In-page text search overlay across active webview content. |
+| **Find In Page** | `Ctrl+Shift+F` / `/` | `toggle-find` | In-page text search overlay across active webview content. |
 | **Find Next Match** | `n` / `Enter` | `find-next` | Navigates to the next search match on the current page. |
 | **Find Previous Match** | `N` / `Shift+Enter` | `find-previous` | Navigates to the previous search match on the current page. |
-| **Reload Active Tab** | `Ctrl+R` / `F5` | `reload-active-tab` | Refreshes current webview document while preserving session state. |
+| **Reload Active Tab** | `Ctrl+R` / `r` | `reload-active-tab` | Refreshes current webview document while preserving session state. |
 | **Close Current Tab** | `Ctrl+X` | `remove-tab` | Disposes of active webview and reclaims allocated V8 heap memory. |
-| **Pin / Unpin Active Tab** | `Ctrl+Shift+X` / `F4` | `toggle-pin-tab` | Pins essential tab to the top of the workspace or unpins it. |
-| **Direct Tab Jump (Tabs 1 to 9)** | `Ctrl+1` - `Ctrl+9` | `jump-to-tab-1` - `jump-to-tab-9` | Jumps directly to tab 1 through 9 from anywhere in the browser. |
-| **Reset Tab Zoom Level** | — | — | Restores webview zoom factor back to 100% default. |
-| **Focus Sidebar Tab List** | `Ctrl+S` | `focus-sidebar` | Moves keyboard focus directly into the vertical tab list. |
+| **Pin / Unpin Active Tab** | `F4` / `p` | `toggle-pin-tab` | Pins essential tab to the top of the workspace or unpins it. |
+| **Reset Tab Zoom Level** | - | - | Restores webview zoom factor back to 100% default. |
+| **Focus Sidebar Tab List** | `s` (Normal mode) | `focus-sidebar` | Moves keyboard focus directly into the vertical tab list. |
 | **Focus Navigation Buttons** | `Ctrl+Tab` | `focus-nav-buttons` | Cycles keyboard focus across toolbar navigation controls. |
 | **Focus Active Webview** | `Ctrl+W` | `focus-webview` | Returns keyboard and typing focus directly to the guest webpage. |
 | **Toggle Sidebar (Expand / Collapse)** | `Ctrl+Shift+Z` | `toggle-zen-mode` | Alternates sidebar between 220px expanded width and 48px icon strip. |
 | **Toggle Status & Mode Bar** | `Ctrl+/` | `toggle-status-bar` | 22px footer status bar displaying modal state, target URL, and TLS encryption. |
-| **Toggle Auto-Collapse Sidebar** | — | — | Pins sidebar open or enables auto-shrink to 36px strip with hover expansion. |
-| **Toggle Zen Mode (Hide Sidebar)** | — | — | Completely hides peripheral sidebar chrome for edge-to-edge reading. |
+| **Toggle Auto-Collapse Sidebar** | - | - | Pins sidebar open or enables auto-shrink to 36px strip with hover expansion. |
+| **Toggle Zen Mode (Hide Sidebar)** | - | - | Completely hides peripheral sidebar chrome for edge-to-edge reading. |
 
 ### Workspaces & Dashboard
 
@@ -96,8 +95,8 @@ The Command Centre gives you rapid, searchable access to all Mise operations, in
 | **Toggle Notifications & Activity** | `Ctrl+Shift+N` | `toggle-notifications` | Central activity feed for downloads, update alerts, permissions, and web notifications. |
 | **Toggle Downloads Shelf** | `Ctrl+Shift+D` | `toggle-downloads` | Bottom drawer showing transfer speed, progress bars, and file links. |
 | **Toggle Active Webview DevTools** | `F12` / `Ctrl+Shift+I` | `toggle-devtools` | Chromium developer tools for inspecting DOM, network, and console. |
-| **Toggle Global Media Playback** | `Ctrl+Shift+0` / `F10` | `toggle-global-media` | Global play and pause toggle across all active media streams. |
-| **Toggle Tab Audio Mute** | `Ctrl+Shift+M` / `F8` | `toggle-tab-audio-mute` | Mute or unmute audio output on active tab without pausing playback. |
+| **Toggle Global Media Playback** | `F10` | `toggle-global-media` | Global play and pause toggle across all active media streams. |
+| **Toggle Tab Audio Mute** | `Ctrl+M` / `m` | `toggle-tab-audio-mute` | Mute or unmute audio output on active tab without pausing playback. |
 | **Toggle Global Audio Mute** | `M` (Normal mode) | `toggle-global-audio-mute` | Mute or unmute audio output across all tabs and workspaces simultaneously. |
 | **Toggle Dark Reader on Active Tab** | `Ctrl+D` / `d` | `toggle-dark-reader` | Inverts web page colours into high-contrast dark theme. |
 | **Toggle Reader View on Active Tab** | `F9` | `toggle-reader-view` | Distils webpage into a clean, distraction-free reading layout. |

@@ -866,6 +866,10 @@ window.addEventListener('keydown', (e) => {
             consumeEvent(e);
             try { ipcRenderer.sendToHost('normal-mode-action', 'toggle-pin-tab'); } catch (err) {}
             break;
+        case '?':
+            consumeEvent(e);
+            try { ipcRenderer.sendToHost('normal-mode-action', 'toggle-help'); } catch (err) {}
+            break;
         case 'y':
             consumeEvent(e);
             try {

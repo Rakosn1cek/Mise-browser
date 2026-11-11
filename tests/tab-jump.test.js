@@ -1,26 +1,20 @@
 // tests/tab-jump.test.js
-// Automated verification for direct tab jumping, keybind mappings, and Alt modifier exclusion
+// Automated verification for direct tab jumping boundary calculations and consolidated keybind mappings
 
 const assert = require('assert');
 const keybinds = require('../keybinds.js');
 
 console.log('Running Mise direct tab jumping and cursor navigation regression tests...');
 
-// 1. Verify jump-to-tab-1 through jump-to-tab-9 keybindings are registered
+// 1. Verify global Ctrl+1 through Ctrl+9 are removed from default keybinds (consolidated to sidebar navigation)
 {
     const defaults = keybinds.DEFAULT_KEYBINDS;
     for (let i = 1; i <= 9; i++) {
         const action = `jump-to-tab-${i}`;
-        assert(defaults[action], `${action} must be present in default keybinds`);
-
-        const bindings = Array.isArray(defaults[action]) 
-            ? defaults[action] 
-            : [defaults[action]];
-
-        assert(bindings.includes(`Ctrl+${i}`), `${action} must include Ctrl+${i}`);
+        assert(!defaults[action], `${action} must not be present in default keybinds`);
     }
 
-    console.log('✓ Tab jump default keybinds (Ctrl+1 to Ctrl+9) registered');
+    console.log('✓ Verified global Ctrl+1 to Ctrl+9 removed from default keybinds');
 }
 
 // 2. Strict Alt modifier guard: ensure no default keybinds use Alt modifier
@@ -37,42 +31,18 @@ console.log('Running Mise direct tab jumping and cursor navigation regression te
     console.log('✓ Verified no default keybindings use Alt modifier');
 }
 
-// 3. Verify action metadata
+// 3. Verify action metadata excludes removed direct jump actions
 {
     const metadata = keybinds.getActionMetadata();
     for (let i = 1; i <= 9; i++) {
         const action = `jump-to-tab-${i}`;
-        assert(metadata[action], `${action} metadata must exist`);
-        assert.strictEqual(metadata[action].category, 'Navigation & Workspaces');
-        assert(metadata[action].label.includes(`Tab ${i}`), `${action} label must reference Tab ${i}`);
+        assert(!metadata[action], `${action} must not exist in action metadata`);
     }
 
-    console.log('✓ Tab jump action metadata verified');
+    console.log('✓ Tab jump action metadata exclusion verified');
 }
 
-// 4. Verify input event translation to key combination
-{
-    for (let i = 1; i <= 9; i++) {
-        const event = {
-            type: 'keyDown',
-            key: String(i),
-            code: `Digit${i}`,
-            control: true,
-            shift: false,
-            alt: false,
-            meta: false
-        };
-        const combo = keybinds.inputEventToKeyCombination(event);
-        assert.strictEqual(combo, `Ctrl+${i}`, `Input event should resolve to Ctrl+${i}`);
-
-        const action = keybinds.getActionForInput(event);
-        assert.strictEqual(action, `jump-to-tab-${i}`, `Event for Ctrl+${i} must resolve to jump-to-tab-${i}`);
-    }
-
-    console.log('✓ Input event translation and action dispatch for Ctrl+1 to Ctrl+9 verified');
-}
-
-// 5. Verify tab jumping boundary calculations
+// 4. Verify tab jumping boundary calculations
 {
     function computeTargetIdx(oneBasedIdx, totalTabs) {
         if (totalTabs === 0) return -1;

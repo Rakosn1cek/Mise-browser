@@ -213,11 +213,11 @@ export function setupSidebarListeners(overlayIds = defaultOverlayIds) {
                     }
                     switchTabFocus(targetIdx);
                 }
-            } else if (e.key === 'ArrowLeft' || e.key === 'h') {
+            } else if (e.key === 'ArrowLeft') {
                 e.preventDefault();
                 const backBtn = document.getElementById('back-btn') || document.getElementById('toggle-nav-btn');
                 if (backBtn) backBtn.focus();
-            } else if (e.key === 'ArrowRight' || e.key === 'l' || e.key === 'i') {
+            } else if (e.key === 'ArrowRight' || e.key === 'l') {
                 e.preventDefault();
                 const targetIdx = focusedListItem ? tabItems.indexOf(focusedListItem) : currentIdx;
                 if (targetIdx !== -1) {

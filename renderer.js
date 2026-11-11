@@ -187,9 +187,6 @@ if (window.miseAPI && typeof window.miseAPI.onMasterShortcut === 'function') {
             case 'toggle-tab-audio-mute': toggleActiveTabAudioMute(); break;
             case 'toggle-global-audio-mute': toggleGlobalAudioMute(); break;
             case 'toggle-pin-tab': togglePinActiveTab(); break;
-            case 'jump-to-tab-1': case 'jump-to-tab-2': case 'jump-to-tab-3': case 'jump-to-tab-4':
-            case 'jump-to-tab-5': case 'jump-to-tab-6': case 'jump-to-tab-7': case 'jump-to-tab-8': case 'jump-to-tab-9':
-                jumpToTabByIndex(parseInt(action.slice(-1), 10)); break;
             case 'jump-to-tab': jumpToTabByIndex(args[0]); break;
             case 'toggle-split': toggleSplitView(); break;
             case 'switch-split-focus': switchSplitFocus(); break;

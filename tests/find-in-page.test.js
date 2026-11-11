@@ -183,7 +183,7 @@ console.log('Running Mise Find-in-Page match counter & Vim navigation tests...')
     const keybindsPath = path.join(__dirname, '../keybinds.js');
     const keybindsSource = fs.readFileSync(keybindsPath, 'utf8');
 
-    assert(keybindsSource.includes("'toggle-find': ['Ctrl+Shift+F', 'F3']"), 'F3 must remain bound to toggle-find');
+    assert(keybindsSource.includes("'toggle-find': 'Ctrl+Shift+F'"), 'Ctrl+Shift+F must remain bound to toggle-find');
     assert(keybindsSource.includes("'find-next': { label: 'Find Next Match'"), 'find-next metadata must be registered');
     assert(keybindsSource.includes("'find-previous': { label: 'Find Previous Match'"), 'find-previous metadata must be registered');
 

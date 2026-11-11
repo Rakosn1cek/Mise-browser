@@ -207,7 +207,7 @@ Mise Browser provides a Vim-inspired modal navigation engine that frees you from
 
 Keep vital dashboards, communications, and media tabs protected from accidental closure and easily accessible:
 
-* **Instant Pinning**: Press **Ctrl + Shift + X** or **F4** (or press **p** in NORMAL mode, or click the pin icon in the tab item) to pin or unpin any tab.
+* **Instant Pinning**: Press **F4** (or press **p** in NORMAL mode, or click the pin icon in the tab item) to pin or unpin any tab.
 * **Top-Anchored Priority**: Pinned tabs are neatly grouped and anchored at the very top of the active workspace tab list, marked with a distinctive golden pin dot badge.
 * **Accidental Closure Guard**: If you press **Ctrl + X** while viewing a pinned tab, Mise blocks closure and displays a status bar warning reminding you that the tab is pinned. This prevents losing ongoing research, active streams, or draft forms.
 * **Persistent Pinning**: Pinned tab states persist in `~/.config/mise-browser/session.json` across reboots and window reloads.
@@ -216,7 +216,7 @@ Keep vital dashboards, communications, and media tabs protected from accidental 
 
 ## Workspace Badges, Tab Jumping & Favicons
 
-* **Direct Tab Jumping**: Press **Ctrl + 1** through **Ctrl + 8** to jump straight to tabs 1 through 8 from anywhere, or **Ctrl + 9** to switch to the final tab. Alternatively, focus the sidebar (**Ctrl + S** or **s**) and type **1** through **9** to jump immediately without waking intermediate tabs.
+* **Direct Tab Jumping**: Focus the sidebar (**Ctrl + Tab** or **s**) and press **1** through **9** to jump directly to any numbered tab without waking intermediate tabs into memory.
 * **Dynamic Tab Number Badges**: Small index badges (`1` to `9`) appear over tab favicons whenever the sidebar has keyboard focus or the `Ctrl` key is held, showing the exact number to jump to.
 * **Non-Disruptive Sidebar Cursor Navigation**: Moving with **j** / **k** or **Down** / **Up** moves the cursor highlight across tabs without waking sleeping tabs into memory. Press **Enter**, **Space**, or **l** / **Right** to activate the highlighted tab.
 * **Workspace Badges**: The top of the strip displays a compact letter or number badge for the current workspace (such as `W1` or `P`). Clicking the workspace badge opens the Workspace Dashboard (**Ctrl + Shift + W**).

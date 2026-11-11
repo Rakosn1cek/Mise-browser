@@ -668,6 +668,11 @@ export function handleNormalModeAction(action, extra, webview, currentWS, idx) {
         case 'toggle-pin-tab':
             togglePinActiveTab();
             break;
+        case 'toggle-help':
+            if (typeof window.togglePreferencesView === 'function') {
+                window.togglePreferencesView();
+            }
+            break;
         case 'export-reader-to-notes':
             exportActiveTabToNotes();
             break;
@@ -1064,13 +1069,7 @@ export function jumpToTabByIndex(oneBasedIdx) {
     const tabItems = document.querySelectorAll('#TabList li');
     if (tabItems && tabItems[targetIdx]) {
         tabItems.forEach((item, idx) => item.setAttribute('tabindex', idx === targetIdx ? '0' : '-1'));
-        const sidebar = document.getElementById('Sidebar');
-        const isSidebarFocused = document.activeElement && sidebar && sidebar.contains(document.activeElement);
-        if (isSidebarFocused) {
-            tabItems[targetIdx].focus();
-        } else {
-            focusActiveWebview();
-        }
+        tabItems[targetIdx].focus();
     }
 }
 

@@ -15,8 +15,8 @@ console.log('Running Mise audio controls and keybind regression tests...');
         ? defaults['toggle-tab-audio-mute'] 
         : [defaults['toggle-tab-audio-mute']];
     
-    assert(bindings.includes('Ctrl+Shift+M'), 'toggle-tab-audio-mute must include Ctrl+Shift+M');
-    assert(bindings.includes('F8'), 'toggle-tab-audio-mute must include F8');
+    assert(bindings.includes('Ctrl+M'), 'toggle-tab-audio-mute must include Ctrl+M');
+    assert(!bindings.includes('F8'), 'toggle-tab-audio-mute must not retain F8');
 
     console.log('✓ Tab audio mute default keybinds registered');
 }

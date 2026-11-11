@@ -17,10 +17,9 @@ All keyboard shortcuts in Mise Browser are fully customisable via `~/.config/mis
 | **Ctrl + L** | `toggle-address` | Focuses the centered status bar address bar |
 | **Ctrl + X** | `remove-tab` | Closes the currently active tab or selected dashboard node |
 | **Ctrl + Shift + W** | `toggle-dashboard` | Opens the Workspace Dashboard tree overlay |
-| **Ctrl + Shift + F** / **F3** | `toggle-find` | In-page text search overlay across active webview content |
-| **Ctrl + R** / **F5** | `reload-active-tab` | Reloads the active tab |
-| **Ctrl + S** | `focus-sidebar` | Moves focus to the vertical tab sidebar (cycles between tabs and navigation buttons) |
-| **Ctrl + Tab** | `focus-nav-buttons` | Moves focus directly to navigation action buttons |
+| **Ctrl + Shift + F** | `toggle-find` | In-page text search overlay across active webview content |
+| **Ctrl + R** | `reload-active-tab` | Reloads the active tab |
+| **Ctrl + Tab** | `focus-nav-buttons` | Moves focus to the vertical tab sidebar (focuses navigation buttons, allows Down arrow into tabs) |
 | **Ctrl + Shift + N** | `toggle-notifications` | Opens the Notifications & Activity overlay |
 | **Ctrl + W** | `focus-webview` | Moves focus directly into the active web page |
 | **Ctrl + Shift + Z** | `toggle-zen-mode` | Toggles sidebar expansion or pin mode |
@@ -35,9 +34,7 @@ All keyboard shortcuts in Mise Browser are fully customisable via `~/.config/mis
 | **Ctrl + Shift + S** | `toggle-split` | Toggles dual split view (1x2 side by side comparison) |
 | **Ctrl + O** | `switch-split-focus` | Cycles keyboard focus between split pane 1 and pane 2 |
 | **Ctrl + \\** | `swap-split-panes` | Swaps the positions of pane 1 and pane 2 |
-| **Ctrl + Shift + X** / **F4** | `toggle-pin-tab` | Pins or unpins the active tab (anchored at top, closure-protected) |
-| **Ctrl + 1** - **Ctrl + 8** | `jump-to-tab-1` - `jump-to-tab-8` | Jumps directly to tab 1 through 8 from anywhere |
-| **Ctrl + 9** | `jump-to-tab-9` | Jumps directly to tab 9 (or last tab if fewer than 9 tabs open) |
+| **F4** | `toggle-pin-tab` | Pins or unpins the active tab (anchored at top, closure-protected) |
 
 ### Web Interaction & Power Tools
 
@@ -54,10 +51,8 @@ All keyboard shortcuts in Mise Browser are fully customisable via `~/.config/mis
 | **Ctrl + Shift + Q [key]** | `set-quickmark` | Binds current page URL to any single key |
 | **Ctrl + J [key]** | `jump-quickmark` | Jumps instantly to the URL bound to that key |
 | **Ctrl + Shift + A** | `add-bookmark` | Saves the current tab into `bookmarks.json` |
-| **Ctrl + Shift + 0** | `toggle-global-media` | Plays or pauses media playback globally |
-| **F10** | `toggle-global-media` | Secondary global media play/pause binding |
-| **Ctrl + Shift + M** | `toggle-tab-audio-mute` | Mutes or unmutes audio on active tab |
-| **F8** | `toggle-tab-audio-mute` | Secondary active tab audio mute toggle |
+| **F10** | `toggle-global-media` | Plays or pauses media playback globally |
+| **Ctrl + M** | `toggle-tab-audio-mute` | Mutes or unmutes audio on active tab |
 | **Ctrl + Shift + I** | `toggle-devtools` | Opens Chromium DevTools in a dedicated window |
 | **F12** | `toggle-devtools` | Secondary shortcut for DevTools |
 
@@ -92,11 +87,12 @@ When viewing web content without an active text field or prompt, Mise operates i
 | `w` | Open Workspace Dashboard |
 | `s` | Focus sidebar tab list |
 | `y` | Copy current page URL to clipboard |
+| `?` | Open Preferences and Settings overlay |
 | `i` | Enter INSERT mode |
 | `Escape` | Blur active input field and return to NORMAL mode |
 | `Shift + Escape` | Toggle PASSTHROUGH mode (sends raw keys to web applications) |
 
-### Sidebar Navigation Mode (`Ctrl + S` or `s`)
+### Sidebar Navigation Mode (`Ctrl + Tab` or `s`)
 
 When keyboard focus is inside the sidebar tab list:
 
@@ -105,7 +101,8 @@ When keyboard focus is inside the sidebar tab list:
 | `1` - `9` | Jump directly to tab 1 through 9 (waking only that specific tab) |
 | `j` / `k` or `↓` / `↑` | Move visual cursor outline through tabs without waking hibernated tabs |
 | `Enter` / `Space` | Activate and wake the highlighted tab under the cursor |
-| `l` / `→` / `i` | Activate the highlighted tab and return keyboard focus to the webview |
+| `l` / `→` | Activate the highlighted tab and return keyboard focus to the webview |
+| `←` | Focus navigation action buttons |
 | `x` | Close the tab under the cursor without waking it into memory |
 | `y` | Copy the URL of the tab under the cursor to the clipboard |
 | `Escape` | Dismiss expanded sidebar and return focus to the active webview |

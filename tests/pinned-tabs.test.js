@@ -15,8 +15,8 @@ console.log('Running Mise pinned tabs regression tests...');
         ? defaults['toggle-pin-tab']
         : [defaults['toggle-pin-tab']];
 
-    assert(bindings.includes('Ctrl+Shift+X'), 'toggle-pin-tab must include Ctrl+Shift+X');
     assert(bindings.includes('F4'), 'toggle-pin-tab must include F4');
+    assert(!bindings.includes('Ctrl+Shift+X'), 'toggle-pin-tab must not retain Ctrl+Shift+X');
 
     console.log('✓ Tab pin/unpin default keybinds registered');
 }
