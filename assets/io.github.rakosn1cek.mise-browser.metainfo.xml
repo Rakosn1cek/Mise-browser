@@ -54,6 +54,11 @@
     </screenshot>
   </screenshots>
   <releases>
+    <release version="1.6.2" date="2026-11-12">
+      <description>
+        <p>Release v1.6.2.</p>
+      </description>
+    </release>
     <release version="1.6.1" date="2026-11-11">
       <description>
         <p>Introduce Widevine DRM detection, consolidate modal keybindings, and bundle verified AppStream metadata.</p>
