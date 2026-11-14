@@ -108,7 +108,7 @@
     "electron@45.2.3": true
   },
   "devDependencies": {
-    "electron": "^45.3.1",
+    "electron": "^45.3.2",
     "electron-builder": "^26.15.3",
     "vitepress": "^1.6.4"
   },
