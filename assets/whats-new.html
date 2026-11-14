@@ -259,79 +259,77 @@
                 <img src="icons/Mise-logo48.png" alt="Mise Logo">
                 <h1>What's New in Mise v1.6.2</h1>
             </div>
-            <p class="subtitle">The v1.6.0 Modular Architecture &amp; Network Filtering Update: Full main process subsystem modularisation, on-demand shell overlay templates, community filter list subscriptions with off-thread worker compilation, workspace cookie auditing and purging, address bar terminal execution, local network TLS certificate trust, neutral theme presets, and direct developer feedback channels.</p>
+            <p class="subtitle">The v1.7.0 Linux Packaging, Modal Workflow &amp; Container Privacy Milestone: Native AppStream metadata and verified AppImageHub packaging, automated Widevine DRM detection, unified Notifications and Activity overlay, ephemeral tab peek link preview, floating Tokyo Night find-in-page match counter, per-workspace visual identity customisation, consolidated modal keybindings, granular domain permissions vault, and configurable local document viewing.</p>
         </header>
 
         <section class="feature-card">
-            <h2 class="feature-title">Community Filter List Subscriptions</h2>
+            <h2 class="feature-title">Linux Packaging, AppStream Metadata &amp; Widevine DRM</h2>
             <p class="feature-desc">
-                Comprehensive content filtering enhancements introducing granular community filter list subscriptions with asynchronous worker thread compilation and instant hot-swapping.
+                Comprehensive native Linux distribution readiness, verified AppStream metadata, and automated Widevine DRM media detection.
             </p>
             <ul class="feature-points">
-                <li><strong>Configurable Filter Lists:</strong> Enable or disable specialised community blocklists directly in Preferences under Privacy &amp; Protection: EasyList, EasyPrivacy, uBlock Annoyances (cookie consent popups and GDPR banners), and Fanboy's Social Media protection.</li>
-                <li><strong>Custom HTTPS Subscriptions:</strong> Subscribe to custom regional or specialised HTTPS filter lists, guarded by strict URL validation and SSRF network protections.</li>
-                <li><strong>Off-Thread Rule Compilation:</strong> Filter lists compile in background worker threads (<code>adblocker-build.js</code>), preventing UI lag and interface hitching during compilation of over 150,000 filtering rules.</li>
-                <li><strong>Dynamic Hot-Swapping &amp; Caching:</strong> Serialised rule sets are cached to disk using deterministic SHA-256 keys and hot-swapped dynamically across all active container sessions without requiring a browser restart.</li>
+                <li><strong>Desktop AppStore Metadata:</strong> Bundles verified Freedesktop AppStream metainfo (<code>io.github.rakosn1cek.mise-browser.metainfo.xml</code>) compliant with OARS 1.1 ratings, Tokyo Night brand colours, and rich screenshots for Linux software centres (GNOME Software, KDE Discover).</li>
+                <li><strong>AppImageHub Packaging Verification:</strong> Pure Zsh validation tooling (<code>scripts/prepare-appimagehub.zsh</code>) automated for directory submission and metadata validation.</li>
+                <li><strong>Widevine DRM Detection Helper:</strong> Automated detection and registration for host Widevine CDM libraries (<code>libwidevinecdm.so</code>) from Chrome, Chromium, and system packages, enabling protected media playback on Linux with privacy-scrubbed diagnostics.</li>
             </ul>
         </section>
 
         <section class="feature-card">
-            <h2 class="feature-title">Main Process &amp; Shell Overlay Modularisation</h2>
+            <h2 class="feature-title">Notifications &amp; Activity Overlay</h2>
             <p class="feature-desc">
-                Major architectural refactoring decomposing the monolithic Electron main process and application shell into lightweight, specialised subsystems without bundler weight.
+                Dedicated keyboard-driven overlay (<kbd>Ctrl + Shift + N</kbd>) centralising recent browser events, active downloads, system updates, and alerts in one unified place.
             </p>
             <ul class="feature-points">
-                <li><strong>Main Process Coordinator:</strong> Decomposed monolithic <code>main.js</code> (reduced from 1,411 lines down to ~518 lines) into 4 specialised domain modules under <code>main/</code>: window management (<code>windowManager.js</code>), web contents security policy (<code>webContentsPolicy.js</code>), context menus (<code>contextMenus.js</code>), and system IPC (<code>systemIpc.js</code>).</li>
-                <li><strong>Interface Shell &amp; Lazy Templates:</strong> Streamlined <code>index.html</code> (reduced from 1,025 lines down to 176 lines) preserving only core persistent scaffolding, with all 10 full-page overlays extracted into modular HTML templates under <code>templates/</code> mounted on demand via <code>modules/templateLoader.js</code> with background idle preloading.</li>
-                <li><strong>Lifecycle &amp; Navigation Fixes:</strong> Resolved guest webview teardown race conditions on tab closure and cleaned trusted domain exemptions.</li>
+                <li><strong>Unified Alert Centre:</strong> Quick access from the keyboard (<kbd>Ctrl + Shift + N</kbd>) or sidebar bell button to review downloads, system updates, and permission prompts.</li>
+                <li><strong>Category Filtering &amp; Memory Bounds:</strong> Instant filter chips (All, Downloads, System, Web) backed by an in-memory 50-event circular buffer to prevent resident memory growth.</li>
+                <li><strong>Keyboard Navigation &amp; Focus Restoration:</strong> Arrow cursor traversal, single-key item dismissal (<kbd>x</kbd>), clear-all action (<kbd>c</kbd>), and seamless webview focus restoration on <kbd>Escape</kbd>.</li>
             </ul>
         </section>
 
         <section class="feature-card">
-            <h2 class="feature-title">Workspace Cookie Inspector &amp; Purge</h2>
+            <h2 class="feature-title">Ephemeral Tab Peek ("Glance") &amp; Find-in-Page Counter</h2>
             <p class="feature-desc">
-                Live container storage auditing and surgical cookie clearing directly within the Workspace Dashboard.
+                Keyboard-driven link previews and upgraded in-page search controls styled in Tokyo Night.
             </p>
             <ul class="feature-points">
-                <li><strong>Live Container Cookie Auditing:</strong> Every workspace card in the Workspace Dashboard (<kbd>Ctrl + Shift + W</kbd>) displays its real-time stored cookie count alongside its active partition badge.</li>
-                <li><strong>Surgical Per-Workspace Purge:</strong> Click the cookie purge button next to any workspace to clear stored cookies for that specific container partition without logging you out of adjacent workspaces.</li>
-                <li><strong>Explicit Safety Dialogue:</strong> Purge requests require confirmation before dispatching, preventing accidental session loss in critical workflows.</li>
+                <li><strong>Ephemeral Tab Peek:</strong> Transient link preview modal (<kbd>Shift + Click</kbd> or <kbd>gh</kbd> hint) over the active tab, dismissing instantly on <kbd>Escape</kbd> without leaving tab clutter or promoting to a permanent tab with <kbd>Ctrl + Enter</kbd>.</li>
+                <li><strong>Find-in-Page Match Counter:</strong> Floating Tokyo Night search bar (<kbd>Ctrl + Shift + F</kbd> or <kbd>/</kbd>) with live match counters (e.g. <code>4 of 21 matches</code>) and Vim-style <kbd>n</kbd> (next) and <kbd>N</kbd> (previous) navigation.</li>
             </ul>
         </section>
 
         <section class="feature-card">
-            <h2 class="feature-title">Address Bar Terminal Execution &amp; Local TLS Trust</h2>
+            <h2 class="feature-title">Workspace Visual Identity &amp; Accent Badges</h2>
             <p class="feature-desc">
-                Seamless command execution directly from the address bar alongside automatic trust for local network TLS certificates.
+                Granular visual customisation across workspaces to distinguish container profiles instantly in the sidebar.
             </p>
             <ul class="feature-points">
-                <li><strong>Address Bar Terminal Execution:</strong> Type terminal commands directly into the status bar address bar (<kbd>Ctrl + L</kbd> or <kbd>!</kbd>) with shell prefixes (<code>$</code>, <code>&gt;</code>, <code>:sh</code>, <code>term</code>). Heuristic command classification stages vetted instructions to your system clipboard and launches your external terminal emulator.</li>
-                <li><strong>Pastejacking Protection:</strong> Clipboard-staged terminal commands are sanitised via <code>security.sanitiseTerminalCommand</code>, neutralising embedded line breaks and null bytes to prevent automatic command execution upon pasting.</li>
-                <li><strong>Local Network TLS Certificate Trust:</strong> Enabled by default (<code>allow_local_certificates</code>), automatically trusting self-signed certificates on private subnets (RFC 1918 <code>192.168.0.0/16</code>, <code>10.0.0.0/8</code>, <code>172.16.0.0/12</code>), loopback (<code>127.0.0.0/8</code> / <code>localhost</code>), and local domains (<code>.local</code>, <code>.lan</code>) for home servers, Cockpit, Proxmox, TrueNAS, and router portals.</li>
-                <li><strong>Informative Error Interstitial:</strong> Beautiful Tokyo Night error interstitial page (<code>assets/error.html</code>) displaying exact Chromium failure codes with retry and certificate exception options, accompanied by a <code>LOCAL TLS</code> badge on the status bar.</li>
+                <li><strong>Curated Tokyo Night Palette:</strong> Choose from 9 curated palette accents or assign custom hex colours directly in the Workspace Dashboard.</li>
+                <li><strong>Single-Character Glyph Badges:</strong> Personalise workspaces with single-character Unicode glyphs and emoji, segmented via native grapheme clustering.</li>
+                <li><strong>Zero-Trust Sanitisation:</strong> Strict hex regex validation, BiDi override stripping, and unforgeable Private profile immunity.</li>
             </ul>
         </section>
 
         <section class="feature-card">
-            <h2 class="feature-title">Community Feedback, Neutral Themes &amp; Polish</h2>
+            <h2 class="feature-title">Keybindings Consolidation &amp; Permissions Vault</h2>
             <p class="feature-desc">
-                Dedicated feedback channels, minimalist visual themes, and upstream framework upgrades.
+                Streamlined modal keyboard controls alongside granular domain hardware permission auditing and revoking.
             </p>
             <ul class="feature-points">
-                <li><strong>Direct Community Channels:</strong> Connect with the developer and users via the official Matrix community (<a href="https://matrix.to/#/#mise-browser:matrix.org" target="_blank" rel="noopener noreferrer">#mise-browser:matrix.org</a>) or direct email (<a href="mailto:rakosn1cek@zohomail.eu">rakosn1cek@zohomail.eu</a>), accessible from Preferences (<kbd>Ctrl + H</kbd>) and the Command Palette (<kbd>Ctrl + P</kbd>).</li>
-                <li><strong>Configurable Webmail Compose:</strong> Choose between system <code>mailto:</code> or webmail providers (Gmail, Zoho Mail, Outlook, ProtonMail, Fastmail) for sharing links and sending pre-filled feedback.</li>
-                <li><strong>Sanitised Diagnostic Bug Reports:</strong> One-click "Email Sanitised Report" in the Diagnostics overlay prepares a scrubbed diagnostic report for troubleshooting.</li>
-                <li><strong>Neutral White &amp; Black Themes:</strong> Added clean neutral white and black accent presets in Preferences for minimalist styling.</li>
-                <li><strong>Upstream Engine Upgrades:</strong> Upgraded to Electron v45.2.3 and Vite v6.4.5, delivering the latest Chromium security patches and Wayland stability enhancements.</li>
-                <li><strong>Comprehensive Test Coverage:</strong> Expanded automated test suite to 74 comprehensive test suites, all passing with 100% verification across security, storage, navigation, and modular controllers.</li>
+                <li><strong>Consolidated Keybindings:</strong> Enforced a strict maximum of two bindings per action (one primary chord and one Vim-style keybind), eliminating redundant bindings and modal traps.</li>
+                <li><strong>Domain Permissions Vault:</strong> Inspect and revoke camera, microphone, geolocation, and clipboard access per domain in Preferences and the status bar, backed by an unconditional Zero-Trust sensor lockdown in Private Profile.</li>
+                <li><strong>Configurable Local Document Viewing:</strong> Opt-in Zero-Trust toggle in Preferences enabling safe viewing of offline documents (<code>.html</code>, <code>.txt</code>, <code>.svg</code>) with strict path sanitisation and system directory confinement.</li>
+                <li><strong>Engine Upgrades &amp; Verification:</strong> Upgraded to Electron v45.3.1 with 82 automated regression test suites verifying stability, memory isolation, and security.</li>
             </ul>
         </section>
 
         <section class="feature-card feedback-card">
-            <h2 class="feature-title feedback-title">Your Voice Shapes Mise</h2>
+            <h2 class="feature-title feedback-title">Your Voice Shapes Mise (Direct Community Channels)</h2>
             <p class="feature-desc">
-                Mise collects zero telemetry and never tracks your browsing. Because we do not monitor you, your direct feedback is the only way we know how the browser performs across different Linux distributions and desktop setups.
+                Mise collects zero telemetry and never tracks your browsing. Because we do not monitor you, your direct feedback is the only way we know how the browser performs across different Linux distributions and desktop environments. Connect with the developer and users through our direct community channels:
             </p>
+            <ul class="feature-points" style="margin-bottom: 8px;">
+                <li><strong>Direct Community Channels:</strong> Connect with the developer and users via the official Matrix community (<a href="https://matrix.to/#/#mise-browser:matrix.org" target="_blank" rel="noopener noreferrer" style="color: var(--accent);">#mise-browser:matrix.org</a>) or direct email (<a href="mailto:rakosn1cek@zohomail.eu" style="color: var(--accent);">rakosn1cek@zohomail.eu</a>), accessible from Preferences (<kbd>Ctrl + H</kbd>) and the Command Palette (<kbd>Ctrl + P</kbd>).</li>
+            </ul>
             <div style="display: flex; gap: 12px; margin-top: 12px; flex-wrap: wrap;">
                 <a href="mailto:rakosn1cek@zohomail.eu?subject=%5BMise%20Browser%20Feedback%5D" class="github-button">
                     Email Developer ↗
