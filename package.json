@@ -57,9 +57,11 @@
       "synopsis": "Keyboard-centric web browser engineered for Linux",
       "description": "Mise Browser is an intentional, efficient web browser built for Linux with tab hibernation and containerised workspaces.",
       "desktop": {
-        "StartupWMClass": "mise-browser",
-        "Keywords": "web;browser;internet;mise;mise-browser;",
-        "MimeType": "text/html;text/xml;application/xhtml+xml;x-scheme-handler/http;x-scheme-handler/https;"
+        "entry": {
+          "StartupWMClass": "mise-browser",
+          "Keywords": "web;browser;internet;mise;mise-browser;",
+          "MimeType": "text/html;text/xml;application/xhtml+xml;x-scheme-handler/http;x-scheme-handler/https;"
+        }
       },
       "extraFiles": [
         {
