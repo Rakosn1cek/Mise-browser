@@ -63,7 +63,8 @@ console.log('Running Mise session permission regression tests...');
     const allowedPermissions = [
         'fullscreen',
         'clipboard-sanitized-write',
-        'pointerLock'
+        'pointerLock',
+        'persistent-storage'
     ];
 
     for (const perm of allowedPermissions) {

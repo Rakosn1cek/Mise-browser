@@ -154,6 +154,7 @@ console.log('Running Mise Granular Permission Vault regression tests...');
     // Synchronous check handler in Private Profile
     assert.strictEqual(mockPrivateSession.checkHandler({}, 'fullscreen', 'https://private-site.com'), true);
     assert.strictEqual(mockPrivateSession.checkHandler({}, 'clipboard-sanitized-write', 'https://private-site.com'), true);
+    assert.strictEqual(mockPrivateSession.checkHandler({}, 'persistent-storage', 'https://private-site.com'), true);
     assert.strictEqual(mockPrivateSession.checkHandler({}, 'media', 'https://private-site.com'), false);
     assert.strictEqual(mockPrivateSession.checkHandler({}, 'geolocation', 'https://private-site.com'), false);
     assert.strictEqual(mockPrivateSession.checkHandler({}, 'clipboard-read', 'https://private-site.com'), false);
@@ -264,6 +265,30 @@ console.log('Running Mise Granular Permission Vault regression tests...');
 
     // Verify remembered state persisted in vault
     assert.strictEqual(getDomainPermissions('new-service.com').geolocation, 'allow');
+
+    // 4e. Benign persistent-storage request allowed immediately without prompt
+    mockWebContents.lastSent = null;
+    let storageAllowed = null;
+    mockPersistentSession.requestHandler(
+        { getURL: () => 'https://app.element.io' },
+        'persistent-storage',
+        (res) => { storageAllowed = res; },
+        { requestingUrl: 'https://app.element.io', isMainFrame: true }
+    );
+    assert.strictEqual(storageAllowed, true, 'Benign persistent-storage must be granted immediately');
+    assert.strictEqual(mockWebContents.lastSent, null, 'Benign persistent-storage must not trigger prompt banner');
+
+    // 4f. Unsupported capabilities fail closed without dispatching prompt banner
+    mockWebContents.lastSent = null;
+    let unsupportedAllowed = null;
+    mockPersistentSession.requestHandler(
+        { getURL: () => 'https://random-site.com' },
+        'openExternal',
+        (res) => { unsupportedAllowed = res; },
+        { requestingUrl: 'https://random-site.com', isMainFrame: true }
+    );
+    assert.strictEqual(unsupportedAllowed, false, 'Unsupported capability must fail closed');
+    assert.strictEqual(mockWebContents.lastSent, null, 'Unsupported capability must not trigger prompt banner');
 
     console.log('✓ Persistent workspace permission checks, requests, and prompt broker verified');
 }

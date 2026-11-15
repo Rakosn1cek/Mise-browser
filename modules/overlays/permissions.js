@@ -247,6 +247,9 @@ function setupPermissionPromptListeners() {
         } else if (caps.includes('notifications') || permission === 'notifications') {
             readableCap = 'desktop notifications';
             iconClass = 'fa-solid fa-bell';
+        } else if (caps.includes('display-capture') || permission === 'display-capture') {
+            readableCap = 'screen sharing';
+            iconClass = 'fa-solid fa-display';
         }
 
         if (domainEl) domainEl.textContent = domain;

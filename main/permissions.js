@@ -19,7 +19,8 @@ const SAFE_BENIGN_PERMISSIONS = new Set([
     'keyboardLock',
     'storage-access',
     'top-level-storage-access',
-    'speaker-selection'
+    'speaker-selection',
+    'persistent-storage'
 ]);
 
 const VALID_CAPABILITIES = new Set([
@@ -240,7 +241,19 @@ function configureSessionPermissions(targetSession, options = {}) {
             return;
         }
 
-        // 4. Broker interactive prompt for unset or prompt states
+        // 4. Unsupported capabilities fail closed without triggering broken prompts
+        const hasUnsupportedCap = requiredCaps.some((cap) => !VALID_CAPABILITIES.has(cap));
+        if (hasUnsupportedCap) {
+            diagnostics.logEvent('warn', 'permissions', 'Denied unsupported permission capability', {
+                permission,
+                domain,
+                capabilities: requiredCaps
+            });
+            callback(false);
+            return;
+        }
+
+        // 5. Broker interactive prompt for unset or prompt states
         const win = (typeof options.getMainWindow === 'function') ? options.getMainWindow() : null;
         if (!win || (typeof win.isDestroyed === 'function' && win.isDestroyed())) {
             callback(false);

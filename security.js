@@ -269,7 +269,8 @@ const ALLOWED = [
     'keyboardLock',
     'storage-access',
     'top-level-storage-access',
-    'speaker-selection'
+    'speaker-selection',
+    'persistent-storage'
 ];
 
 function decidePermission(permission, { trusted, notificationsEnabled } = {}) {
