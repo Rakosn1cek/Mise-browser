@@ -3,6 +3,8 @@ const fs = require('fs');
 const { exec, spawn } = require('child_process');
 const { app, dialog, clipboard, session, net, webContents } = require('electron');
 const security = require('../security');
+const config = require('./config');
+const mediaOffload = require('./mediaOffload');
 
 const appDir = path.resolve(__dirname, '..');
 
@@ -319,6 +321,39 @@ function registerSystemIpc(ipcMain, options = {}) {
 
     ipcMain.on('is-allowed-local-document-url', (event, url) => {
         event.returnValue = security.isAllowedLocalDocumentUrl(url);
+    });
+
+    ipcMain.handle('get-media-offload-status', () => {
+        return mediaOffload.detectMediaBinaries();
+    });
+
+    ipcMain.on('is-candidate-media-url', (event, url) => {
+        event.returnValue = mediaOffload.isCandidateMediaUrl(url);
+    });
+
+    ipcMain.handle('launch-media-offload', async (event, targetUrl) => {
+        const cfg = config.loadBrowserConfig();
+        if (cfg.media_offload_enabled === false) {
+            return { success: false, error: 'Media offload is disabled in browser preferences.' };
+        }
+
+        const result = mediaOffload.spawnMpvProcess(targetUrl, {
+            quality: cfg.media_offload_quality || '1080p'
+        });
+
+        if (result.success) {
+            const win = resolveWindow();
+            if (win && !win.isDestroyed()) {
+                if (cfg.media_offload_pause_tab) {
+                    win.webContents.send('master-shortcut', 'pause-media-offload-tab', result.url);
+                }
+            }
+            if (areNotificationsEnabled()) {
+                sendNotification('mpv Media Offload', 'Playing media stream in mpv');
+            }
+        }
+
+        return result;
     });
 }
 

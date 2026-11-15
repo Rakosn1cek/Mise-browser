@@ -146,3 +146,20 @@ export function updateTabMediaIndicator(workspaceId, tabIdx, isAudible, isMutedO
         }
     }
 }
+
+export function pauseActiveTabMedia() {
+    const currentWS = state.sessionState.current_workspace;
+    const activeListItem = document.querySelector('#TabList li.selected');
+    const currentIdx = activeListItem ? Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem) : 0;
+    const wv = state.activeViewsCache[currentWS]?.[currentIdx];
+    if (wv && typeof wv.executeJavaScript === 'function') {
+        wv.executeJavaScript(`
+            (function() {
+                try {
+                    const media = document.querySelectorAll('video, audio');
+                    media.forEach(m => m.pause());
+                } catch (_) {}
+            })();
+        `, false).catch(() => {});
+    }
+}

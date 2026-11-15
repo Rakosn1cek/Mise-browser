@@ -69,7 +69,7 @@ console.log('Running Mise interface shell & overlay template modularisation regr
         'id="WideAddressBar"',
         'id="StatusBarSecurity"',
         'id="StatusBarPartition"',
-        'id="StatusBarClock"',
+        'id="StatusBarMediaOffload"',
         'id="PermissionsPopover"',
         'id="PermissionPromptBanner"'
     ];

@@ -11,16 +11,14 @@ console.log('Running Mise clock throttling and DOM dirty-checking regression tes
 let now = new Date(2026, 9, 14, 10, 20, 30).getTime();
 let labelWrites = 0;
 const elements = {};
-for (const prefix of ['StatusBar', 'Sidebar']) {
-    elements[`${prefix}Clock`] = { style: {} };
-    for (const suffix of ['Date', 'Time']) {
-        let text = '';
-        elements[`${prefix}Clock${suffix}`] = {
-            style: {},
-            get textContent() { return text; },
-            set textContent(value) { text = value; labelWrites += 1; }
-        };
-    }
+elements.SidebarClock = { style: {} };
+for (const suffix of ['Date', 'Time']) {
+    let text = '';
+    elements[`SidebarClock${suffix}`] = {
+        style: {},
+        get textContent() { return text; },
+        set textContent(value) { text = value; labelWrites += 1; }
+    };
 }
 
 const context = {
@@ -44,12 +42,12 @@ assert.ok(initialWrites > 0, 'Initial render must populate clock labels');
 now += 1000;
 context.updateClockUI();
 assert.equal(labelWrites, initialWrites, 'A seconds tick must not replace unchanged minute and date text nodes');
-assert.match(elements.StatusBarClock.title, /10:20:31/, 'Tooltip updates with accurate second precision');
+assert.match(elements.SidebarClock.title, /10:20:31/, 'Tooltip updates with accurate second precision');
 
-// 3. Advancing by 1 minute triggers exactly 2 text updates (status bar time and sidebar time)
+// 3. Advancing by 1 minute triggers exactly 1 text update (sidebar time)
 now += 60000;
 context.updateClockUI();
-assert.equal(labelWrites, initialWrites + 2, 'A new minute updates both visible times without touching unchanged dates');
+assert.equal(labelWrites, initialWrites + 1, 'A new minute updates visible time without touching unchanged dates');
 
 // 4. Format cycling to time-only hides date elements
 context.cycleClockFormat();
@@ -60,7 +58,7 @@ context.cycleClockFormat();
 const secondsWrites = labelWrites;
 now += 1000;
 context.updateClockUI();
-assert.equal(labelWrites, secondsWrites + 2, 'Seconds format updates labels every second');
+assert.equal(labelWrites, secondsWrites + 1, 'Seconds format updates labels every second');
 
 // 6. When clock is disabled, updates are suppressed entirely
 context.setClockVisibility(false);

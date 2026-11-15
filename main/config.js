@@ -57,7 +57,10 @@ const DEFAULT_CONFIG = {
     startup_behavior: 'restore',
     last_seen_version: null,
     filter_lists: { ...DEFAULT_FILTER_LISTS },
-    allow_local_documents: false
+    allow_local_documents: false,
+    media_offload_enabled: true,
+    media_offload_quality: '1080p',
+    media_offload_pause_tab: true
 };
 
 function resolveConfigDir() {
@@ -108,6 +111,9 @@ function loadBrowserConfig(targetDir = CONFIG_DIR, targetPath = CONFIG_PATH) {
                 ...DEFAULT_FILTER_LISTS,
                 ...(parsed.filter_lists && typeof parsed.filter_lists === 'object' && !Array.isArray(parsed.filter_lists) ? parsed.filter_lists : {})
             },
+            media_offload_enabled: typeof parsed.media_offload_enabled === 'boolean' ? parsed.media_offload_enabled : true,
+            media_offload_quality: ['best', '1080p', '720p', '480p'].includes(parsed.media_offload_quality) ? parsed.media_offload_quality : '1080p',
+            media_offload_pause_tab: typeof parsed.media_offload_pause_tab === 'boolean' ? parsed.media_offload_pause_tab : true,
             theme_colors: {
                 dark: { ...DEFAULT_THEME_COLORS.dark, ...(parsed.theme_colors?.dark || {}) },
                 light: { ...DEFAULT_THEME_COLORS.light, ...(parsed.theme_colors?.light || {}) }
@@ -522,6 +528,34 @@ function validateConfigPatch(patch) {
 
             case 'doh_custom_url': {
                 if (typeof val === 'string' && val.length <= 512) {
+                    clean[key] = val;
+                } else {
+                    rejected.push(key);
+                }
+                break;
+            }
+
+            case 'media_offload_enabled': {
+                if (typeof val === 'boolean') {
+                    clean[key] = val;
+                } else {
+                    rejected.push(key);
+                }
+                break;
+            }
+
+            case 'media_offload_quality': {
+                const allowed = new Set(['best', '1080p', '720p', '480p']);
+                if (typeof val === 'string' && allowed.has(val.toLowerCase())) {
+                    clean[key] = val.toLowerCase();
+                } else {
+                    rejected.push(key);
+                }
+                break;
+            }
+
+            case 'media_offload_pause_tab': {
+                if (typeof val === 'boolean') {
                     clean[key] = val;
                 } else {
                     rejected.push(key);

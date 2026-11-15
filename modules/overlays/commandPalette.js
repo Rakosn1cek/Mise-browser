@@ -728,6 +728,23 @@ export const COMMAND_DEFINITIONS = [
         action: () => window.toggleGlobalMediaPlayback && window.toggleGlobalMediaPlayback()
     },
     {
+        id: 'play-in-mpv',
+        title: 'Play Video in mpv (Low-Resource Offload)',
+        desc: 'Offload video stream to native mpv and yt-dlp player',
+        details: 'Launches the active video or YouTube stream in an external mpv window with native hardware acceleration, saving CPU cycles and RAM.',
+        tip: 'Press Ctrl+Shift+Y or click MPV in the status bar to offload playback.',
+        category: 'Tools & Notes',
+        icon: 'fa-solid fa-tv',
+        actionId: 'play-in-mpv',
+        shortcut: 'Ctrl+Shift+Y',
+        keywords: ['mpv', 'ytdlp', 'youtube', 'video', 'offload', 'hardware', 'stream', 'media', 'player'],
+        action: () => {
+            if (typeof window.triggerMediaOffloadForActiveTab === 'function') {
+                window.triggerMediaOffloadForActiveTab();
+            }
+        }
+    },
+    {
         id: 'toggle-tab-audio-mute',
         title: 'Toggle Tab Audio Mute',
         desc: 'Mute or unmute audio output for the active tab',
@@ -1344,6 +1361,31 @@ export async function syncPreferencesUI() {
                 notesCmdField.value = cfg.external_notes_command || '';
             }
 
+            const mediaOffloadEnableToggle = document.getElementById('setting-media-offload-enable');
+            if (mediaOffloadEnableToggle) {
+                mediaOffloadEnableToggle.checked = cfg.media_offload_enabled !== false;
+            }
+
+            const mediaOffloadQualitySelect = document.getElementById('setting-media-offload-quality');
+            if (mediaOffloadQualitySelect) {
+                mediaOffloadQualitySelect.value = cfg.media_offload_quality || '1080p';
+            }
+
+            const mediaOffloadPauseToggle = document.getElementById('setting-media-offload-pause');
+            if (mediaOffloadPauseToggle) {
+                mediaOffloadPauseToggle.checked = cfg.media_offload_pause_tab !== false;
+            }
+
+            const mediaBinaryStatusEl = document.getElementById('media-offload-binary-status');
+            if (mediaBinaryStatusEl && window.miseAPI && typeof window.miseAPI.getMediaOffloadStatus === 'function') {
+                window.miseAPI.getMediaOffloadStatus().then(status => {
+                    if (!status) return;
+                    const mpvLabel = status.mpvAvailable ? '<span style="color: #9ece6a;">mpv: Ready</span>' : '<span style="color: #f7768e;">mpv: Not found</span>';
+                    const ytdlpLabel = status.ytdlpAvailable ? '<span style="color: #9ece6a;">yt-dlp: Ready</span>' : '<span style="color: #e0af68;">yt-dlp: Optional</span>';
+                    mediaBinaryStatusEl.innerHTML = `${mpvLabel} | ${ytdlpLabel}`;
+                }).catch(() => {});
+            }
+
             if (cfg.custom_search_aliases && typeof cfg.custom_search_aliases === 'object') {
                 state.customSearchAliases = { ...cfg.custom_search_aliases };
             }
@@ -1717,6 +1759,9 @@ export function setupPreferencesListeners() {
             const dohCustomField = document.getElementById('setting-doh-custom-url');
             const windowControlsToggle = document.getElementById('setting-window-controls-toggle');
             const notesCmdField = document.getElementById('setting-notes-command');
+            const mediaEnableToggle = document.getElementById('setting-media-offload-enable');
+            const mediaQualitySelect = document.getElementById('setting-media-offload-quality');
+            const mediaPauseToggle = document.getElementById('setting-media-offload-pause');
 
             const newCfg = {
                 disable_gpu: gpuToggle ? !gpuToggle.checked : false,
@@ -1732,6 +1777,9 @@ export function setupPreferencesListeners() {
                 doh_custom_url: dohCustomField ? dohCustomField.value.trim() : '',
                 show_window_controls: windowControlsToggle ? windowControlsToggle.checked : false,
                 external_notes_command: notesCmdField ? notesCmdField.value.trim() : '',
+                media_offload_enabled: mediaEnableToggle ? mediaEnableToggle.checked : true,
+                media_offload_quality: mediaQualitySelect ? mediaQualitySelect.value : '1080p',
+                media_offload_pause_tab: mediaPauseToggle ? mediaPauseToggle.checked : true,
                 custom_search_aliases: state.customSearchAliases || {}
             };
 
@@ -1748,6 +1796,33 @@ export function setupPreferencesListeners() {
                 const cfg = (await window.miseAPI.getBrowserSettings()) || {};
                 cfg.external_notes_command = liveNotesCmd.value.trim();
                 await window.miseAPI.updateBrowserSettings(cfg);
+            }
+        };
+    }
+
+    const liveMediaEnable = document.getElementById('setting-media-offload-enable');
+    if (liveMediaEnable) {
+        liveMediaEnable.onchange = async () => {
+            if (window.miseAPI && typeof window.miseAPI.updateBrowserSettings === 'function') {
+                await window.miseAPI.updateBrowserSettings({ media_offload_enabled: liveMediaEnable.checked });
+            }
+        };
+    }
+
+    const liveMediaQuality = document.getElementById('setting-media-offload-quality');
+    if (liveMediaQuality) {
+        liveMediaQuality.onchange = async () => {
+            if (window.miseAPI && typeof window.miseAPI.updateBrowserSettings === 'function') {
+                await window.miseAPI.updateBrowserSettings({ media_offload_quality: liveMediaQuality.value });
+            }
+        };
+    }
+
+    const liveMediaPause = document.getElementById('setting-media-offload-pause');
+    if (liveMediaPause) {
+        liveMediaPause.onchange = async () => {
+            if (window.miseAPI && typeof window.miseAPI.updateBrowserSettings === 'function') {
+                await window.miseAPI.updateBrowserSettings({ media_offload_pause_tab: liveMediaPause.checked });
             }
         };
     }

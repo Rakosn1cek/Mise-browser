@@ -38,7 +38,8 @@ const DEFAULT_KEYBINDS = {
     'toggle-dark-reader': 'Ctrl+D',
     'toggle-reader-view': 'F9',
     'toggle-pin-tab': 'F4',
-    'export-reader-to-notes': 'Ctrl+Shift+E'
+    'export-reader-to-notes': 'Ctrl+Shift+E',
+    'play-in-mpv': 'Ctrl+Shift+Y'
 };
 
 const ACTION_METADATA = {
@@ -93,7 +94,8 @@ const ACTION_METADATA = {
     'toggle-pin-tab': { label: 'Pin / Unpin Active Tab', category: 'Navigation & Workspaces' },
     'export-reader-to-notes': { label: 'Export Reader View to Quick Notes', category: 'Web Interaction' },
     'export-reader-to-external': { label: 'Export Reader View to External App', category: 'Web Interaction' },
-    'open-notes-external': { label: 'Open Quick Notes in External Application', category: 'Web Interaction' }
+    'open-notes-external': { label: 'Open Quick Notes in External Application', category: 'Web Interaction' },
+    'play-in-mpv': { label: 'Play Active Video in mpv (Media Offload)', category: 'Web Interaction' }
 };
 
 let activeKeybinds = { ...DEFAULT_KEYBINDS };

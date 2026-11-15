@@ -117,6 +117,9 @@ contextBridge.exposeInMainWorld('miseAPI', {
         return () => ipcRenderer.removeListener('permission-prompt-requested', handler);
     },
     getFilterListsStatus: () => ipcRenderer.invoke('get-filter-lists-status'),
-    refreshFilterLists: () => ipcRenderer.invoke('refresh-filter-lists')
+    refreshFilterLists: () => ipcRenderer.invoke('refresh-filter-lists'),
+    getMediaOffloadStatus: () => ipcRenderer.invoke('get-media-offload-status'),
+    launchMediaOffload: (url) => ipcRenderer.invoke('launch-media-offload', url),
+    isCandidateMediaUrl: (url) => ipcRenderer.sendSync('is-candidate-media-url', url)
 });
 

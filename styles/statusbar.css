@@ -1,9 +1,9 @@
 /* Status Bar & Fixed Address Bar Subsystem */
 
 .status-bar {
-    height: 28px;
-    min-height: 28px;
-    max-height: 28px;
+    height: 30px;
+    min-height: 30px;
+    max-height: 30px;
     background-color: color-mix(in srgb, var(--bg-sidebar) var(--sidebar-opacity, 100%), transparent);
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
@@ -20,22 +20,18 @@
     user-select: none;
 }
 
-.status-bar-left,
-.status-bar-right {
+.status-bar-left {
     display: flex;
     align-items: center;
     gap: 8px;
+    flex: 0 1 auto;
+    max-width: 32%;
+    overflow: hidden;
     min-width: 0;
 }
 
-.status-bar-left {
-    flex: 1 1 0;
-    max-width: 30%;
-    overflow: hidden;
-}
-
 .status-bar-center {
-    flex: 2 1 auto;
+    flex: 1 1 auto;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -43,9 +39,11 @@
 }
 
 .status-bar-right {
-    flex: 1 1 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 0 0 auto;
     justify-content: flex-end;
-    flex-shrink: 0;
 }
 
 .status-target-url {
@@ -73,13 +71,13 @@
 #WideAddressBar {
     width: 100%;
     box-sizing: border-box;
-    height: 22px;
+    height: 24px;
     background-color: color-mix(in srgb, var(--bg-main) 70%, transparent);
     color: var(--text);
     border: 1px solid var(--border);
-    border-radius: 5px;
-    padding: 0 12px;
-    font-size: 12px;
+    border-radius: 6px;
+    padding: 0 14px;
+    font-size: 13px;
     font-family: inherit;
     outline: none;
     display: block;
@@ -91,7 +89,7 @@
 #WideAddressBar::placeholder {
     color: var(--text);
     opacity: 0.5;
-    font-size: 11px;
+    font-size: 12px;
 }
 
 #WideAddressBar:focus {
@@ -300,6 +298,20 @@
     border: 1px solid var(--border);
 }
 
+/* Media Offload Badge */
+.status-badge-media {
+    cursor: pointer;
+    background: color-mix(in srgb, var(--accent) 15%, transparent);
+    color: var(--accent);
+    border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.status-badge-media:hover {
+    background: color-mix(in srgb, var(--accent) 25%, transparent);
+    border-color: var(--accent);
+}
+
 /* Permission Badge States */
 .status-badge-permissions {
     cursor: pointer;
@@ -338,7 +350,7 @@
 /* Quick-Toggle Permissions Popover */
 .permissions-popover {
     position: fixed;
-    bottom: 34px;
+    bottom: 36px;
     right: 280px;
     width: 310px;
     background: var(--bg-sidebar);
@@ -499,35 +511,6 @@
 
 .status-badge-partition.partition-private:hover {
     background: rgba(247, 118, 142, 0.25);
-}
-
-/* Status Bar Clock */
-.status-badge-clock {
-    background: rgba(255, 255, 255, 0.04);
-    color: var(--text);
-    border: 1px solid var(--border);
-    cursor: pointer;
-    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
-    font-variant-numeric: tabular-nums;
-    letter-spacing: 0.3px;
-    text-transform: none;
-    font-weight: 800;
-}
-
-.status-badge-clock:hover {
-    background: var(--selected);
-    border-color: var(--accent);
-    color: var(--accent);
-}
-
-.status-clock-date {
-    opacity: 0.8;
-    margin-right: 3px;
-}
-
-.status-clock-time {
-    color: var(--accent);
-    font-weight: 800;
 }
 
 /* Light Theme Overrides */

@@ -105,6 +105,10 @@
             <footer id="StatusBar" class="status-bar" role="status" aria-live="polite">
                 <div class="status-bar-left">
                     <span id="StatusBarMode" class="status-badge status-badge-mode mode-normal" title="Current Browser Mode">NORMAL</span>
+                    <span id="StatusBarMediaOffload" class="status-badge status-badge-media" title="Play active video in mpv (Ctrl+Shift+Y)" tabindex="0" role="button" style="display: none;">
+                        <i class="fa-solid fa-play"></i>
+                        <span class="status-badge-text">MPV</span>
+                    </span>
                     <span id="StatusBarUrl" class="status-target-url" title="Link Target Preview"></span>
                 </div>
                 <div class="status-bar-center">
@@ -125,11 +129,6 @@
                     <span id="StatusBarPartition" class="status-badge status-badge-partition partition-container" title="Active Container Partition">
                         <i class="fa-solid fa-box-archive"></i>
                         <span class="status-badge-text">Workspace 1</span>
-                    </span>
-                    <span id="StatusBarClock" class="status-badge status-badge-clock" title="Current Date and Time">
-                        <i class="fa-regular fa-clock"></i>
-                        <span id="StatusBarClockDate" class="status-clock-date"></span>
-                        <span id="StatusBarClockTime" class="status-clock-time"></span>
                     </span>
                 </div>
             </footer>

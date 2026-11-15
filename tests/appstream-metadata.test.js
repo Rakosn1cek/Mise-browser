@@ -110,7 +110,7 @@ const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
     }
 
     if (appstreamcliPath) {
-        const output = execFileSync(appstreamcliPath, ['validate', '--pedantic', metainfoPath], { encoding: 'utf8' });
+        const output = execFileSync(appstreamcliPath, ['validate', '--no-net', '--pedantic', metainfoPath], { encoding: 'utf8' });
         assert(output.includes('Validation was successful'), 'appstreamcli validate must succeed with zero errors or warnings');
         console.log('✓ appstreamcli pedantic validation passed with 0 errors');
     } else {

@@ -18,6 +18,7 @@ import {
     toggleTabAudioMute,
     toggleActiveTabAudioMute,
     toggleGlobalAudioMute,
+    pauseActiveTabMedia,
     updateTabMediaIndicator
 } from './webview/audioManager.js';
 import {
@@ -45,6 +46,7 @@ export {
     toggleTabAudioMute,
     toggleActiveTabAudioMute,
     toggleGlobalAudioMute,
+    pauseActiveTabMedia,
     updateTabMediaIndicator,
     updateTabSleepUI,
     wakeTab,
@@ -804,7 +806,7 @@ export function renderWorkspaceUI(targetTabToFocus = null) {
             }
         }
         if (!cachedTitle) {
-            cachedTitle = "Loading...";
+            cachedTitle = (url === 'about:blank') ? "New Tab" : "Loading...";
         }
         const isSleeping = !!state.tabSleepStates[currentWS][idx];
         const cachedFavicon = state.tabFavicons[currentWS]?.[idx] || null;
@@ -814,7 +816,7 @@ export function renderWorkspaceUI(targetTabToFocus = null) {
         li.setAttribute('tabindex', isInitiallySelected ? '0' : '-1');
         const isPinned = !!state.tabPinned?.[currentWS]?.[idx];
         li.className = 'tab-item' + (isInitiallySelected ? ' selected' : '');
-        li.title = `${cachedTitle}\n${url}`;
+        li.title = url === 'about:blank' ? cachedTitle : `${cachedTitle}\n${url}`;
         if (isSleeping) li.classList.add('tab-sleeping');
         if (isPinned) li.classList.add('tab-pinned');
 
@@ -1077,18 +1079,7 @@ export async function spawnNewBlankTab() {
     const currentWS = state.sessionState.current_workspace;
     if (!state.sessionState.workspaces[currentWS]) state.sessionState.workspaces[currentWS] = [];
 
-    let defaultUrl = 'https://duckduckgo.com';
-    if (window.miseAPI && typeof window.miseAPI.getBrowserSettings === 'function') {
-        try {
-            const cfg = await window.miseAPI.getBrowserSettings();
-            if (cfg && cfg.search_engine) {
-                const parsedUrl = new URL(cfg.search_engine.split('?')[0]);
-                defaultUrl = `${parsedUrl.protocol}//${parsedUrl.host}`;
-            }
-        } catch (err) {
-            defaultUrl = 'https://duckduckgo.com';
-        }
-    }
+    const defaultUrl = 'about:blank';
 
     state.sessionState.workspaces[currentWS].push(defaultUrl);
     window.miseAPI.saveSession(state.sessionState);

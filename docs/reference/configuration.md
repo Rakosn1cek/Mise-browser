@@ -85,8 +85,8 @@ Controls hardware switches, process limits, privacy whitelists, and search prefe
 - **`tab_sleep_timeout_minutes`**: Inactivity timeout before background tabs detach and hibernate (5, 15, 30, 60, or 0 to disable).
 - **`sidebar_auto_collapse`**: When `true`, collapses the vertical sidebar into a 36px icon strip, expanding smoothly on hover or via shortcut.
 - **`startup_behavior`**: Startup launch behaviour (`restore`, `dashboard`, or `new-tab`). Defaults to `restore` (reopens on the exact active tab and workspace where you left off). When set to `dashboard`, Mise opens the Workspaces Dashboard overlay on launch for instant keyboard selection. When set to `new-tab`, Mise opens a fresh search tab on launch.
-- **`show_status_bar`**: When `true`, displays the 28px footer status bar with modal state, real-time link hover preview, centered address bar pill, and TLS security status.
-- **`show_clock`**: When `true`, displays a real-time clock and date widget in the status bar and sidebar for full screen browsing.
+- **`show_status_bar`**: When `true`, displays the 30px footer status bar with modal state, real-time link hover preview, spacious centered address bar pill, and TLS security status.
+- **`show_clock`**: When `true`, displays a real-time clock and date widget in the sidebar for full screen browsing.
 - **`clock_format`**: Date and time display format: `12h` (e.g. 02:45 PM), `24h` (e.g. 14:45), `seconds` (e.g. 14:45:08), or `datetime` (e.g. 15 Oct, 14:45).
 - **`show_window_controls`**: When `true`, displays window action buttons (minimise, maximise/restore, close) at the top of the sidebar for desktop environments without native window decorations.
 - **`email_handler`**: Choose between `system` (OS default `mailto:`) or webmail providers (Gmail, Zoho, Outlook, Fastmail, ProtonMail).

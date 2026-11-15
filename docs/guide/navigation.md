@@ -280,4 +280,19 @@ Find text across active web content with instant matching and Vim-style navigati
   * Pressing **n** or **N** while focused on overlay buttons drops focus back to the webview and jumps to the next or previous match.
   * Press **Escape** from the search input, overlay buttons, or the webview to dismiss the search bar and clear highlight markers.
 
+***
+
+## Low-Resource Media Offload (YouTube in mpv)
+
+Offload video streams directly to native `mpv` player with `yt-dlp` stream extraction:
+
+* **Hardware Video Acceleration**: Bypasses heavy Chromium video decoding threads in favour of lightweight, native hardware acceleration (VA-API and VDPAU on Linux), saving substantial CPU cycles and resident memory on fanless hardware.
+* **Instant Keyboard Offload**: Press **Ctrl + Shift + Y** while viewing any YouTube video (`/watch`, `/shorts`, `/live`) or supported media stream to launch mpv immediately.
+* **Status Bar Quick Action**: Whenever an active tab is displaying a supported video URL, a blue **MPV** badge appears in the bottom status bar for one-click offloading. Non-video pages (such as YouTube home feeds, channel profiles, or search results) suppress the badge automatically.
+* **Context Menu Actions (Link vs Page)**:
+  * **Play Link in mpv**: Right-click any video link or thumbnail on feeds, homepages, subscriptions, or search results to stream that video directly in mpv without having to load or open the video page in the browser first.
+  * **Play Page in mpv**: When currently viewing an active video page in a tab, right-click anywhere on the page to offload the active video stream into mpv. Non-video pages (such as the YouTube homepage or search listings) omit this option to prevent mpv from failing on unplayable feed markup.
+* **Automatic Tab Pausing**: When enabled in Preferences under **External Tools**, Mise automatically pauses HTML5 video in the active browser tab when launching mpv to eliminate dual playback and reclaim system resources.
+
+
 

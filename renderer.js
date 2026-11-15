@@ -4,7 +4,7 @@ import {
     renderWorkspaceUI, switchTabFocus, jumpToTabByIndex, spawnNewBlankTab, spawnTabWithUrl, 
     handleTabRemoval, navigateFrameBack, navigateFrameForward, toggleGlobalMediaPlayback, 
     toggleActiveTabAudioMute, toggleGlobalAudioMute, togglePinActiveTab, hibernateInactiveTabs, 
-    toggleReaderViewOnActiveTab, exportActiveTabToNotes, exportActiveTabToExternal 
+    toggleReaderViewOnActiveTab, exportActiveTabToNotes, exportActiveTabToExternal, pauseActiveTabMedia 
 } from './modules/webview.js';
 import { toggleBookmarksOverlay, promptQuickmark, addCurrentPageToBookmarks, deleteBookmark, deleteQuickmark } from './modules/overlays/bookmarks.js';
 import { toggleCommandPaletteView, togglePreferencesView, cycleWebRTCPolicy, toggleWebRTCProtection, setWebRTCPolicy, inspectWebRTCStatus, getWebRTCReadableLabel } from './modules/overlays/commandPalette.js';
@@ -16,7 +16,7 @@ import { openTransientShareModal } from './modules/overlays/shareModal.js';
 import { openPeekModal, closePeekModal } from './modules/overlays/peekModal.js';
 import { toggleDownloadShelf } from './modules/downloads.js';
 import { toggleSplitView, cycleSplitOrientation, switchSplitFocus, swapSplitPanes, closeSplitView, openUrlInSplit } from './modules/splitView.js';
-import { toggleStatusBar, setTargetUrl } from './modules/statusBar.js';
+import { toggleStatusBar, setTargetUrl, triggerMediaOffloadForActiveTab } from './modules/statusBar.js';
 import { toggleDarkReaderOnActiveTab } from './modules/darkReader.js';
 import { toggleClock, cycleClockFormat } from './modules/clock.js';
 import { toggleDiagnosticsView, toggleDiagnosticsRecording } from './modules/overlays/diagnostics.js';
@@ -238,6 +238,7 @@ if (window.miseAPI && typeof window.miseAPI.onMasterShortcut === 'function') {
             case 'toggle-private-mode': togglePrivateWorkspace(); break;
             case 'hibernate-inactive-tabs': hibernateInactiveTabs(); break;
             case 'toggle-notifications': window.toggleNotificationsOverlay?.(); break;
+            case 'play-in-mpv': triggerMediaOffloadForActiveTab(); break; case 'pause-media-offload-tab': pauseActiveTabMedia(); break;
         }
     });
 }

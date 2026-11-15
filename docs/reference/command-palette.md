@@ -49,7 +49,7 @@ The Command Centre gives you rapid, searchable access to all Mise operations, in
 | **Focus Navigation Buttons** | `Ctrl+Tab` | `focus-nav-buttons` | Cycles keyboard focus across toolbar navigation controls. |
 | **Focus Active Webview** | `Ctrl+W` | `focus-webview` | Returns keyboard and typing focus directly to the guest webpage. |
 | **Toggle Sidebar (Expand / Collapse)** | `Ctrl+Shift+Z` | `toggle-zen-mode` | Alternates sidebar between 220px expanded width and 48px icon strip. |
-| **Toggle Status & Mode Bar** | `Ctrl+/` | `toggle-status-bar` | 22px footer status bar displaying modal state, target URL, and TLS encryption. |
+| **Toggle Status & Mode Bar** | `Ctrl+/` | `toggle-status-bar` | 30px footer status bar displaying modal state, target URL, and TLS encryption. |
 | **Toggle Auto-Collapse Sidebar** | - | - | Pins sidebar open or enables auto-shrink to 36px strip with hover expansion. |
 | **Toggle Zen Mode (Hide Sidebar)** | - | - | Completely hides peripheral sidebar chrome for edge-to-edge reading. |
 
@@ -115,7 +115,7 @@ The Command Centre gives you rapid, searchable access to all Mise operations, in
 | Command Title | Shortcut | Action ID | Description |
 | :--- | :--- | :--- | :--- |
 | **Open Preferences** | `Ctrl+H` | `toggle-help` | Full-page settings view for GPU switches, memory caps, and themes. |
-| **Toggle Clock & Date Display** | — | `toggle-clock` | Shows or hides the live clock in the status bar and sidebar. |
+| **Toggle Clock & Date Display** | — | `toggle-clock` | Shows or hides the live clock in the sidebar. |
 | **Cycle Clock Format** | — | `cycle-clock-format` | Rotates clock format between standard date and time, compact time, and seconds. |
 | **Toggle Window Controls** | — | `toggle-window-controls` | Shows or hides window management buttons at the top of the sidebar. |
 | **Switch to Private Workspace** | `Ctrl+Shift+P` | `toggle-private-mode` | Switches to the isolated Private workspace with volatile in-memory storage. |

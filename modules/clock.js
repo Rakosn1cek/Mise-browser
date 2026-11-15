@@ -1,5 +1,5 @@
 // modules/clock.js
-// Live clock and date controller for status bar and sidebar widgets
+// Live clock and date controller for sidebar widget
 
 let clockTimer = null;
 let currentClockMode = 'datetime'; // 'datetime' | 'time' | 'seconds'
@@ -44,22 +44,6 @@ export function updateClockUI() {
     const dateDisplay = currentClockMode === 'time' ? 'none' : 'inline-block';
     const timeText = currentClockMode === 'seconds' ? data.fullTime : data.shortTime;
 
-    // Status bar clock elements
-    const statusClockEl = document.getElementById('StatusBarClock');
-    const statusDateEl = document.getElementById('StatusBarClockDate');
-    const statusTimeEl = document.getElementById('StatusBarClockTime');
-
-    if (statusClockEl) {
-        if (statusClockEl.title !== data.tooltip) statusClockEl.title = data.tooltip;
-        if (statusDateEl) {
-            if (statusDateEl.textContent !== dateText) statusDateEl.textContent = dateText;
-            if (statusDateEl.style.display !== dateDisplay) statusDateEl.style.display = dateDisplay;
-        }
-        if (statusTimeEl) {
-            if (statusTimeEl.textContent !== timeText) statusTimeEl.textContent = timeText;
-        }
-    }
-
     // Sidebar clock elements
     const sidebarClockEl = document.getElementById('SidebarClock');
     const sidebarDateEl = document.getElementById('SidebarClockDate');
@@ -96,12 +80,8 @@ export function cycleClockFormat() {
 
 export function setClockVisibility(visible) {
     isClockEnabled = !!visible;
-    const statusClockEl = document.getElementById('StatusBarClock');
     const sidebarClockEl = document.getElementById('SidebarClock');
 
-    if (statusClockEl) {
-        statusClockEl.style.display = isClockEnabled ? 'inline-flex' : 'none';
-    }
     if (sidebarClockEl) {
         sidebarClockEl.style.display = isClockEnabled ? 'flex' : 'none';
     }
@@ -128,14 +108,7 @@ export function toggleClock(force) {
 }
 
 export function initClock() {
-    const statusClockEl = document.getElementById('StatusBarClock');
     const sidebarClockEl = document.getElementById('SidebarClock');
-
-    if (statusClockEl) {
-        statusClockEl.addEventListener('click', () => {
-            cycleClockFormat();
-        });
-    }
 
     if (sidebarClockEl) {
         sidebarClockEl.addEventListener('click', () => {

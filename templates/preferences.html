@@ -202,6 +202,44 @@
                                     </div>
                                     <input type="text" id="setting-notes-command" class="settings-input" placeholder="e.g. obsidian or code" style="background: var(--bg-main); color: var(--text); border: 1px solid var(--border); border-radius: 4px; padding: 6px 12px; font-size: 13px; width: 220px;" spellcheck="false" autocomplete="off">
                                 </div>
+
+                                <h3 style="margin-top: 24px; margin-bottom: 12px; font-size: 15px; color: var(--accent);">Low-Resource Media Offload (mpv & yt-dlp)</h3>
+
+                                <div class="setting-item">
+                                    <div class="setting-info">
+                                        <span class="setting-label">Enable Media Offload</span>
+                                        <span class="setting-desc">Spawns external mpv player for YouTube and media streams using native VA-API hardware acceleration.</span>
+                                        <div id="media-offload-binary-status" style="margin-top: 6px; font-size: 12px; opacity: 0.85;">Detecting host binaries...</div>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="setting-media-offload-enable" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+
+                                <div class="setting-item">
+                                    <div class="setting-info">
+                                        <span class="setting-label">Preferred Video Resolution</span>
+                                        <span class="setting-desc">Target format passed to yt-dlp to limit bandwidth and decoding overhead on fanless hardware.</span>
+                                    </div>
+                                    <select id="setting-media-offload-quality" class="settings-select" style="background: var(--bg-main); color: var(--text); border: 1px solid var(--border); border-radius: 4px; padding: 6px 12px; font-size: 13px; width: 220px;">
+                                        <option value="1080p">1080p (Full HD)</option>
+                                        <option value="720p">720p (HD)</option>
+                                        <option value="480p">480p (Low Resource)</option>
+                                        <option value="best">Best Available (Maximum)</option>
+                                    </select>
+                                </div>
+
+                                <div class="setting-item">
+                                    <div class="setting-info">
+                                        <span class="setting-label">Pause Active Tab on Offload</span>
+                                        <span class="setting-desc">Automatically pause HTML5 video in the active browser tab when launching mpv to free CPU cycles immediately.</span>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="setting-media-offload-pause" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
                             </section>
                 
                             <!-- Appearance & Visual Theme Section -->
@@ -621,7 +659,7 @@
                                     <h3 class="reference-subheading">Navigation & Workspaces</h3>
                                     <div class="shortcuts-grid">
                                         <div class="shortcut-row" data-action="toggle-menu-bar"><span class="shortcut-desc">Toggle Mise Settings (Menu Bar)</span><span class="shortcut-key"><kbd class="shortcut-badge">F1</kbd></span></div>
-                                        <div class="shortcut-row" data-action="spawn-tab"><span class="shortcut-desc">New DuckDuckGo Tab</span><span class="shortcut-key"><kbd class="shortcut-badge">Ctrl + T</kbd></span></div>
+                                        <div class="shortcut-row" data-action="spawn-tab"><span class="shortcut-desc">New Blank Tab</span><span class="shortcut-key"><kbd class="shortcut-badge">Ctrl + T</kbd></span></div>
                                         <div class="shortcut-row" data-action="toggle-address"><span class="shortcut-desc">Focus Address Bar (Status Bar)</span><span class="shortcut-key"><kbd class="shortcut-badge">Ctrl + L</kbd></span></div>
                                         <div class="shortcut-row" data-action="remove-tab"><span class="shortcut-desc">Close Current Tab (or Node)</span><span class="shortcut-key"><kbd class="shortcut-badge">Ctrl + X</kbd></span></div>
                                         <div class="shortcut-row" data-action="toggle-dashboard"><span class="shortcut-desc">Toggle Workspace Dashboard</span><span class="shortcut-key"><kbd class="shortcut-badge">Ctrl + Shift + W</kbd></span></div>
@@ -720,6 +758,7 @@
                                         <div class="shortcut-row" data-action="jump-quickmark"><span class="shortcut-desc">Jump to quickmark</span><span class="shortcut-key"><kbd class="shortcut-badge">Ctrl + J [key]</kbd></span></div>
                                         <div class="shortcut-row" data-action="add-bookmark"><span class="shortcut-desc">Add bookmark into bookmarks.json</span><span class="shortcut-key"><kbd class="shortcut-badge">Ctrl + Shift + A</kbd></span></div>
                                         <div class="shortcut-row" data-action="toggle-global-media"><span class="shortcut-desc">Play/Pause video playback globally</span><span class="shortcut-key"><kbd class="shortcut-badge">F10</kbd></span></div>
+                                        <div class="shortcut-row" data-action="play-in-mpv"><span class="shortcut-desc">Play Video in mpv (Media Offload)</span><span class="shortcut-key"><kbd class="shortcut-badge">Ctrl + Shift + Y</kbd></span></div>
                                     </div>
                                 </div>
                 

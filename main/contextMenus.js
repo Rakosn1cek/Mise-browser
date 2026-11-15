@@ -11,6 +11,7 @@ const {
     buildEmailComposeUrl
 } = config;
 const security = require('../security');
+const mediaOffload = require('./mediaOffload');
 
 let getMainWindowFn = () => null;
 
@@ -244,6 +245,17 @@ function buildWebviewContextMenu(params, webContents, options = {}) {
             label: 'Open Link in Split View',
             click: () => openLinkInSplit(params.linkURL)
         }));
+        if (mediaOffload.isCandidateMediaUrl(params.linkURL)) {
+            menu.append(new MenuItem({
+                label: 'Play Link in mpv',
+                click: () => {
+                    const cfg = loadBrowserConfig();
+                    if (cfg.media_offload_enabled !== false) {
+                        mediaOffload.spawnMpvProcess(params.linkURL, { quality: cfg.media_offload_quality });
+                    }
+                }
+            }));
+        }
         menu.append(new MenuItem({
             label: 'Copy Link Address',
             click: () => {
@@ -280,6 +292,25 @@ function buildWebviewContextMenu(params, webContents, options = {}) {
         menu.append(new MenuItem({ label: 'Back', click: () => { webContents.send('master-shortcut', 'go-back-signal'); } }));
         menu.append(new MenuItem({ label: 'Forward', click: () => { webContents.send('master-shortcut', 'go-forward-signal'); } }));
         menu.append(new MenuItem({ label: 'Reload', click: () => { webContents.reload(); } }));
+    }
+
+    const activePageUrl = params.pageURL || (typeof webContents.getURL === 'function' ? webContents.getURL() : '');
+    if (activePageUrl && mediaOffload.isCandidateMediaUrl(activePageUrl)) {
+        menu.append(new MenuItem({
+            label: 'Play Page in mpv',
+            click: () => {
+                const cfg = loadBrowserConfig();
+                if (cfg.media_offload_enabled !== false) {
+                    const res = mediaOffload.spawnMpvProcess(activePageUrl, { quality: cfg.media_offload_quality });
+                    if (res && res.success && cfg.media_offload_pause_tab) {
+                        const win = resolveWindowLocal();
+                        if (win && !win.isDestroyed()) {
+                            win.webContents.send('master-shortcut', 'pause-media-offload-tab', activePageUrl);
+                        }
+                    }
+                }
+            }
+        }));
     }
 
     if (menu.items.length > 0) {

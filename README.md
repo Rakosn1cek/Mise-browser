@@ -25,6 +25,7 @@ Named after the Czech word for *"mission"*, Mise leverages the Chromium renderin
 * **Clipboard-Mediated Terminal Oversight**: High-risk script execution and raw web commands trigger a clipboard-mediated security handshake, sanitising and staging vetted commands to your clipboard for deliberate user review and execution in an external terminal.
 * **Native Privacy, DoH & WebRTC Control**: Built-in request interception blocks trackers, telemetry, and advertisements without heavy third-party extensions, with DNS-over-HTTPS resolver selection, granular WebRTC leak controls, and selective whitelisting for trusted services.
 * **Local User Scripts & Styles**: Direct native injection of `.user.js` and `.user.css` files directly from `~/.config/mise-browser/` with inotify watching and live CSS hot-reloading, avoiding the heavy memory overhead of full WebExtensions.
+* **Low-Resource Media Offload**: Offload YouTube videos and web media directly into native `mpv` player with `yt-dlp` extraction and hardware acceleration (VA-API / VDPAU), eliminating Chromium video decoding overhead and saving memory on fanless Linux hardware.
 * **Power Tools**: Integrated Markdown notes, bookmarks, quickmarks, actionable history overlay, and a full-page Command Centre.
 
 ***

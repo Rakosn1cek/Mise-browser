@@ -2,7 +2,7 @@
 // Status and mode bar controller for link target previews, connection security, container partition badges, and modal states
 
 import { state } from './state.js';
-import { escapeHtml, getWorkspacePartition } from './utils.js';
+import { escapeHtml, getWorkspacePartition, showNotificationToast } from './utils.js';
 import { isSplitActive, getSplitState } from './splitView.js';
 import { updateDarkReaderButtonUI, isWebviewDarkReaderActive } from './darkReader.js';
 import { resolveWorkspaceVisual } from './workspaceVisuals.js';
@@ -12,6 +12,7 @@ let modeBadgeEl = null;
 let targetUrlEl = null;
 let securityBadgeEl = null;
 let partitionBadgeEl = null;
+let mediaOffloadBadgeEl = null;
 let permissionsBadgeEl = null;
 let permissionsPopoverEl = null;
 let popoverDomainEl = null;
@@ -39,6 +40,7 @@ export function initStatusBar() {
     targetUrlEl = document.getElementById('StatusBarUrl');
     securityBadgeEl = document.getElementById('StatusBarSecurity');
     partitionBadgeEl = document.getElementById('StatusBarPartition');
+    mediaOffloadBadgeEl = document.getElementById('StatusBarMediaOffload');
     permissionsBadgeEl = document.getElementById('StatusBarPermissions');
     permissionsPopoverEl = document.getElementById('PermissionsPopover');
     popoverDomainEl = document.getElementById('PermissionsPopoverDomain');
@@ -48,7 +50,7 @@ export function initStatusBar() {
 
     if (!statusBarEl) return;
 
-    for (const badge of [partitionBadgeEl, modeBadgeEl, permissionsBadgeEl]) {
+    for (const badge of [partitionBadgeEl, modeBadgeEl, permissionsBadgeEl, mediaOffloadBadgeEl]) {
         if (!badge) continue;
         badge.tabIndex = 0;
         badge.setAttribute('role', 'button');
@@ -57,6 +59,13 @@ export function initStatusBar() {
                 event.preventDefault();
                 badge.click();
             }
+        });
+    }
+
+    if (mediaOffloadBadgeEl) {
+        mediaOffloadBadgeEl.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            await triggerMediaOffloadForActiveTab();
         });
     }
 
@@ -629,11 +638,12 @@ export function updateStatusBarFromActiveView() {
 
     updateSecurityStatus(activeUrl);
     updatePermissionsStatus(activeUrl, isPrivate);
+    updateMediaOffloadStatus(activeUrl);
     setTargetUrl('');
 
     const addressBar = document.getElementById('WideAddressBar');
     if (addressBar && document.activeElement !== addressBar) {
-        addressBar.value = activeUrl || '';
+        addressBar.value = (activeUrl === 'about:blank') ? '' : (activeUrl || '');
     }
 
     const activeWv = state.activeViewsCache[currentWS]?.[currentIdx];
@@ -687,4 +697,118 @@ export function toggleStatusBar(force) {
 
 export function isStatusBarVisible() {
     return isStatusBarEnabled;
+}
+
+const KNOWN_MEDIA_EXTS = new Set([
+    '.mp4', '.webm', '.mkv', '.m3u8', '.mpd',
+    '.flv', '.mov', '.avi', '.ogg', '.ogv'
+]);
+
+const YOUTUBE_HOSTS = new Set([
+    'youtube.com', 'www.youtube.com', 'm.youtube.com',
+    'music.youtube.com', 'gaming.youtube.com', 'youtu.be'
+]);
+
+function checkIsMediaCandidate(rawUrl) {
+    if (!rawUrl || typeof rawUrl !== 'string' || rawUrl === 'about:blank') return false;
+    try {
+        const parsed = new URL(rawUrl);
+        if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return false;
+        const host = parsed.hostname.toLowerCase();
+        const isYtHost = YOUTUBE_HOSTS.has(host) || Array.from(YOUTUBE_HOSTS).some(h => host.endsWith('.' + h));
+        if (isYtHost) {
+            if (host === 'youtu.be' || host.endsWith('.youtu.be')) {
+                return parsed.pathname.length > 1;
+            }
+            const pathname = parsed.pathname.toLowerCase();
+            if (pathname === '/watch' || pathname.startsWith('/watch/')) {
+                return parsed.searchParams.has('v') || parsed.searchParams.has('list');
+            }
+            if (pathname.startsWith('/shorts/') && pathname.length > 8) return true;
+            if (pathname.startsWith('/live/') && pathname.length > 6) return true;
+            if (pathname.startsWith('/embed/') && pathname.length > 7) return true;
+            if (pathname.startsWith('/v/') && pathname.length > 3) return true;
+            if (pathname === '/playlist' && parsed.searchParams.has('list')) return true;
+            return false;
+        }
+        const pathname = parsed.pathname.toLowerCase();
+        const dot = pathname.lastIndexOf('.');
+        if (dot !== -1 && KNOWN_MEDIA_EXTS.has(pathname.slice(dot))) return true;
+    } catch (_) {}
+    return false;
+}
+
+export function updateMediaOffloadStatus(url) {
+    if (!mediaOffloadBadgeEl) {
+        mediaOffloadBadgeEl = document.getElementById('StatusBarMediaOffload');
+    }
+    if (!mediaOffloadBadgeEl) return;
+
+    let isMedia = checkIsMediaCandidate(url);
+    if (!isMedia && url && window.miseAPI && typeof window.miseAPI.isCandidateMediaUrl === 'function') {
+        try {
+            isMedia = window.miseAPI.isCandidateMediaUrl(url);
+        } catch (_) {}
+    }
+
+    mediaOffloadBadgeEl.style.display = isMedia ? 'inline-flex' : 'none';
+}
+
+export async function triggerMediaOffloadForActiveTab() {
+    const currentWS = state.sessionState.current_workspace;
+    const activeListItem = document.querySelector('#TabList li.selected');
+    const currentIdx = activeListItem ? Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem) : 0;
+    const activeWv = state.activeViewsCache[currentWS]?.[currentIdx];
+    const targetUrl = (activeWv && typeof activeWv.getURL === 'function' ? activeWv.getURL() : '') || (state.sessionState.workspaces[currentWS]?.[currentIdx]);
+
+    if (!targetUrl) return;
+
+    let isMedia = checkIsMediaCandidate(targetUrl);
+    if (!isMedia && window.miseAPI && typeof window.miseAPI.isCandidateMediaUrl === 'function') {
+        try {
+            isMedia = window.miseAPI.isCandidateMediaUrl(targetUrl);
+        } catch (_) {}
+    }
+    if (!isMedia) {
+        if (typeof showNotificationToast === 'function') {
+            showNotificationToast('Active page is not a supported media stream');
+        }
+        return;
+    }
+
+    if (!mediaOffloadBadgeEl) {
+        mediaOffloadBadgeEl = document.getElementById('StatusBarMediaOffload');
+    }
+
+    if (mediaOffloadBadgeEl) {
+        mediaOffloadBadgeEl.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i><span class="status-badge-text">LOADING...</span>';
+    }
+    if (typeof showNotificationToast === 'function') {
+        showNotificationToast('Offloading video to mpv...');
+    }
+
+    try {
+        if (window.miseAPI && typeof window.miseAPI.launchMediaOffload === 'function') {
+            const res = await window.miseAPI.launchMediaOffload(targetUrl);
+            if (res && res.success) {
+                setTargetUrl('Playing in mpv: ' + targetUrl, 3000);
+                if (typeof showNotificationToast === 'function') {
+                    showNotificationToast('Stream launched in mpv');
+                }
+            } else if (res && res.error) {
+                setTargetUrl('mpv offload error: ' + res.error, 3500);
+                if (typeof showNotificationToast === 'function') {
+                    showNotificationToast('mpv error: ' + res.error);
+                }
+            }
+        }
+    } finally {
+        if (mediaOffloadBadgeEl) {
+            mediaOffloadBadgeEl.innerHTML = '<i class="fa-solid fa-play"></i><span class="status-badge-text">MPV</span>';
+        }
+    }
+}
+
+if (typeof window !== 'undefined') {
+    window.triggerMediaOffloadForActiveTab = triggerMediaOffloadForActiveTab;
 }
