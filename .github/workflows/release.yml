@@ -61,6 +61,9 @@ jobs:
             dist/*.dmg
             dist/*.zip
             dist/*.exe
+            dist/*.yml
+            dist/*.blockmap
+            dist/*.zsync
           retention-days: 1
 
   publish:
