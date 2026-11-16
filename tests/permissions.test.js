@@ -64,7 +64,9 @@ console.log('Running Mise session permission regression tests...');
         'fullscreen',
         'clipboard-sanitized-write',
         'pointerLock',
-        'persistent-storage'
+        'persistent-storage',
+        'background-sync',
+        'screen-wake-lock'
     ];
 
     for (const perm of allowedPermissions) {

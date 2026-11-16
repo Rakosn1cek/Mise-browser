@@ -20,7 +20,11 @@ const SAFE_BENIGN_PERMISSIONS = new Set([
     'storage-access',
     'top-level-storage-access',
     'speaker-selection',
-    'persistent-storage'
+    'persistent-storage',
+    'background-sync',
+    'periodic-background-sync',
+    'screen-wake-lock',
+    'system-wake-lock'
 ]);
 
 const VALID_CAPABILITIES = new Set([

@@ -266,7 +266,7 @@ console.log('Running Mise Granular Permission Vault regression tests...');
     // Verify remembered state persisted in vault
     assert.strictEqual(getDomainPermissions('new-service.com').geolocation, 'allow');
 
-    // 4e. Benign persistent-storage request allowed immediately without prompt
+    // 4e. Benign persistent-storage and background-sync requests allowed immediately without prompt
     mockWebContents.lastSent = null;
     let storageAllowed = null;
     mockPersistentSession.requestHandler(
@@ -277,6 +277,16 @@ console.log('Running Mise Granular Permission Vault regression tests...');
     );
     assert.strictEqual(storageAllowed, true, 'Benign persistent-storage must be granted immediately');
     assert.strictEqual(mockWebContents.lastSent, null, 'Benign persistent-storage must not trigger prompt banner');
+
+    let syncAllowed = null;
+    mockPersistentSession.requestHandler(
+        { getURL: () => 'https://web.whatsapp.com' },
+        'background-sync',
+        (res) => { syncAllowed = res; },
+        { requestingUrl: 'https://web.whatsapp.com', isMainFrame: true }
+    );
+    assert.strictEqual(syncAllowed, true, 'Benign background-sync must be granted immediately');
+    assert.strictEqual(mockWebContents.lastSent, null, 'Benign background-sync must not trigger prompt banner');
 
     // 4f. Unsupported capabilities fail closed without dispatching prompt banner
     mockWebContents.lastSent = null;

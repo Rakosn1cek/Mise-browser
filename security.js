@@ -270,7 +270,11 @@ const ALLOWED = [
     'storage-access',
     'top-level-storage-access',
     'speaker-selection',
-    'persistent-storage'
+    'persistent-storage',
+    'background-sync',
+    'periodic-background-sync',
+    'screen-wake-lock',
+    'system-wake-lock'
 ];
 
 function decidePermission(permission, { trusted, notificationsEnabled } = {}) {
