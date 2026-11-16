@@ -234,7 +234,7 @@ downloads.registerDownloadIpc(ipcMain, {
 });
 
 // Register version information and update check IPC channels
-updater.registerUpdaterIpc(ipcMain, { app });
+updater.registerUpdaterIpc(ipcMain, { app, getMainWindow });
 
 ipcMain.handle('open-external', async (event, url) => {
     if (!url || typeof url !== 'string' || url.length > 2048) return false;

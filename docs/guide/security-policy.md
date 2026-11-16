@@ -10,9 +10,9 @@ Security updates and critical patches are actively maintained for the latest sta
 
 Starting from version 1.2.0, Mise adheres to a structured release workflow:
 
-* **Weekly Release Cycle:** Routine bug fixes, UI improvements, and feature additions accumulate on the `dev` branch throughout the week. Following comprehensive local verification, these changes are merged into `main` and released in weekly batches on Sunday nights.
-* **Emergency Security Hotfixes:** Critical security vulnerabilities bypass the weekly schedule entirely. They are remediated immediately, merged directly into `main`, and published as expedited patch releases (e.g. `v1.2.1`) to ensure automated package builds deploy without delay.
-* **Upstream Tracking:** Mise tracks upstream Electron and Chromium updates and patches daily. All patches and updates to Electron and Chromium are delivered promptly to ensure runtime security and stability (as demonstrated when three Electron updates were delivered within four days). Each release announcement and tagged milestone explicitly lists its corresponding Electron and Chromium runtime versions.
+* **Sunday & Bi-Weekly Release Cycle:** Routine bug fixes, UI improvements, upstream Electron/Chromium bumps, and feature additions accumulate on the `dev` branch and are merged into `main` for scheduled Sunday batch releases (transitioning to a bi-weekly cadence during the Discovery Phase).
+* **Emergency Zero-Day Hotfixes:** Critical zero-day vulnerabilities bypass the scheduled release cadence entirely. They are remediated immediately, merged directly into `main`, and published as expedited out-of-band patch releases (e.g. `v1.2.1`) to ensure automated package builds and background delta updates deploy without delay.
+* **Background Delta Updates & Upstream Tracking:** Mise tracks upstream Electron and Chromium updates daily and delivers silent differential updates to packaged installations via `electron-updater` (AppImage `zsync`, Windows NSIS blockmaps, and macOS ZIP/Sparkle). Each release announcement and tagged milestone explicitly lists its corresponding Electron and Chromium runtime versions.
 
 | Version | Supported | Notes |
 | :--- | :--- | :--- |

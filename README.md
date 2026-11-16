@@ -34,7 +34,8 @@ Named after the Czech word for *"mission"*, Mise leverages the Chromium renderin
 
 Security, isolation, and upstream dependency freshness are foundational principles for Mise:
 
-* **Daily Upstream Security Auditing**: Mise tracks upstream Electron and Chromium updates and security patches daily. All upstream patches and updates are evaluated, verified, and delivered promptly (exemplified when three Electron updates were released and integrated within four days).
+* **Scheduled Release Cadence & Zero-Day Hotfixes**: Mise tracks upstream Electron and Chromium updates and security patches daily. Routine engine bumps and validated features are batched into scheduled Sunday releases (transitioning to a bi-weekly cadence in the Discovery Phase), while critical zero-day vulnerabilities bypass the schedule and deploy immediately.
+* **Seamless Background Delta Updates**: Packaged builds stream differential updates in the background via `electron-updater` (AppImage `zsync`, Windows NSIS blockmaps, and macOS ZIP/Sparkle) and surface a non-intrusive `⟳ Restart to update` pill in the status bar when ready to install.
 * **Engine Version Verification**: Active Mise, Electron, and Chromium runtime versions are visible directly within the Preferences overlay (`Ctrl + H`) and the Welcome view.
 * **Strict Process Sandboxing**: Webviews run with `contextIsolation: true`, `nodeIntegration: false`, and Chromium sandboxing enabled, guarded by a minimal IPC whitelist.
 * **Granular Permission Vault & Zero-Trust Isolation**: Hardware access (camera, microphone, geolocation, and clipboard) is isolated in a per-domain Permissions Vault with interactive status bar inspection and an unconditional Zero-Trust lockdown in Private Profile.

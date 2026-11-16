@@ -86,15 +86,15 @@ Verify that your downloaded file outputs `OK`.
 
 ## Updating Mise
 
-Mise includes an integrated, zero-privilege update notification system that checks the official GitHub Release ledger:
+Mise includes an integrated background delta update subsystem powered by `electron-updater` that streams differential patches directly from official GitHub Releases:
 
-- **Automated Check**: Mise queries the GitHub Releases API shortly after startup. When a newer version is published, an update badge appears in the sidebar and Preferences view.
+- **Automated Background Delta Updates**: Shortly after startup, packaged builds check the release feed (`latest-linux.yml`, `latest.yml`, or `latest-mac.yml`). When a newer version is published, Mise automatically streams only the changed binary blocks in the background (using AppImage `zsync`, Windows NSIS blockmaps, or macOS ZIP/Sparkle differential packages) without interrupting your browsing session.
+- **Restart Notification Pill**: Once verification completes, a subtle `⟳ Restart to update` pill appears in the bottom status bar (`#StatusBar`). Click it at your convenience to restart and apply the update seamlessly.
 - **Manual Check**: Run **Check for Updates** in the Command Centre (`Ctrl+P`) or click the **Check for Updates** button in Preferences (`Ctrl+H`).
-- **Applying Updates**:
+- **Package Manager & Source Installs**:
   - **Arch Linux (AUR)**: Update alongside system packages (`yay -Syu` or `paru`).
-  - **Linux AppImage**: Download the latest `.AppImage` from GitHub Releases and replace your existing file.
-  - **macOS / Windows**: Download and run the latest installer or portable executable.
-  - **Source Installs**: Run `git pull && npm install` in your repository folder.
+  - **Linux AppImage / macOS / Windows**: Automatic in-app background delta updates handle upgrades automatically once installed; standalone installers remain available on GitHub Releases.
+  - **Source Installs**: Unpackaged source builds bypass live downloads cleanly and update via `git pull && npm install` in your repository folder.
 
 ---
 

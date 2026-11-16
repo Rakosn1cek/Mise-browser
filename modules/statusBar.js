@@ -15,6 +15,8 @@ let securityBadgeEl = null;
 let partitionBadgeEl = null;
 let mediaOffloadBadgeEl = null;
 let qrBadgeEl = null;
+let updateBadgeEl = null;
+let unsubscribeUpdateDownloaded = null;
 let permissionsBadgeEl = null;
 let permissionsPopoverEl = null;
 let popoverDomainEl = null;
@@ -44,6 +46,7 @@ export function initStatusBar() {
     partitionBadgeEl = document.getElementById('StatusBarPartition');
     mediaOffloadBadgeEl = document.getElementById('StatusBarMediaOffload');
     qrBadgeEl = document.getElementById('StatusBarQr');
+    updateBadgeEl = document.getElementById('StatusBarUpdate');
     permissionsBadgeEl = document.getElementById('StatusBarPermissions');
     permissionsPopoverEl = document.getElementById('PermissionsPopover');
     popoverDomainEl = document.getElementById('PermissionsPopoverDomain');
@@ -53,7 +56,7 @@ export function initStatusBar() {
 
     if (!statusBarEl) return;
 
-    for (const badge of [partitionBadgeEl, modeBadgeEl, permissionsBadgeEl, mediaOffloadBadgeEl, qrBadgeEl]) {
+    for (const badge of [partitionBadgeEl, modeBadgeEl, permissionsBadgeEl, mediaOffloadBadgeEl, qrBadgeEl, updateBadgeEl]) {
         if (!badge) continue;
         badge.tabIndex = 0;
         badge.setAttribute('role', 'button');
@@ -63,6 +66,28 @@ export function initStatusBar() {
                 badge.click();
             }
         });
+    }
+
+    if (updateBadgeEl) {
+        updateBadgeEl.addEventListener('click', (e) => {
+            if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+            if (typeof window !== 'undefined' && window.miseAPI && typeof window.miseAPI.quitAndInstall === 'function') {
+                window.miseAPI.quitAndInstall();
+            }
+        });
+    }
+
+    if (unsubscribeUpdateDownloaded) {
+        try { unsubscribeUpdateDownloaded(); } catch (_) {}
+        unsubscribeUpdateDownloaded = null;
+    }
+    if (typeof window !== 'undefined' && window.miseAPI && typeof window.miseAPI.onUpdateDownloaded === 'function') {
+        const unsub = window.miseAPI.onUpdateDownloaded((info) => {
+            showUpdateReadyBadge(info);
+        });
+        if (typeof unsub === 'function') {
+            unsubscribeUpdateDownloaded = unsub;
+        }
     }
 
     if (qrBadgeEl) {
@@ -804,6 +829,47 @@ export function updateQrBadgeActiveState(isOpen) {
     if (qrBadgeEl.classList && typeof qrBadgeEl.classList.toggle === 'function') {
         qrBadgeEl.classList.toggle('active', !!isOpen);
     }
+}
+
+export function showUpdateReadyBadge(info = {}) {
+    if (typeof document === 'undefined') return;
+    if (!updateBadgeEl) {
+        updateBadgeEl = document.getElementById('StatusBarUpdate');
+    }
+    if (!updateBadgeEl && typeof document.createElement === 'function') {
+        const rightContainer = (typeof document.querySelector === 'function' ? document.querySelector('.status-bar-right') : null)
+            || statusBarEl
+            || document.getElementById('StatusBar');
+        if (rightContainer && typeof rightContainer.appendChild === 'function') {
+            const badge = document.createElement('span');
+            badge.id = 'StatusBarUpdate';
+            badge.className = 'status-badge status-badge-update';
+            badge.tabIndex = 0;
+            badge.setAttribute('role', 'button');
+            badge.addEventListener('click', (e) => {
+                if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+                if (typeof window !== 'undefined' && window.miseAPI && typeof window.miseAPI.quitAndInstall === 'function') {
+                    window.miseAPI.quitAndInstall();
+                }
+            });
+            badge.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    badge.click();
+                }
+            });
+            rightContainer.appendChild(badge);
+            updateBadgeEl = badge;
+        }
+    }
+    if (!updateBadgeEl) return;
+
+    const version = (info && (info.version || info.latestVersion)) ? String(info.version || info.latestVersion) : '';
+    updateBadgeEl.innerHTML = '<span class="status-badge-text">⟳ Restart to update</span>';
+    updateBadgeEl.title = version
+        ? `Update v${version} ready: Click to restart and install`
+        : 'Update downloaded and ready to install (Click to restart)';
+    updateBadgeEl.style.display = 'inline-flex';
 }
 
 export async function triggerMediaOffloadForActiveTab() {

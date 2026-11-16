@@ -259,6 +259,8 @@ function createMainWindow(options = {}) {
     });
 
     mainWindow.webContents.once('did-finish-load', () => {
+        updater.initAutoUpdater({ getMainWindow: () => mainWindow });
+
         setTimeout(() => {
             if (!isRendererReady) {
                 setRendererReady(true);

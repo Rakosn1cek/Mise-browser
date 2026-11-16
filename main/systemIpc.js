@@ -5,6 +5,7 @@ const { app, dialog, clipboard, session, net, webContents } = require('electron'
 const security = require('../security');
 const config = require('./config');
 const mediaOffload = require('./mediaOffload');
+const updater = require('./updater');
 
 const appDir = path.resolve(__dirname, '..');
 
@@ -51,6 +52,8 @@ function registerSystemIpc(ipcMain, options = {}) {
         }
         return null;
     };
+
+    updater.setMainWindowGetter(resolveWindow);
 
     const sendNotification = (title, body) => {
         if (options && typeof options.sendNotification === 'function') {

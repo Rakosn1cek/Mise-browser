@@ -19,6 +19,11 @@
   "build": {
     "appId": "io.github.rakosn1cek.mise-browser",
     "productName": "Mise Browser",
+    "publish": {
+      "provider": "github",
+      "owner": "Rakosn1cek",
+      "repo": "Mise-browser"
+    },
     "directories": {
       "output": "dist",
       "buildResources": "build"
@@ -116,6 +121,7 @@
   },
   "dependencies": {
     "@ghostery/adblocker-electron": "^2.18.2",
+    "electron-updater": "^6.3.9",
     "undici": "^7.30.1"
   },
   "overrides": {

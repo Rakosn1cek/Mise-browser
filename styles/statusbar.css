@@ -602,3 +602,28 @@ body.light-mode .status-badge-security.security-insecure {
     color: #c62828;
     border-color: rgba(211, 47, 47, 0.3);
 }
+
+/* Update Downloaded Restart Pill */
+.status-badge-update {
+    cursor: pointer;
+    background: rgba(158, 206, 106, 0.16);
+    color: #9ece6a;
+    border: 1px solid rgba(158, 206, 106, 0.4);
+    text-transform: none;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.status-badge-update:hover {
+    background: rgba(158, 206, 106, 0.28);
+    border-color: #9ece6a;
+}
+
+body.light-mode .status-badge-update {
+    background: rgba(76, 175, 80, 0.15);
+    color: #2e7d32;
+    border-color: rgba(76, 175, 80, 0.35);
+}
+
+body.light-mode .status-badge-update:hover {
+    background: rgba(76, 175, 80, 0.25);
+}

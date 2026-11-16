@@ -8,7 +8,7 @@ Mise Browser treats security as a core architectural foundation. This document o
 
 Security updates and critical patches are actively maintained for the latest stable release. Because Mise Browser operates on a continuous release cycle without legacy long-term support branches, security fixes are not backported to older releases.
 
-Mise tracks upstream Electron and Chromium updates and patches daily. All patches and updates to Electron and Chromium are delivered promptly to ensure runtime security and stability (as demonstrated when three Electron updates were delivered within four days). Each release announcement and tagged milestone explicitly lists its corresponding Electron and Chromium runtime versions.
+Mise tracks upstream Electron and Chromium updates and patches daily. Routine engine updates and validated fixes are batched into scheduled Sunday releases (transitioning to a bi-weekly cadence upon entering the Discovery Phase), while critical zero-day vulnerabilities bypass the schedule entirely and deploy as immediate out-of-band patch releases. Packaged builds receive silent background differential updates via `electron-updater`. Each release announcement and tagged milestone explicitly lists its corresponding Electron and Chromium runtime versions.
 
 | Version | Supported | Notes |
 | :--- | :--- | :--- |

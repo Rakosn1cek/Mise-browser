@@ -80,11 +80,17 @@ contextBridge.exposeInMainWorld('miseAPI', {
     getUserContentSummary: () => ipcRenderer.invoke('get-user-content-summary'),
     compactMemory: () => ipcRenderer.invoke('compact-memory'),
     checkForUpdates: (manual) => ipcRenderer.invoke('check-for-updates', manual),
+    quitAndInstall: () => ipcRenderer.invoke('quit-and-install'),
     openExternal: (url) => ipcRenderer.invoke('open-external', url),
     onUpdateAvailable: (callback) => {
         const handler = (event, info) => callback(info);
         ipcRenderer.on('update-available', handler);
         return () => ipcRenderer.removeListener('update-available', handler);
+    },
+    onUpdateDownloaded: (callback) => {
+        const handler = (event, info) => callback(info);
+        ipcRenderer.on('update-downloaded', handler);
+        return () => ipcRenderer.removeListener('update-downloaded', handler);
     },
     onUserContentUpdated: (callback) => {
         const handler = (event, kind) => callback(kind);
