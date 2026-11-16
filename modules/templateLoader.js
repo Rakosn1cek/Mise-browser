@@ -16,7 +16,8 @@ export const REGISTERED_TEMPLATES = Object.freeze({
     'share-modal': 'templates/share-modal.html',
     'peek-modal': 'templates/peek-modal.html',
     'find-bar': 'templates/find-bar.html',
-    'notifications': 'templates/notifications.html'
+    'notifications': 'templates/notifications.html',
+    'qr-modal': 'templates/qr-modal.html'
 });
 
 /**

@@ -39,7 +39,8 @@ const DEFAULT_KEYBINDS = {
     'toggle-reader-view': 'F9',
     'toggle-pin-tab': 'F4',
     'export-reader-to-notes': 'Ctrl+Shift+E',
-    'play-in-mpv': 'Ctrl+Shift+Y'
+    'play-in-mpv': 'Ctrl+Shift+Y',
+    'send-to-mobile': 'Ctrl+Shift+M'
 };
 
 const ACTION_METADATA = {
@@ -95,7 +96,8 @@ const ACTION_METADATA = {
     'export-reader-to-notes': { label: 'Export Reader View to Quick Notes', category: 'Web Interaction' },
     'export-reader-to-external': { label: 'Export Reader View to External App', category: 'Web Interaction' },
     'open-notes-external': { label: 'Open Quick Notes in External Application', category: 'Web Interaction' },
-    'play-in-mpv': { label: 'Play Active Video in mpv (Media Offload)', category: 'Web Interaction' }
+    'play-in-mpv': { label: 'Play Active Video in mpv (Media Offload)', category: 'Web Interaction' },
+    'send-to-mobile': { label: 'Send Page to Mobile (QR Code)', category: 'Web Interaction' }
 };
 
 let activeKeybinds = { ...DEFAULT_KEYBINDS };

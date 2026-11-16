@@ -318,6 +318,18 @@ function buildWebviewContextMenu(params, webContents, options = {}) {
     }
 
     const shareSubmenu = new Menu();
+    if (security.isSafeTabUrl(targetUrl)) {
+        shareSubmenu.append(new MenuItem({
+            label: 'Send to Mobile (QR Code)',
+            click: () => {
+                const win = resolveWindowLocal();
+                if (win && win.webContents) {
+                    win.webContents.send('master-shortcut', 'send-to-mobile', targetUrl, targetText);
+                }
+            }
+        }));
+        shareSubmenu.append(new MenuItem({ type: 'separator' }));
+    }
     shareSubmenu.append(new MenuItem({
         label: 'Share to WhatsApp',
         click: () => openShareModal(`https://web.whatsapp.com/send?text=${encodedText}%20${encodedUrl}`)

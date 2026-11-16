@@ -6,6 +6,7 @@ import { escapeHtml, getWorkspacePartition, showNotificationToast } from './util
 import { isSplitActive, getSplitState } from './splitView.js';
 import { updateDarkReaderButtonUI, isWebviewDarkReaderActive } from './darkReader.js';
 import { resolveWorkspaceVisual } from './workspaceVisuals.js';
+import { isShareableQrUrl } from './qrCode.js';
 
 let statusBarEl = null;
 let modeBadgeEl = null;
@@ -13,6 +14,7 @@ let targetUrlEl = null;
 let securityBadgeEl = null;
 let partitionBadgeEl = null;
 let mediaOffloadBadgeEl = null;
+let qrBadgeEl = null;
 let permissionsBadgeEl = null;
 let permissionsPopoverEl = null;
 let popoverDomainEl = null;
@@ -41,6 +43,7 @@ export function initStatusBar() {
     securityBadgeEl = document.getElementById('StatusBarSecurity');
     partitionBadgeEl = document.getElementById('StatusBarPartition');
     mediaOffloadBadgeEl = document.getElementById('StatusBarMediaOffload');
+    qrBadgeEl = document.getElementById('StatusBarQr');
     permissionsBadgeEl = document.getElementById('StatusBarPermissions');
     permissionsPopoverEl = document.getElementById('PermissionsPopover');
     popoverDomainEl = document.getElementById('PermissionsPopoverDomain');
@@ -50,7 +53,7 @@ export function initStatusBar() {
 
     if (!statusBarEl) return;
 
-    for (const badge of [partitionBadgeEl, modeBadgeEl, permissionsBadgeEl, mediaOffloadBadgeEl]) {
+    for (const badge of [partitionBadgeEl, modeBadgeEl, permissionsBadgeEl, mediaOffloadBadgeEl, qrBadgeEl]) {
         if (!badge) continue;
         badge.tabIndex = 0;
         badge.setAttribute('role', 'button');
@@ -58,6 +61,15 @@ export function initStatusBar() {
             if (event.key === 'Enter' || event.key === ' ') {
                 event.preventDefault();
                 badge.click();
+            }
+        });
+    }
+
+    if (qrBadgeEl) {
+        qrBadgeEl.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (typeof window.toggleQrModal === 'function') {
+                window.toggleQrModal();
             }
         });
     }
@@ -639,6 +651,7 @@ export function updateStatusBarFromActiveView() {
     updateSecurityStatus(activeUrl);
     updatePermissionsStatus(activeUrl, isPrivate);
     updateMediaOffloadStatus(activeUrl);
+    updateQrStatus(activeUrl);
     setTargetUrl('');
 
     const addressBar = document.getElementById('WideAddressBar');
@@ -752,6 +765,45 @@ export function updateMediaOffloadStatus(url) {
     }
 
     mediaOffloadBadgeEl.style.display = isMedia ? 'inline-flex' : 'none';
+}
+
+function checkIsShareableQrUrl(rawUrl) {
+    if (typeof isShareableQrUrl === 'function') {
+        return isShareableQrUrl(rawUrl);
+    }
+    if (!rawUrl || typeof rawUrl !== 'string' || rawUrl === 'about:blank' || rawUrl.length > 2048 || rawUrl.includes('error.html')) {
+        return false;
+    }
+    try {
+        const parsed = new URL(rawUrl);
+        return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+    } catch (_) {
+        return false;
+    }
+}
+
+export function updateQrStatus(url) {
+    if (!qrBadgeEl) {
+        qrBadgeEl = document.getElementById('StatusBarQr');
+    }
+    if (!qrBadgeEl) return;
+
+    const shareable = checkIsShareableQrUrl(url);
+    qrBadgeEl.style.display = shareable ? 'inline-flex' : 'none';
+}
+
+export function updateQrBadgeActiveState(isOpen) {
+    if (!qrBadgeEl) {
+        qrBadgeEl = document.getElementById('StatusBarQr');
+    }
+    if (!qrBadgeEl) return;
+
+    if (typeof qrBadgeEl.setAttribute === 'function') {
+        qrBadgeEl.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    }
+    if (qrBadgeEl.classList && typeof qrBadgeEl.classList.toggle === 'function') {
+        qrBadgeEl.classList.toggle('active', !!isOpen);
+    }
 }
 
 export async function triggerMediaOffloadForActiveTab() {

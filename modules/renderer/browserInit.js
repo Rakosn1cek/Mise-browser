@@ -28,6 +28,7 @@ import {
     closeNotificationsOverlay,
     addNotificationItem 
 } from '../overlays/notifications.js';
+import { openQrModal, closeQrModal, toggleQrModal, isQrModalActive } from '../overlays/qrModal.js';
 import { initSearchEnginePreference } from '../overlays/searchEngine.js';
 import { initDownloadShelf } from '../downloads.js';
 import { initStatusBar, toggleStatusBar, setTargetUrl } from '../statusBar.js';
@@ -348,6 +349,7 @@ export async function initializeBrowser() {
     window.toggleNotificationsOverlay = toggleNotificationsOverlay;
     window.openNotificationsOverlay = openNotificationsOverlay;
     window.closeNotificationsOverlay = closeNotificationsOverlay;
+    Object.assign(window, { openQrModal, closeQrModal, toggleQrModal, isQrModalActive });
 
     preloadTemplates();
 

@@ -94,6 +94,7 @@ The Command Centre gives you rapid, searchable access to all Mise operations, in
 | **Jump to Quickmark** | `Ctrl+J` | `jump-quickmark` | Prompts for assigned quickmark character to navigate immediately. |
 | **Toggle Notifications & Activity** | `Ctrl+Shift+N` | `toggle-notifications` | Central activity feed for downloads, update alerts, permissions, and web notifications. |
 | **Toggle Downloads Shelf** | `Ctrl+Shift+D` | `toggle-downloads` | Bottom drawer showing transfer speed, progress bars, and file links. |
+| **Send to Mobile (Zero-Cloud QR Code)** | `Ctrl+Shift+M` | `send-to-mobile` | Generates a local SVG QR code for the active URL with zero network requests. |
 | **Toggle Active Webview DevTools** | `F12` / `Ctrl+Shift+I` | `toggle-devtools` | Chromium developer tools for inspecting DOM, network, and console. |
 | **Toggle Global Media Playback** | `F10` | `toggle-global-media` | Global play and pause toggle across all active media streams. |
 | **Toggle Tab Audio Mute** | `Ctrl+M` / `m` | `toggle-tab-audio-mute` | Mute or unmute audio output on active tab without pausing playback. |

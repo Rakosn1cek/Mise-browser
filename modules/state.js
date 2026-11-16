@@ -31,6 +31,7 @@ export const state = {
     bookmarksActive: false,
     diagnosticsActive: false,
     notificationsActive: false,
+    qrModalActive: false,
     notificationsFilter: 'all',
     notificationsSelectionIdx: 0,
     awaitingQuickmarkKey: false,

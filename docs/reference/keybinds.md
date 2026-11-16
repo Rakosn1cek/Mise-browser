@@ -54,6 +54,7 @@ All keyboard shortcuts in Mise Browser are fully customisable via `~/.config/mis
 | **F10** | `toggle-global-media` | Plays or pauses media playback globally |
 | **Ctrl + M** | `toggle-tab-audio-mute` | Mutes or unmutes audio on active tab |
 | **Ctrl + Shift + Y** | `play-in-mpv` | Offloads active video to native mpv (hardware-accelerated media offload) |
+| **Ctrl + Shift + M** | `send-to-mobile` | Generates a local SVG QR code modal to open the active page on mobile |
 | **Ctrl + Shift + I** | `toggle-devtools` | Opens Chromium DevTools in a dedicated window |
 | **F12** | `toggle-devtools` | Secondary shortcut for DevTools |
 

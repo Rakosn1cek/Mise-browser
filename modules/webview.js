@@ -5,6 +5,7 @@ import {
     setTargetUrl, 
     updateSecurityStatus, 
     updatePermissionsStatus,
+    updateQrStatus,
     updateStatusBarFromActiveView, 
     handleGuestInputFocus, 
     handleGuestHintsState,
@@ -262,6 +263,7 @@ export function createWebView(url, currentWS, idx) {
             const currentSelectedIdx = activeListItem ? Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem) : -1;
             if (liveIdx === currentSelectedIdx) {
                 updateSecurityStatus(cleanUrl);
+                updateQrStatus(cleanUrl);
                 const isPrivate = currentWS === 'Private' || getWorkspacePartition(currentWS) === 'MisePrivateProfile' || !!state.globalPrivateModeActive;
                 updatePermissionsStatus(cleanUrl, isPrivate);
             }
@@ -294,6 +296,7 @@ export function createWebView(url, currentWS, idx) {
             const currentSelectedIdx = activeListItem ? Array.from(document.querySelectorAll('#TabList li')).indexOf(activeListItem) : -1;
             if (liveIdx === currentSelectedIdx) {
                 updateSecurityStatus(cleanUrl);
+                updateQrStatus(cleanUrl);
                 const isPrivate = currentWS === 'Private' || getWorkspacePartition(currentWS) === 'MisePrivateProfile' || !!state.globalPrivateModeActive;
                 updatePermissionsStatus(cleanUrl, isPrivate);
             }
@@ -685,7 +688,9 @@ export function handleNormalModeAction(action, extra, webview, currentWS, idx) {
             openNotesInExternalApp();
             break;
         case 'escape':
-            if (typeof isPeekModalActive === 'function' && isPeekModalActive()) {
+            if (typeof window.isQrModalActive === 'function' && window.isQrModalActive()) {
+                window.closeQrModal?.();
+            } else if (typeof isPeekModalActive === 'function' && isPeekModalActive()) {
                 closePeekModal();
             } else if (state.notesActive && typeof window.toggleNotesOverlay === 'function') {
                 window.toggleNotesOverlay();

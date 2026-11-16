@@ -1,0 +1,23 @@
+<!-- templates/qr-modal.html -->
+<div id="QrModalOverlay" class="qr-modal-overlay" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="QrModalTitle" tabindex="-1">
+    <div class="qr-modal-window">
+        <div class="qr-modal-header">
+            <div class="qr-modal-title-group">
+                <span id="QrModalTitle" class="qr-modal-title"><i class="fa-solid fa-qrcode"></i> Send to Mobile</span>
+                <span class="qr-modal-badge">Zero-Cloud</span>
+            </div>
+            <button id="CloseQrModalBtn" class="nav-icon-button" title="Close (Escape)"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="qr-modal-body">
+            <div id="QrModalSvgContainer" class="qr-modal-svg-frame" aria-live="polite"></div>
+            <div class="qr-modal-meta">
+                <div id="QrModalPageTitle" class="qr-modal-page-title">Current Page</div>
+                <div id="QrModalUrlText" class="qr-modal-url" title="Target URL"></div>
+            </div>
+            <p class="qr-modal-hint">Point your phone camera at the QR code to open this page immediately in your mobile browser. Generated locally with zero network transmission.</p>
+        </div>
+        <div class="qr-modal-footer">
+            <button id="QrModalCopyUrlBtn" type="button" class="qr-action-btn" title="Copy URL to clipboard (y)"><i class="fa-regular fa-copy"></i> <span id="QrModalCopyBtnText">Copy URL</span></button>
+        </div>
+    </div>
+</div>

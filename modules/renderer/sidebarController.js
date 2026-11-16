@@ -15,7 +15,7 @@ export const defaultOverlayIds = [
     'BookmarksOverlay', 'BookmarkSearchInput', 'HistoryOverlay',
     'HistorySearchInput', 'NotesOverlay', 'NotesTextArea',
     'DashboardOverlay', 'ShareModalOverlay', 'PeekModalOverlay',
-    'FindBarOverlay', 'DiagnosticsOverlay', 'NotificationsOverlay'
+    'FindBarOverlay', 'DiagnosticsOverlay', 'NotificationsOverlay', 'QrModalOverlay'
 ];
 
 export function applySidebarMode(autoCollapse) {

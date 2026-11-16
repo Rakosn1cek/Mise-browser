@@ -13,6 +13,10 @@ function returnFocusToWebview() {
     if (shareModal && shareModal.style.display === 'flex') {
         return;
     }
+    const qrModal = document.getElementById('QrModalOverlay');
+    if ((qrModal && qrModal.style.display === 'flex') || state.qrModalActive) {
+        return;
+    }
     if (state.paletteActive || state.dashboardActive || state.preferencesActive || state.historyActive || state.notesActive || state.bookmarksActive || state.diagnosticsActive || state.notificationsActive) {
         return;
     }
@@ -741,6 +745,23 @@ export const COMMAND_DEFINITIONS = [
         action: () => {
             if (typeof window.triggerMediaOffloadForActiveTab === 'function') {
                 window.triggerMediaOffloadForActiveTab();
+            }
+        }
+    },
+    {
+        id: 'send-to-mobile',
+        title: 'Send to Mobile (Zero-Cloud QR Code)',
+        desc: 'Generate a local SVG QR code for the active URL to scan with your phone camera',
+        details: 'Renders an instant, high-contrast SVG QR code locally in the browser without any cloud relay or external network request.',
+        tip: 'Press Ctrl+Shift+M or click the QR badge in the status bar to transfer pages to your phone.',
+        category: 'Tools & Notes',
+        icon: 'fa-solid fa-qrcode',
+        actionId: 'send-to-mobile',
+        shortcut: 'Ctrl+Shift+M',
+        keywords: ['qr', 'mobile', 'phone', 'send', 'share', 'transfer', 'scan', 'camera'],
+        action: () => {
+            if (typeof window.toggleQrModal === 'function') {
+                window.toggleQrModal();
             }
         }
     },
