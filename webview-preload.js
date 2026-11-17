@@ -145,25 +145,54 @@ try {
     }
 } catch (err) {}
 
-// Ask the main process whether this site is on the user's trusted-domain
-// allowlist (banking, shopping, etc.). Trusted sites skip fingerprint
-// spoofing so their fraud-detection checks see a consistent, real device
-let isTrustedSite = false;
-try {
-    isTrustedSite = !!ipcRenderer.sendSync('is-trusted-domain', window.location.hostname);
-} catch (e) {
-    isTrustedSite = false;
+// Fast-path and cache trusted-domain checks to avoid blocking frame initialisation.
+// Built-in Google infrastructure hosts are always trusted (matching security.js).
+const BUILTIN_TRUSTED_HOSTS = [
+    'accounts.google.com',
+    'myaccount.google.com',
+    'google.com',
+    'google.co.uk',
+    'gstatic.com',
+    'gvt1.com',
+    'recaptcha.net',
+    'youtube.com'
+];
+const trustedDomainCache = new Map();
+let cachedWebrtcPolicy = null;
+
+function resolveIsTrustedSite(rawHost) {
+    const host = String(rawHost || '').toLowerCase().trim().replace(/\.$/, '');
+    if (!host) return false;
+    if (trustedDomainCache.has(host)) return trustedDomainCache.get(host);
+    if (host !== 'sites.google.com' && !host.endsWith('.sites.google.com')) {
+        if (BUILTIN_TRUSTED_HOSTS.some(d => host === d || host.endsWith('.' + d))) {
+            trustedDomainCache.set(host, true);
+            return true;
+        }
+    }
+    let trusted = false;
+    try {
+        trusted = !!ipcRenderer.sendSync('is-trusted-domain', host);
+    } catch (e) {
+        trusted = false;
+    }
+    trustedDomainCache.set(host, trusted);
+    return trusted;
 }
 
-// Query WebRTC policy configured in browser settings
-let webrtcPolicy = 'default_public_interface_only';
-try {
-    webrtcPolicy = ipcRenderer.sendSync('get-webrtc-policy') || 'default_public_interface_only';
-} catch (e) {
-    webrtcPolicy = 'default_public_interface_only';
-}
+const isTrustedSite = resolveIsTrustedSite(window.location.hostname);
 
 if (!isTrustedSite) {
+    // Only query WebRTC policy on untrusted sites where fingerprint spoofing runs
+    let webrtcPolicy = cachedWebrtcPolicy;
+    if (!webrtcPolicy) {
+        try {
+            webrtcPolicy = ipcRenderer.sendSync('get-webrtc-policy') || 'default_public_interface_only';
+        } catch (e) {
+            webrtcPolicy = 'default_public_interface_only';
+        }
+        cachedWebrtcPolicy = webrtcPolicy;
+    }
     let webrtcBlockScript = '';
     if (webrtcPolicy === 'disabled') {
         webrtcBlockScript = `
@@ -466,7 +495,7 @@ if (!isTrustedSite) {
 
 // Match the Electron identity sent in headers on Google's sign-in pages
 try {
-    if (window.location.hostname.endsWith('.google.com')) {
+    if (window.location.hostname === 'accounts.google.com') {
         const signInUserAgent = ipcRenderer.sendSync('get-google-signin-user-agent', window.location.hostname);
         if (signInUserAgent) {
             webFrame.executeJavaScript(`(function() {
