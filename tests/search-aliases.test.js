@@ -1,6 +1,8 @@
 // tests/search-aliases.test.js
 // Regression test suite for built-in and user-customisable search aliases
 
+const fs = require('fs');
+const path = require('path');
 const assert = require('assert');
 const { 
     DEFAULT_SEARCH_ALIASES, 
@@ -13,7 +15,7 @@ console.log('Running Mise search aliases and custom bangs regression tests...');
 
 // 1. Verify default built-in search aliases
 {
-    const expectedDefaults = ['g', 'ddg', 'yt', 'gh', 'a', 'aur', 'pkg', 'so', 'r', 'sp', 'b', 'k'];
+    const expectedDefaults = ['g', 'ddg', 'yt', 'gh', 'a', 'aur', 'pkg', 'so', 'r', 'sp', 'b', 'k', 'bi', 'ya'];
     expectedDefaults.forEach(alias => {
         assert(DEFAULT_SEARCH_ALIASES[alias], `Default alias '${alias}' must be defined`);
         assert(DEFAULT_SEARCH_ALIASES[alias].url, `Default alias '${alias}' must have a target URL`);
@@ -26,6 +28,12 @@ console.log('Running Mise search aliases and custom bangs regression tests...');
 {
     const googleUrl = resolveSearchAliasUrl('g', 'mise browser');
     assert.strictEqual(googleUrl, 'https://www.google.com/search?q=mise%20browser', 'Google alias must resolve query with %s');
+
+    const bingUrl = resolveSearchAliasUrl('bi', 'arch linux');
+    assert.strictEqual(bingUrl, 'https://www.bing.com/search?q=arch%20linux', 'Bing alias must resolve query with %s');
+
+    const yandexUrl = resolveSearchAliasUrl('ya', 'tokyo night');
+    assert.strictEqual(yandexUrl, 'https://yandex.com/search/?text=tokyo%20night', 'Yandex alias must resolve query with %s');
 
     const aurUrl = resolveSearchAliasUrl('aur', 'hyprland-git');
     assert.strictEqual(aurUrl, 'https://aur.archlinux.org/packages?K=hyprland-git', 'AUR alias must resolve query with %s');
@@ -122,6 +130,15 @@ console.log('Running Mise search aliases and custom bangs regression tests...');
         }
     }
     console.log('✓ Verified no default keybindings use Alt modifier');
+}
+
+// 10. Verify Preferences overlay [Help & Shortcut Reference] includes Bing and Yandex aliases
+{
+    const prefPath = path.join(__dirname, '../templates/preferences.html');
+    const prefHtml = fs.readFileSync(prefPath, 'utf8');
+    assert(prefHtml.includes('<span class="alias-prefix">bi</span><span class="alias-target">Bing Search</span>'), 'Preferences Help reference must include Bing (bi) alias');
+    assert(prefHtml.includes('<span class="alias-prefix">ya</span><span class="alias-target">Yandex Search</span>'), 'Preferences Help reference must include Yandex (ya) alias');
+    console.log('✓ Preferences [Help & Shortcut Reference] markup verified for Bing and Yandex aliases');
 }
 
 console.log('\nAll search aliases and custom bangs regression tests passed successfully!');

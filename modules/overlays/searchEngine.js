@@ -21,7 +21,9 @@ export const DEFAULT_SEARCH_ALIASES = {
     'r': { name: 'Reddit', url: 'https://www.reddit.com/search/?q=%s' },
     'sp': { name: 'Startpage', url: 'https://www.startpage.com/sp/search?query=%s' },
     'b': { name: 'Brave Search', url: 'https://search.brave.com/search?q=%s' },
-    'k': { name: 'Kagi', url: 'https://kagi.com/search?q=%s' }
+    'k': { name: 'Kagi', url: 'https://kagi.com/search?q=%s' },
+    'bi': { name: 'Bing', url: 'https://www.bing.com/search?q=%s' },
+    'ya': { name: 'Yandex', url: 'https://yandex.com/search/?text=%s' }
 };
 
 export function getEffectiveSearchAliases(customAliases = {}) {
@@ -67,7 +69,7 @@ export function renderSearchAliasesUI() {
     if (customEntries.length === 0) {
         const emptyHint = document.createElement('div');
         emptyHint.className = 'search-alias-empty-hint';
-        emptyHint.textContent = 'No custom aliases configured. Built-in defaults (g, ddg, yt, gh, a, aur, pkg, so, r, sp, b, k) are active.';
+        emptyHint.textContent = 'No custom aliases configured. Built-in defaults (g, ddg, yt, gh, a, aur, pkg, so, r, sp, b, k, bi, ya) are active.';
         container.appendChild(emptyHint);
         return;
     }

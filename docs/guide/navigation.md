@@ -85,6 +85,8 @@ In addition to DuckDuckGo bangs, Mise includes native search engine prefixes tha
 * `sp <query>`: Startpage
 * `b <query>`: Brave Search
 * `k <query>`: Kagi
+* `bi <query>`: Bing
+* `ya <query>`: Yandex
 
 ### User-Customised Search Engines
 You can add your own search engines or override existing shortcuts directly in Preferences (**Ctrl + H**) or inside `~/.config/mise-browser/config.json`:
