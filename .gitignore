@@ -29,9 +29,11 @@ docs/.vitepress/cache/
 dist/
 
 # Local planning and roadmaps
+AGENTS.md
 ROADMAP.md
 BUG_HUNT_AND_FIX_PLAN.md
 BROWSER-AUDIT.md
+PERFORMANCE_AUDIT_AND_OPTIMISATION_PLAN.md
 keybinds-consolidation.md
 screenshots/
 

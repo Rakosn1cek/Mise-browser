@@ -60,7 +60,9 @@ const source = fs.readFileSync(path.join(__dirname, '../adblocker-build.js'), 'u
     const expected = await ElectronBlocker.fromPrebuiltAdsAndTracking(async url => ({
         text: async () => url.endsWith('resources.json') ? resources : lists[adsAndTrackingLists.indexOf(url)]
     }));
+    expected.config.enableMutationObserver = false;
 
+    assert.equal(engine.config.enableMutationObserver, false, 'MutationObserver must be disabled in compiled engine config');
     assert.deepEqual(
         Buffer.from(cacheBytes),
         Buffer.from(expected.serialize()),

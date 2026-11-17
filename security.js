@@ -477,6 +477,9 @@ function getAdblocker(filterLists) {
                 try {
                     const buffer = fs.readFileSync(cachePath);
                     blockerInstance = ElectronBlocker.deserialize(buffer);
+                    if (blockerInstance && blockerInstance.config) {
+                        blockerInstance.config.enableMutationObserver = false;
+                    }
                 } catch (_) {
                     console.warn('Adblocker cache version mismatch or corrupted file. Rebuilding cache...');
                     if (fs.existsSync(cachePath)) {

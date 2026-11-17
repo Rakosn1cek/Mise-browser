@@ -2,7 +2,7 @@ const { parentPort, workerData } = require('node:worker_threads');
 const { FiltersEngine } = require(workerData.engineModulePath);
 
 // One-shot worker parsing adblock rule lists off the main event loop
-const engine = FiltersEngine.parse(workerData.lists.join('\n'));
+const engine = FiltersEngine.parse(workerData.lists.join('\n'), { enableMutationObserver: false });
 if (workerData.resources !== undefined) {
     engine.updateResources(workerData.resources, String(workerData.resources.length));
 }
