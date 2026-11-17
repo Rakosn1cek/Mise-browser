@@ -304,18 +304,6 @@ export function createWebView(url, currentWS, idx) {
         if (webview.__miseDarkReaderEnabled) {
             reapplyWebviewDarkReader(webview).catch(() => {});
         }
-        webview.executeJavaScript(`
-            (function() {
-                try {
-                    document.querySelectorAll('video').forEach(v => {
-                        const prevDisplay = v.style.display;
-                        v.style.display = 'none';
-                        void v.offsetHeight; // force synchronous reflow
-                        v.style.display = prevDisplay;
-                    });
-                } catch (e) {}
-            })();
-        `, false).catch(() => {});
     }, listenerOptions);
 
     webview.addEventListener('new-window', (e) => {
