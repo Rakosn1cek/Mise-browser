@@ -1,19 +1,19 @@
 {
   "target": "mise",
   "label": "Mise Browser",
-  "timestamp": "20261117-233222",
+  "timestamp": "20261117-234221",
   "tab_count": 10,
   "sample_duration_s": 5,
   "process_count": 18,
-  "pss_mb": 978.3134765625,
-  "rss_mb": 2667.5546875000,
-  "uss_mb": 727.2265625000,
-  "shared_mb": 1940.3281250000,
-  "cpu_percent": 3.2470029286,
+  "pss_mb": 810.2480468750,
+  "rss_mb": 2582.9882812500,
+  "uss_mb": 555.3125000000,
+  "shared_mb": 2027.6757812500,
+  "cpu_percent": 0.7612508910,
   "roles": {
-    "main_pss_mb": 298.623046875,
-    "gpu_pss_mb": 94.93359375,
-    "renderer_pss_mb": 550.26953125,
-    "utility_pss_mb": 34.4873046875
+    "main_pss_mb": 191.5654296875,
+    "gpu_pss_mb": 101.80859375,
+    "renderer_pss_mb": 484.9423828125,
+    "utility_pss_mb": 31.931640625
   }
 }
