@@ -1,0 +1,19 @@
+{
+  "target": "brave",
+  "label": "Brave Origin",
+  "timestamp": "20261117-082413",
+  "tab_count": 10,
+  "sample_duration_s": 5,
+  "process_count": 21,
+  "pss_mb": 942.7275390625,
+  "rss_mb": 2913.0937500000,
+  "uss_mb": 630.6132812500,
+  "shared_mb": 2282.4804687500,
+  "cpu_percent": 0.7552125855,
+  "roles": {
+    "main_pss_mb": 243.63671875,
+    "gpu_pss_mb": 131.4951171875,
+    "renderer_pss_mb": 516.0341796875,
+    "utility_pss_mb": 51.5615234375
+  }
+}

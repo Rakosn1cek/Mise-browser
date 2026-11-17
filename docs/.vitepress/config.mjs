@@ -78,7 +78,8 @@ export default defineConfig({
           { text: 'Notes, Bookmarks & Quickmarks', link: '/guide/notes-and-bookmarks' },
           { text: 'Terminal Security & Oversight', link: '/guide/terminal-oversight' },
           { text: 'User Scripts & Styles', link: '/guide/user-scripts-and-styles' },
-          { text: 'Community Scripts', link: '/guide/community-scripts' }
+          { text: 'Community Scripts', link: '/guide/community-scripts' },
+          { text: 'Benchmarking & Resources', link: '/guide/benchmarks' }
         ]
       },
       {

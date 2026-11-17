@@ -1,0 +1,10 @@
+https://en.wikipedia.org/wiki/Linux
+https://wiki.archlinux.org/title/Main_page
+https://developer.mozilla.org/en-US/docs/Web/JavaScript
+https://news.ycombinator.com/
+https://devdocs.io/
+https://github.com/torvalds/linux
+https://duckduckgo.com/?q=arch+linux+performance+benchmark
+https://archlinux.org/packages/
+https://en.wikipedia.org/wiki/Electron_(software_framework)
+https://old.reddit.com/r/linux/

@@ -1,0 +1,19 @@
+{
+  "target": "mise",
+  "label": "Mise Browser",
+  "timestamp": "20261117-085252",
+  "tab_count": 10,
+  "sample_duration_s": 5,
+  "process_count": 10,
+  "pss_mb": 654.4746093750,
+  "rss_mb": 1403.4765625000,
+  "uss_mb": 394.0039062500,
+  "shared_mb": 1009.4726562500,
+  "cpu_percent": 1.1537418269,
+  "roles": {
+    "main_pss_mb": 216.5673828125,
+    "gpu_pss_mb": 130.8935546875,
+    "renderer_pss_mb": 267.7392578125,
+    "utility_pss_mb": 39.2744140625
+  }
+}

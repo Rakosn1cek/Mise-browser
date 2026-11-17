@@ -1,0 +1,5 @@
+https://en.wikipedia.org/wiki/Linux
+https://wiki.archlinux.org/title/Main_page
+https://developer.mozilla.org/en-US/docs/Web/JavaScript
+https://news.ycombinator.com/
+https://devdocs.io/
