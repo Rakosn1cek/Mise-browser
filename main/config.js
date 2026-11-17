@@ -76,6 +76,8 @@ function resolveConfigDir() {
 const CONFIG_DIR = resolveConfigDir();
 const CONFIG_PATH = path.join(CONFIG_DIR, 'config.json');
 
+let cachedConfig = null;
+
 // Writes to a temporary file and renames it over config.json. A plain write truncates
 // the file first, so a concurrent loadBrowserConfig could read it empty, fall back to
 // DEFAULT_CONFIG and have the next save persist those defaults over the user's settings.
@@ -84,17 +86,27 @@ function writeConfigFile(cfg, targetPath = CONFIG_PATH) {
     const tmpPath = `${targetPath}.${process.pid}.tmp`;
     fs.writeFileSync(tmpPath, JSON.stringify(cfg, null, 4), 'utf-8');
     fs.renameSync(tmpPath, targetPath);
+    if (targetPath === CONFIG_PATH) {
+        cachedConfig = null;
+    }
 }
 
 function loadBrowserConfig(targetDir = CONFIG_DIR, targetPath = CONFIG_PATH) {
+    if (targetPath === CONFIG_PATH && cachedConfig) {
+        return { ...cachedConfig };
+    }
     try {
         if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir, { recursive: true });
         if (!fs.existsSync(targetPath)) {
-            writeConfigFile(DEFAULT_CONFIG, targetPath);
-            return { ...DEFAULT_CONFIG };
+            const initial = { ...DEFAULT_CONFIG };
+            writeConfigFile(initial, targetPath);
+            if (targetPath === CONFIG_PATH) {
+                cachedConfig = initial;
+            }
+            return { ...initial };
         }
         const parsed = JSON.parse(fs.readFileSync(targetPath, 'utf-8'));
-        return {
+        const loaded = {
             ...DEFAULT_CONFIG,
             ...parsed,
             email_handler: normalizeEmailHandler(parsed.email_handler || 'system'),
@@ -119,6 +131,10 @@ function loadBrowserConfig(targetDir = CONFIG_DIR, targetPath = CONFIG_PATH) {
                 light: { ...DEFAULT_THEME_COLORS.light, ...(parsed.theme_colors?.light || {}) }
             }
         };
+        if (targetPath === CONFIG_PATH) {
+            cachedConfig = loaded;
+        }
+        return { ...loaded };
     } catch (e) {
         try {
             if (fs.existsSync(targetPath)) {
@@ -143,6 +159,9 @@ function saveBrowserConfig(cfg, targetDir = CONFIG_DIR, targetPath = CONFIG_PATH
     try {
         const merged = { ...loadBrowserConfig(targetDir, targetPath), ...cfg };
         writeConfigFile(merged, targetPath);
+        if (targetPath === CONFIG_PATH) {
+            cachedConfig = merged;
+        }
         restartApp();
         return true;
     } catch (e) {
@@ -156,6 +175,9 @@ function updateBrowserConfig(newCfg, targetDir = CONFIG_DIR, targetPath = CONFIG
         const existing = loadBrowserConfig(targetDir, targetPath);
         const merged = { ...existing, ...newCfg };
         writeConfigFile(merged, targetPath);
+        if (targetPath === CONFIG_PATH) {
+            cachedConfig = merged;
+        }
         return { success: true, config: merged };
     } catch (e) {
         return { success: false, error: e.message };

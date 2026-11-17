@@ -10,6 +10,7 @@ const updater = require('./updater');
 const appDir = path.resolve(__dirname, '..');
 
 let cachedReaderDistillerCode = null;
+let cachedHinterCode = null;
 
 function compactMemory() {
     if (typeof global.gc === 'function') {
@@ -206,9 +207,13 @@ function registerSystemIpc(ipcMain, options = {}) {
     });
 
     ipcMain.handle('read-hinter-code', async () => {
+        if (cachedHinterCode) return cachedHinterCode;
         try {
             const hinterPath = path.join(appDir, 'hinter.js');
-            if (fs.existsSync(hinterPath)) return fs.readFileSync(hinterPath, 'utf8');
+            if (fs.existsSync(hinterPath)) {
+                cachedHinterCode = fs.readFileSync(hinterPath, 'utf8');
+                return cachedHinterCode;
+            }
         } catch (err) {}
         return '';
     });
