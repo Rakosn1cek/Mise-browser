@@ -11,12 +11,12 @@ Automated multi-process resource evaluation conducted on Linux Wayland.
 
 | Metric | Mise Browser | Brave Origin | Variance |
 | :--- | :--- | :--- | :--- |
-| **Real RAM (PSS Total)** | **654.4746093750 MB** | **942.7275390625 MB** | **-30.5764834211%** |
-| Reported RSS | 1403.4765625000 MB | 2913.0937500000 MB | -1509.6171875 MB |
-| Private Memory (USS) | 394.0039062500 MB | 630.6132812500 MB | -236.609375 MB |
-| Settled CPU Draw | 1.1537418269% | 0.7552125855% | 0.3985292413999999% |
-| Process Count | 10 | 21 | -11 |
-| Real RAM per Tab | 65.447460937499997 MB | 94.272753906250003 MB | -28.825292968750006 MB |
+| **Real RAM (PSS Total)** | **978.3134765625 MB** | **942.7275390625 MB** | **3.7747849750%** |
+| Reported RSS | 2667.5546875000 MB | 2913.0937500000 MB | -245.5390625 MB |
+| Private Memory (USS) | 727.2265625000 MB | 630.6132812500 MB | 96.61328125 MB |
+| Settled CPU Draw | 3.2470029286% | 0.7552125855% | 2.4917903430999999% |
+| Process Count | 18 | 21 | -3 |
+| Real RAM per Tab | 97.831347656250003 MB | 94.272753906250003 MB | 3.55859375 MB |
 
 ## Key Insights
 1. **Accurate Memory Accounting**: Traditional task managers sum resident set size (RSS), which multiplies shared system libraries across every child process. Proportional Set Size (PSS) divides shared code pages evenly, presenting genuine physical memory usage.
