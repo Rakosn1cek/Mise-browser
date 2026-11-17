@@ -82,6 +82,8 @@ function initializeEngineSwitches() {
         if (process.platform === 'linux') {
             app.commandLine.appendSwitch('ignore-gpu-blocklist');
             app.commandLine.appendSwitch('enable-gpu-rasterization');
+            app.commandLine.appendSwitch('enable-zero-copy');
+            app.commandLine.appendSwitch('enable-native-gpu-memory-buffers');
             app.commandLine.appendSwitch('enable-accelerated-video-decode');
             // Kept VA-API hardware decode/encode and CanvasOopRasterization for parallel GPU tile rasterization
             app.commandLine.appendSwitch('enable-features', 'VaapiVideoDecoder,VaapiVideoEncoder,CanvasOopRasterization,TLSExtensionGrease');
@@ -96,7 +98,7 @@ function initializeEngineSwitches() {
     }
     
     // Compositor texture boundary allocation
-    app.commandLine.appendSwitch('force-gpu-mem-available-mb', '512');
+    app.commandLine.appendSwitch('force-gpu-mem-available-mb', '1024');
 
     app.commandLine.appendSwitch('renderer-process-limit', String(cfg.process_limit || 4));
     app.commandLine.appendSwitch('disable-smooth-scrolling');
@@ -105,9 +107,9 @@ function initializeEngineSwitches() {
     app.commandLine.appendSwitch('log-level', '3');
     app.commandLine.appendSwitch('disable-speech-api');
 
-    // Explicit disk and media cache caps (150MB and 50MB) to prevent profile bloat
-    app.commandLine.appendSwitch('disk-cache-size', '157286400');
-    app.commandLine.appendSwitch('media-cache-size', '52428800');
+    // Explicit disk and media cache caps (1024MB and 256MB) to prevent cache eviction thrashing
+    app.commandLine.appendSwitch('disk-cache-size', '1073741824');
+    app.commandLine.appendSwitch('media-cache-size', '268435456');
 
     // Google sign-in needs Electron's own identity, see security.js
     security.setGoogleSignInUserAgent(app.userAgentFallback);

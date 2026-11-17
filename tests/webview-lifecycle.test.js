@@ -167,9 +167,9 @@ console.log('Running Mise guest webview lifecycle and teardown regression tests.
 {
     const mainSource = fs.readFileSync(path.join(__dirname, '../main.js'), 'utf8');
     assert(mainSource.includes("'disk-cache-size'"), 'disk-cache-size switch must be configured');
-    assert(mainSource.includes("'157286400'"), 'disk-cache-size must be bounded to 150MB (157286400 bytes)');
+    assert(mainSource.includes("'1073741824'"), 'disk-cache-size must be bounded to 1024MB (1073741824 bytes)');
     assert(mainSource.includes("'media-cache-size'"), 'media-cache-size switch must be configured');
-    assert(mainSource.includes("'52428800'"), 'media-cache-size must be bounded to 50MB (52428800 bytes)');
+    assert(mainSource.includes("'268435456'"), 'media-cache-size must be bounded to 256MB (268435456 bytes)');
 
     console.log('✓ Chromium disk and media cache limits registered with explicit boundaries');
 }
