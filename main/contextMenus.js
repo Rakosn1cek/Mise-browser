@@ -272,6 +272,13 @@ function buildWebviewContextMenu(params, webContents, options = {}) {
 
     if (params.mediaType === 'image') {
         menu.append(new MenuItem({
+            label: 'Open Image in New Tab',
+            click: () => {
+                const targetMedia = params.srcURL || params.linkURL;
+                if (targetMedia) openLinkTab(targetMedia);
+            }
+        }));
+        menu.append(new MenuItem({
             label: 'Save Image As...',
             click: () => {
                 const win = resolveWindowLocal();

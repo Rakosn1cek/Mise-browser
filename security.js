@@ -350,10 +350,43 @@ function hardenSession(targetSession, spellLang = 'en-GB', webrtcPolicy = 'defau
                 headers['sec-ch-ua'] = `"Chromium";v="${chromeMajor}", "Google Chrome";v="${chromeMajor}", "Not-A.Brand";v="99"`;
                 headers['sec-ch-ua-full-version-list'] = `"Chromium";v="${chromeMajor}.0.0.0", "Google Chrome";v="${chromeMajor}.0.0.0", "Not-A.Brand";v="99.0.0.0"`;
                 headers['Accept-Language'] = 'en-GB,en-US;q=0.9,en;q=0.8';
+
+                if (isCandidateImageUrl(details.url)) {
+                    headers['Accept'] = 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8';
+                }
             }
             callback({ requestHeaders: headers });
         });
     }
+}
+
+function isCandidateImageUrl(urlString) {
+    if (!urlString || typeof urlString !== 'string') return false;
+    try {
+        const u = new URL(urlString);
+        const pathname = u.pathname.toLowerCase();
+        if (/\.(png|jpe?g|gif|webp|avif|svg|bmp|ico)$/i.test(pathname)) return true;
+        const format = u.searchParams.get('format') || u.searchParams.get('f') || u.searchParams.get('ext');
+        if (format && /^(png|jpe?g|gif|webp|avif|svg|bmp|ico)$/i.test(format)) return true;
+        return false;
+    } catch (_) {
+        return false;
+    }
+}
+
+function extractWrappedMediaUrl(urlString) {
+    if (!urlString || typeof urlString !== 'string') return null;
+    try {
+        const u = new URL(urlString);
+        const candidateKeys = ['url', 'src', 'img', 'image', 'media', 'media_url', 'img_url'];
+        for (const key of candidateKeys) {
+            const val = u.searchParams.get(key);
+            if (val && /^https?:\/\//i.test(val) && isCandidateImageUrl(val)) {
+                return val;
+            }
+        }
+    } catch (_) {}
+    return null;
 }
 
 // Electron keeps a single listener per webRequest event, so the ad-blocker's
@@ -369,6 +402,12 @@ function attachNetworkHandlers(targetSession) {
         const url = details.url || '';
         if (url.includes('flowName=GlifWebSignIn') && /^https?:\/\/accounts\.google\.com\//i.test(url)) {
             return callback({ redirectURL: url.replaceAll('flowName=GlifWebSignIn', 'flowName=WebLiteSignIn') });
+        }
+        if ((details.resourceType === 'main_frame' || details.resourceType === 'mainFrame') && url) {
+            const wrappedMedia = extractWrappedMediaUrl(url);
+            if (wrappedMedia && wrappedMedia !== url) {
+                return callback({ redirectURL: wrappedMedia });
+            }
         }
         if (blockingEnabled()) return blockerInstance.onBeforeRequest(details, callback);
         callback({});
@@ -1156,5 +1195,7 @@ module.exports = {
     getAllowLocalDocuments,
     validateLocalDocumentPath,
     isAllowedLocalDocumentUrl,
-    ALLOWED_LOCAL_DOCUMENT_EXTENSIONS
+    ALLOWED_LOCAL_DOCUMENT_EXTENSIONS,
+    isCandidateImageUrl,
+    extractWrappedMediaUrl
 };

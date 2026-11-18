@@ -40,6 +40,14 @@ import {
     reapplyActiveUserStyles,
     attachShieldToggleListener
 } from './webview/tabLifecycle.js';
+import {
+    zoomInActiveTab,
+    zoomOutActiveTab,
+    zoomResetActiveTab,
+    applyWebviewZoom,
+    getWebviewZoomFactor,
+    setWebviewZoomFactor
+} from './webview/zoomManager.js';
 import { applyWorkspaceVisuals } from './workspaceVisuals.js';
 
 export {
@@ -62,7 +70,13 @@ export {
     updateTabShieldStatus,
     injectMatchingUserContent,
     reapplyActiveUserStyles,
-    attachShieldToggleListener
+    attachShieldToggleListener,
+    zoomInActiveTab,
+    zoomOutActiveTab,
+    zoomResetActiveTab,
+    applyWebviewZoom,
+    getWebviewZoomFactor,
+    setWebviewZoomFactor
 };
 
 
@@ -304,6 +318,8 @@ export function createWebView(url, currentWS, idx) {
         if (webview.__miseDarkReaderEnabled) {
             reapplyWebviewDarkReader(webview).catch(() => {});
         }
+
+        applyWebviewZoom(webview, currentWS, idx);
     }, listenerOptions);
 
     webview.addEventListener('new-window', (e) => {
@@ -311,6 +327,16 @@ export function createWebView(url, currentWS, idx) {
         const targetUrl = e.url;
         if (!isSafeTabUrl(targetUrl)) {
             return;
+        }
+        const currentUrl = typeof webview.getURL === 'function' ? webview.getURL() : '';
+        if (currentUrl && targetUrl) {
+            try {
+                const cur = new URL(currentUrl);
+                const tgt = new URL(targetUrl);
+                if (cur.origin === tgt.origin && cur.pathname === tgt.pathname) {
+                    return;
+                }
+            } catch (_) {}
         }
         const inheritsDarkReader = !!webview.__miseDarkReaderEnabled;
         
@@ -398,6 +424,8 @@ export function createWebView(url, currentWS, idx) {
         if (webview.__miseDarkReaderEnabled) {
             reapplyWebviewDarkReader(webview).catch(() => {});
         }
+
+        applyWebviewZoom(webview, currentWS, idx);
 
         const liveIdx = getLiveTabIndex(webview, currentWS, idx);
         if (liveIdx < 0) return;
@@ -500,6 +528,16 @@ export function createWebView(url, currentWS, idx) {
             const previewUrl = e.args[0];
             if (previewUrl && isSafeTabUrl(previewUrl)) {
                 openPeekModal(previewUrl);
+            }
+        } else if (e.channel === 'guest-zoom-action') {
+            const zoomAction = e.args[0];
+            if (zoomAction === 'zoom-in') zoomInActiveTab();
+            else if (zoomAction === 'zoom-out') zoomOutActiveTab();
+            else if (zoomAction === 'zoom-reset') zoomResetActiveTab();
+        } else if (e.channel === 'open-preview-url') {
+            const previewUrl = e.args[0];
+            if (previewUrl && isSafeTabUrl(previewUrl)) {
+                spawnTabWithUrl(previewUrl);
             }
         } else if (e.channel === 'normal-mode-action') {
             const action = e.args[0];
@@ -1022,6 +1060,7 @@ export function switchTabFocus(targetIdx) {
     
     if (!state.dashboardActive && currentWSViews[targetIdx]) {
         currentWSViews[targetIdx].style.display = 'flex';
+        applyWebviewZoom(currentWSViews[targetIdx], currentWS, targetIdx);
         
         if (!state.tabActivityTimestamps[currentWS]) state.tabActivityTimestamps[currentWS] = [];
         state.tabActivityTimestamps[currentWS][targetIdx] = Date.now();

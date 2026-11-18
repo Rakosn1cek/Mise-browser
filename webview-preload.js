@@ -87,6 +87,97 @@ window.addEventListener('mise-glance-request', (e) => {
     }
 });
 
+// Guest Ctrl + MouseWheel zoom handler
+window.addEventListener('wheel', (e) => {
+    if (!e || !e.ctrlKey) return;
+    e.preventDefault();
+    try {
+        if (e.deltaY < 0) {
+            ipcRenderer.sendToHost('guest-zoom-action', 'zoom-in');
+        } else if (e.deltaY > 0) {
+            ipcRenderer.sendToHost('guest-zoom-action', 'zoom-out');
+        }
+    } catch (_) {}
+}, { passive: false });
+
+function isSameDocumentUrl(url) {
+    if (!url || typeof url !== 'string') return false;
+    try {
+        const target = new URL(url, window.location.href);
+        const current = window.location;
+        return target.origin === current.origin && target.pathname === current.pathname;
+    } catch (_) {
+        return false;
+    }
+}
+
+function getMediaSourceUrl(el) {
+    if (!el) return null;
+    const mediaEl = el.tagName === 'IMG' || el.tagName === 'VIDEO'
+        ? el
+        : (typeof el.querySelector === 'function' ? el.querySelector('img, video') : null);
+    if (!mediaEl) return null;
+    let src = mediaEl.currentSrc || mediaEl.src || mediaEl.getAttribute('src');
+    if (src && typeof src === 'string') {
+        return src.replace(/&amp;/g, '&');
+    }
+    return null;
+}
+
+function isCandidateImageUrl(urlString) {
+    if (!urlString || typeof urlString !== 'string') return false;
+    try {
+        const u = new URL(urlString, window.location.href);
+        const pathname = u.pathname.toLowerCase();
+        if (/\.(png|jpe?g|gif|webp|avif|svg|bmp|ico)$/i.test(pathname)) return true;
+        const format = u.searchParams.get('format') || u.searchParams.get('f') || u.searchParams.get('ext');
+        if (format && /^(png|jpe?g|gif|webp|avif|svg|bmp|ico)$/i.test(format)) return true;
+        return false;
+    } catch (_) {
+        return false;
+    }
+}
+
+// Self-referential media click interceptor: prevents duplicate tab navigation on in-page media clicks
+window.addEventListener('click', (e) => {
+    if (!e || !e.isTrusted || e.button !== 0) return;
+    const target = e.target;
+    if (!target) return;
+
+    const isMedia = target.tagName === 'IMG' || target.tagName === 'VIDEO' || target.tagName === 'PICTURE' ||
+                    (typeof target.closest === 'function' && target.closest('img, video, picture, figure'));
+    if (!isMedia) return;
+
+    const anchor = typeof target.closest === 'function' ? target.closest('a[href]') : null;
+    if (!anchor) return;
+
+    if (isSameDocumentUrl(anchor.href)) {
+        e.preventDefault();
+    }
+}, true);
+
+// Auxiliary click (middle mouse button) on media: opens the direct media source
+window.addEventListener('auxclick', (e) => {
+    if (!e || !e.isTrusted || e.button !== 1) return;
+    const target = e.target;
+    if (!target) return;
+
+    const isMedia = target.tagName === 'IMG' || target.tagName === 'VIDEO' || target.tagName === 'PICTURE' ||
+                    (typeof target.closest === 'function' && target.closest('img, video, picture, figure'));
+    if (!isMedia) return;
+
+    const anchor = typeof target.closest === 'function' ? target.closest('a[href]') : null;
+    if (anchor && (isSameDocumentUrl(anchor.href) || isCandidateImageUrl(anchor.href))) {
+        e.preventDefault();
+        const mediaSrc = getMediaSourceUrl(target) || getMediaSourceUrl(anchor) || anchor.href;
+        if (mediaSrc) {
+            try {
+                ipcRenderer.sendToHost('open-preview-url', mediaSrc);
+            } catch (_) {}
+        }
+    }
+}, true);
+
 // Error page action bridge (restricted strictly to offline error page)
 window.addEventListener('mise-error-action', (e) => {
     if (window.location.protocol !== 'file:' || !window.location.pathname.endsWith('error.html')) {

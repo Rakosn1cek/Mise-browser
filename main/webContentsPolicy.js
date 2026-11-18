@@ -140,6 +140,16 @@ function setupWebContentsPolicy(app, options = {}) {
             webContents.setWindowOpenHandler((details) => {
                 if (details.url && details.url !== 'about:blank') {
                     if (security.isSafeTabUrl(details.url)) {
+                        const currentUrl = typeof webContents.getURL === 'function' ? webContents.getURL() : '';
+                        if (currentUrl && details.url) {
+                            try {
+                                const cur = new URL(currentUrl);
+                                const tgt = new URL(details.url);
+                                if (cur.origin === tgt.origin && cur.pathname === tgt.pathname) {
+                                    return { action: 'deny' };
+                                }
+                            } catch (_) {}
+                        }
                         const win = resolveMainWindow();
                         if (win && win.webContents) {
                             win.webContents.send('master-shortcut', 'spawn-tab-with-url', details.url);

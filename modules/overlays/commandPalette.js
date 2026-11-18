@@ -204,6 +204,45 @@ export const COMMAND_DEFINITIONS = [
         action: () => window.toggleStatusBar && window.toggleStatusBar()
     },
     {
+        id: 'zoom-in',
+        title: 'Zoom In',
+        desc: 'Enlarge active webview content zoom level',
+        details: 'Increases the zoom factor of the currently active tab up to a maximum of 500 percent.',
+        tip: 'Use Ctrl+= or Ctrl+WheelUp to zoom in quickly.',
+        category: 'Tabs & Navigation',
+        icon: 'fa-solid fa-magnifying-glass-plus',
+        actionId: 'zoom-in',
+        shortcut: 'Ctrl+=',
+        keywords: ['zoom', 'in', 'enlarge', 'magnify', 'scale', 'bigger', 'text'],
+        action: () => window.zoomInActiveTab && window.zoomInActiveTab()
+    },
+    {
+        id: 'zoom-out',
+        title: 'Zoom Out',
+        desc: 'Reduce active webview content zoom level',
+        details: 'Decreases the zoom factor of the currently active tab down to a minimum of 25 percent.',
+        tip: 'Use Ctrl+- or Ctrl+WheelDown to zoom out quickly.',
+        category: 'Tabs & Navigation',
+        icon: 'fa-solid fa-magnifying-glass-minus',
+        actionId: 'zoom-out',
+        shortcut: 'Ctrl+-',
+        keywords: ['zoom', 'out', 'reduce', 'shrink', 'scale', 'smaller', 'text'],
+        action: () => window.zoomOutActiveTab && window.zoomOutActiveTab()
+    },
+    {
+        id: 'zoom-reset',
+        title: 'Reset Zoom (100%)',
+        desc: 'Reset active webview content zoom level to 100 percent',
+        details: 'Resets the zoom factor of the currently active tab back to the default 100 percent scale.',
+        tip: 'Press Ctrl+0 to quickly reset zoom to default.',
+        category: 'Tabs & Navigation',
+        icon: 'fa-solid fa-magnifying-glass',
+        actionId: 'zoom-reset',
+        shortcut: 'Ctrl+0',
+        keywords: ['zoom', 'reset', 'default', '100%', 'scale', 'normal'],
+        action: () => window.zoomResetActiveTab && window.zoomResetActiveTab()
+    },
+    {
         id: 'trigger-hints',
         title: 'Toggle Link Hints Overlay',
         desc: 'Display letter tags over clickable links for mouse-free browsing',

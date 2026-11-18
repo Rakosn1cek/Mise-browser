@@ -16,6 +16,7 @@ export const state = {
     tabFavicons: {},
     tabHistory: {},
     tabDarkReaderStates: {},
+    tabZoomFactors: {},
     splitStates: {},
     appVersion: '',
     

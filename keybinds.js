@@ -40,7 +40,10 @@ const DEFAULT_KEYBINDS = {
     'toggle-pin-tab': 'F4',
     'export-reader-to-notes': 'Ctrl+Shift+E',
     'play-in-mpv': 'Ctrl+Shift+Y',
-    'send-to-mobile': 'Ctrl+Shift+M'
+    'send-to-mobile': 'Ctrl+Shift+M',
+    'zoom-in': ['Ctrl+=', 'Ctrl+Shift+=', 'Ctrl+Plus', 'Ctrl+Shift+Plus'],
+    'zoom-out': ['Ctrl+-', 'Ctrl+_'],
+    'zoom-reset': 'Ctrl+0'
 };
 
 const ACTION_METADATA = {
@@ -97,7 +100,10 @@ const ACTION_METADATA = {
     'export-reader-to-external': { label: 'Export Reader View to External App', category: 'Web Interaction' },
     'open-notes-external': { label: 'Open Quick Notes in External Application', category: 'Web Interaction' },
     'play-in-mpv': { label: 'Play Active Video in mpv (Media Offload)', category: 'Web Interaction' },
-    'send-to-mobile': { label: 'Send Page to Mobile (QR Code)', category: 'Web Interaction' }
+    'send-to-mobile': { label: 'Send Page to Mobile (QR Code)', category: 'Web Interaction' },
+    'zoom-in': { label: 'Zoom In', category: 'Web Interaction' },
+    'zoom-out': { label: 'Zoom Out', category: 'Web Interaction' },
+    'zoom-reset': { label: 'Reset Zoom (100%)', category: 'Web Interaction' }
 };
 
 let activeKeybinds = { ...DEFAULT_KEYBINDS };
@@ -105,7 +111,9 @@ let compiledKeymap = compileKeymap(activeKeybinds);
 
 function normalizeKeyCombination(str) {
     if (!str || typeof str !== 'string') return '';
-    const parts = str.split('+').map(p => p.trim()).filter(Boolean);
+    const parts = str.endsWith('++')
+        ? [...str.slice(0, -2).split('+').map(p => p.trim()).filter(Boolean), 'Plus']
+        : str.split('+').map(p => p.trim()).filter(Boolean);
     let ctrl = false;
     let alt = false;
     let shift = false;
@@ -131,6 +139,7 @@ function normalizeKeyCombination(str) {
     else if (lowerKey === 'del' || lowerKey === 'delete') normalized = 'Delete';
     else if (lowerKey === 'tab') normalized = 'Tab';
     else if (lowerKey === 'space') normalized = 'Space';
+    else if (lowerKey === 'plus' || mainKey === '+') normalized = 'Plus';
     else if (mainKey.length === 1) normalized = mainKey.toUpperCase();
 
     const res = [];
@@ -166,6 +175,10 @@ function inputEventToKeyCombination(input) {
         normalizedKey = 'Tab';
     } else if (key === ' ') {
         normalizedKey = 'Space';
+    } else if (key === '+' || input.code === 'NumpadAdd') {
+        normalizedKey = 'Plus';
+    } else if (input.code === 'NumpadSubtract') {
+        normalizedKey = '-';
     } else if (/^[a-z]$/i.test(key)) {
         normalizedKey = key.toUpperCase();
     } else if (input.code && input.code.startsWith('Digit') && input.code.length === 6) {

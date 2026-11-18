@@ -4,7 +4,8 @@ import {
     renderWorkspaceUI, switchTabFocus, jumpToTabByIndex, spawnNewBlankTab, spawnTabWithUrl, 
     handleTabRemoval, navigateFrameBack, navigateFrameForward, toggleGlobalMediaPlayback, 
     toggleActiveTabAudioMute, toggleGlobalAudioMute, togglePinActiveTab, hibernateInactiveTabs, 
-    toggleReaderViewOnActiveTab, exportActiveTabToNotes, exportActiveTabToExternal, pauseActiveTabMedia 
+    toggleReaderViewOnActiveTab, exportActiveTabToNotes, exportActiveTabToExternal, pauseActiveTabMedia,
+    zoomInActiveTab, zoomOutActiveTab, zoomResetActiveTab
 } from './modules/webview.js';
 import { toggleBookmarksOverlay, promptQuickmark, addCurrentPageToBookmarks, deleteBookmark, deleteQuickmark } from './modules/overlays/bookmarks.js';
 import { toggleCommandPaletteView, togglePreferencesView, cycleWebRTCPolicy, toggleWebRTCProtection, setWebRTCPolicy, inspectWebRTCStatus, getWebRTCReadableLabel } from './modules/overlays/commandPalette.js';
@@ -30,9 +31,8 @@ import { initializeBrowser } from './modules/renderer/browserInit.js';
 export { applySidebarMode, toggleSidebarExpansion, toggleSidebarPin, focusSidebar, togglePrivateWorkspace, testCleanGoogleSignIn, toggleInPageSearch, findInPageNext, findInPagePrevious, toggleWebviewTheme, toggleInterfaceTheme, initializeBrowser };
 
 export const overlayIds = [
-    'PaletteInput', 'PaletteList', 'PreferencesOverlay', 'BookmarksOverlay', 'BookmarkSearchInput',
-    'HistoryOverlay', 'HistorySearchInput', 'NotesOverlay', 'NotesTextArea', 'DashboardOverlay',
-    'ShareModalOverlay', 'PeekModalOverlay', 'FindBarOverlay', 'DiagnosticsOverlay', 'NotificationsOverlay', 'QrModalOverlay'
+    'PaletteInput', 'PaletteList', 'PreferencesOverlay', 'BookmarksOverlay', 'BookmarkSearchInput', 'HistoryOverlay', 'HistorySearchInput',
+    'NotesOverlay', 'NotesTextArea', 'DashboardOverlay', 'ShareModalOverlay', 'PeekModalOverlay', 'FindBarOverlay', 'DiagnosticsOverlay', 'NotificationsOverlay', 'QrModalOverlay'
 ];
 
 function dispatchHintMode(opts) {
@@ -152,7 +152,8 @@ Object.assign(window, {
     toggleCommandPaletteView, toggleGlobalMediaPlayback, toggleActiveTabAudioMute,
     toggleGlobalAudioMute, togglePinActiveTab, toggleSplitView, cycleSplitOrientation,
     switchSplitFocus, swapSplitPanes, closeSplitView, openUrlInSplit, toggleBookmarksOverlay,
-    promptQuickmark, addCurrentPageToBookmarks, focusSidebar, testCleanGoogleSignIn, checkForUpdates: triggerUpdateCheck, promptWorkspaceCreation, promptWorkspaceRename, confirmWorkspaceDeletion, purgeWorkspaceCookies
+    promptQuickmark, addCurrentPageToBookmarks, focusSidebar, testCleanGoogleSignIn, checkForUpdates: triggerUpdateCheck, promptWorkspaceCreation, promptWorkspaceRename, confirmWorkspaceDeletion, purgeWorkspaceCookies,
+    zoomInActiveTab, zoomOutActiveTab, zoomResetActiveTab
 });
 
 if (window.miseAPI && typeof window.miseAPI.onMasterShortcut === 'function') {
@@ -238,6 +239,7 @@ if (window.miseAPI && typeof window.miseAPI.onMasterShortcut === 'function') {
             case 'toggle-private-mode': togglePrivateWorkspace(); break;
             case 'hibernate-inactive-tabs': hibernateInactiveTabs(); break;
             case 'toggle-notifications': window.toggleNotificationsOverlay?.(); break;
+            case 'zoom-in': zoomInActiveTab(); break; case 'zoom-out': zoomOutActiveTab(); break; case 'zoom-reset': zoomResetActiveTab(); break;
             case 'play-in-mpv': triggerMediaOffloadForActiveTab(); break; case 'pause-media-offload-tab': pauseActiveTabMedia(); break; case 'send-to-mobile': window.toggleQrModal?.(args[0], args[1]); break;
         }
     });
