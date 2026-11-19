@@ -16,6 +16,7 @@ Controls hardware switches, process limits, privacy whitelists, and search prefe
 {
     "disable_gpu": false,
     "background_throttling": true,
+    "smooth_scrolling": false,
     "process_limit": 4,
     "tab_sleep_timeout_minutes": 15,
     "sidebar_auto_collapse": true,
@@ -81,6 +82,7 @@ Controls hardware switches, process limits, privacy whitelists, and search prefe
 
 - **`disable_gpu`**: Set to `true` to disable hardware GPU acceleration on systems with problematic graphics drivers.
 - **`background_throttling`**: Throttles timers and delays tasks in background tabs to conserve CPU cycles.
+- **`smooth_scrolling`**: Set to `true` to enable kinetic smooth scrolling animations across web pages (requires restart).
 - **`process_limit`**: Hard cap on Chromium renderer process forks (1 to 5).
 - **`tab_sleep_timeout_minutes`**: Inactivity timeout before background tabs detach and hibernate (5, 15, 30, 60, or 0 to disable).
 - **`sidebar_auto_collapse`**: When `true`, collapses the vertical sidebar into a 36px icon strip, expanding smoothly on hover or via shortcut.

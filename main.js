@@ -101,7 +101,9 @@ function initializeEngineSwitches() {
     app.commandLine.appendSwitch('force-gpu-mem-available-mb', '1024');
 
     app.commandLine.appendSwitch('renderer-process-limit', String(cfg.process_limit || 4));
-    app.commandLine.appendSwitch('disable-smooth-scrolling');
+    if (!cfg.smooth_scrolling) {
+        app.commandLine.appendSwitch('disable-smooth-scrolling');
+    }
     app.commandLine.appendSwitch('enable-strict-mixed-content-checking');
     app.commandLine.appendSwitch('disable-battery-saver');
     app.commandLine.appendSwitch('log-level', '3');

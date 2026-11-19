@@ -21,6 +21,7 @@ const sessionStore = require('../main/sessionStore');
             const validPatch = {
                 disable_gpu: true,
                 background_throttling: false,
+                smooth_scrolling: true,
                 sidebar_auto_collapse: false,
                 show_status_bar: false,
                 show_clock: false,
@@ -64,6 +65,7 @@ const sessionStore = require('../main/sessionStore');
             const wrongTypePatch = {
                 disable_gpu: 'true',
                 background_throttling: 1,
+                smooth_scrolling: 'yes',
                 process_limit: '4',
                 tab_sleep_timeout_minutes: '15',
                 trusted_domains: 'https://single-domain.org',

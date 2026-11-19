@@ -32,6 +32,7 @@ const DEFAULT_FILTER_LISTS = {
 const DEFAULT_CONFIG = {
     disable_gpu: false,
     background_throttling: true,
+    smooth_scrolling: false,
     process_limit: 4,
     email_handler: 'system',
     search_engine: 'https://duckduckgo.com/?q=%s',
@@ -115,6 +116,7 @@ function loadBrowserConfig(targetDir = CONFIG_DIR, targetPath = CONFIG_PATH) {
             webview_theme: parsed.webview_theme || 'dark',
             allow_local_certificates: typeof parsed.allow_local_certificates === 'boolean' ? parsed.allow_local_certificates : true,
             allow_local_documents: typeof parsed.allow_local_documents === 'boolean' ? parsed.allow_local_documents : false,
+            smooth_scrolling: typeof parsed.smooth_scrolling === 'boolean' ? parsed.smooth_scrolling : false,
             trusted_certificates: Array.isArray(parsed.trusted_certificates) ? parsed.trusted_certificates : [],
             doh_provider: parsed.doh_provider || 'off',
             doh_custom_url: typeof parsed.doh_custom_url === 'string' ? parsed.doh_custom_url : '',
@@ -382,6 +384,7 @@ function validateConfigPatch(patch) {
         switch (key) {
             case 'disable_gpu':
             case 'background_throttling':
+            case 'smooth_scrolling':
             case 'sidebar_auto_collapse':
             case 'show_status_bar':
             case 'show_clock':

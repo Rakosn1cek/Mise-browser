@@ -1369,6 +1369,7 @@ export async function syncPreferencesUI() {
         if (cfg) {
             const gpuToggle = document.getElementById('setting-gpu-toggle');
             const throttleToggle = document.getElementById('setting-throttling-toggle');
+            const smoothScrollingToggle = document.getElementById('setting-smooth-scrolling-toggle');
             const processSelect = document.getElementById('setting-process-limit');
             const emailSelect = document.getElementById('setting-email-handler');
             const sleepSelect = document.getElementById('setting-sleep-timeout');
@@ -1382,6 +1383,7 @@ export async function syncPreferencesUI() {
 
             if (gpuToggle) gpuToggle.checked = !cfg.disable_gpu;
             if (throttleToggle) throttleToggle.checked = !!cfg.background_throttling;
+            if (smoothScrollingToggle) smoothScrollingToggle.checked = !!cfg.smooth_scrolling;
             if (processSelect) processSelect.value = String(cfg.process_limit || 3);
             if (emailSelect) emailSelect.value = normalizeEmailHandler(cfg.email_handler || 'system');
             if (sleepSelect) sleepSelect.value = String(cfg.tab_sleep_timeout_minutes ?? 15);
@@ -1821,6 +1823,7 @@ export function setupPreferencesListeners() {
         saveBtn.onclick = async () => {
             const gpuToggle = document.getElementById('setting-gpu-toggle');
             const throttleToggle = document.getElementById('setting-throttling-toggle');
+            const smoothScrollingToggle = document.getElementById('setting-smooth-scrolling-toggle');
             const processSelect = document.getElementById('setting-process-limit');
             const emailSelect = document.getElementById('setting-email-handler');
             const sleepSelect = document.getElementById('setting-sleep-timeout');
@@ -1839,6 +1842,7 @@ export function setupPreferencesListeners() {
             const newCfg = {
                 disable_gpu: gpuToggle ? !gpuToggle.checked : false,
                 background_throttling: throttleToggle ? throttleToggle.checked : true,
+                smooth_scrolling: smoothScrollingToggle ? smoothScrollingToggle.checked : false,
                 process_limit: processSelect ? parseInt(processSelect.value, 10) : 3,
                 tab_sleep_timeout_minutes: sleepSelect ? parseInt(sleepSelect.value, 10) : 15,
                 sidebar_auto_collapse: sidebarToggle ? sidebarToggle.checked : true,

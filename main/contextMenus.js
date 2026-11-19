@@ -46,6 +46,14 @@ function buildSettingsSubmenu(cfg, options = {}) {
                 saveBrowserConfig({ background_throttling: menuItem.checked });
             }
         },
+        {
+            label: 'Enable Smooth Scrolling',
+            type: 'checkbox',
+            checked: !!cfg.smooth_scrolling,
+            click: (menuItem) => {
+                saveBrowserConfig({ smooth_scrolling: menuItem.checked });
+            }
+        },
         { type: 'separator' },
         {
             label: 'Renderer Process Limit',
