@@ -16,7 +16,11 @@ import {
     executeDashboardItemActivation, 
     showWorkspaceInputDialog, 
     hideWorkspaceInputDialog, 
-    processWorkspaceCreation 
+    processWorkspaceCreation,
+    buildDashboardTree,
+    isWorkspaceExpanded,
+    setWorkspaceExpanded,
+    toggleWorkspaceExpansion
 } from '../overlays/dashboard.js';
 
 let previousNonPrivateWorkspace = 'Workspace 1';
@@ -164,7 +168,7 @@ export function setupWorkspaceListeners() {
                 document.activeElement?.classList.contains('dashboard-rename-input')
             ) return;
 
-            if (e.key === 'Enter' && document.activeElement && document.activeElement.tagName === 'BUTTON') {
+            if ((e.key === 'Enter' || e.key === ' ') && document.activeElement && document.activeElement.tagName === 'BUTTON') {
                 e.preventDefault();
                 document.activeElement.click();
                 return;
@@ -192,6 +196,22 @@ export function setupWorkspaceListeners() {
                 e.preventDefault();
                 const targetItem = state.dashboardItems[state.dashboardSelectionIdx];
                 if (targetItem) executeDashboardItemActivation(targetItem.payload);
+            } else if (e.key === ' ' || e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+                const targetItem = state.dashboardItems[state.dashboardSelectionIdx];
+                if (!targetItem) return;
+                const [itemType, wsName] = targetItem.payload;
+                if (e.key === ' ' && itemType === 'workspace') {
+                    e.preventDefault();
+                    toggleWorkspaceExpansion(wsName);
+                } else if (e.key === 'ArrowRight' && itemType === 'workspace' && !isWorkspaceExpanded(wsName)) {
+                    e.preventDefault();
+                    setWorkspaceExpanded(wsName, true);
+                    buildDashboardTree(wsName);
+                } else if (e.key === 'ArrowLeft' && (itemType === 'tab' || isWorkspaceExpanded(wsName))) {
+                    e.preventDefault();
+                    setWorkspaceExpanded(wsName, false);
+                    buildDashboardTree(wsName);
+                }
             } else if (e.key === 'Delete') {
                 e.preventDefault();
                 handleTabRemoval();

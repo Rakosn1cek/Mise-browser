@@ -222,4 +222,28 @@
     color: #f7768e;
 }
 
+.workspace-tab-count-tag {
+    display: inline-flex;
+    align-items: center;
+    font-size: 11px;
+    font-family: monospace;
+    color: var(--text);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid transparent;
+    padding: 1px 6px;
+    border-radius: 3px;
+    margin-right: 8px;
+    user-select: none;
+}
+
+.workspace-tree-node.collapsed .workspace-tab-count-tag {
+    color: var(--accent);
+    border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.workspace-toggle-btn:hover {
+    color: var(--accent);
+}
+
 

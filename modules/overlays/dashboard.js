@@ -47,6 +47,32 @@ export function toggleDashboardView() {
     }
 }
 
+export function isWorkspaceExpanded(wsName) {
+    if (!state.dashboardExpandedWorkspaces || typeof state.dashboardExpandedWorkspaces !== 'object') {
+        state.dashboardExpandedWorkspaces = {};
+    }
+    if (Object.prototype.hasOwnProperty.call(state.dashboardExpandedWorkspaces, wsName)) {
+        return Boolean(state.dashboardExpandedWorkspaces[wsName]);
+    }
+    return wsName === state.sessionState?.current_workspace;
+}
+
+export function setWorkspaceExpanded(wsName, expanded) {
+    if (!wsName) return;
+    if (!state.dashboardExpandedWorkspaces || typeof state.dashboardExpandedWorkspaces !== 'object') {
+        state.dashboardExpandedWorkspaces = {};
+    }
+    state.dashboardExpandedWorkspaces[wsName] = Boolean(expanded);
+}
+
+export function toggleWorkspaceExpansion(wsName) {
+    if (!wsName) return false;
+    const nextState = !isWorkspaceExpanded(wsName);
+    setWorkspaceExpanded(wsName, nextState);
+    buildDashboardTree(wsName);
+    return nextState;
+}
+
 export function renameWorkspace(oldName, newName, visual = null) {
     if (String(oldName).trim().toLowerCase() === 'private') return;
     if (isReservedWorkspaceName(oldName)) return;
@@ -115,6 +141,11 @@ export function renameWorkspace(oldName, newName, visual = null) {
         delete state.sessionState.active_tabs[oldName];
     }
 
+    if (state.dashboardExpandedWorkspaces && Object.prototype.hasOwnProperty.call(state.dashboardExpandedWorkspaces, oldName)) {
+        state.dashboardExpandedWorkspaces[trimmed] = state.dashboardExpandedWorkspaces[oldName];
+        delete state.dashboardExpandedWorkspaces[oldName];
+    }
+
     if (state.sessionState.current_workspace === oldName) {
         state.sessionState.current_workspace = trimmed;
     }
@@ -164,6 +195,7 @@ export function deleteWorkspace(wsName) {
     if (state.sessionState.tab_sleep_states?.[wsName]) delete state.sessionState.tab_sleep_states[wsName];
     if (state.sessionState.active_tabs?.[wsName] !== undefined) delete state.sessionState.active_tabs[wsName];
     if (state.sessionState.workspace_visuals?.[wsName]) delete state.sessionState.workspace_visuals[wsName];
+    if (state.dashboardExpandedWorkspaces) delete state.dashboardExpandedWorkspaces[wsName];
     delete state.sessionState.workspaces[wsName];
     
     window.miseAPI.saveSession(state.sessionState);
@@ -179,7 +211,7 @@ export function deleteWorkspace(wsName) {
     }
 }
 
-export function buildDashboardTree() {
+export function buildDashboardTree(anchorWsName = null) {
     const container = document.getElementById('DashboardTreeContainer');
     container.innerHTML = '';
     state.dashboardItems = [];
@@ -197,8 +229,13 @@ export function buildDashboardTree() {
 
     wsKeys.forEach((wsName) => {
         const isPrivate = wsName === 'Private';
+        const urls = state.sessionState.workspaces[wsName] || [];
+        const isExpanded = isWorkspaceExpanded(wsName);
         const node = document.createElement('div');
         node.className = 'workspace-tree-node';
+        if (!isExpanded) node.classList.add('collapsed');
+        node.dataset.ws = wsName;
+        node.dataset.expanded = isExpanded ? 'true' : 'false';
 
         const headerContainer = document.createElement('div');
         headerContainer.className = 'workspace-tree-header';
@@ -351,6 +388,32 @@ export function buildDashboardTree() {
         });
         actionsDiv.appendChild(purgeCookiesBtn);
 
+        const expandBtn = document.createElement('button');
+        expandBtn.type = 'button';
+        expandBtn.className = 'nav-icon-button workspace-toggle-btn';
+        expandBtn.dataset.ws = wsName;
+        expandBtn.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
+        expandBtn.innerHTML = isExpanded
+            ? '<i class="fa-solid fa-chevron-up"></i>'
+            : '<i class="fa-solid fa-chevron-down"></i>';
+        expandBtn.title = isExpanded ? `Shrink ${wsName} tabs` : `Expand ${wsName} tabs`;
+        expandBtn.style.width = '24px';
+        expandBtn.style.height = '24px';
+        expandBtn.style.fontSize = '11px';
+        expandBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleWorkspaceExpansion(wsName);
+        });
+        actionsDiv.appendChild(expandBtn);
+
+        const tabCountBadge = document.createElement('span');
+        tabCountBadge.className = 'workspace-tab-count-tag';
+        tabCountBadge.dataset.ws = wsName;
+        tabCountBadge.textContent = `${urls.length} ${urls.length === 1 ? 'tab' : 'tabs'}`;
+        tabCountBadge.title = isExpanded
+            ? `${urls.length} open ${urls.length === 1 ? 'tab' : 'tabs'} (expanded)`
+            : `${urls.length} open ${urls.length === 1 ? 'tab' : 'tabs'} (collapsed)`;
+
         const containerTag = document.createElement('span');
         containerTag.className = 'workspace-container-tag';
         const partitionName = getWorkspacePartition(wsName);
@@ -379,6 +442,7 @@ export function buildDashboardTree() {
 
         headerContainer.appendChild(wsBadgeSpan);
         headerContainer.appendChild(titleSpan);
+        headerContainer.appendChild(tabCountBadge);
         headerContainer.appendChild(containerTag);
         headerContainer.appendChild(cookieBadge);
         headerContainer.appendChild(actionsDiv);
@@ -411,74 +475,76 @@ export function buildDashboardTree() {
 
         node.appendChild(headerContainer);
 
-        const urls = state.sessionState.workspaces[wsName] || [];
-        urls.forEach((url, idx) => {
-            const tabItem = document.createElement('div');
-            tabItem.className = 'dashboard-tab-item';
-            const cachedTitle = (state.activeTitlesCache[wsName] && state.activeTitlesCache[wsName][idx]) || url;
-            const isSleeping = state.tabSleepStates[wsName] && state.tabSleepStates[wsName][idx];
-            const isPinned = !!state.tabPinned?.[wsName]?.[idx];
-            const pinBadge = isPinned ? ' 📌' : '';
-            const sleepBadge = isSleeping ? ' 🌙' : '';
-            tabItem.textContent = `- ${cachedTitle}${pinBadge}${sleepBadge}`;
-            
-            tabItem.setAttribute('draggable', 'true');
+        if (isExpanded) {
+            urls.forEach((url, idx) => {
+                const tabItem = document.createElement('div');
+                tabItem.className = 'dashboard-tab-item';
+                const cachedTitle = (state.activeTitlesCache[wsName] && state.activeTitlesCache[wsName][idx]) || url;
+                const isSleeping = state.tabSleepStates[wsName] && state.tabSleepStates[wsName][idx];
+                const isPinned = !!state.tabPinned?.[wsName]?.[idx];
+                const pinBadge = isPinned ? ' 📌' : '';
+                const sleepBadge = isSleeping ? ' 🌙' : '';
+                tabItem.textContent = `- ${cachedTitle}${pinBadge}${sleepBadge}`;
+                
+                tabItem.setAttribute('draggable', 'true');
 
-            tabItem.addEventListener('dragstart', (e) => {
-                e.dataTransfer.setData('text/plain', JSON.stringify({ workspace: wsName, index: idx }));
-                e.stopPropagation();
-            });
+                tabItem.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('text/plain', JSON.stringify({ workspace: wsName, index: idx }));
+                    e.stopPropagation();
+                });
 
-            tabItem.addEventListener('dragover', (e) => e.preventDefault());
+                tabItem.addEventListener('dragover', (e) => e.preventDefault());
 
-            tabItem.addEventListener('drop', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                try {
-                    const data = JSON.parse(e.dataTransfer.getData('text/plain'));
-                    const sourceWS = data.workspace;
-                    const sourceIdx = data.index;
-                    const targetWS = wsName;
+                tabItem.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    try {
+                        const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+                        const sourceWS = data.workspace;
+                        const sourceIdx = data.index;
+                        const targetWS = wsName;
 
-                    if (sourceWS === targetWS && sourceIdx === idx) return;
+                        if (sourceWS === targetWS && sourceIdx === idx) return;
 
-                    let targetIdx = idx;
-                    if (sourceWS === targetWS && sourceIdx < idx) {
-                        targetIdx--;
-                    }
+                        let targetIdx = idx;
+                        if (sourceWS === targetWS && sourceIdx < idx) {
+                            targetIdx--;
+                        }
 
-                    if (sourceWS === targetWS) {
-                        moveTabState(sourceWS, sourceIdx, targetIdx);
+                        if (sourceWS === targetWS) {
+                            moveTabState(sourceWS, sourceIdx, targetIdx);
+                            window.miseAPI.saveSession(state.sessionState);
+                            renderWorkspaceUI();
+                            buildDashboardTree();
+                            return;
+                        }
+
+                        transferTab(state, sourceWS, sourceIdx, targetWS, targetIdx);
                         window.miseAPI.saveSession(state.sessionState);
                         renderWorkspaceUI();
                         buildDashboardTree();
-                        return;
+                    } catch (err) {
+                        console.error("Tab reorder/move drop failed:", err);
                     }
+                });
 
-                    transferTab(state, sourceWS, sourceIdx, targetWS, targetIdx);
-                    window.miseAPI.saveSession(state.sessionState);
-                    renderWorkspaceUI();
-                    buildDashboardTree();
-                } catch (err) {
-                    console.error("Tab reorder/move drop failed:", err);
-                }
+                const tabPayload = ['tab', wsName, idx];
+                const tabItemRef = { element: tabItem, payload: tabPayload };
+                state.dashboardItems.push(tabItemRef);
+
+                tabItem.addEventListener('click', () => {
+                    executeDashboardItemActivation(tabPayload);
+                });
+
+                node.appendChild(tabItem);
             });
-
-            const tabPayload = ['tab', wsName, idx];
-            const tabItemRef = { element: tabItem, payload: tabPayload };
-            state.dashboardItems.push(tabItemRef);
-
-            tabItem.addEventListener('click', () => {
-                executeDashboardItemActivation(tabPayload);
-            });
-
-            node.appendChild(tabItem);
-        });
+        }
 
         container.appendChild(node);
     });
 
-    const activeWsIdx = state.dashboardItems.findIndex(item => item.payload[0] === 'workspace' && item.payload[1] === state.sessionState.current_workspace);
+    const targetAnchorWs = anchorWsName || state.sessionState.current_workspace;
+    const activeWsIdx = state.dashboardItems.findIndex(item => item.payload[0] === 'workspace' && item.payload[1] === targetAnchorWs);
     if (activeWsIdx >= 0) {
         state.dashboardSelectionIdx = activeWsIdx;
     } else {

@@ -43,6 +43,7 @@ export const state = {
     // Overlay Data Caches
     dashboardItems: [],
     dashboardSelectionIdx: 0,
+    dashboardExpandedWorkspaces: {},
     paletteMatches: [],
     paletteSelectionIdx: 0,
     historyResults: [],
