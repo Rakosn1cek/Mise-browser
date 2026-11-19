@@ -109,4 +109,28 @@ console.log('Running Mise stylesheet modularisation regression tests...');
     console.log(`✓ Recursive import traversal resolved all ${visitedSheets.size} modular sheets cleanly`);
 }
 
+// 6. Verify url() asset references in all stylesheets resolve to existing files on disk
+{
+    const visitedSheets = fs.readdirSync(path.join(__dirname, '../styles'), { recursive: true })
+        .filter(f => typeof f === 'string' && f.endsWith('.css'))
+        .map(f => path.join(__dirname, '../styles', f));
+    visitedSheets.push(path.join(__dirname, '../style.css'));
+
+    visitedSheets.forEach(sheetPath => {
+        const content = fs.readFileSync(sheetPath, 'utf8');
+        const urlRegex = /url\(\s*['"]?([^'")]+)['"]?\s*\)/g;
+        let match;
+        while ((match = urlRegex.exec(content)) !== null) {
+            const assetUrl = match[1].trim();
+            if (assetUrl.startsWith('data:') || assetUrl.startsWith('http://') || assetUrl.startsWith('https://') || assetUrl.endsWith('.css')) {
+                continue;
+            }
+            const targetPath = path.resolve(path.dirname(sheetPath), assetUrl);
+            assert(fs.existsSync(targetPath), `Asset referenced in ${path.basename(sheetPath)} does not exist on disk: ${assetUrl} -> ${targetPath}`);
+        }
+    });
+
+    console.log('✓ All stylesheet url() asset references verified on disk');
+}
+
 console.log('All stylesheet modularisation regression tests passed successfully!');
