@@ -22,6 +22,210 @@ function compactMemory() {
     return false;
 }
 
+/**
+ * Reads Linux procfs smaps_rollup for accurate PSS, RSS, and USS memory figures in KiB.
+ */
+async function readProcSmapsRollup(pid, fsModule = fs, options = {}) {
+    const targetPlatform = options.platform || process.platform;
+    if (targetPlatform !== 'linux') return null;
+
+    const numericPid = Number(pid);
+    if (!Number.isInteger(numericPid) || numericPid <= 0) return null;
+
+    const procPath = `/proc/${numericPid}/smaps_rollup`;
+    let content = '';
+    try {
+        if (fsModule.promises && typeof fsModule.promises.readFile === 'function') {
+            content = await fsModule.promises.readFile(procPath, 'utf8');
+        } else if (typeof fsModule.readFileSync === 'function') {
+            content = fsModule.readFileSync(procPath, 'utf8');
+        } else {
+            return null;
+        }
+    } catch (_) {
+        return null;
+    }
+
+    if (!content || typeof content !== 'string') return null;
+
+    let rssKB = 0;
+    let pssKB = 0;
+    let ussKB = 0;
+    let sharedKB = 0;
+
+    const lines = content.split('\n');
+    for (const line of lines) {
+        const match = line.match(/^(Rss|Pss|Private_Clean|Private_Dirty|Shared_Clean|Shared_Dirty):\s+(\d+)/);
+        if (!match) continue;
+        const key = match[1];
+        const val = parseInt(match[2], 10) || 0;
+        if (key === 'Rss') {
+            rssKB = val;
+        } else if (key === 'Pss') {
+            pssKB = val;
+        } else if (key === 'Private_Clean' || key === 'Private_Dirty') {
+            ussKB += val;
+        } else if (key === 'Shared_Clean' || key === 'Shared_Dirty') {
+            sharedKB += val;
+        }
+    }
+
+    if (rssKB <= 0 && pssKB <= 0) return null;
+    return { rssKB, pssKB, ussKB, sharedKB };
+}
+
+/**
+ * Collects live process CPU and memory metrics alongside webContents process mappings.
+ */
+async function gatherTaskManagerMetrics(options = {}) {
+    const targetApp = options.app || app;
+    const targetWebContents = options.webContents || webContents;
+    const targetFs = options.fs || fs;
+    const targetPlatform = options.platform || process.platform;
+
+    let appMetrics = [];
+    try {
+        if (targetApp && typeof targetApp.getAppMetrics === 'function') {
+            appMetrics = targetApp.getAppMetrics() || [];
+        }
+    } catch (_) {
+        appMetrics = [];
+    }
+
+    const processesByPid = new Map();
+    for (const metric of appMetrics) {
+        if (!metric || !metric.pid) continue;
+        const pid = metric.pid;
+        if (processesByPid.has(pid)) continue;
+
+        const type = metric.type || 'Unknown';
+        const rawCpu = (metric.cpu && typeof metric.cpu.percentCPUUsage === 'number')
+            ? metric.cpu.percentCPUUsage
+            : 0;
+        const cpuPercent = Math.max(0, Math.round(rawCpu * 10) / 10);
+
+        const fallbackRssKB = (metric.memory && typeof metric.memory.residentSet === 'number')
+            ? metric.memory.residentSet
+            : ((metric.memory && typeof metric.memory.workingSetSize === 'number') ? metric.memory.workingSetSize : 0);
+        const fallbackPrivateKB = (metric.memory && typeof metric.memory.privateBytes === 'number' && metric.memory.privateBytes > 0)
+            ? metric.memory.privateBytes
+            : fallbackRssKB;
+
+        processesByPid.set(pid, {
+            pid,
+            type,
+            cpuPercent,
+            fallbackRssKB,
+            fallbackPrivateKB
+        });
+    }
+
+    const procEntries = Array.from(processesByPid.values());
+    const smapsResults = await Promise.all(
+        procEntries.map((entry) => readProcSmapsRollup(entry.pid, targetFs, { platform: targetPlatform }))
+    );
+
+    let totalPssKB = 0;
+    let totalRssKB = 0;
+    let totalUssKB = 0;
+    let sumCpuPercent = 0;
+
+    procEntries.forEach((entry, idx) => {
+        const smaps = smapsResults[idx];
+        const pssKB = smaps ? smaps.pssKB : entry.fallbackPrivateKB;
+        const rssKB = smaps ? smaps.rssKB : entry.fallbackRssKB;
+        const ussKB = smaps ? smaps.ussKB : entry.fallbackPrivateKB;
+
+        totalPssKB += pssKB;
+        totalRssKB += rssKB;
+        totalUssKB += ussKB;
+        sumCpuPercent += entry.cpuPercent;
+
+        processesByPid.set(entry.pid, {
+            pid: entry.pid,
+            type: entry.type,
+            cpuPercent: entry.cpuPercent,
+            pssKB,
+            rssKB,
+            ussKB,
+            pssMB: Math.round((pssKB / 1024) * 10) / 10,
+            rssMB: Math.round((rssKB / 1024) * 10) / 10,
+            ussMB: Math.round((ussKB / 1024) * 10) / 10
+        });
+    });
+
+    const webContentsMap = {};
+    try {
+        if (targetWebContents && typeof targetWebContents.getAllWebContents === 'function') {
+            const allWc = targetWebContents.getAllWebContents() || [];
+            for (const wc of allWc) {
+                if (!wc) continue;
+                try {
+                    if (typeof wc.isDestroyed === 'function' && wc.isDestroyed()) continue;
+                    const id = wc.id;
+                    if (id === undefined || id === null) continue;
+
+                    let osPid = null;
+                    try {
+                        if (typeof wc.getOSProcessId === 'function') {
+                            osPid = wc.getOSProcessId();
+                        }
+                    } catch (_) {
+                        osPid = null;
+                    }
+
+                    let wcType = '';
+                    try {
+                        if (typeof wc.getType === 'function') {
+                            wcType = wc.getType() || '';
+                        }
+                    } catch (_) {}
+
+                    let wcUrl = '';
+                    try {
+                        if (typeof wc.getURL === 'function') {
+                            wcUrl = wc.getURL() || '';
+                        }
+                    } catch (_) {}
+
+                    let wcTitle = '';
+                    try {
+                        if (typeof wc.getTitle === 'function') {
+                            wcTitle = wc.getTitle() || '';
+                        }
+                    } catch (_) {}
+
+                    const procInfo = osPid ? processesByPid.get(osPid) : null;
+                    webContentsMap[id] = {
+                        webContentsId: id,
+                        pid: osPid || (procInfo ? procInfo.pid : null),
+                        type: wcType || (procInfo ? procInfo.type : ''),
+                        url: wcUrl,
+                        title: wcTitle,
+                        cpuPercent: procInfo ? procInfo.cpuPercent : 0,
+                        pssMB: procInfo ? procInfo.pssMB : 0,
+                        rssMB: procInfo ? procInfo.rssMB : 0,
+                        ussMB: procInfo ? procInfo.ussMB : 0
+                    };
+                } catch (_) {}
+            }
+        }
+    } catch (_) {}
+
+    return {
+        timestamp: Date.now(),
+        totals: {
+            pssMB: Math.round((totalPssKB / 1024) * 10) / 10,
+            rssMB: Math.round((totalRssKB / 1024) * 10) / 10,
+            ussMB: Math.round((totalUssKB / 1024) * 10) / 10,
+            cpuPercent: Math.round(sumCpuPercent * 10) / 10,
+            processCount: processesByPid.size
+        },
+        processes: Array.from(processesByPid.values()),
+        webContentsMap
+    };
+}
+
 function initializeMemoryWatcher(options = {}) {
     return setInterval(() => {
         const win = (options && typeof options.getMainWindow === 'function') ? options.getMainWindow() : null;
@@ -363,10 +567,16 @@ function registerSystemIpc(ipcMain, options = {}) {
 
         return result;
     });
+
+    ipcMain.handle('get-task-manager-metrics', async () => {
+        return gatherTaskManagerMetrics();
+    });
 }
 
 module.exports = {
     registerSystemIpc,
     initializeMemoryWatcher,
-    compactMemory
+    compactMemory,
+    readProcSmapsRollup,
+    gatherTaskManagerMetrics
 };

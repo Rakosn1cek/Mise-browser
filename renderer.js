@@ -32,7 +32,7 @@ export { applySidebarMode, toggleSidebarExpansion, toggleSidebarPin, focusSideba
 
 export const overlayIds = [
     'PaletteInput', 'PaletteList', 'PreferencesOverlay', 'BookmarksOverlay', 'BookmarkSearchInput', 'HistoryOverlay', 'HistorySearchInput',
-    'NotesOverlay', 'NotesTextArea', 'DashboardOverlay', 'ShareModalOverlay', 'PeekModalOverlay', 'FindBarOverlay', 'DiagnosticsOverlay', 'NotificationsOverlay', 'QrModalOverlay'
+    'NotesOverlay', 'NotesTextArea', 'DashboardOverlay', 'ShareModalOverlay', 'PeekModalOverlay', 'FindBarOverlay', 'DiagnosticsOverlay', 'NotificationsOverlay', 'QrModalOverlay', 'TaskManagerOverlay'
 ];
 
 function dispatchHintMode(opts) {
@@ -238,7 +238,7 @@ if (window.miseAPI && typeof window.miseAPI.onMasterShortcut === 'function') {
             case 'go-back': case 'go-back-signal': navigateFrameBack(); break; case 'go-forward': case 'go-forward-signal': navigateFrameForward(); break;
             case 'toggle-private-mode': togglePrivateWorkspace(); break;
             case 'hibernate-inactive-tabs': hibernateInactiveTabs(); break;
-            case 'toggle-notifications': window.toggleNotificationsOverlay?.(); break;
+            case 'toggle-notifications': window.toggleNotificationsOverlay?.(); break; case 'toggle-task-manager': window.toggleTaskManagerOverlay?.(); break;
             case 'zoom-in': zoomInActiveTab(); break; case 'zoom-out': zoomOutActiveTab(); break; case 'zoom-reset': zoomResetActiveTab(); break;
             case 'play-in-mpv': triggerMediaOffloadForActiveTab(); break; case 'pause-media-offload-tab': pauseActiveTabMedia(); break; case 'send-to-mobile': window.toggleQrModal?.(args[0], args[1]); break;
         }

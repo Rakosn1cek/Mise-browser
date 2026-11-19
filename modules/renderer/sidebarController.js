@@ -15,7 +15,7 @@ export const defaultOverlayIds = [
     'BookmarksOverlay', 'BookmarkSearchInput', 'HistoryOverlay',
     'HistorySearchInput', 'NotesOverlay', 'NotesTextArea',
     'DashboardOverlay', 'ShareModalOverlay', 'PeekModalOverlay',
-    'FindBarOverlay', 'DiagnosticsOverlay', 'NotificationsOverlay', 'QrModalOverlay'
+    'FindBarOverlay', 'DiagnosticsOverlay', 'NotificationsOverlay', 'QrModalOverlay', 'TaskManagerOverlay'
 ];
 
 export function applySidebarMode(autoCollapse) {
@@ -123,7 +123,7 @@ export function setupSidebarListeners(overlayIds = defaultOverlayIds) {
         if (!btn) return;
 
         btn.addEventListener('keydown', (e) => {
-            if (state.dashboardActive || state.bookmarksActive || state.paletteActive || state.preferencesActive || state.historyActive || state.notesActive) return;
+            if (state.dashboardActive || state.bookmarksActive || state.paletteActive || state.preferencesActive || state.historyActive || state.notesActive || state.taskManagerActive) return;
             if (e.key === 'ArrowRight' || (e.key === 'Tab' && !e.shiftKey && idx < bottomButtons.length - 1)) {
                 e.preventDefault();
                 const nextBtn = document.getElementById(bottomButtons[idx + 1]);
@@ -157,7 +157,7 @@ export function setupSidebarListeners(overlayIds = defaultOverlayIds) {
     const tabListContainer = document.getElementById('TabList');
     if (tabListContainer) {
         tabListContainer.addEventListener('keydown', (e) => {
-            if (state.dashboardActive || state.bookmarksActive || state.paletteActive || state.preferencesActive || state.historyActive || state.notesActive) return;
+            if (state.dashboardActive || state.bookmarksActive || state.paletteActive || state.preferencesActive || state.historyActive || state.notesActive || state.taskManagerActive) return;
             if (e.key === 'Escape') {
                 e.preventDefault();
                 const sidebar = document.getElementById('Sidebar');
@@ -285,7 +285,7 @@ export function setupSidebarListeners(overlayIds = defaultOverlayIds) {
     if (sidebar) {
         sidebar.addEventListener('focusout', (e) => {
             if (e.relatedTarget && !sidebar.contains(e.relatedTarget)) {
-                if (state.dashboardActive || state.paletteActive || state.preferencesActive || state.bookmarksActive || state.historyActive || state.notesActive || state.diagnosticsActive) return;
+                if (state.dashboardActive || state.paletteActive || state.preferencesActive || state.bookmarksActive || state.historyActive || state.notesActive || state.diagnosticsActive || state.taskManagerActive) return;
 
                 for (const id of overlayIds) {
                     const el = document.getElementById(id);

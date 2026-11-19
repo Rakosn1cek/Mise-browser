@@ -33,6 +33,8 @@ export const state = {
     diagnosticsActive: false,
     notificationsActive: false,
     qrModalActive: false,
+    taskManagerActive: false,
+    taskManagerSelectionIdx: 0,
     notificationsFilter: 'all',
     notificationsSelectionIdx: 0,
     awaitingQuickmarkKey: false,

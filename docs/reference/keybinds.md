@@ -21,6 +21,7 @@ All keyboard shortcuts in Mise Browser are fully customisable via `~/.config/mis
 | **Ctrl + R** | `reload-active-tab` | Reloads the active tab |
 | **Ctrl + Tab** | `focus-nav-buttons` | Moves focus to the vertical tab sidebar (focuses navigation buttons, allows Down arrow into tabs) |
 | **Ctrl + Shift + N** | `toggle-notifications` | Opens the Notifications & Activity overlay |
+| **Ctrl + Shift + T** | `toggle-task-manager` | Opens the Task Manager (Tab Resource Inspector) overlay |
 | **Ctrl + W** | `focus-webview` | Moves focus directly into the active web page |
 | **Ctrl + Shift + Z** | `toggle-zen-mode` | Toggles sidebar expansion or pin mode |
 | **Ctrl + P** | `toggle-palette` | Opens the Command Palette |
@@ -128,6 +129,22 @@ When the Notifications & Activity overlay is active (`Ctrl + Shift + N` or click
 | `c` | Clear notifications in the active view |
 | `Tab` / `Shift + Tab` | Cycle focus between controls, category chips, and feed items |
 | `Escape` | Dismiss overlay and restore focus to active webview |
+
+---
+
+## Task Manager Overlay Navigation
+
+When the Task Manager (Tab Resource Inspector) overlay is active (`Ctrl + Shift + T`):
+
+| Key | Action |
+| :--- | :--- |
+| `↓` / `↑` or `j` / `k` | Move cursor through open tabs across workspaces |
+| `z` | Hibernate highlighted background tab immediately and compact memory |
+| `Enter` | Jump directly to the highlighted tab (switching workspace if needed) |
+| `x` | Close the highlighted tab (pinned tabs remain protected) |
+| `r` | Refresh live CPU and memory metrics |
+| `Tab` / `Shift + Tab` | Cycle focus across header controls (Hibernate All, Refresh, Close) |
+| `Escape` | Dismiss overlay, stop polling, and restore focus to active webview |
 
 ---
 

@@ -1,0 +1,70 @@
+<!-- templates/task-manager.html -->
+<div id="TaskManagerOverlay" class="task-manager-overlay" tabindex="0" style="display: none;" role="dialog" aria-label="Task Manager">
+    <div class="task-manager-page task-manager-card">
+        <div class="task-manager-header">
+            <div class="task-manager-title-group">
+                <h1 class="task-manager-title">
+                    <i class="fa-solid fa-gauge-high"></i>
+                    <span>Task Manager</span>
+                </h1>
+                <span class="task-manager-subtitle">Live tab resource inspector and memory reclamation</span>
+            </div>
+            <div class="task-manager-header-actions">
+                <button type="button" id="TaskManagerHibernateAllBtn" class="task-manager-action-btn primary" title="Hibernate all background tabs except active tab">
+                    <i class="fa-solid fa-bed"></i>
+                    <span>Hibernate All</span>
+                </button>
+                <button type="button" id="TaskManagerRefreshBtn" class="nav-icon-button" title="Refresh Metrics (r)">
+                    <i class="fa-solid fa-arrows-rotate"></i>
+                </button>
+                <button type="button" id="CloseTaskManagerBtn" class="nav-icon-button" title="Close Task Manager (Esc)">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="task-manager-totals-grid">
+            <div class="task-manager-stat-card">
+                <span class="task-manager-stat-label">Real RAM (PSS Total)</span>
+                <span id="TaskManagerTotalPss" class="task-manager-stat-value">0.0 MB</span>
+            </div>
+            <div class="task-manager-stat-card">
+                <span class="task-manager-stat-label">Reported RSS</span>
+                <span id="TaskManagerTotalRss" class="task-manager-stat-value">0.0 MB</span>
+            </div>
+            <div class="task-manager-stat-card">
+                <span class="task-manager-stat-label">Private Memory (USS)</span>
+                <span id="TaskManagerTotalUss" class="task-manager-stat-value">0.0 MB</span>
+            </div>
+            <div class="task-manager-stat-card">
+                <span class="task-manager-stat-label">Total CPU</span>
+                <span id="TaskManagerTotalCpu" class="task-manager-stat-value">0.0%</span>
+            </div>
+            <div class="task-manager-stat-card">
+                <span class="task-manager-stat-label">Process Count</span>
+                <span id="TaskManagerProcessCount" class="task-manager-stat-value">0</span>
+            </div>
+        </div>
+
+        <div class="task-manager-list-container">
+            <div class="task-manager-list-header">
+                <span class="tm-col-tab">Tab &amp; Workspace</span>
+                <span class="tm-col-status">Status / PID</span>
+                <span class="tm-col-cpu">CPU</span>
+                <span class="tm-col-mem">Memory (PSS)</span>
+                <span class="tm-col-actions">Actions</span>
+            </div>
+            <div id="TaskManagerTabList" class="task-manager-tab-list" role="listbox" aria-label="Open tabs"></div>
+            <div id="TaskManagerEmptyState" class="task-manager-empty-state" style="display: none;">No tabs open across workspaces.</div>
+        </div>
+
+        <div class="task-manager-footer">
+            <span class="task-manager-key-hint"><kbd>&uarr;</kbd><kbd>&darr;</kbd> / <kbd>j</kbd><kbd>k</kbd> Navigate</span>
+            <span class="task-manager-key-hint"><kbd>z</kbd> Hibernate Tab</span>
+            <span class="task-manager-key-hint"><kbd>Enter</kbd> Jump to Tab</span>
+            <span class="task-manager-key-hint"><kbd>x</kbd> Close Tab</span>
+            <span class="task-manager-key-hint"><kbd>r</kbd> Refresh</span>
+            <span class="task-manager-key-hint"><kbd>Esc</kbd> Close</span>
+        </div>
+    </div>
+</div>

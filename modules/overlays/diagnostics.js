@@ -102,6 +102,7 @@ export async function toggleDiagnosticsView() {
         if (state.dashboardActive && window.toggleDashboardView) window.toggleDashboardView();
         if (state.bookmarksActive && window.toggleBookmarksOverlay) window.toggleBookmarksOverlay();
         if (state.historyActive && window.toggleHistoryOverlay) window.toggleHistoryOverlay();
+        if (state.taskManagerActive && window.closeTaskManagerOverlay) window.closeTaskManagerOverlay();
         const prefOverlay = document.getElementById('PreferencesOverlay');
         if ((state.preferencesActive || (prefOverlay && prefOverlay.style.display !== 'none')) && window.togglePreferencesView) {
             window.togglePreferencesView();

@@ -17,7 +17,7 @@ function returnFocusToWebview() {
     if ((qrModal && qrModal.style.display === 'flex') || state.qrModalActive) {
         return;
     }
-    if (state.paletteActive || state.dashboardActive || state.preferencesActive || state.historyActive || state.notesActive || state.bookmarksActive || state.diagnosticsActive || state.notificationsActive) {
+    if (state.paletteActive || state.dashboardActive || state.preferencesActive || state.historyActive || state.notesActive || state.bookmarksActive || state.diagnosticsActive || state.notificationsActive || state.taskManagerActive) {
         return;
     }
     window.miseAllowWebviewFocus = true;
@@ -592,6 +592,19 @@ export const COMMAND_DEFINITIONS = [
     },
 
     // Performance & Memory
+    {
+        id: 'toggle-task-manager',
+        title: 'Toggle Task Manager (Tab Resource Inspector)',
+        desc: 'Inspect live CPU and RAM usage (PSS, RSS, USS) per tab and hibernate heavy tabs',
+        details: 'Opens the real-time Task Manager overlay displaying Proportional Set Size (PSS), Resident Set Size (RSS), Unique Set Size (USS), process count, and per-tab resource draw.',
+        tip: 'Press Ctrl+Shift+T to open, then press z on any background tab to detach its DOM and reclaim memory.',
+        category: 'Performance & Memory',
+        icon: 'fa-solid fa-gauge-high',
+        actionId: 'toggle-task-manager',
+        shortcut: 'Ctrl+Shift+T',
+        keywords: ['task', 'manager', 'ram', 'memory', 'cpu', 'pss', 'rss', 'uss', 'process', 'inspector', 'resources', 'hibernate'],
+        action: () => window.toggleTaskManagerOverlay && window.toggleTaskManagerOverlay()
+    },
     {
         id: 'hibernate-tabs',
         title: 'Hibernate Inactive Tabs',
@@ -2241,6 +2254,7 @@ export async function togglePreferencesView() {
     state.preferencesActive = preferencesActive;
     if (preferencesActive) {
         if (state.paletteActive) toggleCommandPaletteView();
+        if (state.taskManagerActive && typeof window.closeTaskManagerOverlay === 'function') window.closeTaskManagerOverlay();
         const dash = document.getElementById('DashboardOverlay');
         if (state.dashboardActive && dash) dash.style.display = 'none';
 
@@ -2278,6 +2292,7 @@ export async function openCommandPalette() {
     if (!overlay || !input) return;
 
     if (preferencesActive) togglePreferencesView();
+    if (state.taskManagerActive && typeof window.closeTaskManagerOverlay === 'function') window.closeTaskManagerOverlay();
     if (state.dashboardActive) {
         state.dashboardActive = false;
         const dash = document.getElementById('DashboardOverlay');

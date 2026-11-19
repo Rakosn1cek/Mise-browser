@@ -586,6 +586,9 @@ function closeOtherOverlays() {
     if (state.historyActive && typeof window.toggleHistoryOverlay === 'function') {
         window.toggleHistoryOverlay();
     }
+    if (state.taskManagerActive && typeof window.closeTaskManagerOverlay === 'function') {
+        window.closeTaskManagerOverlay();
+    }
 }
 
 /**

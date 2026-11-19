@@ -43,7 +43,8 @@ const DEFAULT_KEYBINDS = {
     'send-to-mobile': 'Ctrl+Shift+M',
     'zoom-in': ['Ctrl+=', 'Ctrl+Shift+=', 'Ctrl+Plus', 'Ctrl+Shift+Plus'],
     'zoom-out': ['Ctrl+-', 'Ctrl+_'],
-    'zoom-reset': 'Ctrl+0'
+    'zoom-reset': 'Ctrl+0',
+    'toggle-task-manager': 'Ctrl+Shift+T'
 };
 
 const ACTION_METADATA = {
@@ -103,7 +104,8 @@ const ACTION_METADATA = {
     'send-to-mobile': { label: 'Send Page to Mobile (QR Code)', category: 'Web Interaction' },
     'zoom-in': { label: 'Zoom In', category: 'Web Interaction' },
     'zoom-out': { label: 'Zoom Out', category: 'Web Interaction' },
-    'zoom-reset': { label: 'Reset Zoom (100%)', category: 'Web Interaction' }
+    'zoom-reset': { label: 'Reset Zoom (100%)', category: 'Web Interaction' },
+    'toggle-task-manager': { label: 'Toggle Task Manager (Tab Resource Inspector)', category: 'System' }
 };
 
 let activeKeybinds = { ...DEFAULT_KEYBINDS };

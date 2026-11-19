@@ -77,6 +77,7 @@ The Command Centre gives you rapid, searchable access to all Mise operations, in
 
 | Command Title | Shortcut | Action ID | Description |
 | :--- | :--- | :--- | :--- |
+| **Toggle Task Manager (Tab Resource Inspector)** | `Ctrl+Shift+T` | `toggle-task-manager` | Inspect live CPU and RAM usage (PSS, RSS, USS) per tab and hibernate heavy tabs. |
 | **Hibernate Inactive Tabs** | — | — | Detaches background webviews from DOM to free CPU cycles and RAM. |
 | **Wake All Tabs in Workspace** | — | — | Restores and reconnects all sleeping tabs in the active workspace. |
 

@@ -126,6 +126,7 @@ contextBridge.exposeInMainWorld('miseAPI', {
     refreshFilterLists: () => ipcRenderer.invoke('refresh-filter-lists'),
     getMediaOffloadStatus: () => ipcRenderer.invoke('get-media-offload-status'),
     launchMediaOffload: (url) => ipcRenderer.invoke('launch-media-offload', url),
-    isCandidateMediaUrl: (url) => ipcRenderer.sendSync('is-candidate-media-url', url)
+    isCandidateMediaUrl: (url) => ipcRenderer.sendSync('is-candidate-media-url', url),
+    getTaskManagerMetrics: () => ipcRenderer.invoke('get-task-manager-metrics')
 });
 
