@@ -181,7 +181,7 @@ export const COMMAND_DEFINITIONS = [
         id: 'toggle-history',
         title: 'Toggle Actionable History',
         desc: 'Search, filter by domain, or purge browsing history records',
-        details: 'Opens the searchable history ledger stored locally in SQLite, featuring domain-level filtering and surgical record purging.',
+        details: 'Opens the searchable history ledger stored locally in history.json, featuring instant filtering, single-entry deletion, and full history purging.',
         tip: 'Filter by specific domains to audit past navigation or clear privacy-sensitive sessions.',
         category: 'Tabs & Navigation',
         icon: 'fa-solid fa-clock-rotate-left',
@@ -1426,6 +1426,12 @@ export async function syncPreferencesUI() {
                 allowLocalDocsToggle.checked = !!cfg.allow_local_documents;
             }
 
+            const keepHistoryToggle = document.getElementById('setting-keep-history-toggle');
+            if (keepHistoryToggle) {
+                keepHistoryToggle.checked = cfg.keep_history !== false;
+            }
+            state.keepHistory = cfg.keep_history !== false;
+
             const trustedCertsField = document.getElementById('setting-trusted-certificates');
             if (trustedCertsField) {
                 trustedCertsField.value = Array.isArray(cfg.trusted_certificates) ? cfg.trusted_certificates.join('\n') : '';
@@ -1838,6 +1844,7 @@ export function setupPreferencesListeners() {
             const mediaEnableToggle = document.getElementById('setting-media-offload-enable');
             const mediaQualitySelect = document.getElementById('setting-media-offload-quality');
             const mediaPauseToggle = document.getElementById('setting-media-offload-pause');
+            const keepHistoryToggle = document.getElementById('setting-keep-history-toggle');
 
             const newCfg = {
                 disable_gpu: gpuToggle ? !gpuToggle.checked : false,
@@ -1857,6 +1864,7 @@ export function setupPreferencesListeners() {
                 media_offload_enabled: mediaEnableToggle ? mediaEnableToggle.checked : true,
                 media_offload_quality: mediaQualitySelect ? mediaQualitySelect.value : '1080p',
                 media_offload_pause_tab: mediaPauseToggle ? mediaPauseToggle.checked : true,
+                keep_history: keepHistoryToggle ? keepHistoryToggle.checked : true,
                 custom_search_aliases: state.customSearchAliases || {}
             };
 
@@ -2124,6 +2132,18 @@ export function setupPreferencesListeners() {
             if (window.miseAPI && typeof window.miseAPI.updateBrowserSettings === 'function') {
                 await window.miseAPI.updateBrowserSettings({
                     allow_local_documents: allowLocalDocsToggle.checked
+                });
+            }
+        };
+    }
+
+    const keepHistoryToggle = document.getElementById('setting-keep-history-toggle');
+    if (keepHistoryToggle) {
+        keepHistoryToggle.onchange = async () => {
+            state.keepHistory = keepHistoryToggle.checked;
+            if (window.miseAPI && typeof window.miseAPI.updateBrowserSettings === 'function') {
+                await window.miseAPI.updateBrowserSettings({
+                    keep_history: keepHistoryToggle.checked
                 });
             }
         };

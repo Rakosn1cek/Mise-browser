@@ -35,7 +35,7 @@ The Command Centre gives you rapid, searchable access to all Mise operations, in
 | :--- | :--- | :--- | :--- |
 | **New Blank Tab** | `Ctrl+T` | `spawn-tab` | Creates an isolated webview in the current workspace. |
 | **Focus Status Bar Address Bar** | `Ctrl+L` | `toggle-address` | Focuses status bar address bar with upward query completion and search aliases. |
-| **Toggle Actionable History** | `Ctrl+Shift+H` | `toggle-history` | Local history ledger with domain-level filtering and record purging. |
+| **Toggle Actionable History** | `Ctrl+Shift+H` | `toggle-history` | Local `history.json` ledger with live filtering, single-entry deletion, and full purging. |
 | **Toggle Link Hints Overlay** | `Ctrl+F` | `trigger-hints` | Letter tags overlaid on clickable webpage links for keyboard browsing. |
 | **Trigger Glance Hints (Preview)** | `Ctrl+G` / `gh` | `trigger-glance` | Ephemeral Tab Peek link hints for transient modal previews without creating tabs. |
 | **Find In Page** | `Ctrl+Shift+F` / `/` | `toggle-find` | In-page text search overlay across active webview content. |

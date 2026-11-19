@@ -192,6 +192,7 @@ export async function initializeBrowser() {
             const cfg = await window.miseAPI.getBrowserSettings();
             if (cfg) {
                 initialCfg = cfg;
+                state.keepHistory = cfg.keep_history !== false;
                 if (cfg.theme) savedTheme = cfg.theme;
                 if (typeof cfg.sidebar_auto_collapse === 'boolean') {
                     sidebarAutoCollapse = cfg.sidebar_auto_collapse;

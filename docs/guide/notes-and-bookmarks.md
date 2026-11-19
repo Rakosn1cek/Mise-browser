@@ -72,4 +72,5 @@ Quickmarks are saved in:
 - Press **Ctrl + Shift + H** to open the History overlay.
 - Search through your browsing history in real time.
 - Press **Enter** on any result to open the page.
-- Click **Purge History** to wipe all stored history records from `history.json`.
+- Press **x** or **Delete** (or click the row trash icon) to remove a single history entry, or click **Purge History** to wipe all stored history records from `history.json`.
+- Toggle **Keep History** in Preferences (**Privacy & Protection**) at any time to pause recording future visits without losing existing entries. History is never recorded in the **Private** workspace or ephemeral **Peek** modals.

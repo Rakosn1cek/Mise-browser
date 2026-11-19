@@ -25,6 +25,7 @@ export const state = {
     paletteActive: false,
     preferencesActive: false,
     historyActive: false,
+    keepHistory: true,
     globalPrivateModeActive: false,
     notesActive: false,
     isEditingNotes: false,

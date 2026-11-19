@@ -148,6 +148,20 @@ When the Task Manager (Tab Resource Inspector) overlay is active (`Ctrl + Shift 
 
 ---
 
+## Actionable History Overlay Navigation
+
+When the History overlay is active (`Ctrl + Shift + H`):
+
+| Key | Action |
+| :--- | :--- |
+| `↓` / `↑` | Move selection cursor through matching history entries |
+| `Enter` | Open the highlighted history entry in a new tab |
+| `x` / `Delete` | Remove the highlighted history entry from `history.json` (`x` deletes when search is empty or after list navigation) |
+| `Tab` / `Shift + Tab` | Cycle focus between the search input, Purge History button, and Close button |
+| `Escape` | Dismiss overlay and restore focus to active webview |
+
+---
+
 ## Customising Shortcuts (`keybinds.json`)
 
 Keybindings are decoupled from source code and managed by `keybinds.js`. You can customise any shortcut by editing:

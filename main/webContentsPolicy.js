@@ -2,12 +2,29 @@ const path = require('path');
 const { session } = require('electron');
 const security = require('../security');
 const diagnostics = require('../diagnostics');
-const { logVisit } = require('./storage');
+const { logVisit, updateVisitTitle } = require('./storage');
 const keybinds = require('../keybinds');
 const { showWebviewContextMenu } = require('./contextMenus');
 
 const appDir = path.resolve(__dirname, '..');
 const allowedAssetsDir = path.resolve(appDir, 'assets');
+
+const ephemeralWebContents = new WeakSet();
+let pendingEphemeralCount = 0;
+let pendingEphemeralUntil = 0;
+
+function markNextWebviewEphemeral() {
+    const now = Date.now();
+    if (now > pendingEphemeralUntil) {
+        pendingEphemeralCount = 0;
+    }
+    pendingEphemeralCount++;
+    pendingEphemeralUntil = now + 5000;
+}
+
+function isEphemeralWebContents(wc) {
+    return ephemeralWebContents.has(wc);
+}
 
 function attachWebviewSecurityGuards(windowWebContents, options = {}) {
     if (!windowWebContents) return;
@@ -44,7 +61,12 @@ function setupWebContentsPolicy(app, options = {}) {
         if (webContents.getType() === 'webview') {
             webContents.setMaxListeners(30);
 
+            if (pendingEphemeralCount > 0 && Date.now() <= pendingEphemeralUntil) {
+                pendingEphemeralCount--;
+                ephemeralWebContents.add(webContents);
+            }
             const isPrivate = webContents.session === session.fromPartition('MisePrivateProfile');
+            const isEphemeral = ephemeralWebContents.has(webContents);
 
             webContents.on('will-navigate', (navEvent, navigationUrl) => {
                 if (!navigationUrl || typeof navigationUrl !== 'string') {
@@ -108,10 +130,17 @@ function setupWebContentsPolicy(app, options = {}) {
                 diagnostics.logEvent('warn', 'navigation', 'Blocked unsafe subframe navigation', { url: targetUrl });
             });
 
+            let lastCommittedUrl = '';
+            let lastCommittedTitle = '';
+
             webContents.on('did-navigate', (navEvent, url) => {
-                if (!isPrivate) {
-                    logVisit(webContents.getTitle(), url);
+                if (!isPrivate && !isEphemeral) {
+                    const rawTitle = typeof webContents.getTitle === 'function' ? webContents.getTitle() : '';
+                    // Avoid inheriting the outgoing page title before the new document parses its <title>
+                    const effectiveTitle = (lastCommittedUrl && url !== lastCommittedUrl && rawTitle === lastCommittedTitle) ? '' : rawTitle;
+                    logVisit(effectiveTitle, url);
                 }
+                lastCommittedUrl = url || '';
                 if (url) {
                     try {
                         const parsedUrl = new URL(url);
@@ -125,9 +154,19 @@ function setupWebContentsPolicy(app, options = {}) {
                 }
             });
 
-            webContents.on('did-navigate-in-page', (navEvent, url) => {
-                if (!isPrivate) {
-                    logVisit(webContents.getTitle(), url);
+            webContents.on('did-navigate-in-page', (navEvent, url, isMainFrame) => {
+                if (isMainFrame === false) return;
+                if (!isPrivate && !isEphemeral) {
+                    logVisit(typeof webContents.getTitle === 'function' ? webContents.getTitle() : '', url);
+                }
+                lastCommittedUrl = url || '';
+            });
+
+            webContents.on('page-title-updated', (titleEvent, title) => {
+                lastCommittedTitle = title || '';
+                if (!isPrivate && !isEphemeral) {
+                    const currentUrl = (typeof webContents.getURL === 'function' && webContents.getURL()) || lastCommittedUrl;
+                    updateVisitTitle(title, currentUrl);
                 }
             });
 
@@ -233,5 +272,7 @@ function setupWebContentsPolicy(app, options = {}) {
 
 module.exports = {
     setupWebContentsPolicy,
-    attachWebviewSecurityGuards
+    attachWebviewSecurityGuards,
+    markNextWebviewEphemeral,
+    isEphemeralWebContents
 };

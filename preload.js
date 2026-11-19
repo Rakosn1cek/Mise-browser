@@ -31,6 +31,8 @@ contextBridge.exposeInMainWorld('miseAPI', {
     executeTerminalCommand: (commandStr) => ipcRenderer.send('execute-terminal-command', commandStr),
     searchHistory: (query) => ipcRenderer.invoke('search-history', query),
     purgeHistory: () => ipcRenderer.invoke('purge-history'),
+    deleteHistoryItem: (target) => ipcRenderer.invoke('delete-history-item', target),
+    markNextWebviewEphemeral: () => ipcRenderer.send('mark-next-webview-ephemeral'),
     setNativeTheme: (mode) => ipcRenderer.send('set-native-theme', mode),
     readNotes: () => ipcRenderer.invoke('read-notes'),
     saveNotes: (content) => ipcRenderer.invoke('save-notes', content),

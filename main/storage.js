@@ -21,10 +21,12 @@ const BOOKMARKS_PATH = path.join(CONFIG_DIR, 'bookmarks.json');
 const QUICKMARKS_PATH = path.join(CONFIG_DIR, 'quickmarks.json');
 const historyPath = path.join(CONFIG_DIR, 'history.json');
 const MAX_HISTORY_ITEMS = 500;
+const MAX_HISTORY_TITLE_LENGTH = 512;
 const MAX_STORAGE_SIZE = 5 * 1024 * 1024;
 
 let inMemoryHistory = null;
 let historyFlushTimer = null;
+let keepHistoryEnabled = true;
 
 function isPlainObject(val) {
     return typeof val === 'object' && val !== null && !Array.isArray(val);
@@ -64,26 +66,52 @@ function scheduleHistoryFlush(delayMs = 4000, targetPath = historyPath) {
     }, delayMs);
 }
 
+function setKeepHistoryEnabled(enabled) {
+    keepHistoryEnabled = enabled !== false;
+}
+
+function getKeepHistoryEnabled() {
+    return keepHistoryEnabled;
+}
+
 function isRecordableHistoryUrl(url) {
     if (typeof url !== 'string' || url.length === 0 || url.length > 4096) {
         return false;
     }
     try {
         const parsed = new URL(url);
-        return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+        if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+            return false;
+        }
+        // Reject URLs containing embedded HTTP Basic Auth credentials
+        if (parsed.username || parsed.password) {
+            return false;
+        }
+        return true;
     } catch {
         return false;
     }
 }
 
+function sanitiseHistoryTitle(rawTitle, fallbackUrl = '') {
+    if (typeof rawTitle !== 'string') return fallbackUrl;
+    const clean = rawTitle
+        .replace(/[\r\n\t]+/g, ' ')
+        .replace(/[\u0000-\u001F\u007F-\u009F\u200E\u200F\u202A-\u202E\u2066-\u2069]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, MAX_HISTORY_TITLE_LENGTH);
+    return clean || fallbackUrl;
+}
+
 function logVisit(title, url, maxItems = MAX_HISTORY_ITEMS, targetPath = historyPath) {
-    if (!isRecordableHistoryUrl(url)) return;
+    if (!keepHistoryEnabled || !isRecordableHistoryUrl(url)) return;
 
     const history = getHistoryCache(targetPath);
     if (history.length > 0 && history[0].url === url) return;
 
     const newEntry = {
-        title: title || url,
+        title: sanitiseHistoryTitle(title, url),
         url: url,
         timestamp: Date.now()
     };
@@ -93,6 +121,54 @@ function logVisit(title, url, maxItems = MAX_HISTORY_ITEMS, targetPath = history
         history.length = maxItems;
     }
     scheduleHistoryFlush(4000, targetPath);
+}
+
+function updateVisitTitle(title, url, targetPath = historyPath) {
+    if (!keepHistoryEnabled || !isRecordableHistoryUrl(url) || typeof title !== 'string') {
+        return false;
+    }
+    const cleanTitle = sanitiseHistoryTitle(title, '');
+    if (!cleanTitle || cleanTitle === url) return false;
+
+    const history = getHistoryCache(targetPath);
+    const entry = history.find(item => item && item.url === url);
+    if (!entry || entry.title === cleanTitle) return false;
+
+    entry.title = cleanTitle;
+    scheduleHistoryFlush(4000, targetPath);
+    return true;
+}
+
+function deleteHistoryItem(target, targetPath = historyPath) {
+    try {
+        let targetUrl = '';
+        let targetTimestamp = null;
+        if (typeof target === 'string') {
+            targetUrl = target;
+        } else if (isPlainObject(target)) {
+            targetUrl = typeof target.url === 'string' ? target.url : '';
+            if (typeof target.timestamp === 'number' && Number.isFinite(target.timestamp)) {
+                targetTimestamp = target.timestamp;
+            }
+        }
+        if (!targetUrl || targetUrl.length > 4096) return false;
+
+        const history = getHistoryCache(targetPath);
+        let idx = -1;
+        if (targetTimestamp !== null) {
+            idx = history.findIndex(item => item && item.url === targetUrl && item.timestamp === targetTimestamp);
+        }
+        if (idx === -1) {
+            idx = history.findIndex(item => item && item.url === targetUrl);
+        }
+        if (idx === -1) return false;
+
+        history.splice(idx, 1);
+        flushHistoryToDisk(targetPath);
+        return true;
+    } catch (err) {
+        return false;
+    }
 }
 
 function searchHistory(query, targetPath = historyPath) {
@@ -308,6 +384,10 @@ function registerStorageIpc(ipcMain) {
         return purgeHistory();
     });
 
+    ipcMain.handle('delete-history-item', async (event, target) => {
+        return deleteHistoryItem(target);
+    });
+
     ipcMain.handle('read-bookmarks', async () => {
         return readBookmarks();
     });
@@ -331,12 +411,18 @@ module.exports = {
     QUICKMARKS_PATH,
     historyPath,
     MAX_HISTORY_ITEMS,
+    MAX_HISTORY_TITLE_LENGTH,
+    setKeepHistoryEnabled,
+    getKeepHistoryEnabled,
     isRecordableHistoryUrl,
+    sanitiseHistoryTitle,
     getHistoryCache,
     setInMemoryHistory,
     flushHistoryToDisk,
     scheduleHistoryFlush,
     logVisit,
+    updateVisitTitle,
+    deleteHistoryItem,
     searchHistory,
     purgeHistory,
     readBookmarks,

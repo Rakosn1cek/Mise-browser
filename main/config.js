@@ -59,6 +59,7 @@ const DEFAULT_CONFIG = {
     last_seen_version: null,
     filter_lists: { ...DEFAULT_FILTER_LISTS },
     allow_local_documents: false,
+    keep_history: true,
     media_offload_enabled: true,
     media_offload_quality: '1080p',
     media_offload_pause_tab: true
@@ -116,6 +117,7 @@ function loadBrowserConfig(targetDir = CONFIG_DIR, targetPath = CONFIG_PATH) {
             webview_theme: parsed.webview_theme || 'dark',
             allow_local_certificates: typeof parsed.allow_local_certificates === 'boolean' ? parsed.allow_local_certificates : true,
             allow_local_documents: typeof parsed.allow_local_documents === 'boolean' ? parsed.allow_local_documents : false,
+            keep_history: typeof parsed.keep_history === 'boolean' ? parsed.keep_history : true,
             smooth_scrolling: typeof parsed.smooth_scrolling === 'boolean' ? parsed.smooth_scrolling : false,
             trusted_certificates: Array.isArray(parsed.trusted_certificates) ? parsed.trusted_certificates : [],
             doh_provider: parsed.doh_provider || 'off',
@@ -390,7 +392,8 @@ function validateConfigPatch(patch) {
             case 'show_clock':
             case 'enable_diagnostics':
             case 'show_window_controls':
-            case 'allow_local_documents': {
+            case 'allow_local_documents':
+            case 'keep_history': {
                 if (typeof val === 'boolean') {
                     clean[key] = val;
                 } else {
@@ -669,6 +672,11 @@ function registerConfigIpc(ipcMain, hooks = {}) {
                 before.allow_local_documents !== merged.allow_local_documents &&
                 typeof hooks.onAllowLocalDocumentsChange === 'function') {
                 hooks.onAllowLocalDocumentsChange(merged.allow_local_documents);
+            }
+            if (Object.prototype.hasOwnProperty.call(payload, 'keep_history') &&
+                before.keep_history !== merged.keep_history &&
+                typeof hooks.onKeepHistoryChange === 'function') {
+                hooks.onKeepHistoryChange(merged.keep_history);
             }
             if (Object.prototype.hasOwnProperty.call(payload, 'trusted_certificates') &&
                 JSON.stringify(before.trusted_certificates) !== JSON.stringify(merged.trusted_certificates) &&

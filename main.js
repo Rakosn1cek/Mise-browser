@@ -131,6 +131,7 @@ contextMenus.setMainWindowGetter(getMainWindow);
 // Queue initial command line URLs received on cold start
 const coldBootCfg = loadBrowserConfig();
 security.setAllowLocalDocuments(coldBootCfg.allow_local_documents === true);
+storage.setKeepHistoryEnabled(coldBootCfg.keep_history !== false);
 extractUrlsFromArgs(process.argv).forEach(url => {
     if (security.isSafeTabUrl(url) || security.isAllowedLocalDocumentUrl(url)) dispatchTabUrl(url);
 });
@@ -359,6 +360,7 @@ config.registerConfigIpc(ipcMain, {
     onTrustedDomainsChange: security.setTrustedDomains,
     onAllowLocalCertificatesChange: security.setAllowLocalCertificates,
     onAllowLocalDocumentsChange: security.setAllowLocalDocuments,
+    onKeepHistoryChange: storage.setKeepHistoryEnabled,
     onTrustedCertificatesChange: security.setTrustedCertificates,
     onSpellcheckerChange: applySpellcheckerToAllSessions,
     onDiagnosticsChange: diagnostics.setDiagnosticsEnabled,
@@ -392,15 +394,12 @@ storage.registerStorageIpc(ipcMain);
 ipcMain.handle('get-keybinds', async () => {
     return keybinds.getKeybinds();
 });
-
 ipcMain.handle('save-keybinds', async (event, binds) => {
     return keybinds.saveKeybinds(CONFIG_DIR, binds);
 });
-
 ipcMain.handle('get-action-metadata', async () => {
     return keybinds.getActionMetadata();
 });
-
 ipcMain.handle('reload-keybinds', async () => {
     return keybinds.initializeKeybinds(CONFIG_DIR);
 });
@@ -467,6 +466,8 @@ ipcMain.on('bubble-webview-key', (event, action) => {
         win.webContents.send('master-shortcut', action);
     }
 });
+
+ipcMain.on('mark-next-webview-ephemeral', () => webContentsPolicy.markNextWebviewEphemeral());
 
 webContentsPolicy.setupWebContentsPolicy(app, {
     getMainWindow,
