@@ -1,6 +1,6 @@
 {
   "name": "mise-browser",
-  "version": "1.7.2",
+  "version": "1.7.3",
   "description": "Mise Browser - Electron Edition",
   "main": "main.js",
   "license": "GPL-3.0-or-later",
@@ -107,10 +107,10 @@
     }
   },
   "allowScripts": {
-    "electron@45.3.4": true
+    "electron@45.4.1": true
   },
   "devDependencies": {
-    "electron": "^45.3.4",
+    "electron": "^45.4.1",
     "electron-builder": "^26.15.3",
     "vitepress": "^1.6.4"
   },
