@@ -291,16 +291,8 @@ ipcMain.handle('clear-domain-cookies', async (event, data) => {
     try {
         if (!data || typeof data !== 'object') return false;
         const targetSession = getSessionForContext(data);
-        const parsed = new URL(data.urlStr);
-        const cookies = await targetSession.cookies.get({ domain: parsed.hostname });
-        
-        for (const cookie of cookies) {
-            const protocol = cookie.secure ? 'https://' : 'http://';
-            const domain = cookie.domain.replace(/^\./, '');
-            await targetSession.cookies.remove(`${protocol}${domain}${cookie.path}`, cookie.name);
-        }
-
-        sendSystemNotification('Mise Browser', `Cookies cleared for ${parsed.hostname}`);
+        const hostname = await security.clearDomainSiteData(targetSession, data.urlStr);
+        sendSystemNotification('Mise Browser', `Cookies cleared for ${hostname}`);
         return true;
     } catch (err) {
         sendSystemNotification('Mise Error', `Cookie wipe failed: ${err.message}`);
@@ -334,7 +326,7 @@ ipcMain.handle('clear-workspace-cookies', async (event, workspace) => {
         if (typeof workspace !== 'string' || workspace.length > 100) return false;
         const targetSession = getSessionForContext({ workspace });
         await targetSession.clearStorageData({ storages: ['cookies'] });
-        if (targetSession?.cookies?.flushStore) await targetSession.cookies.flushStore();
+        await security.clearWorkspaceSiteData(targetSession);
         sendSystemNotification('Mise Browser', `Cookies cleared for workspace: ${workspace}`);
         return true;
     } catch (err) {
@@ -470,7 +462,7 @@ ipcMain.on('bubble-webview-key', (event, action) => {
     }
 });
 
-ipcMain.on('mark-next-webview-ephemeral', () => webContentsPolicy.markNextWebviewEphemeral());
+ipcMain.on('mark-next-webview-ephemeral', (_event, targetUrl) => webContentsPolicy.markNextWebviewEphemeral(targetUrl));
 
 webContentsPolicy.setupWebContentsPolicy(app, {
     getMainWindow,

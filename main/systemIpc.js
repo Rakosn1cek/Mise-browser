@@ -299,7 +299,7 @@ function registerSystemIpc(ipcMain, options = {}) {
             throw new Error('Invalid PDF URL specified.');
         }
 
-        security.validatePdfAccess(token, sourceUrl, event.sender ? event.sender.getURL() : '');
+        const resolvedPdfPath = security.validatePdfAccess(token, sourceUrl, event.sender ? event.sender.getURL() : '');
 
         if (sourceUrl.startsWith('file://') || sourceUrl.startsWith('/')) {
             let filePath = sourceUrl;
@@ -311,10 +311,11 @@ function registerSystemIpc(ipcMain, options = {}) {
                 }
             }
             filePath = decodeURIComponent(filePath);
-            if (!fs.existsSync(filePath)) {
-                throw new Error(`Local file not found: ${filePath}`);
+            const safePath = resolvedPdfPath || filePath;
+            if (!fs.existsSync(safePath)) {
+                throw new Error(`Local file not found: ${safePath}`);
             }
-            const data = await fs.promises.readFile(filePath);
+            const data = await fs.promises.readFile(safePath);
             return data;
         }
 
@@ -345,7 +346,7 @@ function registerSystemIpc(ipcMain, options = {}) {
             const { token, options: saveOptions } = payload || {};
             const { url, suggestedName, data } = saveOptions || {};
 
-            security.validatePdfAccess(token, url, event.sender ? event.sender.getURL() : '');
+            const resolvedPdfPath = security.validatePdfAccess(token, url, event.sender ? event.sender.getURL() : '');
 
             let cleanName = suggestedName || 'document.pdf';
             if (!cleanName.toLowerCase().endsWith('.pdf')) cleanName += '.pdf';
@@ -371,7 +372,7 @@ function registerSystemIpc(ipcMain, options = {}) {
             } else if (url && (url.startsWith('file://') || url.startsWith('/'))) {
                 let srcPath = url.startsWith('file://') ? new URL(url).pathname : url;
                 srcPath = decodeURIComponent(srcPath);
-                await fs.promises.copyFile(srcPath, filePath);
+                await fs.promises.copyFile(resolvedPdfPath || srcPath, filePath);
             } else if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
                 const callerSession = event.sender ? event.sender.session : session.defaultSession;
                 const netFetch = (callerSession && callerSession.net && typeof callerSession.net.fetch === 'function')

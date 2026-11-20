@@ -33,7 +33,7 @@ contextBridge.exposeInMainWorld('miseAPI', {
     searchHistory: (query) => ipcRenderer.invoke('search-history', query),
     purgeHistory: () => ipcRenderer.invoke('purge-history'),
     deleteHistoryItem: (target) => ipcRenderer.invoke('delete-history-item', target),
-    markNextWebviewEphemeral: () => ipcRenderer.send('mark-next-webview-ephemeral'),
+    markNextWebviewEphemeral: (targetUrl) => ipcRenderer.send('mark-next-webview-ephemeral', targetUrl),
     setNativeTheme: (mode) => ipcRenderer.send('set-native-theme', mode),
     readNotes: () => ipcRenderer.invoke('read-notes'),
     saveNotes: (content) => ipcRenderer.invoke('save-notes', content),

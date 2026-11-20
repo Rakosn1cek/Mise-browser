@@ -11,16 +11,63 @@ const allowedAssetsDir = path.resolve(appDir, 'assets');
 
 const ephemeralWebContents = new WeakSet();
 const sessionPartitionMap = new WeakMap();
-let pendingEphemeralCount = 0;
-let pendingEphemeralUntil = 0;
+const pendingEphemeralEntries = [];
+const verifiedEphemeralQueue = [];
 
-function markNextWebviewEphemeral() {
-    const now = Date.now();
-    if (now > pendingEphemeralUntil) {
-        pendingEphemeralCount = 0;
+function pruneExpiredEphemeralEntries(now = Date.now()) {
+    for (let i = pendingEphemeralEntries.length - 1; i >= 0; i--) {
+        if (now > pendingEphemeralEntries[i].expiresAt) {
+            pendingEphemeralEntries.splice(i, 1);
+        }
     }
-    pendingEphemeralCount++;
-    pendingEphemeralUntil = now + 5000;
+    for (let i = verifiedEphemeralQueue.length - 1; i >= 0; i--) {
+        if (now > verifiedEphemeralQueue[i].expiresAt) {
+            verifiedEphemeralQueue.splice(i, 1);
+        }
+    }
+}
+
+function markNextWebviewEphemeral(expectedUrl = null) {
+    const now = Date.now();
+    pruneExpiredEphemeralEntries(now);
+    const cleanUrl = (typeof expectedUrl === 'string' && expectedUrl.trim()) ? expectedUrl.trim() : null;
+    pendingEphemeralEntries.push({ expectedUrl: cleanUrl, expiresAt: now + 5000 });
+}
+
+function consumeEphemeralOnAttach(srcUrl) {
+    pruneExpiredEphemeralEntries();
+    if (!srcUrl || typeof srcUrl !== 'string') return;
+    const idx = pendingEphemeralEntries.findIndex(e => e.expectedUrl && e.expectedUrl === srcUrl);
+    if (idx !== -1) {
+        const [entry] = pendingEphemeralEntries.splice(idx, 1);
+        verifiedEphemeralQueue.push({ expectedUrl: entry.expectedUrl, expiresAt: Date.now() + 5000 });
+    }
+}
+
+function consumeEphemeralOnCreated(wcUrl) {
+    pruneExpiredEphemeralEntries();
+    if (verifiedEphemeralQueue.length > 0) {
+        const matchIdx = wcUrl
+            ? verifiedEphemeralQueue.findIndex(e => e.expectedUrl === wcUrl)
+            : 0;
+        if (matchIdx !== -1) {
+            verifiedEphemeralQueue.splice(matchIdx, 1);
+            return true;
+        }
+        if (!wcUrl) {
+            verifiedEphemeralQueue.shift();
+            return true;
+        }
+    }
+    const idx = pendingEphemeralEntries.findIndex(e => {
+        if (e.expectedUrl === null) return true;
+        return Boolean(wcUrl && e.expectedUrl === wcUrl);
+    });
+    if (idx !== -1) {
+        pendingEphemeralEntries.splice(idx, 1);
+        return true;
+    }
+    return false;
 }
 
 function isEphemeralWebContents(wc) {
@@ -38,6 +85,9 @@ function attachWebviewSecurityGuards(windowWebContents, options = {}) {
             event.preventDefault();
             diagnostics.logEvent('warn', 'security', 'Blocked webview attach', { reason: attachDecision.reason });
             return;
+        }
+        if (params && typeof params.src === 'string') {
+            consumeEphemeralOnAttach(params.src);
         }
         const partitionStr = (webPreferences && webPreferences.partition) || (params && params.partition);
         if (partitionStr) {
@@ -66,8 +116,8 @@ function setupWebContentsPolicy(app, options = {}) {
         if (webContents.getType() === 'webview') {
             webContents.setMaxListeners(30);
 
-            if (pendingEphemeralCount > 0 && Date.now() <= pendingEphemeralUntil) {
-                pendingEphemeralCount--;
+            const wcUrl = typeof webContents.getURL === 'function' ? webContents.getURL() : '';
+            if (consumeEphemeralOnCreated(wcUrl)) {
                 ephemeralWebContents.add(webContents);
             }
             const isPrivate = webContents.session === session.fromPartition('MisePrivateProfile');

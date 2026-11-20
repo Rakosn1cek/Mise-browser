@@ -52,7 +52,7 @@ export function openTransientShareModal(targetUrl) {
     }
 
     if (window.miseAPI && typeof window.miseAPI.markNextWebviewEphemeral === 'function') {
-        window.miseAPI.markNextWebviewEphemeral();
+        window.miseAPI.markNextWebviewEphemeral(targetUrl);
     }
     container.appendChild(webview);
     overlay.style.display = 'flex';

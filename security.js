@@ -6,7 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const net = require('net');
-const { app, ipcMain } = require('electron');
+const { app, ipcMain, session } = require('electron');
 
 let blockerInstance = null;
 let blockerInitialisation = null;
@@ -243,8 +243,10 @@ function buildExceptionFilters(domains) {
 function applySpellcheckerLanguage(targetSession, languageCode) {
     if (!targetSession) return;
     try {
+        const isPrivate = session && typeof session.fromPartition === 'function'
+            && targetSession === session.fromPartition('MisePrivateProfile');
         const lang = String(languageCode || '').trim();
-        if (!lang || lang === 'disabled' || lang === 'none') {
+        if (!lang || lang === 'disabled' || lang === 'none' || isPrivate) {
             if (typeof targetSession.setSpellCheckerEnabled === 'function') {
                 targetSession.setSpellCheckerEnabled(false);
             }
@@ -262,6 +264,21 @@ function applySpellcheckerLanguage(targetSession, languageCode) {
     } catch (err) {
         console.error('Failed to configure spellchecker language:', err);
     }
+}
+
+function sanitiseOutgoingReferer(headers, targetUrlStr) {
+    if (!headers || typeof headers !== 'object' || !targetUrlStr) return;
+    const refKey = Object.keys(headers).find(k => k.toLowerCase() === 'referer');
+    if (!refKey || typeof headers[refKey] !== 'string' || !headers[refKey]) return;
+    try {
+        const refUrl = new URL(headers[refKey]);
+        const dstUrl = new URL(targetUrlStr);
+        if (refUrl.protocol === 'https:' && dstUrl.protocol === 'http:') {
+            delete headers[refKey];
+        } else if (refUrl.origin !== dstUrl.origin && (refUrl.protocol === 'http:' || refUrl.protocol === 'https:')) {
+            headers[refKey] = `${refUrl.origin}/`;
+        }
+    } catch (_) {}
 }
 
 const ALLOWED = [
@@ -332,8 +349,11 @@ function hardenSession(targetSession, spellLang = 'en-GB', webrtcPolicy = 'defau
             if (googleSignInUserAgent && isGoogleSignInRequest(details)) {
                 const headers = details.requestHeaders || {};
                 headers['User-Agent'] = googleSignInUserAgent;
+                sanitiseOutgoingReferer(headers, details.url);
                 return callback({ requestHeaders: headers });
             }
+
+            sanitiseOutgoingReferer(details.requestHeaders, details.url);
 
             // Keep unmodified headers on trusted authentication domains
             if (isTrustedDomain(hostname)) {
@@ -798,6 +818,57 @@ function mintPdfViewerUrl(targetUrl) {
     return `file://${viewerPath}?file=${encodeURIComponent(targetUrl)}&token=${token}`;
 }
 
+async function clearDomainSiteData(targetSession, urlStr) {
+    if (!targetSession || typeof urlStr !== 'string') {
+        throw new Error('Invalid session or URL');
+    }
+    const parsed = new URL(urlStr);
+    const seen = new Set();
+    const collected = [];
+
+    if (targetSession.cookies && typeof targetSession.cookies.get === 'function') {
+        const byUrl = await targetSession.cookies.get({ url: parsed.toString() });
+        const byDomain = await targetSession.cookies.get({ domain: parsed.hostname });
+        for (const c of [...(byUrl || []), ...(byDomain || [])]) {
+            const key = `${c.name}\0${c.domain}\0${c.path}`;
+            if (seen.has(key)) continue;
+            seen.add(key);
+            collected.push(c);
+        }
+        for (const cookie of collected) {
+            const protocol = cookie.secure ? 'https://' : 'http://';
+            const domain = String(cookie.domain || '').replace(/^\./, '');
+            if (domain) {
+                await targetSession.cookies.remove(`${protocol}${domain}${cookie.path}`, cookie.name);
+            }
+        }
+    }
+
+    if (typeof targetSession.clearStorageData === 'function') {
+        await targetSession.clearStorageData({
+            origin: parsed.origin,
+            storages: ['localstorage', 'indexdb', 'serviceworkers', 'cachestorage']
+        });
+    }
+
+    if (targetSession.cookies && typeof targetSession.cookies.flushStore === 'function') {
+        await targetSession.cookies.flushStore();
+    }
+    return parsed.hostname;
+}
+
+async function clearWorkspaceSiteData(targetSession) {
+    if (!targetSession) return;
+    if (typeof targetSession.clearStorageData === 'function') {
+        await targetSession.clearStorageData({
+            storages: ['localstorage', 'indexdb', 'serviceworkers', 'cachestorage']
+        });
+    }
+    if (targetSession.cookies && typeof targetSession.cookies.flushStore === 'function') {
+        await targetSession.cookies.flushStore();
+    }
+}
+
 function validatePdfAccess(token, targetUrl, senderUrl) {
     const viewerPath = path.join(__dirname, 'assets', 'pdfjs', 'viewer.html');
     const viewerPrefix = 'file://' + viewerPath;
@@ -817,7 +888,7 @@ function validatePdfAccess(token, targetUrl, senderUrl) {
         throw new Error('Authorisation failure: Capability token does not match requested PDF target.');
     }
 
-    // 3. Path verification: local files must strictly possess a .pdf extension
+    // 3. Path verification: local files must have .pdf extension and pass canonical symlink checks
     if (targetUrl.startsWith('file://') || targetUrl.startsWith('/')) {
         let filePath = targetUrl;
         if (targetUrl.startsWith('file://')) {
@@ -831,7 +902,13 @@ function validatePdfAccess(token, targetUrl, senderUrl) {
         if (!isPdfExtension(filePath)) {
             throw new Error('Authorisation failure: Target local file must possess a .pdf extension.');
         }
+        const val = validateLocalDocumentPath(targetUrl);
+        if (!val.allowed) {
+            throw new Error(`Authorisation failure: Target local PDF path rejected (${val.reason}).`);
+        }
+        return val.resolvedPath;
     }
+    return null;
 }
 
 function isSafeTabUrl(url) {
@@ -1223,8 +1300,11 @@ module.exports = {
     isGoogleInfraHost,
     isPermissionTrustedRequest,
     applySpellcheckerLanguage,
+    sanitiseOutgoingReferer,
     applyWebRTCPolicy,
     clearGoogleAuthCookies,
+    clearDomainSiteData,
+    clearWorkspaceSiteData,
     setGoogleSignInUserAgent,
     getGoogleSignInUserAgent,
     isGoogleSignInRequest,
