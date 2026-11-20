@@ -333,14 +333,32 @@ if (!isTrustedSite) {
     }
 
     const codeToInject = `(function() {
-        if (window.__miseFingerprintPatchesApplied) return;
-        window.__miseFingerprintPatchesApplied = true;
+        const nativeMaskMap = new WeakMap();
+        const origFnToString = Function.prototype.toString;
+        const markNative = (fn, name) => {
+            if (typeof fn === 'function') {
+                const fnName = name !== undefined ? name : (fn.name || '');
+                nativeMaskMap.set(fn, 'function ' + fnName + '() { [native code] }');
+            }
+            return fn;
+        };
+        Function.prototype.toString = markNative(function toString() {
+            if (nativeMaskMap.has(this)) return nativeMaskMap.get(this);
+            return origFnToString.apply(this, arguments);
+        }, 'toString');
 
         ${webrtcBlockScript}
 
+        const defineNativeGetter = (obj, prop, getter) => {
+            Object.defineProperty(obj, prop, {
+                get: markNative(getter, 'get ' + prop),
+                configurable: true
+            });
+        };
+
         // Privacy signals
-        Object.defineProperty(navigator, 'doNotTrack', { get: () => '1', configurable: true });
-        Object.defineProperty(navigator, 'globalPrivacyControl', { get: () => true, configurable: true });
+        defineNativeGetter(navigator, 'doNotTrack', () => '1');
+        defineNativeGetter(navigator, 'globalPrivacyControl', () => true);
 
         // Domain-bound hardware specification standardisation
         const hostStr = String(window.location.hostname || '');
@@ -351,13 +369,13 @@ if (!isTrustedSite) {
         hostHash = Math.abs(hostHash);
 
         const domainConcurrency = (hostHash % 2 === 0) ? 8 : 12;
-        Object.defineProperty(navigator, 'hardwareConcurrency', { get: () => domainConcurrency, configurable: true });
-        Object.defineProperty(navigator, 'deviceMemory', { get: () => 8, configurable: true });
-        Object.defineProperty(navigator, 'platform', { get: () => 'Linux x86_64', configurable: true });
-        Object.defineProperty(navigator, 'language', { get: () => 'en-GB', configurable: true });
-        Object.defineProperty(navigator, 'languages', { get: () => Object.freeze(['en-GB', 'en-US', 'en']), configurable: true });
+        defineNativeGetter(navigator, 'hardwareConcurrency', () => domainConcurrency);
+        defineNativeGetter(navigator, 'deviceMemory', () => 8);
+        defineNativeGetter(navigator, 'platform', () => 'Linux x86_64');
+        defineNativeGetter(navigator, 'language', () => 'en-GB');
+        defineNativeGetter(navigator, 'languages', () => Object.freeze(['en-GB', 'en-US', 'en']));
 
-        // Domain-bound plugin farbling for cross-domain randomization detection
+        // Domain-bound plugin farbling for cross-domain randomisation detection
         try {
             if (navigator.plugins && navigator.plugins.length) {
                 const isEvenDomain = (hostHash % 2 === 0);
@@ -378,7 +396,7 @@ if (!isTrustedSite) {
                             return target[prop];
                         }
                     });
-                    Object.defineProperty(navigator, 'plugins', { get: () => proxiedPlugins, configurable: true });
+                    defineNativeGetter(navigator, 'plugins', () => proxiedPlugins);
                 }
             }
         } catch (e) {}
@@ -389,25 +407,31 @@ if (!isTrustedSite) {
             .replace(new RegExp('Electron/[0-9.]+\\\\s*', 'gi'), '')
             .replace(new RegExp('Chrome/(\\\\d+)\\\\.[\\\\d.]+', 'i'), 'Chrome/$1.0.0.0')
             .trim();
-        Object.defineProperty(navigator, 'userAgent', { get: () => cleanUserAgent, configurable: true });
-        Object.defineProperty(navigator, 'appVersion', { get: () => cleanUserAgent.replace(new RegExp('^Mozilla/'), ''), configurable: true });
-
-        try {
-            const origResolvedOptions = Intl.DateTimeFormat.prototype.resolvedOptions;
-            Intl.DateTimeFormat.prototype.resolvedOptions = function() {
-                const res = origResolvedOptions.apply(this, arguments);
-                res.timeZone = 'Europe/London';
-                return res;
-            };
-        } catch (e) {}
+        defineNativeGetter(navigator, 'userAgent', () => cleanUserAgent);
+        defineNativeGetter(navigator, 'appVersion', () => cleanUserAgent.replace(new RegExp('^Mozilla/'), ''));
 
         const chromeMatch = (navigator.userAgent || '').match(new RegExp('Chrome/(\\\\d+)\\\\.([\\\\d.]+)'));
         const chromeMajor = chromeMatch ? chromeMatch[1] : (typeof process !== 'undefined' && process.versions && process.versions.chrome ? process.versions.chrome.split('.')[0] : '132');
         const chromeFull = chromeMajor + '.0.0.0';
 
         if (navigator.userAgentData) {
+            const highEntropyGetter = markNative(function getHighEntropyValues() {
+                return Promise.resolve({
+                    architecture: 'x86',
+                    bitness: '64',
+                    brands: [
+                        { brand: 'Chromium', version: chromeMajor },
+                        { brand: 'Google Chrome', version: chromeMajor }
+                    ],
+                    mobile: false,
+                    model: '',
+                    platform: 'Linux',
+                    platformVersion: '',
+                    uaFullVersion: chromeFull
+                });
+            }, 'getHighEntropyValues');
             Object.defineProperty(navigator, 'userAgentData', {
-                get: function() {
+                get: markNative(function() {
                     return {
                         brands: [
                             { brand: 'Chromium', version: chromeMajor },
@@ -416,40 +440,26 @@ if (!isTrustedSite) {
                         ],
                         mobile: false,
                         platform: 'Linux',
-                        getHighEntropyValues: function() {
-                            return Promise.resolve({
-                                architecture: 'x86',
-                                bitness: '64',
-                                brands: [
-                                    { brand: 'Chromium', version: chromeMajor },
-                                    { brand: 'Google Chrome', version: chromeMajor }
-                                ],
-                                mobile: false,
-                                model: '',
-                                platform: 'Linux',
-                                platformVersion: '',
-                                uaFullVersion: chromeFull
-                            });
-                        }
+                        getHighEntropyValues: highEntropyGetter
                     };
-                }
+                }, 'get userAgentData')
             });
         }
 
-        // WebGL Spoofing and Extension Shuffle on prototypes (matching Brave's Brave~Brave baseline)
+        // WebGL spoofing and extension shuffle on prototypes
         const spoofWebGlPrototype = (proto) => {
             if (!proto || !proto.getParameter) return;
             const origGetParam = proto.getParameter;
-            proto.getParameter = function(param) {
+            proto.getParameter = markNative(function getParameter(param) {
                 if (param === 37445 || param === 0x9245) return 'Google Inc. (Intel)';
                 if (param === 37446 || param === 0x9246) return 'ANGLE (Intel, Mesa Intel(R) UHD Graphics 620 (KBL GT2), OpenGL 4.6)';
                 if (param === 7936 || param === 0x1F00) return 'WebKit';
                 if (param === 7937 || param === 0x1F01) return 'WebKit WebGL';
                 return origGetParam.apply(this, arguments);
-            };
+            }, 'getParameter');
 
             const origGetExt = proto.getExtension;
-            proto.getExtension = function(name) {
+            proto.getExtension = markNative(function getExtension(name) {
                 if (name === 'WEBGL_debug_renderer_info') {
                     return {
                         UNMASKED_VENDOR_WEBGL: 37445,
@@ -457,10 +467,10 @@ if (!isTrustedSite) {
                     };
                 }
                 return origGetExt.apply(this, arguments);
-            };
+            }, 'getExtension');
 
             const origGetSupportedExtensions = proto.getSupportedExtensions;
-            proto.getSupportedExtensions = function() {
+            proto.getSupportedExtensions = markNative(function getSupportedExtensions() {
                 const list = origGetSupportedExtensions.apply(this, arguments);
                 if (!list) return list;
                 const shuffled = list.slice();
@@ -471,11 +481,11 @@ if (!isTrustedSite) {
                     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
                 }
                 return shuffled;
-            };
+            }, 'getSupportedExtensions');
 
             if (proto.readPixels) {
                 const origReadPixels = proto.readPixels;
-                proto.readPixels = function() {
+                proto.readPixels = markNative(function readPixels() {
                     origReadPixels.apply(this, arguments);
                     const pixels = arguments[6];
                     if (pixels && pixels.length) {
@@ -484,7 +494,7 @@ if (!isTrustedSite) {
                             pixels[i] = Math.min(255, Math.max(0, pixels[i] + delta));
                         }
                     }
-                };
+                }, 'readPixels');
             }
         };
 
@@ -526,7 +536,7 @@ if (!isTrustedSite) {
             } catch (e) {}
         };
 
-        HTMLCanvasElement.prototype.toDataURL = function() {
+        HTMLCanvasElement.prototype.toDataURL = markNative(function toDataURL() {
             try {
                 const ctx2d = this.getContext('2d');
                 if (ctx2d) {
@@ -547,9 +557,9 @@ if (!isTrustedSite) {
                 }
             } catch (e) {}
             return origToDataURL.apply(this, arguments);
-        };
+        }, 'toDataURL');
 
-        HTMLCanvasElement.prototype.toBlob = function(callback, type, quality) {
+        HTMLCanvasElement.prototype.toBlob = markNative(function toBlob(callback, type, quality) {
             try {
                 const ctx2d = this.getContext('2d');
                 if (ctx2d) {
@@ -557,9 +567,9 @@ if (!isTrustedSite) {
                 }
             } catch (e) {}
             return origToBlob.apply(this, arguments);
-        };
+        }, 'toBlob');
 
-        CanvasRenderingContext2D.prototype.getImageData = function() {
+        CanvasRenderingContext2D.prototype.getImageData = markNative(function getImageData() {
             const imgData = origGetImageData.apply(this, arguments);
             if (imgData && imgData.data) {
                 const d = imgData.data;
@@ -573,12 +583,12 @@ if (!isTrustedSite) {
                 }
             }
             return imgData;
-        };
+        }, 'getImageData');
 
         // Audio Farbling
         if (typeof AudioBuffer !== 'undefined') {
             const origGetChannelData = AudioBuffer.prototype.getChannelData;
-            AudioBuffer.prototype.getChannelData = function(channel) {
+            AudioBuffer.prototype.getChannelData = markNative(function getChannelData(channel) {
                 const results = origGetChannelData.apply(this, arguments);
                 if (results && results.length >= 100) {
                     const start = Math.min(results.length - 1, 4500);
@@ -589,7 +599,7 @@ if (!isTrustedSite) {
                     }
                 }
                 return results;
-            };
+            }, 'getChannelData');
         }
     })();`;
 
@@ -642,6 +652,9 @@ function isEditableElement(el) {
     if (tag === 'BUTTON' || role === 'button' || tag.includes('BUTTON')) {
         return false;
     }
+    if (tag === 'IFRAME' || tag === 'OBJECT' || tag === 'EMBED') {
+        return true;
+    }
     if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
         const type = (el.type || '').toLowerCase();
         if (['button', 'submit', 'reset', 'checkbox', 'radio', 'image'].includes(type)) {
@@ -652,14 +665,24 @@ function isEditableElement(el) {
     if (el.isContentEditable || el.contentEditable === 'true') {
         return true;
     }
-    if (role === 'textbox' || role === 'searchbox' || role === 'combobox') {
+    if (role === 'textbox' || role === 'searchbox' || role === 'combobox' || role === 'spinbutton') {
         return true;
     }
-    if (tag.includes('-') && (tag.includes('SEARCH') || tag.includes('INPUT') || tag.includes('TEXT') || tag.includes('FIELD') || tag.includes('EDITOR') || tag.includes('COMPOSER'))) {
+    if (typeof el.hasAttribute === 'function') {
+        const inputMode = (el.getAttribute('inputmode') || '').toLowerCase();
+        if (el.hasAttribute('inputmode') && inputMode !== 'none') {
+            return true;
+        }
+        const autoComplete = (el.getAttribute('autocomplete') || '').toLowerCase();
+        if (tag !== 'FORM' && el.hasAttribute('autocomplete') && autoComplete !== 'off') {
+            return true;
+        }
+    }
+    if (tag.includes('-') && (tag.includes('SEARCH') || tag.includes('INPUT') || tag.includes('TEXT') || tag.includes('FIELD') || tag.includes('EDITOR') || tag.includes('COMPOSER') || tag.includes('PIN') || tag.includes('OTP') || tag.includes('CODE') || tag.includes('CARD') || tag.includes('PAY') || tag.includes('AUTH'))) {
         return true;
     }
     if (typeof el.closest === 'function') {
-        const parentEditable = el.closest('[contenteditable="true"], input, textarea, [role="textbox"], [role="searchbox"]');
+        const parentEditable = el.closest('[contenteditable="true"], input, textarea, [role="textbox"], [role="searchbox"], [role="spinbutton"], [inputmode]:not([inputmode="none"])');
         if (parentEditable) return true;
     }
     return false;

@@ -160,7 +160,7 @@ if (window.miseAPI && typeof window.miseAPI.onMasterShortcut === 'function') {
     window.miseAPI.onMasterShortcut((action, ...args) => {
         switch (action) {
             case 'spawn-tab': spawnNewBlankTab(); break;
-            case 'spawn-tab-with-url': spawnTabWithUrl(args[0]); break;
+            case 'spawn-tab-with-url': spawnTabWithUrl(args[0], args[1]); break;
             case 'open-link-in-split': openUrlInSplit(args[0]); break;
             case 'open-transient-share': openTransientShareModal(args[0]); break;
             case 'toggle-address': displayAddressOverlay(); break;

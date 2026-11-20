@@ -13,6 +13,7 @@ contextBridge.exposeInMainWorld('miseAPI', {
     getWelcomePath: () => ipcRenderer.sendSync('get-welcome-path'),
     getErrorPageUrl: (targetUrl, errorCode, errorDesc) => ipcRenderer.sendSync('get-error-page-url', targetUrl, errorCode, errorDesc),
     trustCertificateHost: (host) => ipcRenderer.invoke('trust-certificate-host', host),
+    isCertificateTrustedHost: (host) => ipcRenderer.sendSync('is-certificate-trusted-host', host),
     isLocalOrPrivateHost: (host) => ipcRenderer.sendSync('is-local-or-private-host', host),
     validateLocalDocumentPath: (targetPath) => ipcRenderer.sendSync('validate-local-document-path', targetPath),
     isAllowedLocalDocumentUrl: (url) => ipcRenderer.sendSync('is-allowed-local-document-url', url),

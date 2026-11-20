@@ -10,6 +10,7 @@ const appDir = path.resolve(__dirname, '..');
 const allowedAssetsDir = path.resolve(appDir, 'assets');
 
 const ephemeralWebContents = new WeakSet();
+const sessionPartitionMap = new WeakMap();
 let pendingEphemeralCount = 0;
 let pendingEphemeralUntil = 0;
 
@@ -39,8 +40,12 @@ function attachWebviewSecurityGuards(windowWebContents, options = {}) {
             return;
         }
         const partitionStr = (webPreferences && webPreferences.partition) || (params && params.partition);
-        if (partitionStr && options && typeof options.configureAndHardenSession === 'function') {
-            options.configureAndHardenSession(session.fromPartition(partitionStr));
+        if (partitionStr) {
+            const targetSess = session.fromPartition(partitionStr);
+            sessionPartitionMap.set(targetSess, partitionStr);
+            if (options && typeof options.configureAndHardenSession === 'function') {
+                options.configureAndHardenSession(targetSess);
+            }
         }
     });
 }
@@ -184,14 +189,21 @@ function setupWebContentsPolicy(app, options = {}) {
                             try {
                                 const cur = new URL(currentUrl);
                                 const tgt = new URL(details.url);
-                                if (cur.origin === tgt.origin && cur.pathname === tgt.pathname) {
+                                if (cur.origin === tgt.origin && cur.pathname === tgt.pathname && cur.search === tgt.search) {
                                     return { action: 'deny' };
                                 }
                             } catch (_) {}
                         }
                         const win = resolveMainWindow();
                         if (win && win.webContents) {
-                            win.webContents.send('master-shortcut', 'spawn-tab-with-url', details.url);
+                            const openerPartition = webContents.session === session.fromPartition('MisePrivateProfile')
+                                ? 'MisePrivateProfile'
+                                : (sessionPartitionMap.get(webContents.session) || null);
+                            if (openerPartition) {
+                                win.webContents.send('master-shortcut', 'spawn-tab-with-url', details.url, openerPartition);
+                            } else {
+                                win.webContents.send('master-shortcut', 'spawn-tab-with-url', details.url);
+                            }
                         }
                     } else {
                         let scheme = 'unknown';

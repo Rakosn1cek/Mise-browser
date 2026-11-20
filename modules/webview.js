@@ -333,7 +333,7 @@ export function createWebView(url, currentWS, idx) {
             try {
                 const cur = new URL(currentUrl);
                 const tgt = new URL(targetUrl);
-                if (cur.origin === tgt.origin && cur.pathname === tgt.pathname) {
+                if (cur.origin === tgt.origin && cur.pathname === tgt.pathname && cur.search === tgt.search) {
                     return;
                 }
             } catch (_) {}
@@ -1132,7 +1132,7 @@ export async function spawnNewBlankTab() {
     }
 }
 
-export function spawnTabWithUrl(url) {
+export function spawnTabWithUrl(url, targetPartition = null) {
     if (state.dashboardActive && typeof window.toggleDashboardView === 'function') {
         window.toggleDashboardView();
     }
@@ -1161,7 +1161,19 @@ export function spawnTabWithUrl(url) {
         }
     }
 
-    const currentWS = state.sessionState.current_workspace;
+    let currentWS = state.sessionState.current_workspace;
+    if (targetPartition && typeof targetPartition === 'string') {
+        if (targetPartition === 'MisePrivateProfile') {
+            const privWs = Object.keys(state.sessionState.workspaces || {}).find(ws => getWorkspacePartition(ws) === 'MisePrivateProfile') || 'Private';
+            currentWS = privWs;
+        } else {
+            const matchedWs = Object.keys(state.sessionState.workspaces || {}).find(ws => getWorkspacePartition(ws) === targetPartition);
+            if (matchedWs) currentWS = matchedWs;
+        }
+        if (state.sessionState.current_workspace !== currentWS) {
+            state.sessionState.current_workspace = currentWS;
+        }
+    }
     if (!state.sessionState.workspaces[currentWS]) state.sessionState.workspaces[currentWS] = [];
     state.sessionState.workspaces[currentWS].push(url || "https://duckduckgo.com");
     window.miseAPI.saveSession(state.sessionState);

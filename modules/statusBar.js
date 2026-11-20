@@ -251,11 +251,18 @@ export function updateSecurityStatus(url) {
             const isLocal = typeof window !== 'undefined' && window.miseAPI && typeof window.miseAPI.isLocalOrPrivateHost === 'function'
                 ? window.miseAPI.isLocalOrPrivateHost(parsed.hostname)
                 : false;
+            const isTrustedException = typeof window !== 'undefined' && window.miseAPI && typeof window.miseAPI.isCertificateTrustedHost === 'function'
+                ? window.miseAPI.isCertificateTrustedHost(parsed.host)
+                : false;
 
             if (isLocal) {
                 securityBadgeEl.innerHTML = '<i class="fa-solid fa-shield-halved"></i><span class="status-badge-text">LOCAL TLS</span>';
                 securityBadgeEl.className = 'status-badge status-badge-security security-local';
                 securityBadgeEl.title = `Local connection with self-signed certificate | Host: ${parsed.hostname}`;
+            } else if (isTrustedException) {
+                securityBadgeEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i><span class="status-badge-text">TLS EXCEPTION</span>';
+                securityBadgeEl.className = 'status-badge status-badge-security security-local';
+                securityBadgeEl.title = `Untrusted certificate exception bypassed | Host: ${parsed.host}`;
             } else {
                 securityBadgeEl.innerHTML = '<i class="fa-solid fa-lock"></i><span class="status-badge-text">HTTPS</span>';
                 securityBadgeEl.className = 'status-badge status-badge-security security-secure';

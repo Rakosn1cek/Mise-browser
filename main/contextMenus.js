@@ -289,9 +289,13 @@ function buildWebviewContextMenu(params, webContents, options = {}) {
         menu.append(new MenuItem({
             label: 'Save Image As...',
             click: () => {
-                const win = resolveWindowLocal();
-                if (win && win.webContents) {
-                    win.webContents.downloadURL(params.srcURL);
+                const rawSrc = params.srcURL;
+                if (!rawSrc || typeof rawSrc !== 'string') return;
+                const isAllowedSrc = /^(https?:\/\/|data:image\/|blob:)/i.test(rawSrc.trim());
+                if (!isAllowedSrc) return;
+                const canUseGuest = webContents && (typeof webContents.isDestroyed !== 'function' || !webContents.isDestroyed());
+                if (canUseGuest && typeof webContents.downloadURL === 'function') {
+                    webContents.downloadURL(rawSrc);
                 }
             }
         }));
@@ -379,7 +383,6 @@ function buildWebviewContextMenu(params, webContents, options = {}) {
             if (selectedSnippet) {
                 emailSubject = `Snippet from: ${pageTitle}`;
                 emailBody = `${selectedSnippet}\n\nSource: ${currentUrl}`;
-                clipboard.writeText(selectedSnippet);
             } else if (imageSrc) {
                 emailSubject = `Image from: ${pageTitle}`;
                 emailBody = `${imageSrc}\n\nPage: ${currentUrl}`;

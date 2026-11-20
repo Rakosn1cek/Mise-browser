@@ -510,17 +510,37 @@ function registerSystemIpc(ipcMain, options = {}) {
         if (!host || typeof host !== 'string' || host.length > 255) return false;
         const cleanHost = host.trim().toLowerCase();
         security.addTrustedCertificate(cleanHost);
+        let hostOnly = cleanHost;
         try {
-            const { loadBrowserConfig, writeConfigFile } = require('./config');
-            const cfg = loadBrowserConfig();
-            const existing = Array.isArray(cfg.trusted_certificates) ? cfg.trusted_certificates : [];
-            if (!existing.includes(cleanHost)) {
-                existing.push(cleanHost);
-                cfg.trusted_certificates = existing;
-                writeConfigFile(cfg);
-            }
+            hostOnly = new URL('https://' + cleanHost).hostname.toLowerCase();
         } catch (_) {}
+        if (security.isLocalOrPrivateHost(hostOnly)) {
+            try {
+                const { loadBrowserConfig, writeConfigFile } = require('./config');
+                const cfg = loadBrowserConfig();
+                const existing = Array.isArray(cfg.trusted_certificates) ? cfg.trusted_certificates : [];
+                if (!existing.includes(cleanHost)) {
+                    existing.push(cleanHost);
+                    cfg.trusted_certificates = existing;
+                    writeConfigFile(cfg);
+                }
+            } catch (_) {}
+        }
         return true;
+    });
+
+    ipcMain.on('is-certificate-trusted-host', (event, host) => {
+        if (!host || typeof host !== 'string') {
+            event.returnValue = false;
+            return;
+        }
+        const cleanHost = host.trim().toLowerCase();
+        let hostOnly = cleanHost;
+        try {
+            hostOnly = new URL('https://' + cleanHost).hostname.toLowerCase();
+        } catch (_) {}
+        const trusted = security.getTrustedCertificates();
+        event.returnValue = trusted.includes(cleanHost) || trusted.includes(hostOnly);
     });
 
     ipcMain.on('is-local-or-private-host', (event, host) => {

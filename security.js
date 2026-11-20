@@ -1169,7 +1169,18 @@ function isCertificateAllowed(urlString, context = {}) {
         const hostname = parsed.hostname.toLowerCase();
 
         if (trustedCertificates.has(host) || trustedCertificates.has(hostname)) {
-            return true;
+            const isMainFrame = !!context.isMainFrame;
+            const topLevelUrl = context.topLevelUrl || '';
+            if (isMainFrame || !topLevelUrl) {
+                return true;
+            }
+            try {
+                const topParsed = new URL(topLevelUrl);
+                if (topParsed.host.toLowerCase() === host || topParsed.hostname.toLowerCase() === hostname) {
+                    return true;
+                }
+            } catch (_) {}
+            return false;
         }
 
         if (allowLocalCertificates && isLocalOrPrivateHost(hostname)) {
