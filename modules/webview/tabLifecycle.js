@@ -151,12 +151,17 @@ export async function injectMatchingUserContent(webview) {
     if (!webview || typeof webview.getURL !== 'function') return;
     const currentUrl = webview.getURL();
     if (!currentUrl || currentUrl.startsWith('about:') || currentUrl.startsWith('devtools:')) return;
-    if (!window.miseAPI || typeof window.miseAPI.getUserContentForUrl !== 'function') return;
+
+    const isPrivate = typeof webview.getAttribute === 'function' && webview.getAttribute('partition') === 'MisePrivateProfile';
+    const fetchContent = isPrivate
+        ? (window.miseAPI && typeof window.miseAPI.getUserStylesForUrl === 'function' ? window.miseAPI.getUserStylesForUrl : null)
+        : (window.miseAPI && typeof window.miseAPI.getUserContentForUrl === 'function' ? window.miseAPI.getUserContentForUrl : null);
+    if (!fetchContent) return;
 
     const navEpoch = webview.__miseNavigationEpoch || 0;
 
     try {
-        const content = await window.miseAPI.getUserContentForUrl(currentUrl);
+        const content = await fetchContent(currentUrl);
         if (!content) return;
 
         // Abort if page navigated or started loading a new destination while awaiting IPC lookup
@@ -186,7 +191,7 @@ export async function injectMatchingUserContent(webview) {
             webview.__miseInjectedScriptIds = new Set();
         }
 
-        if (Array.isArray(content.scripts)) {
+        if (!isPrivate && Array.isArray(content.scripts)) {
             for (const item of content.scripts) {
                 const scriptId = item.scriptId || item.filename || item.name;
                 if (webview.__miseInjectedScriptIds.has(scriptId)) {

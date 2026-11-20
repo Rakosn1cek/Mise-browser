@@ -6,7 +6,7 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-const { app, shell, ipcMain, net } = require('electron');
+const { app, shell, ipcMain, net, session } = require('electron');
 const dns = require('dns');
 const nodeNet = require('net');
 const crypto = require('crypto');
@@ -290,6 +290,14 @@ function validateTokenSender(tokenData, event) {
         throw new Error('Authorisation failure: Unable to verify GM token sender');
     }
 
+    try {
+        if (session && typeof session.fromPartition === 'function' && event.sender.session === session.fromPartition('MisePrivateProfile')) {
+            throw new Error('Authorisation failure: Userscripts are disabled in Private profile');
+        }
+    } catch (err) {
+        if (err && err.message && err.message.includes('Authorisation failure')) throw err;
+    }
+
     if (event.senderFrame === null) {
         throw new Error('Authorisation failure: Sender frame mismatch');
     }
@@ -516,9 +524,10 @@ async function validateRequestDestination(targetUrl, tokenData) {
         throw new Error(`Unsupported protocol "${protocol}". Only http: and https: requests are permitted`);
     }
 
-    // Verify @grant authorisation if grants are declared by the userscript
-    if (tokenData && Array.isArray(tokenData.grants) && tokenData.grants.length > 0) {
-        const hasNetGrant = tokenData.grants.some(g => {
+    // Require explicit @grant declaration for GM_xmlhttpRequest (fail closed)
+    if (tokenData) {
+        const grants = Array.isArray(tokenData.grants) ? tokenData.grants : [];
+        const hasNetGrant = grants.some(g => {
             const lower = String(g).trim().toLowerCase();
             return lower === 'gm_xmlhttprequest' || lower === 'gm.xmlhttprequest' || lower === '*' || lower === 'gm_*';
         });
@@ -584,7 +593,7 @@ async function validateRequestDestination(targetUrl, tokenData) {
 
 function hasStorageGrant(tokenData) {
     if (!tokenData || !Array.isArray(tokenData.grants) || tokenData.grants.length === 0) {
-        return true;
+        return false;
     }
     return tokenData.grants.some(g => {
         const lower = String(g).trim().toLowerCase();
@@ -1053,34 +1062,35 @@ function parseUserStyleMetadata(content, filename) {
 }
 
 function urlMatchesRule(url, meta) {
-    if (!url || typeof url !== 'string') return false;
+    if (!url || typeof url !== 'string' || !meta || typeof meta !== 'object') return false;
     if (url.startsWith('about:') || url.startsWith('chrome:') || url.startsWith('devtools:')) {
         return false;
     }
 
-    if (Array.isArray(meta.excludeRegexes) && meta.excludeRegexes.length > 0) {
-        for (const regex of meta.excludeRegexes) {
-            if (regex && regex.test(url)) return false;
-        }
+    const matchRegexes = (Array.isArray(meta.matchRegexes) && meta.matchRegexes.length > 0)
+        ? meta.matchRegexes
+        : (Array.isArray(meta.matches) ? meta.matches.map(patternToRegex).filter(Boolean) : []);
+    const includeRegexes = (Array.isArray(meta.includeRegexes) && meta.includeRegexes.length > 0)
+        ? meta.includeRegexes
+        : (Array.isArray(meta.includes) ? meta.includes.map(patternToRegex).filter(Boolean) : []);
+    const excludeRegexes = (Array.isArray(meta.excludeRegexes) && meta.excludeRegexes.length > 0)
+        ? meta.excludeRegexes
+        : (Array.isArray(meta.excludes) ? meta.excludes.map(patternToRegex).filter(Boolean) : []);
+
+    for (const regex of excludeRegexes) {
+        if (regex && regex.test(url)) return false;
     }
 
-    const hasExplicitMatches = (meta.matchRegexes && meta.matchRegexes.length > 0) ||
-                               (meta.includeRegexes && meta.includeRegexes.length > 0);
-
-    if (!hasExplicitMatches) {
-        return url.startsWith('http://') || url.startsWith('https://');
+    if (matchRegexes.length === 0 && includeRegexes.length === 0) {
+        return false;
     }
 
-    if (Array.isArray(meta.matchRegexes)) {
-        for (const regex of meta.matchRegexes) {
-            if (regex && regex.test(url)) return true;
-        }
+    for (const regex of matchRegexes) {
+        if (regex && regex.test(url)) return true;
     }
 
-    if (Array.isArray(meta.includeRegexes)) {
-        for (const regex of meta.includeRegexes) {
-            if (regex && regex.test(url)) return true;
-        }
+    for (const regex of includeRegexes) {
+        if (regex && regex.test(url)) return true;
     }
 
     return false;
@@ -1323,7 +1333,7 @@ function getMatchingUserContent(targetUrl) {
                 code: item.code,
                 runAt: item.meta.runAt,
                 meta: item.meta,
-                storage: loadScriptStorage(scriptId),
+                storage: hasStorageGrant(item.meta) ? loadScriptStorage(scriptId) : Object.create(null),
                 token: generateScriptToken(scriptId, hostname, item.meta.connects, item.meta.grants, pageOrigin)
             });
         }

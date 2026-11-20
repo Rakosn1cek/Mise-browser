@@ -200,7 +200,7 @@ window.addEventListener('mise-error-action', (e) => {
     }
 });
 
-// Expose minimal, secure GM bridge for userscript execution
+// Expose minimal, secure GM bridge for userscript execution and lock it in main world
 try {
     if (contextBridge && typeof contextBridge.exposeInMainWorld === 'function') {
         contextBridge.exposeInMainWorld('__miseGMBridge', {
@@ -209,6 +209,22 @@ try {
             deleteStorageValue: (token, scriptId, key) => ipcRenderer.invoke('gm-storage-delete', { token, scriptId, key }),
             getStorage: (token, scriptId) => ipcRenderer.invoke('gm-storage-get', { token, scriptId })
         });
+        if (window.location.protocol === 'http:' || window.location.protocol === 'https:' || window.location.protocol === 'file:') {
+            webFrame.executeJavaScript(`(function() {
+                try {
+                    var bridge = window.__miseGMBridge;
+                    if (bridge) {
+                        Object.freeze(bridge);
+                        Object.defineProperty(window, '__miseGMBridge', {
+                            value: bridge,
+                            writable: false,
+                            configurable: false,
+                            enumerable: false
+                        });
+                    }
+                } catch (_) {}
+            })();`);
+        }
     }
 } catch (err) {}
 

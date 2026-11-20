@@ -228,7 +228,9 @@ function buildExceptionFilters(domains) {
     });
 
     allDomains.forEach(domain => {
-        // Whitelist all sub-resources, scripts, beacons, and websocket frames
+        // Whitelist document, subdocuments, and all sub-resources on trusted origins
+        filters.push(`@@||${domain}^$document,important`);
+        filters.push(`@@||${domain}^$subdocument,important`);
         filters.push(`@@||${domain}^$important`);
         filters.push(`@@||${domain}^`);
         // Disable cosmetic CSS/DOM element hiding
@@ -374,19 +376,59 @@ function isCandidateImageUrl(urlString) {
     }
 }
 
+function isSafeRasterImageUrl(urlString) {
+    if (!urlString || typeof urlString !== 'string') return false;
+    try {
+        const u = new URL(urlString);
+        if (u.protocol !== 'http:' && u.protocol !== 'https:') return false;
+        const format = (u.searchParams.get('format') || u.searchParams.get('f') || u.searchParams.get('ext') || '').toLowerCase();
+        if (format === 'svg') return false;
+        const pathname = u.pathname.toLowerCase();
+        if (/\.svg$/i.test(pathname)) return false;
+        if (/\.(png|jpe?g|gif|webp|avif|bmp|ico)$/i.test(pathname)) return true;
+        if (format && /^(png|jpe?g|gif|webp|avif|bmp|ico)$/i.test(format)) return true;
+        return false;
+    } catch (_) {
+        return false;
+    }
+}
+
 function extractWrappedMediaUrl(urlString) {
     if (!urlString || typeof urlString !== 'string') return null;
     try {
         const u = new URL(urlString);
-        const candidateKeys = ['url', 'src', 'img', 'image', 'media', 'media_url', 'img_url'];
-        for (const key of candidateKeys) {
-            const val = u.searchParams.get(key);
-            if (val && /^https?:\/\//i.test(val) && isCandidateImageUrl(val)) {
-                return val;
-            }
+        const pathname = u.pathname.toLowerCase();
+        if (pathname !== '/media' && pathname !== '/media/') {
+            return null;
+        }
+        const val = u.searchParams.get('url');
+        if (val && isSafeRasterImageUrl(val)) {
+            return val;
         }
     } catch (_) {}
     return null;
+}
+
+function isTrustedPageRequest(details) {
+    if (!details) return false;
+    const checkHost = (rawUrl) => {
+        if (!rawUrl || typeof rawUrl !== 'string') return false;
+        try {
+            return isUserTrustedDomain(new URL(rawUrl).hostname);
+        } catch (_) {
+            return false;
+        }
+    };
+    if (details.resourceType === 'main_frame' || details.resourceType === 'mainFrame') {
+        return checkHost(details.url);
+    }
+    try {
+        const topUrl = details.webContents && typeof details.webContents.getURL === 'function'
+            ? details.webContents.getURL()
+            : '';
+        if (checkHost(topUrl)) return true;
+    } catch (_) {}
+    return checkHost(details.initiator);
 }
 
 // Electron keeps a single listener per webRequest event, so the ad-blocker's
@@ -409,6 +451,7 @@ function attachNetworkHandlers(targetSession) {
                 return callback({ redirectURL: wrappedMedia });
             }
         }
+        if (isTrustedPageRequest(details)) return callback({});
         if (blockingEnabled()) return blockerInstance.onBeforeRequest(details, callback);
         callback({});
     });
@@ -436,6 +479,7 @@ function attachNetworkHandlers(targetSession) {
                 }
             }
         }
+        if (isTrustedPageRequest(details)) return callback({ responseHeaders: details.responseHeaders });
         if (blockingEnabled()) return blockerInstance.onHeadersReceived(details, callback);
         callback({ responseHeaders: details.responseHeaders });
     });

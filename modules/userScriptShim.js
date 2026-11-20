@@ -64,7 +64,7 @@ export function buildUserScriptWrapper(item, appVersion = '') {
     }
     Set.prototype.add.call(__gm_injected, __gm_script_id__);
 
-    var __gm_store = Object.assign({}, __gm_initial_storage__ || {});
+    var __gm_store = Object.assign(Object.create(null), __gm_initial_storage__ || {});
     var __gm_listeners = new Map();
     var __gm_listener_id = 1;
 

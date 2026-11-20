@@ -2,6 +2,7 @@
 // Tab hibernation, dormant view unmounting, session snapshots, and state restoration
 
 import { state } from '../state.js';
+import { getWorkspacePartition } from '../utils.js';
 import { originOf, sanitizeSnapshot, attachSnapshot, snapshotForRestore } from '../sleepSnapshot.js';
 import { isSplitActive, getSplitState } from '../splitView.js';
 import { createWebView, destroyGuestWebview, attachShieldToggleListener } from '../webview.js';
@@ -152,6 +153,8 @@ export async function hibernateTab(currentWS, idx) {
     let originBefore = null;
     let originAfter = null;
     let rawSession = null;
+    const isPrivateWS = getWorkspacePartition(currentWS) === 'MisePrivateProfile' ||
+        (webview && typeof webview.getAttribute === 'function' && webview.getAttribute('partition') === 'MisePrivateProfile');
 
     if (webview) {
         isDarkReader = !!webview.__miseDarkReaderEnabled;
@@ -166,28 +169,33 @@ export async function hibernateTab(currentWS, idx) {
             }
         } catch (err) {}
 
-        try {
-            originBefore = originOf(webview.getURL());
-        } catch (err) {}
+        if (!isPrivateWS) {
+            try {
+                originBefore = originOf(webview.getURL());
+            } catch (err) {}
 
-        try {
-            rawSession = await webview.executeJavaScript(`(function() {
-                try {
-                    const data = {};
-                    for (let i = 0; i < window.sessionStorage.length; i++) {
-                        const key = window.sessionStorage.key(i);
-                        data[key] = window.sessionStorage.getItem(key);
+            try {
+                rawSession = await webview.executeJavaScript(`(function() {
+                    try {
+                        var sensitiveKeyRe = /token|auth|jwt|pkce|verifier|secret|key|session|csrf|card|checkout|passwd|password|pin|cvv|credential|oauth|sso|saml|bearer/i;
+                        const data = {};
+                        for (let i = 0; i < window.sessionStorage.length; i++) {
+                            const key = window.sessionStorage.key(i);
+                            if (key && !sensitiveKeyRe.test(key)) {
+                                data[key] = window.sessionStorage.getItem(key);
+                            }
+                        }
+                        return JSON.stringify(data);
+                    } catch (e) {
+                        return null;
                     }
-                    return JSON.stringify(data);
-                } catch (e) {
-                    return null;
-                }
-            })()`);
-        } catch (err) {}
+                })()`);
+            } catch (err) {}
 
-        try {
-            originAfter = originOf(webview.getURL());
-        } catch (err) {}
+            try {
+                originAfter = originOf(webview.getURL());
+            } catch (err) {}
+        }
 
         try {
             const liveUrl = webview.getURL();
@@ -204,7 +212,7 @@ export async function hibernateTab(currentWS, idx) {
         } catch (err) {}
 
         try {
-            if (window.miseAPI && typeof window.miseAPI.flushSessionStore === 'function') {
+            if (!isPrivateWS && window.miseAPI && typeof window.miseAPI.flushSessionStore === 'function') {
                 await window.miseAPI.flushSessionStore({ workspace: currentWS });
             }
         } catch (err) {}
@@ -224,7 +232,7 @@ export async function hibernateTab(currentWS, idx) {
         darkReader: isDarkReader,
         hibernatedAt: Date.now()
     };
-    if (originBefore && originBefore === originAfter) {
+    if (!isPrivateWS && originBefore && originBefore === originAfter) {
         const sanitizedData = sanitizeSnapshot(rawSession);
         if (sanitizedData !== null) {
             attachSnapshot(sleepRecord, originBefore, sanitizedData);

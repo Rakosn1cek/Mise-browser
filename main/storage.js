@@ -93,6 +93,33 @@ function isRecordableHistoryUrl(url) {
     }
 }
 
+function scrubSensitiveUrl(rawUrl) {
+    if (typeof rawUrl !== 'string' || !rawUrl || !/^https?:\/\//i.test(rawUrl)) return rawUrl;
+    try {
+        const parsed = new URL(rawUrl);
+        let modified = false;
+        if (parsed.username || parsed.password) {
+            parsed.username = '';
+            parsed.password = '';
+            modified = true;
+        }
+        const sensitiveParamRe = /^(access_token|id_token|refresh_token|auth_token|oauth_token|token|auth|code|password|passwd|pwd|secret|api_key|apikey|client_secret|cvv|cvc|card_number|pin|otp|session_id|sid|jwt|bearer)$/i;
+        for (const key of Array.from(parsed.searchParams.keys())) {
+            if (sensitiveParamRe.test(key)) {
+                parsed.searchParams.delete(key);
+                modified = true;
+            }
+        }
+        if (parsed.hash && /(?:access_token|id_token|refresh_token|auth_token|token|code|secret|password|passwd|api_key)=/i.test(parsed.hash)) {
+            parsed.hash = '';
+            modified = true;
+        }
+        return modified ? parsed.toString() : rawUrl;
+    } catch (_) {
+        return rawUrl;
+    }
+}
+
 function sanitiseHistoryTitle(rawTitle, fallbackUrl = '') {
     if (typeof rawTitle !== 'string') return fallbackUrl;
     const clean = rawTitle
@@ -107,12 +134,13 @@ function sanitiseHistoryTitle(rawTitle, fallbackUrl = '') {
 function logVisit(title, url, maxItems = MAX_HISTORY_ITEMS, targetPath = historyPath) {
     if (!keepHistoryEnabled || !isRecordableHistoryUrl(url)) return;
 
+    const cleanUrl = scrubSensitiveUrl(url);
     const history = getHistoryCache(targetPath);
-    if (history.length > 0 && history[0].url === url) return;
+    if (history.length > 0 && history[0].url === cleanUrl) return;
 
     const newEntry = {
-        title: sanitiseHistoryTitle(title, url),
-        url: url,
+        title: sanitiseHistoryTitle(title, cleanUrl),
+        url: cleanUrl,
         timestamp: Date.now()
     };
 
@@ -127,11 +155,12 @@ function updateVisitTitle(title, url, targetPath = historyPath) {
     if (!keepHistoryEnabled || !isRecordableHistoryUrl(url) || typeof title !== 'string') {
         return false;
     }
+    const cleanUrl = scrubSensitiveUrl(url);
     const cleanTitle = sanitiseHistoryTitle(title, '');
-    if (!cleanTitle || cleanTitle === url) return false;
+    if (!cleanTitle || cleanTitle === cleanUrl) return false;
 
     const history = getHistoryCache(targetPath);
-    const entry = history.find(item => item && item.url === url);
+    const entry = history.find(item => item && item.url === cleanUrl);
     if (!entry || entry.title === cleanTitle) return false;
 
     entry.title = cleanTitle;
@@ -324,7 +353,7 @@ async function exportArticleToExternal({ title, markdown } = {}, targetConfigDir
                 return { success: false, error: 'Clippings directory file limit reached (200 files maximum)' };
             }
         } else {
-            fs.mkdirSync(clippingsDir, { recursive: true });
+            fs.mkdirSync(clippingsDir, { recursive: true, mode: 0o700 });
         }
 
         const cfg = config.loadBrowserConfig(targetConfigDir, path.join(targetConfigDir, 'config.json'));
@@ -415,6 +444,7 @@ module.exports = {
     setKeepHistoryEnabled,
     getKeepHistoryEnabled,
     isRecordableHistoryUrl,
+    scrubSensitiveUrl,
     sanitiseHistoryTitle,
     getHistoryCache,
     setInMemoryHistory,

@@ -3,6 +3,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { atomicWriteFileSync } = require('./main/atomicFile');
 
 const DEFAULT_KEYBINDS = {
     'toggle-menu-bar': 'F1',
@@ -244,9 +245,9 @@ function mergeKeybinds(defaults, userBinds) {
 function initializeKeybinds(configDir) {
     const keybindsPath = path.join(configDir, 'keybinds.json');
     try {
-        if (!fs.existsSync(configDir)) fs.mkdirSync(configDir, { recursive: true });
+        if (!fs.existsSync(configDir)) fs.mkdirSync(configDir, { recursive: true, mode: 0o700 });
         if (!fs.existsSync(keybindsPath)) {
-            fs.writeFileSync(keybindsPath, JSON.stringify(DEFAULT_KEYBINDS, null, 4), 'utf8');
+            atomicWriteFileSync(keybindsPath, JSON.stringify(DEFAULT_KEYBINDS, null, 4), { mode: 0o600 });
             activeKeybinds = { ...DEFAULT_KEYBINDS };
         } else {
             const raw = fs.readFileSync(keybindsPath, 'utf8');
@@ -264,8 +265,9 @@ function initializeKeybinds(configDir) {
 function saveKeybinds(configDir, newBinds) {
     const keybindsPath = path.join(configDir, 'keybinds.json');
     try {
+        if (!fs.existsSync(configDir)) fs.mkdirSync(configDir, { recursive: true, mode: 0o700 });
         activeKeybinds = mergeKeybinds(DEFAULT_KEYBINDS, newBinds);
-        fs.writeFileSync(keybindsPath, JSON.stringify(activeKeybinds, null, 4), 'utf8');
+        atomicWriteFileSync(keybindsPath, JSON.stringify(activeKeybinds, null, 4), { mode: 0o600 });
         compiledKeymap = compileKeymap(activeKeybinds);
         return true;
     } catch (err) {

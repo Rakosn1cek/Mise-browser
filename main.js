@@ -258,6 +258,9 @@ ipcMain.handle('open-external', async (event, url) => {
 ipcMain.handle('flush-session-store', async (event, context) => {
     try {
         const targetSession = getSessionForContext(context);
+        if (targetSession === session.fromPartition('MisePrivateProfile')) {
+            return false;
+        }
         flushSessionToDisk();
         if (targetSession && targetSession.cookies) {
             await targetSession.cookies.flushStore();

@@ -86,7 +86,10 @@ let cachedConfig = null;
 // Synchronous on purpose: saves never interleave, so no update can be lost either.
 function writeConfigFile(cfg, targetPath = CONFIG_PATH) {
     const tmpPath = `${targetPath}.${process.pid}.tmp`;
-    fs.writeFileSync(tmpPath, JSON.stringify(cfg, null, 4), 'utf-8');
+    fs.writeFileSync(tmpPath, JSON.stringify(cfg, null, 4), { encoding: 'utf-8', mode: 0o600 });
+    if (process.platform !== 'win32' && typeof fs.chmodSync === 'function') {
+        try { fs.chmodSync(tmpPath, 0o600); } catch (_) {}
+    }
     fs.renameSync(tmpPath, targetPath);
     if (targetPath === CONFIG_PATH) {
         cachedConfig = null;
@@ -98,7 +101,7 @@ function loadBrowserConfig(targetDir = CONFIG_DIR, targetPath = CONFIG_PATH) {
         return { ...cachedConfig };
     }
     try {
-        if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir, { recursive: true });
+        if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir, { recursive: true, mode: 0o700 });
         if (!fs.existsSync(targetPath)) {
             const initial = { ...DEFAULT_CONFIG };
             writeConfigFile(initial, targetPath);
@@ -175,7 +178,7 @@ function saveBrowserConfig(cfg, targetDir = CONFIG_DIR, targetPath = CONFIG_PATH
 
 function updateBrowserConfig(newCfg, targetDir = CONFIG_DIR, targetPath = CONFIG_PATH) {
     try {
-        if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir, { recursive: true });
+        if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir, { recursive: true, mode: 0o700 });
         const existing = loadBrowserConfig(targetDir, targetPath);
         const merged = { ...existing, ...newCfg };
         writeConfigFile(merged, targetPath);

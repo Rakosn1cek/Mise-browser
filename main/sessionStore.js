@@ -15,7 +15,7 @@ let sessionFlushTimer = null;
 
 function checkAndInitializeSentinel(targetDir = CONFIG_DIR, targetSentinel = sentinelPath) {
     try {
-        if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir, { recursive: true });
+        if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir, { recursive: true, mode: 0o700 });
         if (fs.existsSync(targetSentinel)) {
             const raw = fs.readFileSync(targetSentinel, 'utf8');
             const data = JSON.parse(raw);
@@ -30,14 +30,17 @@ function checkAndInitializeSentinel(targetDir = CONFIG_DIR, targetSentinel = sen
 
 function markSentinelState(cleanExit, targetDir = CONFIG_DIR, targetSentinel = sentinelPath) {
     try {
-        if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir, { recursive: true });
+        if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir, { recursive: true, mode: 0o700 });
         const data = {
             clean_exit: !!cleanExit,
             timestamp: Date.now(),
             pid: process.pid
         };
         const tmpPath = targetSentinel + '.tmp';
-        fs.writeFileSync(tmpPath, JSON.stringify(data, null, 2), 'utf8');
+        fs.writeFileSync(tmpPath, JSON.stringify(data, null, 2), { encoding: 'utf8', mode: 0o600 });
+        if (process.platform !== 'win32' && typeof fs.chmodSync === 'function') {
+            try { fs.chmodSync(tmpPath, 0o600); } catch (_) {}
+        }
         fs.renameSync(tmpPath, targetSentinel);
     } catch (err) {}
 }
@@ -90,6 +93,33 @@ function migrateLegacyPrivateWorkspace(sessionData) {
     return sessionData;
 }
 
+function scrubSensitiveUrl(rawUrl) {
+    if (typeof rawUrl !== 'string' || !rawUrl || !/^https?:\/\//i.test(rawUrl)) return rawUrl;
+    try {
+        const parsed = new URL(rawUrl);
+        let modified = false;
+        if (parsed.username || parsed.password) {
+            parsed.username = '';
+            parsed.password = '';
+            modified = true;
+        }
+        const sensitiveParamRe = /^(access_token|id_token|refresh_token|auth_token|oauth_token|token|auth|code|password|passwd|pwd|secret|api_key|apikey|client_secret|cvv|cvc|card_number|pin|otp|session_id|sid|jwt|bearer)$/i;
+        for (const key of Array.from(parsed.searchParams.keys())) {
+            if (sensitiveParamRe.test(key)) {
+                parsed.searchParams.delete(key);
+                modified = true;
+            }
+        }
+        if (parsed.hash && /(?:access_token|id_token|refresh_token|auth_token|token|code|secret|password|passwd|api_key)=/i.test(parsed.hash)) {
+            parsed.hash = '';
+            modified = true;
+        }
+        return modified ? parsed.toString() : rawUrl;
+    } catch (_) {
+        return rawUrl;
+    }
+}
+
 function sanitizeSessionForDisk(sessionData) {
     if (!sessionData || typeof sessionData !== 'object') return sessionData;
     const clone = JSON.parse(JSON.stringify(sessionData));
@@ -101,6 +131,14 @@ function sanitizeSessionForDisk(sessionData) {
                 if (isPrivateWS(ws)) {
                     delete clone[key][ws];
                 }
+            }
+        }
+    }
+
+    if (clone.workspaces && typeof clone.workspaces === 'object') {
+        for (const ws of Object.keys(clone.workspaces)) {
+            if (Array.isArray(clone.workspaces[ws])) {
+                clone.workspaces[ws] = clone.workspaces[ws].map(scrubSensitiveUrl);
             }
         }
     }
@@ -175,6 +213,9 @@ function maybeCreateSnapshot(targetDir, sourceFilePath, sessionObj) {
         const snapName = `session.snap-${formatSnapshotTimestamp(new Date(now))}.json`;
         const snapPath = path.join(targetDir, snapName);
         fs.copyFileSync(sourceFilePath, snapPath);
+        if (process.platform !== 'win32' && typeof fs.chmodSync === 'function') {
+            try { fs.chmodSync(snapPath, 0o600); } catch (_) {}
+        }
 
         existingSnapshots.push(snapName);
         existingSnapshots.sort();
@@ -201,7 +242,7 @@ function flushSessionToDisk(customPaths = {}) {
     if (!pendingSessionData || typeof pendingSessionData !== 'object') return true;
     try {
         const dir = path.dirname(targetSessionPath);
-        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
 
         // Read existing session file before writing
         let existingSession = null;
@@ -222,7 +263,10 @@ function flushSessionToDisk(customPaths = {}) {
         const isExistingHealthy = existingSession !== null && existingCounts.total > 0 && (existingCounts.blank / existingCounts.total) <= 0.2;
 
         if (isNewSuspect && isExistingHealthy) {
-            fs.writeFileSync(targetSuspectPath, JSON.stringify(sanitizedNew, null, 4), 'utf8');
+            fs.writeFileSync(targetSuspectPath, JSON.stringify(sanitizedNew, null, 4), { encoding: 'utf8', mode: 0o600 });
+            if (process.platform !== 'win32' && typeof fs.chmodSync === 'function') {
+                try { fs.chmodSync(targetSuspectPath, 0o600); } catch (_) {}
+            }
             diagnostics.logEvent('warn', 'session', 'Suspect session write intercepted with excessive blank tabs', {
                 newTotalTabs: newCounts.total,
                 newBlankTabs: newCounts.blank,
@@ -236,14 +280,20 @@ function flushSessionToDisk(customPaths = {}) {
         const serialized = JSON.stringify(sanitizedNew, null, 4);
         const tempPath = targetSessionPath + '.tmp';
 
-        // Write to temporary file first
-        fs.writeFileSync(tempPath, serialized, 'utf8');
+        // Write to temporary file first with restricted permissions
+        fs.writeFileSync(tempPath, serialized, { encoding: 'utf8', mode: 0o600 });
+        if (process.platform !== 'win32' && typeof fs.chmodSync === 'function') {
+            try { fs.chmodSync(tempPath, 0o600); } catch (_) {}
+        }
 
         // Rotate existing valid session to backup only if it parses and is not mostly blank
         const isExistingParsableAndNotMostlyBlank = existingSession !== null && existingCounts.total > 0 && (existingCounts.blank / existingCounts.total) < 0.5;
         if (fs.existsSync(targetSessionPath) && isExistingParsableAndNotMostlyBlank) {
             try {
                 fs.copyFileSync(targetSessionPath, targetBackupPath);
+                if (process.platform !== 'win32' && typeof fs.chmodSync === 'function') {
+                    try { fs.chmodSync(targetBackupPath, 0o600); } catch (_) {}
+                }
             } catch (copyErr) {}
             maybeCreateSnapshot(dir, targetSessionPath, existingSession);
         }
