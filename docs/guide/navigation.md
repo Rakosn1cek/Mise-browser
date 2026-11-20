@@ -134,6 +134,8 @@ When typing queries into the address bar, prepend shorthand prefixes to route se
 | `sp <query>` | Startpage Search | `sp private search` |
 | `b <query>` | Brave Search | `b web standards` |
 | `k <query>` | Kagi Search | `k technical docs` |
+| `bi <query>` | Bing Search | `bi arch linux` |
+| `ya <query>` | Yandex Search | `ya tokyo night` |
 
 If no alias is entered, Mise uses your configured default search engine set in Preferences.
 
@@ -295,6 +297,49 @@ Offload video streams directly to native `mpv` player with `yt-dlp` stream extra
   * **Play Link in mpv**: Right-click any video link or thumbnail on feeds, homepages, subscriptions, or search results to stream that video directly in mpv without having to load or open the video page in the browser first.
   * **Play Page in mpv**: When currently viewing an active video page in a tab, right-click anywhere on the page to offload the active video stream into mpv. Non-video pages (such as the YouTube homepage or search listings) omit this option to prevent mpv from failing on unplayable feed markup.
 * **Automatic Tab Pausing**: When enabled in Preferences under **External Tools**, Mise automatically pauses HTML5 video in the active browser tab when launching mpv to eliminate dual playback and reclaim system resources.
+
+***
+
+## Send to Mobile (Zero-Cloud QR Code)
+
+Transfer URLs directly to mobile devices without cloud relays, accounts, or telemetry:
+
+* **Zero-Cloud Generation**: Generates pure vanilla ISO/IEC 18004 SVG QR codes entirely within local JavaScript. URLs are encoded directly on your machine without contacting remote QR APIs or telemetry servers.
+* **Instant Activation**: Press **Ctrl + Shift + M** (or click the **QR** pill in the status bar) to display the QR code modal for the active web page.
+* **Quick Dismissal**: Press **Escape** or click the close icon to dismiss the modal and immediately restore focus to the active tab.
+
+***
+
+## Webview Zoom Controls
+
+Scale web content smoothly whilst preserving layout stability:
+
+* **Granular Zoom Scaling**: Press **Ctrl + =** (or hold **Ctrl** whilst rolling the mouse wheel up) to zoom in, scaling content upwards in 10% steps up to 300%.
+* **Zoom Out**: Press **Ctrl + -** (or hold **Ctrl** whilst rolling the mouse wheel down) to zoom out down to 50%.
+* **Zoom Reset**: Press **Ctrl + 0** to restore content magnification to default 100%.
+* **Status Feedback**: Each zoom level adjustment displays a non-intrusive status toast confirming the active magnification factor.
+
+***
+
+## Task Manager & Tab Resource Inspector (`Ctrl + Shift + T`)
+
+Inspect real-time CPU and memory consumption per tab using kernel-level Linux accounting:
+
+* **Precise Linux Accounting**: Reads `/proc/[pid]/smaps_rollup` to calculate exact physical memory metrics: Proportional Set Size (PSS), Resident Set Size (RSS), and Unique Set Size (USS), eliminating shared library double-counting.
+* **Instant Overlay Access**: Press **Ctrl + Shift + T** to open the Task Manager overlay.
+* **Per-Tab & Multi-Workspace Visibility**: Lists every open tab grouped across workspaces, displaying process ID (PID), live CPU percentage, and physical RAM footprint.
+* **Surgical Process Management**: Terminate unneeded or runaway tabs directly from the overlay, or trigger instant tab hibernation to release system memory.
+* **Keyboard Sorting & Filter Chips**: Filter tabs by category (All, Active, Sleeping, Background) or sort by CPU, PSS, or workspace order using arrow keys and hotkeys.
+
+***
+
+## Kinetic Smooth Scrolling
+
+Customise page scrolling dynamics for touchpads and precision mice:
+
+* **Toggle in Preferences**: Enable or disable kinetic smooth scrolling under Preferences (**Ctrl + H**) -> **Performance & Engine**.
+* **Engine Flag Delegation**: Configures Chromium's internal smooth scrolling flags cleanly, eliminating micro-stutter on high refresh rate displays whilst allowing low-power devices to save compositor cycles.
+
 
 
 

@@ -60,6 +60,9 @@ Controls hardware switches, process limits, privacy whitelists, and search prefe
     "allow_local_certificates": true,
     "allow_local_documents": false,
     "keep_history": true,
+    "media_offload_enabled": true,
+    "media_offload_quality": "1080p",
+    "media_offload_pause_tab": true,
     "trusted_certificates": [],
     "filter_lists": {
         "easylist": true,
@@ -100,6 +103,9 @@ Controls hardware switches, process limits, privacy whitelists, and search prefe
 - **`allow_local_certificates`**: When `true` (default), permits connections to self-signed TLS certificates on private subnets and local endpoints (192.168.*, 10.*, 172.16-31.*, localhost, .local) for home servers, Cockpit, Proxmox, TrueNAS, and routers.
 - **`allow_local_documents`**: When `true`, permits viewing local documents (`.html`, `.htm`, `.xhtml`, `.txt`, `.svg`, `.pdf`) on demand. Kept `false` by default to uphold Zero-Trust local filesystem isolation, restricting access to safe user directories whilst rejecting sensitive system paths (`/etc`, `/proc`, `/sys`), hidden credential stores, and executable scripts.
 - **`keep_history`**: When `true` (default), records visited `http:` and `https:` page titles and URLs in `history.json` across standard workspaces (never in the `Private` workspace or ephemeral Peek/Share modals). When `false`, stops recording future visits whilst preserving existing records for search and address bar autocomplete until deleted or purged manually.
+- **`media_offload_enabled`**: When `true` (default), enables hardware-accelerated video offloading to native `mpv` via `yt-dlp` stream extraction, saving memory and CPU cycles on Linux.
+- **`media_offload_quality`**: Target streaming resolution when offloading video to `mpv` (`best`, `2160p`, `1440p`, `1080p`, `720p`, `480p`, or `360p`). Defaults to `1080p`.
+- **`media_offload_pause_tab`**: When `true` (default), automatically pauses HTML5 video in the active tab when offloading to `mpv` to avoid dual audio/video playback and free decoder resources.
 - **`trusted_certificates`**: Array of host and port endpoints explicitly permitted to bypass TLS certificate verification (e.g. `["192.168.1.61:9090"]`).
 - **`filter_lists`**: Object configuring active adblocking and tracker filter list subscriptions:
   - **`easylist`**: Enables core EasyList ad and banner blocking rules (default: `true`).

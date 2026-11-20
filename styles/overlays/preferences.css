@@ -316,6 +316,7 @@
     justify-content: space-between;
     gap: 16px;
     padding: 6px 8px;
+    min-height: 32px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     border-radius: 4px;
     transition: background-color 0.15s ease;
@@ -330,10 +331,10 @@
     font-size: 13px;
     opacity: 0.9;
     flex: 1 1 auto;
-    min-width: 0;
+    min-width: 140px;
     text-align: left;
     white-space: normal;
-    word-break: break-word;
+    overflow-wrap: break-word;
     line-height: 1.4;
 }
 

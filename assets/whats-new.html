@@ -259,66 +259,102 @@
                 <img src="icons/Mise-logo48.png" alt="Mise Logo">
                 <h1>What's New in Mise v1.7.3</h1>
             </div>
-            <p class="subtitle">The v1.7.0 Linux Packaging, Modal Workflow &amp; Container Privacy Milestone: Native AppStream metadata and verified AppImageHub packaging, automated Widevine DRM detection, unified Notifications and Activity overlay, ephemeral tab peek link preview, floating Tokyo Night find-in-page match counter, per-workspace visual identity customisation, consolidated modal keybindings, granular domain permissions vault, and configurable local document viewing.</p>
+            <p class="subtitle">The v1.8.0 Media Offload, Zero-Cloud Mobility, Resource Inspection &amp; Security Hardening Milestone: Hardware-accelerated mpv media offload, Zero-Cloud Send to Mobile SVG QR code generation, Linux procfs Task Manager overlay, background delta updates, collapsible workspace dashboard nodes, webview zoom controls, smooth scrolling toggle, history privacy controls with single-item deletion, and four-phase defence-in-depth security hardening.</p>
         </header>
 
         <section class="feature-card">
-            <h2 class="feature-title">Linux Packaging, AppStream Metadata &amp; Widevine DRM</h2>
+            <h2 class="feature-title">Low-Resource Media Offload (mpv &amp; yt-dlp)</h2>
             <p class="feature-desc">
-                Comprehensive native Linux distribution readiness, verified AppStream metadata, and automated Widevine DRM media detection.
+                Offload video streams directly to external native mpv player instances using yt-dlp stream extraction, eliminating heavy Chromium decoding overhead.
             </p>
             <ul class="feature-points">
-                <li><strong>Desktop AppStore Metadata:</strong> Bundles verified Freedesktop AppStream metainfo (<code>io.github.rakosn1cek.mise-browser.metainfo.xml</code>) compliant with OARS 1.1 ratings, Tokyo Night brand colours, and rich screenshots for Linux software centres (GNOME Software, KDE Discover).</li>
-                <li><strong>AppImageHub Packaging Verification:</strong> Pure Zsh validation tooling (<code>scripts/prepare-appimagehub.zsh</code>) automated for directory submission and metadata validation.</li>
-                <li><strong>Widevine DRM Detection Helper:</strong> Automated detection and registration for host Widevine CDM libraries (<code>libwidevinecdm.so</code>) from Chrome, Chromium, and system packages, enabling protected media playback on Linux with privacy-scrubbed diagnostics.</li>
+                <li><strong>Hardware Video Acceleration:</strong> Bypasses browser media pipeline in favour of native VA-API / VDPAU acceleration on Linux, saving significant CPU cycles and memory on fanless hardware.</li>
+                <li><strong>Instant Keyboard &amp; Status Bar Offload:</strong> Press <kbd>Ctrl + Shift + Y</kbd> to offload active video streams immediately, or click the blue <strong>MPV</strong> status bar badge.</li>
+                <li><strong>Context Menu Stream Routing:</strong> Right-click video links or thumbnails to launch mpv directly without loading the web page, with automatic tab pausing to eliminate dual playback.</li>
             </ul>
         </section>
 
         <section class="feature-card">
-            <h2 class="feature-title">Notifications &amp; Activity Overlay</h2>
+            <h2 class="feature-title">Send to Mobile (Zero-Cloud QR Code)</h2>
             <p class="feature-desc">
-                Dedicated keyboard-driven overlay (<kbd>Ctrl + Shift + N</kbd>) centralising recent browser events, active downloads, system updates, and alerts in one unified place.
+                Transfer URLs directly to mobile devices without cloud relays, accounts, or telemetry using an embedded pure vanilla SVG generator.
             </p>
             <ul class="feature-points">
-                <li><strong>Unified Alert Centre:</strong> Quick access from the keyboard (<kbd>Ctrl + Shift + N</kbd>) or sidebar bell button to review downloads, system updates, and permission prompts.</li>
-                <li><strong>Category Filtering &amp; Memory Bounds:</strong> Instant filter chips (All, Downloads, System, Web) backed by an in-memory 50-event circular buffer to prevent resident memory growth.</li>
-                <li><strong>Keyboard Navigation &amp; Focus Restoration:</strong> Arrow cursor traversal, single-key item dismissal (<kbd>x</kbd>), clear-all action (<kbd>c</kbd>), and seamless webview focus restoration on <kbd>Escape</kbd>.</li>
+                <li><strong>Zero-Cloud Privacy:</strong> Pure ISO/IEC 18004 SVG matrix encoding executed entirely on-device, communicating with zero external network APIs.</li>
+                <li><strong>Instant Modal Access:</strong> Press <kbd>Ctrl + Shift + M</kbd> or click the status bar QR badge to display crisp high-contrast codes scan-ready for phone cameras.</li>
+                <li><strong>Modal Lifecycle:</strong> Instant dismissal via <kbd>Escape</kbd> with automatic focus restoration back to the active tab.</li>
             </ul>
         </section>
 
         <section class="feature-card">
-            <h2 class="feature-title">Ephemeral Tab Peek ("Glance") &amp; Find-in-Page Counter</h2>
+            <h2 class="feature-title">Task Manager &amp; Tab Resource Inspector</h2>
             <p class="feature-desc">
-                Keyboard-driven link previews and upgraded in-page search controls styled in Tokyo Night.
+                Kernel-level Linux resource inspection overlay revealing exact physical RAM (PSS, RSS, USS) and live CPU percentage per tab.
             </p>
             <ul class="feature-points">
-                <li><strong>Ephemeral Tab Peek:</strong> Transient link preview modal (<kbd>Shift + Click</kbd> or <kbd>gh</kbd> hint) over the active tab, dismissing instantly on <kbd>Escape</kbd> without leaving tab clutter or promoting to a permanent tab with <kbd>Ctrl + Enter</kbd>.</li>
-                <li><strong>Find-in-Page Match Counter:</strong> Floating Tokyo Night search bar (<kbd>Ctrl + Shift + F</kbd> or <kbd>/</kbd>) with live match counters (e.g. <code>4 of 21 matches</code>) and Vim-style <kbd>n</kbd> (next) and <kbd>N</kbd> (previous) navigation.</li>
+                <li><strong>Precise procfs Accounting:</strong> Computes accurate memory metrics directly from <code>/proc/[pid]/smaps_rollup</code>, eliminating shared library duplication errors.</li>
+                <li><strong>Multi-Workspace Overview:</strong> Keyboard-driven overlay (<kbd>Ctrl + Shift + T</kbd>) grouping processes by workspace with category filters (All, Active, Sleeping, Background).</li>
+                <li><strong>Surgical Process Management:</strong> Terminate runaway renderer processes or trigger instant tab hibernation directly from the inspector interface.</li>
             </ul>
         </section>
 
         <section class="feature-card">
-            <h2 class="feature-title">Workspace Visual Identity &amp; Accent Badges</h2>
+            <h2 class="feature-title">Background Delta Updates &amp; Engine Enhancements</h2>
             <p class="feature-desc">
-                Granular visual customisation across workspaces to distinguish container profiles instantly in the sidebar.
+                Silent differential updates via electron-updater and upgraded engine runtime components.
             </p>
             <ul class="feature-points">
-                <li><strong>Curated Tokyo Night Palette:</strong> Choose from 9 curated palette accents or assign custom hex colours directly in the Workspace Dashboard.</li>
-                <li><strong>Single-Character Glyph Badges:</strong> Personalise workspaces with single-character Unicode glyphs and emoji, segmented via native grapheme clustering.</li>
-                <li><strong>Zero-Trust Sanitisation:</strong> Strict hex regex validation, BiDi override stripping, and unforgeable Private profile immunity.</li>
+                <li><strong>Differential Delta Streaming:</strong> Streams compact binary delta patches in the background for Linux AppImage (zsync), Windows NSIS, and macOS.</li>
+                <li><strong>Non-Intrusive Readiness Pill:</strong> Displays a discreet status bar indicator (<code>[⟳ Restart to update]</code>) when an update is fully staged, applying on click.</li>
+                <li><strong>Engine Upgrades:</strong> Upgraded to Electron v45.4.1 (Chromium 156) with extensive zero-copy GPU flags and expanded disk and media caching.</li>
             </ul>
         </section>
 
         <section class="feature-card">
-            <h2 class="feature-title">Keybindings Consolidation &amp; Permissions Vault</h2>
+            <h2 class="feature-title">Workspace Dashboard Collapsible Nodes &amp; Visual Identity</h2>
             <p class="feature-desc">
-                Streamlined modal keyboard controls alongside granular domain hardware permission auditing and revoking.
+                Streamlined multi-workspace management with compact tree nodes, tab count badges, and persistent expansion state.
             </p>
             <ul class="feature-points">
-                <li><strong>Consolidated Keybindings:</strong> Enforced a strict maximum of two bindings per action (one primary chord and one Vim-style keybind), eliminating redundant bindings and modal traps.</li>
-                <li><strong>Domain Permissions Vault:</strong> Inspect and revoke camera, microphone, geolocation, and clipboard access per domain in Preferences and the status bar, backed by an unconditional Zero-Trust sensor lockdown in Private Profile.</li>
-                <li><strong>Configurable Local Document Viewing:</strong> Opt-in Zero-Trust toggle in Preferences enabling safe viewing of offline documents (<code>.html</code>, <code>.txt</code>, <code>.svg</code>) with strict path sanitisation and system directory confinement.</li>
-                <li><strong>Engine Upgrades &amp; Verification:</strong> Upgraded to Electron v45.3.1 with 82 automated regression test suites verifying stability, memory isolation, and security.</li>
+                <li><strong>Collapsible Tree Hierarchy:</strong> Large workspace sessions remain compact; inactive workspaces start collapsed with count badges (e.g. <code>8 tabs</code>), expanding via <kbd>Space</kbd> or arrow keys.</li>
+                <li><strong>Session Memory:</strong> Expanded and collapsed states persist across dashboard toggles for the duration of the browser session.</li>
+                <li><strong>Container Isolation:</strong> Header tags display container partitions (<code>persist:work</code>, <code>volatile</code>) alongside live cookie counts and surgical container wiping.</li>
+            </ul>
+        </section>
+
+        <section class="feature-card">
+            <h2 class="feature-title">Webview Zoom Controls &amp; Media Deduplication</h2>
+            <p class="feature-desc">
+                Precise per-tab magnification controls and cleaner navigation when opening web media.
+            </p>
+            <ul class="feature-points">
+                <li><strong>Granular Zoom Scaling:</strong> Zoom in (<kbd>Ctrl + =</kbd> / <kbd>zi</kbd>), zoom out (<kbd>Ctrl + -</kbd> / <kbd>zo</kbd>), and reset (<kbd>Ctrl + 0</kbd> / <kbd>zz</kbd>) between 50% and 300% with live factor toasts.</li>
+                <li><strong>Direct Media Loading:</strong> Suppresses self-referencing duplicate tabs and bypasses interstitial HTML wrappers when opening direct images or media links.</li>
+            </ul>
+        </section>
+
+        <section class="feature-card">
+            <h2 class="feature-title">History Privacy Controls &amp; Smooth Scrolling</h2>
+            <p class="feature-desc">
+                Enhanced browsing privacy options, granular history management, and custom scrolling dynamics.
+            </p>
+            <ul class="feature-points">
+                <li><strong>Keep History Toggle:</strong> Pause future visit logging in Preferences without purging existing records; private workspaces and peek modals remain unconditionally excluded.</li>
+                <li><strong>Single-Item History Deletion:</strong> Delete individual history entries with <kbd>x</kbd> or <kbd>Delete</kbd> alongside full database purges.</li>
+                <li><strong>Kinetic Smooth Scrolling:</strong> Optional engine-level smooth scrolling toggle in Preferences for touchpad and mouse navigation.</li>
+            </ul>
+        </section>
+
+        <section class="feature-card">
+            <h2 class="feature-title">Four-Phase Security Hardening Audit</h2>
+            <p class="feature-desc">
+                Comprehensive defence-in-depth hardening across four audited security phases:
+            </p>
+            <ul class="feature-points">
+                <li><strong>Phase 1:</strong> Sensitive token and credential scrubbing from URLs, checkout hijacking prevention, fail-closed userscript permissions, and private workspace storage isolation.</li>
+                <li><strong>Phase 2:</strong> Payment and PIN input element detection, query-distinct popup isolation, guest session scoping for saved images, canvas fingerprinting jitter, and TLS exception subframe isolation.</li>
+                <li><strong>Phase 3:</strong> Canonical path validation with PDF symlink traversal blocking, comprehensive domain and workspace storage wiping, cross-origin Referer truncation and protocol downgrade stripping, race-free ephemeral webview tagging, and private profile spellchecker network isolation.</li>
+                <li><strong>Phase 4:</strong> Elimination of redundant IPC channels, dead code cleanup, and complete synchronisation between runtime checks and documentation.</li>
             </ul>
         </section>
 

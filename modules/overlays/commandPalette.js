@@ -1520,7 +1520,16 @@ export async function syncPreferencesUI() {
                     if (binding) {
                         const keySpan = row.querySelector('.shortcut-key');
                         if (keySpan) {
-                            const list = Array.isArray(binding) ? binding : [binding];
+                            let list = Array.isArray(binding) ? binding : [binding];
+                            if (action === 'zoom-in') {
+                                const hasCustom = !list.includes('Ctrl+=');
+                                list = hasCustom ? list.slice(0, 2) : ['Ctrl+=', 'Ctrl+WheelUp'];
+                            } else if (action === 'zoom-out') {
+                                const hasCustom = !list.includes('Ctrl+-');
+                                list = hasCustom ? list.slice(0, 2) : ['Ctrl+-', 'Ctrl+WheelDown'];
+                            } else if (list.length > 2) {
+                                list = list.slice(0, 2);
+                            }
                             const badges = list.map(b => {
                                 let text = b.replace(/\+/g, ' + ');
                                 if (action === 'set-quickmark' || action === 'jump-quickmark') {
