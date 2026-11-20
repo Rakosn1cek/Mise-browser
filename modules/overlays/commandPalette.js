@@ -100,7 +100,7 @@ export async function launchEmailComposer({
     try {
         if (window.miseAPI && typeof window.miseAPI.getAppVersion === 'function') {
             const v = await window.miseAPI.getAppVersion();
-            if (v) appVer = v;
+            if (v) appVer = (typeof v === 'object' && v.version) ? v.version : String(v);
         }
     } catch (e) {
         appVer = '1.6.0';

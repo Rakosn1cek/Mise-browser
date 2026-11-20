@@ -110,11 +110,13 @@ async function runFunctionalTests() {
         .replace('export async function selectSuggestion', 'async function selectSuggestion')
         .replace('export function hideSuggestions', 'function hideSuggestions');
 
+    const { isTerminalCommand, prepareTerminalCommand } = require('../modules/utils.js');
     const factory = new Function(
         'state', 'document', 'window', 'isPdfUrl', 'getPdfViewerUrl', 'setTargetUrl',
         'updateStatusBarFromActiveView', 'formatSearchUrl', 'resolveSearchAliasUrl',
         'evaluateMathExpression', 'extractDdgBang', 'focusActiveWebview', 'wakeTab',
         'renderWorkspaceUI', 'spawnTabWithUrl', 'requestAnimationFrame', 'setTimeout',
+        'isTerminalCommand', 'prepareTerminalCommand',
         `${strippedNav}\nreturn { setupAddressBarAutocomplete, handleNavigation, selectSuggestion };`
     );
 
@@ -141,7 +143,9 @@ async function runFunctionalTests() {
         () => {},
         () => {},
         (fn) => fn(),
-        (fn) => fn()
+        (fn) => fn(),
+        isTerminalCommand,
+        prepareTerminalCommand
     );
 
     // Initialise address bar listeners

@@ -154,6 +154,10 @@ function isTrustedDomain(hostname) {
     return isGoogleInfraHost(host) || isUserTrustedDomain(host);
 }
 
+/**
+ * @deprecated Legacy permission trust helper retained for unit-test compatibility.
+ * Runtime permission prompts and checks live exclusively in main/permissions.js.
+ */
 function isPermissionTrustedRequest(options) {
     if (!options || typeof options !== 'object') {
         return false;
@@ -281,6 +285,10 @@ function sanitiseOutgoingReferer(headers, targetUrlStr) {
     } catch (_) {}
 }
 
+/**
+ * @deprecated Legacy permission allowlist retained for backwards compatibility.
+ * Runtime permission enforcement lives exclusively in main/permissions.js.
+ */
 const ALLOWED = [
     'fullscreen',
     'clipboard-sanitized-write',
@@ -296,10 +304,11 @@ const ALLOWED = [
     'system-wake-lock'
 ];
 
-function decidePermission(permission, { trusted, notificationsEnabled } = {}) {
-    if (trusted === true) {
-        return true;
-    }
+/**
+ * @deprecated Legacy permission helper retained for backwards compatibility.
+ * Never silently grants sensitive hardware or privacy-sensitive permissions for trusted domains.
+ */
+function decidePermission(permission, { notificationsEnabled } = {}) {
     if (permission === 'notifications') {
         return Boolean(notificationsEnabled);
     }

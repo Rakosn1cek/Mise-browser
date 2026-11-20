@@ -173,44 +173,9 @@ export function displayAddressOverlay() {
     }
 }
 
-const checkTerminalCmd = (typeof isTerminalCommand === 'function')
-    ? isTerminalCommand
-    : (input) => {
-        if (!input || typeof input !== 'string') return false;
-        const trimmed = input.trim();
-        if (trimmed.startsWith('$') || trimmed.startsWith('>')) return true;
-        const lower = trimmed.toLowerCase();
-        if (lower.startsWith(':sh ') || lower.startsWith(':term ')) return true;
-        if (lower.startsWith('term ') || lower.startsWith('terminal ')) return true;
-        if (lower.startsWith('oversight ') || lower.startsWith('oversight:')) return true;
-        if (lower.startsWith('sudo ') || lower.startsWith('curl ') || lower.startsWith('wget ')) return true;
-        if (trimmed.startsWith('./') || trimmed.startsWith('../')) return true;
-        const firstWord = lower.split(/[\s=]+/)[0];
-        const cliOnly = ['btop', 'htop', 'nvtop', 'neofetch', 'fastfetch'];
-        if (cliOnly.includes(firstWord)) return true;
-        const common = ['sudo', 'pacman', 'yay', 'paru', 'systemctl', 'git', 'cargo', 'npm', 'btop', 'htop', 'neofetch', 'fastfetch', 'cat', 'grep', 'ls'];
-        if (common.includes(firstWord) && trimmed.includes(' ')) return true;
-        return false;
-    };
-
-const prepTerminalCmd = (typeof prepareTerminalCommand === 'function')
-    ? prepareTerminalCommand
-    : (raw) => {
-        if (!raw || typeof raw !== 'string') return '';
-        let clean = raw.trim();
-        if (clean.startsWith('$') || clean.startsWith('>')) clean = clean.slice(1).trim();
-        const lower = clean.toLowerCase();
-        const isDangerous = lower.startsWith('sudo ') || lower.startsWith('curl ') || lower.startsWith('wget ');
-        const isScript = clean.endsWith('.sh') || clean.endsWith('.py') || clean.endsWith('.js');
-        if ((isDangerous || isScript) && !lower.startsWith('oversight ')) {
-            return `oversight ${clean}`;
-        }
-        return clean;
-    };
-
 function executeAddressBarTerminalCommand(rawInput) {
     if (!rawInput) return;
-    const prepared = prepTerminalCmd(rawInput);
+    const prepared = typeof prepareTerminalCommand === 'function' ? prepareTerminalCommand(rawInput) : '';
     if (!prepared) return;
 
     if (typeof window !== 'undefined' && window.miseAPI && typeof window.miseAPI.executeTerminalCommand === 'function') {
@@ -280,7 +245,7 @@ export async function handleNavigation(input) {
     }
 
     // Terminal command execution
-    if (checkTerminalCmd(trimmedInput)) {
+    if (typeof isTerminalCommand === 'function' && isTerminalCommand(trimmedInput)) {
         executeAddressBarTerminalCommand(trimmedInput);
         return;
     }
@@ -473,7 +438,7 @@ export function setupAddressBarAutocomplete() {
         // 4. Terminal command suggestion
         const cleanTermCmd = query.replace(/^[$>]\s*/, '').replace(/^:(sh|term|terminal)\s+/i, '').replace(/^(term|terminal)\s+/i, '').trim();
         if (cleanTermCmd && !query.toLowerCase().startsWith('http://') && !query.toLowerCase().startsWith('https://')) {
-            const isExplicit = checkTerminalCmd(query);
+            const isExplicit = typeof isTerminalCommand === 'function' && isTerminalCommand(query);
             const termItem = {
                 title: `Run in terminal: "${cleanTermCmd}"`,
                 value: query,

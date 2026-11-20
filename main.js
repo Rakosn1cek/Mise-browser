@@ -452,16 +452,6 @@ ipcMain.handle('clear-google-auth-cookies', async (event, partitionName) => {
     return true;
 });
 
-ipcMain.on('bubble-webview-key', (event, action) => {
-    if (typeof action !== 'string' || action.length > 64) return;
-    const metadata = keybinds.getActionMetadata();
-    if (!metadata || !Object.prototype.hasOwnProperty.call(metadata, action)) return;
-    const win = getMainWindow();
-    if (win && win.webContents) {
-        win.webContents.send('master-shortcut', action);
-    }
-});
-
 ipcMain.on('mark-next-webview-ephemeral', (_event, targetUrl) => webContentsPolicy.markNextWebviewEphemeral(targetUrl));
 
 webContentsPolicy.setupWebContentsPolicy(app, {

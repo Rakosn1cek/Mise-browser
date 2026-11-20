@@ -109,33 +109,44 @@ console.log('Running Mise session permission regression tests...');
     console.log('✓ Notifications permission follows notificationsEnabled state');
 }
 
-// 4. Verify any permission is granted when trusted is true
+// 4. Verify hardware and sensitive permissions are NOT silently granted when trusted is true
 {
-    const permissionsToTest = [
+    const restrictedPermissions = [
         'clipboard-read',
         'media',
         'geolocation',
         'openExternal',
         'display-capture',
         'unknown-future-permission',
-        'notifications',
-        'fullscreen',
         'arbitrary-permission-name'
     ];
 
-    for (const perm of permissionsToTest) {
+    for (const perm of restrictedPermissions) {
         assert.strictEqual(
             decidePermission(perm, { trusted: true, notificationsEnabled: false }),
-            true,
-            `Permission ${perm} must be allowed for trusted origin`
+            false,
+            `Permission ${perm} must remain denied even when trusted is true`
         );
         assert.strictEqual(
             decidePermission(perm, { trusted: true, notificationsEnabled: true }),
-            true,
-            `Permission ${perm} must be allowed for trusted origin regardless of notifications toggle`
+            false,
+            `Permission ${perm} must remain denied regardless of notifications toggle`
         );
     }
-    console.log('✓ Any permission granted when trusted is true');
+    assert.strictEqual(
+        decidePermission('notifications', { trusted: true, notificationsEnabled: false }),
+        false,
+        'Notifications must still follow notificationsEnabled even when trusted is true'
+    );
+    assert.strictEqual(
+        decidePermission('notifications', { trusted: true, notificationsEnabled: true }),
+        true
+    );
+    assert.strictEqual(
+        decidePermission('fullscreen', { trusted: true, notificationsEnabled: false }),
+        true
+    );
+    console.log('✓ Trusted flag does not silently grant hardware or sensitive permissions');
 }
 
 console.log('All session permission regression tests passed successfully!');

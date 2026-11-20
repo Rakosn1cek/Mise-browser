@@ -134,9 +134,10 @@ console.log('Running Mise host IPC channel validation and diagnostics bounding t
     console.log('✓ diagnostics.sanitizeObject enforces depth 6, 500 char string cap, and 50 item array cap');
 }
 
-// 4. Verify main.js source level integration of handlers
+// 4. Verify main.js and main/windowManager.js source level integration of handlers
 {
     const mainSource = fs.readFileSync(path.join(__dirname, '../main.js'), 'utf8');
+    const windowManagerSource = fs.readFileSync(path.join(__dirname, '../main/windowManager.js'), 'utf8');
 
     // Verify isValidPartitionName is imported and used in main.js
     assert(mainSource.includes('security.isValidPartitionName'), 'main.js must check security.isValidPartitionName');
@@ -144,9 +145,10 @@ console.log('Running Mise host IPC channel validation and diagnostics bounding t
     // Verify open-external checks URL length 2048
     assert(mainSource.includes('url.length > 2048'), 'open-external must reject URLs longer than 2048 characters');
 
-    // Verify bubble-webview-key checks length 64 and getActionMetadata
-    assert(mainSource.includes('action.length > 64'), 'bubble-webview-key must reject action names longer than 64 characters');
-    assert(mainSource.includes('keybinds.getActionMetadata()'), 'bubble-webview-key must check keybinds.getActionMetadata()');
+    // Verify bubble-webview-key in main/windowManager.js checks length 64 and getActionMetadata without duplicating in main.js
+    assert(windowManagerSource.includes('action.length > 64'), 'windowManager.js must reject bubble-webview-key action names longer than 64 characters');
+    assert(windowManagerSource.includes('keybinds.getActionMetadata()'), 'windowManager.js must check keybinds.getActionMetadata()');
+    assert(!mainSource.includes("ipcMain.on('bubble-webview-key'"), 'main.js must not duplicate bubble-webview-key listener');
 
     // Verify log-diagnostics-event checks allowed levels and length bounds
     assert(mainSource.includes("['info', 'warn', 'error']"), 'log-diagnostics-event must validate level enum');

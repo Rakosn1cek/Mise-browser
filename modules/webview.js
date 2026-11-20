@@ -79,11 +79,6 @@ export {
     setWebviewZoomFactor
 };
 
-
-export function applyCSSThemeToView() {
-    // Intentionally no-op to preserve native website themes
-}
-
 function getLiveTabIndex(webview, wsName) {
     const views = state.activeViewsCache[wsName];
     if (Array.isArray(views)) {
