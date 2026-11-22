@@ -344,7 +344,8 @@ console.log('Running Mise Zero-Cloud Send to Mobile (QR Code) regression tests..
         assert(svg.includes('shape-rendering="crispEdges"'), 'SVG must render crisp edges for reliable scanning');
         assert(svg.includes('<rect width="100%" height="100%" fill="#ffffff"'), 'SVG must render quiet zone background');
         assert(svg.includes('<path d="M'), 'SVG must render compound module path');
-        assert(!svg.includes('https://duckduckgo.com'), 'SVG markup must encode matrix bits rather than plain URL text');
+        assert(!svg.includes('duckduckgo'), 'SVG markup must encode matrix bits rather than plain URL text');
+        assert(!svg.includes('<text'), 'SVG markup must not embed raw text elements');
         assert(!/href=["']https?:\/\//i.test(svg), 'SVG must not reference any external HTTP/HTTPS assets');
 
         console.log('✓ Pure vanilla SVG QR rendering verified with zero external network assets');
