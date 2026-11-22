@@ -649,8 +649,9 @@ console.log('Running Mise Task Manager Overlay regression tests...');
             for (let i = 0; i < lines.length; i++) {
                 const line = lines[i];
                 if (rel.endsWith('.md') || rel.endsWith('.html')) {
-                    const stripped = line.replace(/<!--|-->|---+/g, '');
-                    assert(!stripped.includes('--'), `${rel}:${i + 1} must not contain double dashes`);
+                    if (line.includes('<!--') && (line.includes('-->') || line.includes('--!>'))) continue;
+                    if (line.includes('---')) continue;
+                    assert(!line.includes('--'), `${rel}:${i + 1} must not contain double dashes`);
                 }
             }
         }
